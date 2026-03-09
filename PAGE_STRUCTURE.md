@@ -85,20 +85,19 @@ This document outlines the complete page structure aligned with functional requi
 ### 4. Login Page (`/login`)
 **Route:** `/login`  
 **Access:** Unauthenticated users  
-**Purpose:** User authentication via Google OAuth
+**Purpose:** User authentication via Username & Password provided by our company
 
 **Content:**
-- **Sign in with Google OAuth button** (FR-01)
+- **Username & Password fields** (FR-01)
 - No registration option (admin provides access)
 - Forgot password link (for non-OAuth users if applicable)
 
 **Related FR:**
-- FR-01: User Sign In via Google OAuth
+- FR-01: User Sign In via Username & Password
 
 **Authentication Flow:**
-1. User clicks "Sign in with Google"
-2. Google OAuth authentication
-3. Backend validates credentials
+1. User enters username & password
+2. Backend validates credentials
 4. Check user role → Redirect to appropriate dashboard
 
 **Post-Login Navigation:**
