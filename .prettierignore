@@ -1,0 +1,26 @@
+# Artifacts
+build
+coverage
+
+# Next.js
+.next
+out
+next-env.d.ts
+
+# Generated
+generated
+prisma/generated
+
+# Dependencies
+node_modules
+
+# Lock files (no need to format these)
+pnpm-lock.yaml
+
+# Env files
+.env
+.env.*
+
+# Misc
+.DS_Store
+*.log
