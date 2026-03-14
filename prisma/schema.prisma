@@ -31,7 +31,8 @@ model User {
 
   // Relations
   whatsappBusinessAccounts  WhatsappBusinessAccount[]
-
+  botWebhooks               BotWebhook[]
+  
   @@unique([email])
   @@map("user")
 }
@@ -124,6 +125,27 @@ model PhoneNumber {
   wabaId String
   waba   WhatsappBusinessAccount @relation(fields: [wabaId], references: [id])
 
+  botWebhookId String?
+  botWebhook   BotWebhook? @relation(fields: [botWebhookId], references: [id])
+
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
+}
+
+model BotWebhook {
+  id          String   @id @default(cuid())
+  name        String
+  webhookUrl  String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  phoneNumbers PhoneNumber[]
+
+  @@index([userId], name: "idx_bot_webhooks_userId")
+  @@map("bot_webhook")
 }
