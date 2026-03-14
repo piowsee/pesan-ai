@@ -128,6 +128,8 @@ model PhoneNumber {
   botWebhookId String?
   botWebhook   BotWebhook? @relation(fields: [botWebhookId], references: [id])
 
+  conversations Conversation[]
+
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
 }
@@ -148,4 +150,24 @@ model BotWebhook {
 
   @@index([userId], name: "idx_bot_webhooks_userId")
   @@map("bot_webhook")
+}
+
+model Conversation {
+  id                    String    @id @default(cuid())
+  customerPhone         String    // Customer WhatsApp number (not id)
+  customerName          String?
+  adminTakeover         Boolean   @default(false) // Admin has taken over (bot paused)
+  lastMessageAt         DateTime?
+  lastCustomerMessageAt DateTime? // For 24h window check
+  unreadCount           Int       @default(0)
+  status                String    @default("active") // active, archived, blocked
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  phoneNumberId String
+  phoneNumber   PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+
+  @@unique([phoneNumberId, customerPhone], name: "unique_conversation")
+  @@index([lastMessageAt], name: "idx_conversations_last_message")
+  @@map("conversation")
 }
