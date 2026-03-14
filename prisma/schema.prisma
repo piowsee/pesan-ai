@@ -24,6 +24,15 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  role       String?
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  // Relations
+  whatsappBusinessAccounts  WhatsappBusinessAccount[]
+  botWebhooks               BotWebhook[]
+  
   @@unique([email])
   @@map("user")
 }
@@ -38,6 +47,8 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String?
 
   @@unique([token])
   @@index([userId])
@@ -74,4 +85,134 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model WhatsappBusinessAccount {
+  id                  String   @id @default(cuid())
+  wabaId              String   @unique // Meta WABA ID — already indexed via @unique
+  businessName        String?
+  businessAddress     String?
+  businessDescription String? 
+  systemUserToken     String
+  webhookVerifyToken  String
+  status              String   @default("active") // active, disconnected, suspended
+  qualityRating       String?  // GREEN, YELLOW, RED
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Relations
+  phoneNumbers PhoneNumber[]
+
+  @@index([userId], name: "idx_waba_userId")
+  @@map("whatsapp_business_account")
+}
+
+model PhoneNumber {
+  id                     String   @id @default(cuid())
+  phoneNumberId          String   @unique // Meta Phone Number ID — already indexed
+  displayPhoneNumber     String
+  verifiedName           String?
+  codeVerificationStatus String   @default("VERIFIED") // VERIFIED, NOT_VERIFIED
+  qualityRating          String?  // GREEN, YELLOW, RED
+  botEnabled             Boolean  @default(true)
+  unreadCount            Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  wabaId String
+  waba   WhatsappBusinessAccount @relation(fields: [wabaId], references: [id])
+
+  botWebhookId String?
+  botWebhook   BotWebhook? @relation(fields: [botWebhookId], references: [id])
+
+  conversations Conversation[]
+  businessProfile BusinessProfile?
+
+  @@index([wabaId], name: "idx_phone_number_wabaId")
+  @@map("phone_number")
+}
+
+model BotWebhook {
+  id          String   @id @default(cuid())
+  name        String
+  webhookUrl  String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  phoneNumbers PhoneNumber[]
+
+  @@index([userId], name: "idx_bot_webhooks_userId")
+  @@map("bot_webhook")
+}
+
+model Conversation {
+  id                    String    @id @default(cuid())
+  customerPhone         String    // Customer WhatsApp number (not id)
+  customerName          String?
+  adminTakeover         Boolean   @default(false) // Admin has taken over (bot paused)
+  lastMessageAt         DateTime?
+  lastCustomerMessageAt DateTime? // For 24h window check
+  unreadCount           Int       @default(0)
+  status                String    @default("active") // active, archived, blocked
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  phoneNumberId String
+  phoneNumber   PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+
+  messages Message[]
+
+  @@unique([phoneNumberId, customerPhone], name: "unique_conversation")
+  @@index([lastMessageAt], name: "idx_conversations_last_message")
+  @@map("conversation")
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  messageId     String?  @unique // Meta message ID (wamid.xxx) - null for outgoing pre-confirmation
+  direction     String   // incoming, outgoing
+  source        String   // customer, admin, bot
+  type          String   // text, image, video, audio, document, sticker, location
+  content       String?  // Text content or caption
+  mediaUrl      String?  // S3/Cloudflare R2 URL
+  mediaMimeType String?
+  mediaFilename String?
+  mediaSize     BigInt?  // File size in bytes
+  status        String   @default("sent") // sent, delivered, read, failed
+  errorMessage  String?
+  metadata      String?  // Additional Meta webhook data (JSON string)
+  timestamp     DateTime // Message timestamp from Meta or server time
+  createdAt     DateTime @default(now())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, timestamp], name: "idx_messages_conversation_timestamp")
+  @@map("message")
+}
+
+model BusinessProfile {
+  id                String   @id @default(cuid())
+  address           String?  // Business address
+  description       String?  // Business description
+  vertical          String?  // Business industry/category
+  about             String?  // Profile about text
+  email             String?  // Business email
+  websites          String[] // Array of website URLs
+  profilePictureUrl String?  // Meta-hosted profile picture URL
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  phoneNumberId String      @unique
+  phoneNumber   PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+
+  @@map("business_profile")
 }
