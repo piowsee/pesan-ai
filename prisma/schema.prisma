@@ -29,6 +29,9 @@ model User {
   banReason  String?
   banExpires DateTime?
 
+  // Relations
+  whatsappBusinessAccounts  WhatsappBusinessAccount[]
+
   @@unique([email])
   @@map("user")
 }
@@ -81,4 +84,24 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model WhatsappBusinessAccount {
+  id                  String   @id @default(cuid())
+  wabaId              String   @unique // Meta WABA ID — already indexed via @unique
+  businessName        String?
+  businessAddress     String?
+  businessDescription String? 
+  systemUserToken     String
+  webhookVerifyToken  String
+  status              String   @default("active") // active, disconnected, suspended
+  qualityRating       String?  // GREEN, YELLOW, RED
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId], name: "idx_waba_userId")
+  @@map("whatsapp_business_account")
 }
