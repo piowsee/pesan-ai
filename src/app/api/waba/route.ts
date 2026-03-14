@@ -3,6 +3,13 @@ import { jsend } from '@/lib/jsend';
 import { logError } from '@/logger/logger';
 import { WabaService } from '@/services/waba.service';
 
+/**
+ * @route GET /api/waba
+ * @param None
+ * @response { status: 'success', data: { wabaList: WhatsappBusinessAccount[] } }
+ * @access Authenticated users
+ * @description List all WhatsApp Business Accounts (WABAs) associated with the current user.
+ */
 export async function GET() {
   try {
     const userId = await AuthHelper.getUserId();

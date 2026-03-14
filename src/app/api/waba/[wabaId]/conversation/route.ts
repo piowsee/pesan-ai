@@ -3,6 +3,13 @@ import { jsend } from '@/lib/jsend';
 import { logError } from '@/logger/logger';
 import { ChatService } from '@/services/chat.service';
 
+/**
+ * @route GET /api/waba/:wabaId/conversation
+ * @param wabaId {string}
+ * @response { status: 'success', data: { chats: Conversation[] } }
+ * @access Authenticated users
+ * @description List all conversations for a specific WABA, validated by user ownership.
+ */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ wabaId: string }> },
