@@ -27,4 +27,31 @@ export const ChatService = {
       throw err;
     }
   },
+
+  async getChatDetail(convId: string, wabaId: string, userId: string) {
+    logger.info('Fetching chat details', { convId, wabaId, userId });
+
+    try {
+      const chatDetail = await ChatRepository.findById(convId, wabaId, userId);
+
+      if (chatDetail === null) {
+        logger.warn('Chat detail fetch failed: Not found or access denied', {
+          convId,
+          wabaId,
+          userId,
+        });
+        return null;
+      }
+
+      logger.info('Chat detail fetched successfully', {
+        convId,
+        wabaId,
+        userId,
+      });
+      return chatDetail;
+    } catch (err) {
+      logError(err, { action: 'getChatDetail', convId, wabaId, userId });
+      throw err;
+    }
+  },
 };
