@@ -17,4 +17,20 @@ export const WabaService = {
       throw err;
     }
   },
+
+  async getTotalUnreadListByUserId(userId: string) {
+    logger.info('Fetching total unread counts for all WABAs', { userId });
+
+    try {
+      const result = await WabaRepository.getTotalUnreadListByUserId(userId);
+      logger.info('Total unread counts fetched successfully', {
+        userId,
+        count: result.length,
+      });
+      return result;
+    } catch (err) {
+      logError(err, { action: 'getTotalUnreadListByUserId', userId });
+      throw err;
+    }
+  },
 };
