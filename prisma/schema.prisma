@@ -102,6 +102,28 @@ model WhatsappBusinessAccount {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  // Relations
+  phoneNumbers PhoneNumber[]
+
   @@index([userId], name: "idx_waba_userId")
   @@map("whatsapp_business_account")
+}
+
+model PhoneNumber {
+  id                     String   @id @default(cuid())
+  phoneNumberId          String   @unique // Meta Phone Number ID — already indexed
+  displayPhoneNumber     String
+  verifiedName           String?
+  codeVerificationStatus String   @default("VERIFIED") // VERIFIED, NOT_VERIFIED
+  qualityRating          String?  // GREEN, YELLOW, RED
+  botEnabled             Boolean  @default(true)
+  unreadCount            Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  wabaId String
+  waba   WhatsappBusinessAccount @relation(fields: [wabaId], references: [id])
+
+  @@index([wabaId], name: "idx_phone_number_wabaId")
+  @@map("phone_number")
 }
