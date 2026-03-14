@@ -129,6 +129,7 @@ model PhoneNumber {
   botWebhook   BotWebhook? @relation(fields: [botWebhookId], references: [id])
 
   conversations Conversation[]
+  businessProfile BusinessProfile?
 
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
@@ -196,4 +197,22 @@ model Message {
 
   @@index([conversationId, timestamp], name: "idx_messages_conversation_timestamp")
   @@map("message")
+}
+
+model BusinessProfile {
+  id                String   @id @default(cuid())
+  address           String?  // Business address
+  description       String?  // Business description
+  vertical          String?  // Business industry/category
+  about             String?  // Profile about text
+  email             String?  // Business email
+  websites          String[] // Array of website URLs
+  profilePictureUrl String?  // Meta-hosted profile picture URL
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  phoneNumberId String      @unique
+  phoneNumber   PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+
+  @@map("business_profile")
 }
