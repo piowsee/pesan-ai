@@ -12,9 +12,11 @@ Pesan AI is a simple CRM built for the WhatsApp Cloud API.
 - **Language:** TypeScript
 - **Tooling:** ESLint, Prettier, Husky, lint-staged
 
-## Page Structure
+## Documentation
 
-For a detailed functional breakdown of each view and page structure, please refer to [`PAGE_STRUCTURE.md`](./PAGE_STRUCTURE.md).
+- **Page Structure:** For a detailed functional breakdown, see [`PAGE_STRUCTURE.md`](./PAGE_STRUCTURE.md).
+- **API Documentation:** [Postman Documentation](https://documenter.getpostman.com/view/38554123/2sBXigMtFi)
+
 
 ## Getting Started
 
