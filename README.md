@@ -51,4 +51,20 @@ pnpm prisma generate
 pnpm run dev
 ```
 
+### Database Seeding (Optional)
+
+To populate the database with test data (Admin & User accounts, WABA, Conversations):
+
+> [!IMPORTANT]
+> You **MUST** temporarily disable/comment out the `signUpEmail` pre-hook (Endpoint restriction) in `src/lib/auth/auth.ts` before seeding, as the script uses the signup API to create users with hashed passwords.
+
+```bash
+pnpm prisma db seed
+```
+
+**Login Credentials:**
+- **Password:** `password123`
+- **Admin:** `admin@piowsee.com`
+- **User:** `user@piowsee.com` (Associated with chat data)
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
