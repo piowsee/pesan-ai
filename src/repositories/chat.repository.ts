@@ -61,4 +61,49 @@ export const ChatRepository = {
       },
     });
   },
+
+  /**
+   * Fetches metadata and verifies ownership for sending a message.
+   * PERFORMANCE: To avoid DB ownership checks on every message, consider generating a
+   * signed JWT 'chat token' when the user opens a specific conversation (GET Detail).
+   * This allows the 'Send' (POST) action to use that token to stay stateless.
+   */
+  async getChatMetaForSending(
+    convId: string,
+    userId: string,
+    includeToken = true,
+  ) {
+    return prisma.conversation.findFirst({
+      where: {
+        id: convId,
+        phoneNumber: {
+          waba: {
+            userId: userId,
+          },
+        },
+      },
+      include: {
+        phoneNumber: {
+          include: {
+            waba: includeToken,
+          },
+        },
+      },
+    });
+  },
+
+  async saveMessage(data: {
+    conversationId: string;
+    direction: 'incoming' | 'outgoing';
+    source: 'customer' | 'admin' | 'bot';
+    type: string;
+    content?: string;
+    status: string;
+    messageId?: string;
+    timestamp: Date;
+  }) {
+    return prisma.message.create({
+      data,
+    });
+  },
 };
