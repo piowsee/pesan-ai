@@ -1,6 +1,7 @@
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { jsend } from '@/lib/jsend';
 import { logError } from '@/logger/logger';
+import { SendMessageSchema } from '@/schemas/message.schema';
 import { ChatService } from '@/services/chat.service';
 
 /**
@@ -19,12 +20,24 @@ export async function POST(
   const { wabaId, convId } = await params;
 
   try {
-    const { message, token } = await req.json();
-    const userId = await AuthHelper.getUserId();
+    const body = await req.json();
+    const validated = SendMessageSchema.safeParse(body);
 
-    if (!message) {
-      return jsend.fail({ message: 'Message content is required' }, 400);
+    if (!validated.success) {
+      const fieldErrors = validated.error.flatten().fieldErrors;
+      const flatErrors = Object.entries(fieldErrors).reduce(
+        (acc, [key, errors]) => {
+          acc[key] = errors?.[0] || 'Invalid value';
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
+      return jsend.fail(flatErrors, 400);
     }
+
+    const { message, token } = validated.data;
+    const userId = await AuthHelper.getUserId();
 
     const result = await ChatService.sendAdminMessage(
       convId,
