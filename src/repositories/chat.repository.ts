@@ -106,4 +106,74 @@ export const ChatRepository = {
       data,
     });
   },
+
+  async findPhoneNumberByMetaId(metaPhoneNumberId: string) {
+    return prisma.phoneNumber.findUnique({
+      where: { phoneNumberId: metaPhoneNumberId },
+    });
+  },
+
+  async processIncomingMessage(params: {
+    phoneNumberId: string; // Internal ID
+    customerPhone: string;
+    customerName?: string;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string;
+      timestamp: Date;
+      metadata?: string;
+    };
+  }) {
+    const { phoneNumberId, customerPhone, customerName, message } = params;
+
+    return prisma.$transaction(async (tx) => {
+      // 1. Upsert conversation
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            customerPhone,
+          },
+        },
+        update: {
+          customerName, // Update name if provided
+          lastMessageAt: message.timestamp,
+          lastCustomerMessageAt: message.timestamp,
+          unreadCount: { increment: 1 },
+        },
+        create: {
+          phoneNumberId,
+          customerPhone,
+          customerName,
+          lastMessageAt: message.timestamp,
+          lastCustomerMessageAt: message.timestamp,
+          unreadCount: 1,
+        },
+      });
+
+      // 2. Create message
+      const savedMessage = await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          messageId: message.messageId,
+          direction: 'incoming',
+          source: 'customer',
+          type: message.type,
+          content: message.content,
+          timestamp: message.timestamp,
+          metadata: message.metadata,
+          status: 'delivered', // Incoming messages from Meta are delivered
+        },
+      });
+
+      // 3. Update parent PhoneNumber unread count
+      await tx.phoneNumber.update({
+        where: { id: phoneNumberId },
+        data: { unreadCount: { increment: 1 } },
+      });
+
+      return { conversation, message: savedMessage };
+    });
+  },
 };

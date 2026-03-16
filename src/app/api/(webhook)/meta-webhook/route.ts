@@ -1,4 +1,5 @@
 import { logError, logger } from '@/logger/logger';
+import { ChatService } from '@/services/chat.service';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -31,13 +32,25 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    // Meta expects a 200 OK response to acknowledge receipt of the event
-    // The actual processing will be implemented later
-    // TODO: add code for process incoming request
     const body = await req.json();
     logger.info('Received Meta Webhook Event', { body });
 
-    return NextResponse.json({ received: true }, { status: 200 });
+    const result = await ChatService.processMetaWebhookPayload(body);
+
+    if (!result.processed) {
+      const isNotWaba = result.reason === 'Not a WABA event';
+      const status = isNotWaba ? 404 : 200;
+      const responseBody = isNotWaba
+        ? { error: result.reason }
+        : { received: true, ...result };
+
+      return NextResponse.json(responseBody, { status });
+    }
+
+    return NextResponse.json(
+      { received: true, messagesProcessed: result.count },
+      { status: 200 },
+    );
   } catch (err) {
     logError(err, { service: 'meta-webhook', method: 'POST' });
     return NextResponse.json(
