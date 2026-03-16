@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import winston from 'winston';
 import 'winston-daily-rotate-file';
 
-const { combine, timestamp, json, colorize, align, errors } = winston.format;
+const { combine, timestamp, json, colorize, errors } = winston.format;
 
 const __filename = fileURLToPath(import.meta.url);
 const logDir = path.dirname(__filename);
@@ -36,16 +36,33 @@ export const logger = winston.createLogger({
   transports: [combinedTransport, errorTransport],
 });
 
+const consoleFormat = combine(
+  timestamp({ format: 'HH:mm:ss' }),
+  colorize({ all: true }),
+  errors({ stack: true }),
+  winston.format.printf(({ timestamp, level, message, ...metadata }) => {
+    let msg = `[${timestamp}] ${level}: ${message}`;
+
+    // Clean up metadata: remove 'service' if it's the default one to reduce noise
+    const cleanMeta = { ...metadata };
+    if (cleanMeta.service === 'user-service') {
+      delete cleanMeta.service;
+    }
+
+    // If there's any metadata left (like 'body' or 'result'), print it prettified
+    if (Object.keys(cleanMeta).length > 0) {
+      msg += `\n${JSON.stringify(cleanMeta, null, 2)}`;
+    }
+
+    return msg;
+  }),
+);
+
 // terminal logging for development
 if (process.env.NODE_ENV !== 'production') {
   logger.add(
     new winston.transports.Console({
-      format: combine(
-        errors({ stack: true }),
-        colorize({ all: true }),
-        timestamp(),
-        align(),
-      ),
+      format: consoleFormat,
     }),
   );
 }
