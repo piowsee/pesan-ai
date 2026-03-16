@@ -5,6 +5,11 @@
       "source": "vercel-labs/next-skills",
       "sourceType": "github",
       "computedHash": "c31ddd68ba5798a79a516c619b1e1fc4408cc4876ad600fefa4f5add4425719d"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "computedHash": "1d61d915437a447176ad9f1d7141f22b163265e64f9fac50267264674068099f"
     }
   }
 }
