@@ -94,7 +94,6 @@ async function main() {
     where: { wabaId: '123456789012345' },
     update: {},
     create: {
-      id: 'waba_seed_123',
       wabaId: '123456789012345',
       businessName: 'Piowsee Salon',
       systemUserToken: encrypt('EAAG...fake_token...'), // Encrypted for security
@@ -108,11 +107,10 @@ async function main() {
 
   // 3. Create Phone Number
   const phoneNumber = await prisma.phoneNumber.upsert({
-    where: { phoneNumberId: '9876543210' },
+    where: { phoneNumberId: '979032335300118' },
     update: {},
     create: {
-      id: 'pn_seed_123',
-      phoneNumberId: '9876543210',
+      phoneNumberId: '979032335300118',
       displayPhoneNumber: '123456789',
       verifiedName: 'Piowsee Support',
       wabaId: waba.id,
@@ -145,7 +143,7 @@ async function main() {
     },
     update: {},
     create: {
-      id: 'conv_seed_123',
+      id: 'convs_seed_123',
       customerPhone: '628123456789',
       customerName: 'Budi Santoso',
       phoneNumberId: phoneNumber.id,
