@@ -40,3 +40,36 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
     }
   };
 }
+
+/**
+ * Higher-order function to wrap API routes with admin authentication and standardized error handling.
+ * @param handler The actual route logic
+ * @returns A Next.js API route handler
+ */
+export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
+  return async (req: Request, { params }: { params: Promise<T> }) => {
+    try {
+      const user = await AuthHelper.requireUser();
+
+      if (user.role !== 'admin') {
+        throw new UnauthorizedError('Admin privileges required', 403);
+      }
+
+      const resolvedParams = await params;
+
+      return await handler({ userId: user.id, params: resolvedParams, req });
+    } catch (err) {
+      const action = req.method + ' ' + new URL(req.url).pathname;
+      logError(err, { action });
+
+      if (err instanceof UnauthorizedError) {
+        return jsend.fail({ message: err.message }, err.status || 401);
+      }
+
+      return jsend.error(
+        err instanceof Error ? err.message : 'Internal Server Error',
+        500,
+      );
+    }
+  };
+}
