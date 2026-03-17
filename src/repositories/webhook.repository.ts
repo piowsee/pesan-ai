@@ -13,4 +13,12 @@ export const WebhookRepository = {
       },
     });
   },
+
+  async findAll() {
+    return prisma.botWebhook.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  },
 };

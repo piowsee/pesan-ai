@@ -6,7 +6,7 @@ import { WebhookService } from '@/services/webhook.service';
 /**
  * @route POST /api/webhook
  * @body { name: string, webhookUrl: string, passphrase: string }
- * @response success with saved webhook data
+ * @response { status: 'success', data: { webhook: BotWebhook } }
  * @access Admin only
  * @description take input webhook and passphrase, verify webhook by sending a GET request, and save it if valid.
  */
@@ -38,5 +38,18 @@ export const POST = withApiAdmin(async ({ req, userId }) => {
 
   return jsend.success({
     webhook,
+  });
+});
+
+/**
+ * @route GET /api/webhook
+ * @response { status: 'success', data: { webhooks: BotWebhook[] } }
+ * @access Admin only
+ */
+export const GET = withApiAdmin(async () => {
+  const webhooks = await WebhookService.getAllWebhooks();
+
+  return jsend.success({
+    webhooks,
   });
 });
