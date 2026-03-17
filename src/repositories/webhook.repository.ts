@@ -21,4 +21,10 @@ export const WebhookRepository = {
       },
     });
   },
+
+  async deleteWebhook(id: string) {
+    return prisma.botWebhook.delete({
+      where: { id },
+    });
+  },
 };

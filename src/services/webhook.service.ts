@@ -86,4 +86,9 @@ export const WebhookService = {
       userId: webhook.userId,
     }));
   },
+
+  async deleteWebhook(id: string) {
+    await WebhookRepository.deleteWebhook(id);
+    return { success: true };
+  },
 };
