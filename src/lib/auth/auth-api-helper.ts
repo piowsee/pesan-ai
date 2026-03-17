@@ -3,14 +3,14 @@ import { headers } from 'next/headers';
 import { auth } from './auth';
 
 /**
- * Custom error class for authentication failures
+ * Custom error class for API failures (4xx/5xx)
  */
-export class UnauthorizedError extends Error {
+export class ApiError extends Error {
   status: number;
-  constructor(message = 'Unauthorized access attempt detected', status = 401) {
+  constructor(message = 'API request failed', status = 401) {
     super(message);
     this.status = status;
-    this.name = 'UnauthorizedError';
+    this.name = 'ApiError';
   }
 }
 
@@ -22,7 +22,7 @@ export const AuthHelper = {
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session || !session.user) {
-      throw new UnauthorizedError();
+      throw new ApiError('Unauthorized access attempt detected', 401);
     }
 
     return session.user;

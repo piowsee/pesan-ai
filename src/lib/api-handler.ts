@@ -1,6 +1,6 @@
 import { logError } from '@/logger/logger';
 
-import { AuthHelper, UnauthorizedError } from './auth/auth-api-helper';
+import { ApiError, AuthHelper } from './auth/auth-api-helper';
 import { jsend } from './jsend';
 
 type ApiHandlerContext<T = unknown> = {
@@ -29,8 +29,8 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
       const action = req.method + ' ' + new URL(req.url).pathname;
       logError(err, { action });
 
-      if (err instanceof UnauthorizedError) {
-        return jsend.fail({ message: err.message }, 401);
+      if (err instanceof ApiError) {
+        return jsend.fail({ message: err.message }, err.status);
       }
 
       return jsend.error(
@@ -52,7 +52,7 @@ export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
       const user = await AuthHelper.requireUser();
 
       if (user.role !== 'admin') {
-        throw new UnauthorizedError('Admin privileges required', 403);
+        throw new ApiError('Admin privileges required', 403);
       }
 
       const resolvedParams = await params;
@@ -62,8 +62,8 @@ export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
       const action = req.method + ' ' + new URL(req.url).pathname;
       logError(err, { action });
 
-      if (err instanceof UnauthorizedError) {
-        return jsend.fail({ message: err.message }, err.status || 401);
+      if (err instanceof ApiError) {
+        return jsend.fail({ message: err.message }, err.status);
       }
 
       return jsend.error(
