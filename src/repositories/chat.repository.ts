@@ -2,15 +2,7 @@ import prisma from '@/lib/prisma';
 
 export const ChatRepository = {
   async findAllByWabaId(wabaId: string, userId: string) {
-    // 1. Verify that the WABA exists and belongs to the user
-    const waba = await prisma.whatsappBusinessAccount.findFirst({
-      where: {
-        id: wabaId,
-        userId: userId,
-      },
-    });
-
-    if (!waba) {
+    if (!(await this._verifyWabaOwnership(wabaId, userId))) {
       return null;
     }
 
@@ -31,15 +23,7 @@ export const ChatRepository = {
   },
 
   async findById(convId: string, wabaId: string, userId: string) {
-    // 1. Verify that the WABA exists and belongs to the user
-    const waba = await prisma.whatsappBusinessAccount.findFirst({
-      where: {
-        id: wabaId,
-        userId: userId,
-      },
-    });
-
-    if (!waba) {
+    if (!(await this._verifyWabaOwnership(wabaId, userId))) {
       return null;
     }
 
@@ -60,6 +44,16 @@ export const ChatRepository = {
         },
       },
     });
+  },
+
+  async _verifyWabaOwnership(wabaId: string, userId: string) {
+    const waba = await prisma.whatsappBusinessAccount.findFirst({
+      where: {
+        id: wabaId,
+        userId: userId,
+      },
+    });
+    return !!waba;
   },
 
   /**
