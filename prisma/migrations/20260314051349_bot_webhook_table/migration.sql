@@ -6,7 +6,7 @@ CREATE TABLE "bot_webhook" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "webhookUrl" TEXT NOT NULL,
-    "description" TEXT,
+    "passphrase" TEXT NOT NULL,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

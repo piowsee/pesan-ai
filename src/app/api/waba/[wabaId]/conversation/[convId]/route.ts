@@ -11,7 +11,7 @@ import { ChatService } from '@/services/chat.service';
  * @description Fetch details of a specific conversation including its message history, validated by ownership.
  */
 export const GET = withApiAuth<{ wabaId: string; convId: string }>(
-  async (userId, { wabaId, convId }) => {
+  async ({ userId, params: { wabaId, convId } }) => {
     const chatDetail = await ChatService.getChatDetail(convId, wabaId, userId);
 
     if (chatDetail === null) {

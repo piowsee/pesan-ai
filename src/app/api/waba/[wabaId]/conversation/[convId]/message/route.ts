@@ -14,7 +14,7 @@ import { ChatService } from '@/services/chat.service';
  */
 
 export const POST = withApiAuth<{ wabaId: string; convId: string }>(
-  async (userId, { convId }, req) => {
+  async ({ userId, params: { convId }, req }) => {
     const body = await req.json();
     const validated = SendMessageSchema.safeParse(body);
 
