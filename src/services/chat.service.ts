@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/auth/auth-api-helper';
 import { decrypt } from '@/lib/encryption';
 import { logError, logger } from '@/logger/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
@@ -24,7 +25,7 @@ export const ChatService = {
           wabaId,
           userId,
         });
-        return null;
+        throw new ApiError('WABA not found or access denied', 404);
       }
 
       logger.info('Chat list fetched successfully', {
@@ -51,7 +52,7 @@ export const ChatService = {
           wabaId,
           userId,
         });
-        return null;
+        throw new ApiError('Chat not found or access denied', 404);
       }
 
       logger.info('Chat detail fetched successfully', {
@@ -86,7 +87,7 @@ export const ChatService = {
           chatId,
           userId,
         });
-        return null;
+        throw new ApiError('Chat not found or access denied', 404);
       }
 
       const { phoneNumber, customerPhone } = chatMeta;
@@ -98,7 +99,7 @@ export const ChatService = {
 
       if (!tokenToUse) {
         logger.error('No WhatsApp token available for sending', { chatId });
-        return null;
+        throw new ApiError('WhatsApp token is missing or invalid', 403);
       }
 
       // 2. Send via WhatsApp API

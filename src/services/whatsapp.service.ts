@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/auth/auth-api-helper';
 import { logError, logger } from '@/logger/logger';
 
 export const WhatsappService = {
@@ -41,8 +42,9 @@ export const WhatsappService = {
           phoneNumberId,
           to,
         });
-        throw new Error(
+        throw new ApiError(
           data.error?.message || 'Failed to send WhatsApp message',
+          400,
         );
       }
 
@@ -55,6 +57,8 @@ export const WhatsappService = {
         status: 'sent',
       };
     } catch (err) {
+      if (err instanceof ApiError) throw err;
+
       logError(err, { action: 'sendTextMessage', phoneNumberId, to });
       throw err;
     }

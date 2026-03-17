@@ -1,3 +1,4 @@
+import { logError, logger } from '@/logger/logger';
 import CryptoJS from 'crypto-js';
 
 /**
@@ -7,10 +8,12 @@ import CryptoJS from 'crypto-js';
 function getEncryptionKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    throw new Error('ENCRYPTION_KEY is not set in environment variables');
+    logger.error('ENCRYPTION_KEY is not set in environment variables');
+    return '';
   }
   if (key.length !== 32) {
-    throw new Error('ENCRYPTION_KEY must be exactly 32 characters long');
+    logger.error('ENCRYPTION_KEY must be exactly 32 characters long');
+    return '';
   }
   return key;
 }
@@ -23,9 +26,21 @@ const PREFIX = 'enc:';
  */
 export function encrypt(text: string): string {
   if (!text) return text;
+
   const key = getEncryptionKey();
-  const encrypted = CryptoJS.AES.encrypt(text, key).toString();
-  return `${PREFIX}${encrypted}`;
+  if (!key) {
+    // If key is missing, we don't throw to avoid exposing env info,
+    // but we log it and return the original text as a fallback.
+    return text;
+  }
+
+  try {
+    const encrypted = CryptoJS.AES.encrypt(text, key).toString();
+    return `${PREFIX}${encrypted}`;
+  } catch (err) {
+    logError(err, { action: 'encrypt' });
+    return text;
+  }
 }
 
 /**
@@ -39,6 +54,8 @@ export function decrypt(text: string): string {
   }
 
   const key = getEncryptionKey();
+  if (!key) return text;
+
   const encryptedData = text.slice(PREFIX.length);
 
   try {
@@ -51,7 +68,7 @@ export function decrypt(text: string): string {
 
     return decrypted;
   } catch (err) {
-    console.error('Decryption failed:', err);
+    logError(err, { action: 'decrypt' });
     // Fallback to returning original text if decryption fails (might be a false positive prefix)
     return text;
   }
