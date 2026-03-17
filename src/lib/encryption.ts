@@ -5,16 +5,12 @@ import CryptoJS from 'crypto-js';
  * Key must be 32 characters (256 bits).
  */
 function getEncryptionKey(): string {
-  const key = process.env.WABA_TOKEN_ENCRYPTION_KEY;
+  const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    throw new Error(
-      'WABA_TOKEN_ENCRYPTION_KEY is not set in environment variables',
-    );
+    throw new Error('ENCRYPTION_KEY is not set in environment variables');
   }
   if (key.length !== 32) {
-    throw new Error(
-      'WABA_TOKEN_ENCRYPTION_KEY must be exactly 32 characters long',
-    );
+    throw new Error('ENCRYPTION_KEY must be exactly 32 characters long');
   }
   return key;
 }
