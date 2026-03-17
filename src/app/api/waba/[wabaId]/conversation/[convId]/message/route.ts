@@ -1,6 +1,5 @@
-import { AuthHelper } from '@/lib/auth/auth-api-helper';
+import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
-import { logError } from '@/logger/logger';
 import { SendMessageSchema } from '@/schemas/message.schema';
 import { ChatService } from '@/services/chat.service';
 
@@ -13,13 +12,9 @@ import { ChatService } from '@/services/chat.service';
  * @access Authenticated users
  * @description Send a text message to a customer via WhatsApp Business API inside a specific conversation.
  */
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ wabaId: string; convId: string }> },
-) {
-  const { wabaId, convId } = await params;
 
-  try {
+export const POST = withApiAuth<{ wabaId: string; convId: string }>(
+  async (userId, { convId }, req) => {
     const body = await req.json();
     const validated = SendMessageSchema.safeParse(body);
 
@@ -37,7 +32,6 @@ export async function POST(
     }
 
     const { message, token } = validated.data;
-    const userId = await AuthHelper.getUserId();
 
     const result = await ChatService.sendAdminMessage(
       convId,
@@ -54,20 +48,5 @@ export async function POST(
     }
 
     return jsend.success({ message: result });
-  } catch (err) {
-    logError(err, {
-      action: 'POST /api/waba/[wabaId]/conversation/[convId]/message',
-      wabaId,
-      convId,
-    });
-
-    if (err instanceof Error && err.name === 'UnauthorizedError') {
-      return jsend.fail({ message: err.message }, 401);
-    }
-
-    return jsend.error(
-      err instanceof Error ? err.message : 'Internal Server Error',
-      500,
-    );
-  }
-}
+  },
+);

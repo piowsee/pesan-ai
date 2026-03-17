@@ -1,6 +1,5 @@
-import { AuthHelper } from '@/lib/auth/auth-api-helper';
+import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
-import { logError } from '@/logger/logger';
 import { ChatService } from '@/services/chat.service';
 
 /**
@@ -10,14 +9,8 @@ import { ChatService } from '@/services/chat.service';
  * @access Authenticated users
  * @description List all conversations for a specific WABA, validated by user ownership.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ wabaId: string }> },
-) {
-  try {
-    const { wabaId } = await params;
-    const userId = await AuthHelper.getUserId();
-
+export const GET = withApiAuth<{ wabaId: string }>(
+  async (userId, { wabaId }) => {
     const chatList = await ChatService.getChatsByWabaId(wabaId, userId);
 
     if (chatList === null) {
@@ -25,13 +18,5 @@ export async function GET(
     }
 
     return jsend.success({ chats: chatList });
-  } catch (err) {
-    logError(err, { action: 'GET /api/waba/[wabaId]/chat' });
-
-    if (err instanceof Error && err.name === 'UnauthorizedError') {
-      return jsend.fail({ message: err.message }, 401);
-    }
-
-    return jsend.error('Internal Server Error', 500);
-  }
-}
+  },
+);
