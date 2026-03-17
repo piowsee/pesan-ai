@@ -10,7 +10,7 @@ import { ChatService } from '@/services/chat.service';
  * @description List all conversations for a specific WABA, validated by user ownership.
  */
 export const GET = withApiAuth<{ wabaId: string }>(
-  async (userId, { wabaId }) => {
+  async ({ userId, params: { wabaId } }) => {
     const chatList = await ChatService.getChatsByWabaId(wabaId, userId);
 
     if (chatList === null) {

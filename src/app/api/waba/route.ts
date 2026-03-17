@@ -9,7 +9,7 @@ import { WabaService } from '@/services/waba.service';
  * @access Authenticated users
  * @description List all WhatsApp Business Accounts (WABAs) associated with the current user.
  */
-export const GET = withApiAuth(async (userId) => {
+export const GET = withApiAuth(async ({ userId }) => {
   const wabaList = await WabaService.getWabasByUserId(userId);
   return jsend.success({ wabaList });
 });

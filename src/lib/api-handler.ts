@@ -3,10 +3,14 @@ import { logError } from '@/logger/logger';
 import { AuthHelper, UnauthorizedError } from './auth/auth-api-helper';
 import { jsend } from './jsend';
 
+type ApiHandlerContext<T = unknown> = {
+  userId: string;
+  params: T;
+  req: Request;
+};
+
 type ApiHandler<T = unknown> = (
-  userId: string,
-  params: T,
-  req: Request,
+  context: ApiHandlerContext<T>,
 ) => Promise<Response>;
 
 /**
@@ -20,7 +24,7 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
       const userId = await AuthHelper.getUserId();
       const resolvedParams = await params;
 
-      return await handler(userId, resolvedParams, req);
+      return await handler({ userId, params: resolvedParams, req });
     } catch (err) {
       const action = req.method + ' ' + new URL(req.url).pathname;
       logError(err, { action });
