@@ -140,7 +140,6 @@ model BotWebhook {
   name        String
   webhookUrl  String
   passphrase  String
-  description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
