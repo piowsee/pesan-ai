@@ -78,6 +78,18 @@ export const WebhookService = {
     await this.callWebhook(url, passphrase, 'GET');
   },
 
+  /**
+   * Sends a POST request to the webhook URL with a JWT-signed passphrase and payload.
+   */
+  async sendMessageToWebhook(
+    url: string,
+    passphrase: string,
+    payload: Record<string, unknown>,
+  ) {
+    const response = await this.callWebhook(url, passphrase, 'POST', payload);
+    return response.json();
+  },
+
   async createWebhook(userId: string, data: CreateWebhookPayload) {
     const encryptedPassphrase = encrypt(data.passphrase);
 
