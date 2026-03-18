@@ -81,7 +81,7 @@ export const WebhookService = {
   /**
    * Sends a POST request to the webhook URL with a JWT-signed passphrase and payload.
    */
-  // TODO: create a schema validation for response payload
+  // TODO: create a schema validation for request payload and response payload
   async sendMessageToWebhook(
     url: string,
     passphrase: string,
