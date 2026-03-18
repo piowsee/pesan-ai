@@ -1,0 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Ketentuan layanan pesan.ai.',
+};
+
+export default function TermsOfServicePage() {
+  return;
+}
