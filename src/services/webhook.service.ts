@@ -7,52 +7,75 @@ import { SignJWT } from 'jose';
 
 export const WebhookService = {
   /**
-   * Validates the webhook URL by sending a GET request with a JWT-signed passphrase.
+   * Generates a JWT token for webhook authentication.
    */
-  async validateWebhookUrl(url: string, passphrase: string) {
+  async generateWebhookToken(url: string, passphrase: string) {
+    const secret = new TextEncoder().encode(passphrase);
+    return await new SignJWT({ url })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('1m')
+      .sign(secret);
+  },
+
+  /**
+   * Internal helper to call a webhook with standardized timeout, token, and error handling.
+   */
+  async callWebhook(
+    url: string,
+    passphrase: string,
+    method: 'GET' | 'POST',
+    payload?: Record<string, unknown>,
+  ) {
+    const action = method === 'GET' ? 'validate' : 'send message to';
     try {
-      const secret = new TextEncoder().encode(passphrase);
-      // TODO: Add note on frontend about the algorithm and the type of auth we use
-      const token = await new SignJWT({ url })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime('1m')
-        .sign(secret);
+      const token = await this.generateWebhookToken(url, passphrase);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-      logger.info('Validating webhook url', { url });
+      logger.info(`Calling webhook (${method})`, { url });
 
       const response = await fetch(url, {
-        method: 'GET',
+        method,
         headers: {
           Authorization: `Bearer ${token}`,
+          ...(payload ? { 'Content-Type': 'application/json' } : {}),
         },
+        body: payload ? JSON.stringify(payload) : undefined,
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
+        const status = response.status >= 500 ? 502 : 400;
+        logger.error(`Webhook ${method} request failed`, {
+          url,
+          status: response.status,
+        });
         throw new ApiError(
-          `Webhook validation failed with status: ${response.status}`,
-          400,
+          `Webhook ${action} failed with status: ${response.status}`,
+          status,
         );
       }
+
+      return response;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
       }
 
-      if (error instanceof Error) {
-        throw new ApiError(`Failed to validate webhook: ${error.message}`, 400);
-      }
-      throw new ApiError(
-        'Failed to validate webhook due to an unknown error',
-        400,
-      );
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new ApiError(`Failed to ${action} webhook: ${message}`, 400);
     }
+  },
+
+  /**
+   * Validates the webhook URL by sending a GET request with a JWT-signed passphrase.
+   */
+  async validateWebhookUrl(url: string, passphrase: string) {
+    await this.callWebhook(url, passphrase, 'GET');
   },
 
   async createWebhook(userId: string, data: CreateWebhookPayload) {
