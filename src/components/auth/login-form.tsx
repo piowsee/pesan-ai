@@ -147,10 +147,12 @@ export function LoginForm() {
             )}
             placeholder="Masukkan password Anda"
           />
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 cursor-pointer"
+            className="absolute inset-y-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground hover:bg-transparent"
             aria-label={
               showPassword ? 'Sembunyikan password' : 'Tampilkan password'
             }
@@ -160,7 +162,7 @@ export function LoginForm() {
             ) : (
               <Eye className="size-4" />
             )}
-          </button>
+          </Button>
         </div>
         {errors.password ? (
           <p className="text-xs text-destructive">{errors.password}</p>
