@@ -1,0 +1,17 @@
+import { LoginForm } from '@/components/auth/login-form';
+
+export function LoginCard() {
+  return (
+    <div className="relative z-10 w-full max-w-md xl:max-w-xl">
+      <div className="mb-8 space-y-2.5">
+        <h1 className="text-[32px] leading-tight font-bold tracking-tight text-foreground sm:text-[34px] text-center">
+          Login Akun Anda
+        </h1>
+        <p className="text-center text-sm leading-6 text-muted-foreground mb-10">
+          Masukkan email dan password anda.
+        </p>
+      </div>
+      <LoginForm />
+    </div>
+  );
+}
