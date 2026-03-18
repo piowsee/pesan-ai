@@ -1,9 +1,6 @@
 import { LoginBrandPanel } from '@/components/auth/login-brand-panel';
 import { LoginCard } from '@/components/auth/login-card';
-import { auth } from '@/lib/auth/auth';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'Login',
@@ -11,14 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (session?.user) {
-    redirect('/dashboard');
-  }
-
   return (
     <main className="relative min-h-svh overflow-hidden bg-muted/25 font-sans">
       <div className="pointer-events-none absolute -left-24 top-16 size-80 rounded-full bg-brand/12 blur-3xl" />
