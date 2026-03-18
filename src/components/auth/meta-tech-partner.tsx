@@ -8,7 +8,7 @@ export function MetaTechPartner() {
         alt="Meta logo"
         width={22}
         height={22}
-        className="h-[22px] w-[22px] object-contain"
+        className="h-5.5 w-5.5 object-contain"
       />
       <span className="text-sm">Official Meta Tech Partner</span>
     </div>
