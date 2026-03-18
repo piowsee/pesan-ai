@@ -1,6 +1,7 @@
 import { logError } from '@/logger/logger';
 
-import { ApiError, AuthHelper } from './auth/auth-api-helper';
+import { AuthHelper } from './auth/auth-api-helper';
+import { ApiError } from './error';
 import { jsend } from './jsend';
 
 type ApiHandlerContext<T = unknown> = {
