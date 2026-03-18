@@ -1,5 +1,5 @@
-import { ApiError } from '@/lib/auth/auth-api-helper';
 import { encrypt } from '@/lib/encryption';
+import { ApiError } from '@/lib/error';
 import { logger } from '@/logger/logger';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { CreateWebhookPayload } from '@/schemas/create-webhook.schema';
@@ -81,6 +81,7 @@ export const WebhookService = {
   /**
    * Sends a POST request to the webhook URL with a JWT-signed passphrase and payload.
    */
+  // TODO: create a schema validation for request payload and response payload
   async sendMessageToWebhook(
     url: string,
     passphrase: string,

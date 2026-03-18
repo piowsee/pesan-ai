@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/auth/auth-api-helper';
+import { ApiError } from '@/lib/error';
 import { logError, logger } from '@/logger/logger';
 
 export const WhatsappService = {

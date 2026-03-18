@@ -1,5 +1,5 @@
-import { ApiError } from '@/lib/auth/auth-api-helper';
 import { decrypt } from '@/lib/encryption';
+import { ApiError } from '@/lib/error';
 import { logError, logger } from '@/logger/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import {
