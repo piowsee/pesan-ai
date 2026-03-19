@@ -43,13 +43,36 @@ export const POST = withApiAdmin(async ({ req, userId }) => {
 
 /**
  * @route GET /api/webhook
- * @response { status: 'success', data: { webhooks: BotWebhook[] } }
+ * @query page {number} - Page number (optional, enables pagination)
+ * @query limit {number} - Items per page (default: 10, only used with page)
+ * @response { status: 'success', data: { webhooks, total?, page?, limit? } }
  * @access Admin only
+ * @description Returns all webhooks when no query params are passed. Supports pagination via page/limit.
  */
-export const GET = withApiAdmin(async () => {
-  const webhooks = await WebhookService.getAllWebhooks();
+export const GET = withApiAdmin(async ({ req }) => {
+  const { searchParams } = new URL(req.url);
+  const rawPage = searchParams.get('page');
+  const rawLimit = searchParams.get('limit');
+
+  const hasPagination = rawPage !== null || rawLimit !== null;
+
+  if (!hasPagination) {
+    const webhooks = await WebhookService.getAllWebhooks();
+    return jsend.success({ webhooks });
+  }
+
+  const page = Math.max(1, Number(rawPage ?? 1));
+  const limit = Math.max(1, Math.min(100, Number(rawLimit ?? 10)));
+
+  const { webhooks, total } = await WebhookService.getWebhooksPaginated(
+    page,
+    limit,
+  );
 
   return jsend.success({
     webhooks,
+    total,
+    page,
+    limit,
   });
 });

@@ -22,6 +22,19 @@ export const WebhookRepository = {
     });
   },
 
+  async findPaginated(limit: number, offset: number) {
+    const [webhooks, total] = await prisma.$transaction([
+      prisma.botWebhook.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.botWebhook.count(),
+    ]);
+
+    return { webhooks, total };
+  },
+
   async deleteWebhook(id: string) {
     return prisma.botWebhook.delete({
       where: { id },
