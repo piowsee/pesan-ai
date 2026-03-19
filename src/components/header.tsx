@@ -13,7 +13,7 @@ export function PageHeader() {
           className="h-8 w-auto object-contain brightness-0 invert"
         />
         <span className="text-sm font-semibold tracking-tight text-primary-foreground">
-          pesan ai
+          pesan-ai
         </span>
       </div>
 
