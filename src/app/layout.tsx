@@ -1,3 +1,5 @@
+import { QueryProvider } from '@/components/query-provider';
+import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
@@ -31,7 +33,8 @@ export default function RootLayout({
       <body
         className={`font-sans ${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}
       >
-        {children}
+        <QueryProvider>{children}</QueryProvider>
+        <Toaster />
       </body>
     </html>
   );
