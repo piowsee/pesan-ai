@@ -5,7 +5,9 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login');
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard');
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/admin');
 
   if (!sessionCookie && isProtectedRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
@@ -19,5 +21,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
 };
