@@ -1,5 +1,5 @@
-import { CreateUserDialog } from '@/components/admin/create-user-dialog';
-import { UserTable } from '@/components/admin/user-table';
+import { CreateUserDialog } from '@/components/admin/user/create-user-dialog';
+import { UserTable } from '@/components/admin/user/user-table';
 import { PageHeader } from '@/components/header';
 import { requireAdmin } from '@/lib/auth/auth-page-helper';
 
