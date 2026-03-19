@@ -3,6 +3,7 @@
 import {
   keepPreviousData,
   queryOptions,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -52,6 +53,20 @@ export const webhookQueries = {
       staleTime: 60 * 1000, // 1 minute
       placeholderData: keepPreviousData,
     }),
+  infiniteList: (limit = DEFAULT_PAGE_SIZE) => ({
+    queryKey: [...webhookKeys.all, 'infinite', limit],
+    queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
+      fetchWebhooks(pageParam, limit),
+    initialPageParam: 1,
+    getNextPageParam: (
+      lastPage: ListWebhooksResponse,
+      allPages: ListWebhooksResponse[],
+    ) => {
+      // Use total count to determine if there's a next page
+      const fetchedSoFar = allPages.length * limit;
+      return fetchedSoFar < lastPage.total ? allPages.length + 1 : undefined;
+    },
+  }),
 };
 
 // ─── API Functions ───────────────────────────────────────────────────
@@ -147,4 +162,11 @@ export function useDeleteWebhook() {
       });
     },
   });
+}
+
+/**
+ * Infinite query for select dropdowns.
+ */
+export function useInfiniteWebhooks(limit = 10) {
+  return useInfiniteQuery(webhookQueries.infiniteList(limit));
 }
