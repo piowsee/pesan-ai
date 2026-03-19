@@ -1,4 +1,5 @@
 import { CreateWebhookDialog } from '@/components/admin/create-webhook-dialog';
+import { WebhookDocsDialog } from '@/components/admin/webhook-docs-dialog';
 import { WebhookTable } from '@/components/admin/webhook-table';
 import { PageHeader } from '@/components/header';
 import { requireAdmin } from '@/lib/auth/auth-page-helper';
@@ -24,7 +25,10 @@ export default async function AdminWebhookPage() {
             </p>
           </div>
 
-          <CreateWebhookDialog />
+          <div className="flex items-center gap-2">
+            <WebhookDocsDialog />
+            <CreateWebhookDialog />
+          </div>
         </div>
 
         <WebhookTable />
