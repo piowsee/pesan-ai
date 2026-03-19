@@ -29,8 +29,8 @@ export function LoginBrandPanel() {
 
         <div className="my-auto max-w-2xl space-y-6">
           <p className="text-[38px] leading-[1.3] font-bold text-white">
-            Tingkatkan efisiensi bisnis Anda melalui otomatisasi chat WhatsApp
-            dengan dukungan AI.
+            Boost your business efficiency through WhatsApp chat automation with
+            AI support.
           </p>
           <MetaTechPartner />
         </div>

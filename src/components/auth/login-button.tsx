@@ -35,7 +35,7 @@ export function LoginButton({
       });
 
       if (result?.error) {
-        onError(result.error.message || 'Email atau password tidak valid.');
+        onError(result.error.message || 'Invalid email or password.');
         return;
       }
 
@@ -46,7 +46,7 @@ export function LoginButton({
       router.push(redirectTo);
       router.refresh();
     } catch {
-      onError('Terjadi kendala saat login. Silakan coba lagi.');
+      onError('An error occurred during login. Please try again.');
     } finally {
       setIsPending(false);
     }
@@ -64,7 +64,7 @@ export function LoginButton({
       {isPending ? (
         <Loader2 className="animate-spin" data-icon="inline-start" />
       ) : null}
-      {isPending ? 'Memproses...' : 'Login'}
+      {isPending ? 'Processing...' : 'Login'}
     </Button>
   );
 }

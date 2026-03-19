@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     default: 'pesan.ai',
     template: '%s | pesan.ai',
   },
-  description: 'Platform otomatisasi chat WhatsApp dengan dukungan AI.',
+  description: 'WhatsApp chat automation platform with AI support.',
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html lang="en">
       <body
         className={`font-sans ${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}
       >
