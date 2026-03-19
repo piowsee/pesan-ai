@@ -29,18 +29,18 @@ export function LoginForm() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailRegex.test(email.trim())) {
-      nextErrors.email = 'Format email tidak valid.';
+      nextErrors.email = 'Invalid email format.';
     }
 
     if (!password.trim()) {
-      nextErrors.password = 'Password tidak boleh kosong.';
+      nextErrors.password = 'Password cannot be empty.';
     } else if (password.trim().length < 8) {
-      nextErrors.password = 'Password minimal 8 karakter.';
+      nextErrors.password = 'Password must be at least 8 characters.';
     }
 
     if (!agreed) {
       nextErrors.terms =
-        'Anda perlu menyetujui Terms of Service untuk melanjutkan.';
+        'You need to agree to the Terms of Service to continue.';
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -82,7 +82,7 @@ export function LoginForm() {
             errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
-          placeholder="nama@perusahaan.com"
+          placeholder="name@company.com"
         />
         {errors.email ? (
           <p className="text-xs text-destructive">{errors.email}</p>
@@ -114,7 +114,7 @@ export function LoginForm() {
               errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
-            placeholder="Masukkan password Anda"
+            placeholder="Enter your password"
           />
           <Button
             type="button"
@@ -122,9 +122,7 @@ export function LoginForm() {
             size="icon"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute inset-y-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground hover:bg-transparent"
-            aria-label={
-              showPassword ? 'Sembunyikan password' : 'Tampilkan password'
-            }
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
               <EyeOff className="size-4" />

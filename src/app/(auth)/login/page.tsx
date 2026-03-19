@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Login',
-  description: 'Masuk ke akun pesan.ai Anda.',
+  description: 'Log in to your pesan ai account.',
 };
 
 export default async function LoginPage() {
