@@ -188,7 +188,7 @@ export function LoginForm() {
           >
             I agree to the{' '}
             <Link
-              href="/terms-of-service"
+              href="/terms"
               className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
               target="_blank"
               rel="noopener noreferrer"
@@ -197,7 +197,7 @@ export function LoginForm() {
             </Link>{' '}
             and{' '}
             <Link
-              href="/privacy-policy"
+              href="/privacy"
               className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
               target="_blank"
               rel="noopener noreferrer"
