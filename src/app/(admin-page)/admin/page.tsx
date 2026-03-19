@@ -1,12 +1,6 @@
 import { AdminDashboardCard } from '@/components/admin/admin-dashboard-card';
 import { PageHeader } from '@/components/header';
 import { requireAdmin } from '@/lib/auth/auth-page-helper';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Admin Dashboard',
-  description: 'Administration panel for managing the pesan.ai system.',
-};
 
 export default async function AdminPage() {
   await requireAdmin();

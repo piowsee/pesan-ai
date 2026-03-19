@@ -1,11 +1,5 @@
 import { SignOutButton } from '@/components/sign-out-button';
 import { requireUser } from '@/lib/auth/auth-page-helper';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Dashboard',
-  description: 'Main dashboard of pesan ai.',
-};
 
 export default async function DashboardPage() {
   await requireUser();
