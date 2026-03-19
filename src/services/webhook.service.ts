@@ -123,6 +123,27 @@ export const WebhookService = {
     }));
   },
 
+  async getWebhooksPaginated(page: number, limit: number) {
+    const offset = (page - 1) * limit;
+    const { webhooks, total } = await WebhookRepository.findPaginated(
+      limit,
+      offset,
+    );
+
+    return {
+      webhooks: webhooks.map((webhook) => ({
+        id: webhook.id,
+        name: webhook.name,
+        webhookUrl: webhook.webhookUrl,
+        isActive: webhook.isActive,
+        createdAt: webhook.createdAt,
+        updatedAt: webhook.updatedAt,
+        userId: webhook.userId,
+      })),
+      total,
+    };
+  },
+
   async deleteWebhook(id: string) {
     await WebhookRepository.deleteWebhook(id);
     return { success: true };
