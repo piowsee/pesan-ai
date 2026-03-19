@@ -10,3 +10,14 @@ export async function requireUser() {
   }
   return session.user.id;
 }
+
+export async function requireAdmin() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) {
+    return redirect('/login');
+  }
+  if (session.user.role !== 'admin') {
+    return redirect('/dashboard');
+  }
+  return session.user.id;
+}
