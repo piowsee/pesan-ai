@@ -1,6 +1,6 @@
-import { CreateWebhookDialog } from '@/components/admin/create-webhook-dialog';
-import { WebhookDocsDialog } from '@/components/admin/webhook-docs-dialog';
-import { WebhookTable } from '@/components/admin/webhook-table';
+import { CreateWebhookDialog } from '@/components/admin/webhook/create-webhook-dialog';
+import { WebhookDocsDialog } from '@/components/admin/webhook/webhook-docs-dialog';
+import { WebhookTable } from '@/components/admin/webhook/webhook-table';
 import { PageHeader } from '@/components/header';
 import { requireAdmin } from '@/lib/auth/auth-page-helper';
 
