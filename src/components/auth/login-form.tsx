@@ -1,15 +1,14 @@
 'use client';
 
+import { LoginButton } from '@/components/auth/login-button';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { type FormEvent, useState } from 'react';
+import { useState } from 'react';
 
 type FormErrors = {
   email?: string;
@@ -19,15 +18,13 @@ type FormErrors = {
 };
 
 export function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isPending, setIsPending] = useState(false);
 
-  function validateForm() {
+  function validateForm(): boolean {
     const nextErrors: FormErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -46,49 +43,21 @@ export function LoginForm() {
         'Anda perlu menyetujui Terms of Service untuk melanjutkan.';
     }
 
-    return nextErrors;
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const nextErrors = validateForm();
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
-      return;
+      return false;
     }
 
     setErrors({});
-    setIsPending(true);
+    return true;
+  }
 
-    try {
-      const result = await authClient.signIn.email({
-        email: email.trim(),
-        password,
-        callbackURL: '/dashboard',
-        rememberMe: true,
-      });
-
-      if (result?.error) {
-        setErrors({
-          form: result.error.message || 'Email atau password tidak valid.',
-        });
-        return;
-      }
-
-      router.push('/dashboard');
-      router.refresh();
-    } catch {
-      setErrors({
-        form: 'Terjadi kendala saat login. Silakan coba lagi.',
-      });
-    } finally {
-      setIsPending(false);
-    }
+  function handleError(message: string) {
+    setErrors({ form: message });
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -217,18 +186,12 @@ export function LoginForm() {
         <p className="text-xs text-destructive">{errors.form}</p>
       ) : null}
 
-      <Button
-        type="submit"
-        variant="brand"
-        size="lg"
-        disabled={isPending}
-        className="mt-2 h-10 w-full rounded-md shadow-sm cursor-pointer"
-      >
-        {isPending ? (
-          <Loader2 className="animate-spin" data-icon="inline-start" />
-        ) : null}
-        {isPending ? 'Memproses...' : 'Login'}
-      </Button>
-    </form>
+      <LoginButton
+        email={email}
+        password={password}
+        onError={handleError}
+        onBeforeLogin={validateForm}
+      />
+    </div>
   );
 }
