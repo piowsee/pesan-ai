@@ -1,63 +1,85 @@
 'use client';
 
-import { LoginButton } from '@/components/auth/login-button';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-type FormErrors = {
-  email?: string;
-  password?: string;
-  terms?: string;
-  form?: string;
-};
+// ─── Schema ──────────────────────────────────────────────────────────
+
+const loginSchema = z.object({
+  email: z.email('Invalid email format'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(8, 'Password must be at least 8 characters'),
+  terms: z.boolean().refine((val) => val === true, {
+    message: 'You need to agree to the Terms and Privacy to continue',
+  }),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+// ─── Component ───────────────────────────────────────────────────────
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [agreed, setAgreed] = useState(false);
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [isPending, setIsPending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  function validateForm(): boolean {
-    const nextErrors: FormErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      terms: false,
+    },
+  });
 
-    if (!emailRegex.test(email.trim())) {
-      nextErrors.email = 'Invalid email format.';
+  async function onSubmit(values: LoginFormValues) {
+    setIsPending(true);
+    setFormError(null);
+
+    try {
+      const result = await authClient.signIn.email({
+        email: values.email.trim(),
+        password: values.password,
+        rememberMe: true,
+      });
+
+      if (result?.error) {
+        setFormError(result.error.message || 'Invalid email or password.');
+        return;
+      }
+
+      const session = await authClient.getSession();
+      const isAdmin = session?.data?.user?.role === 'admin';
+
+      const redirectTo = isAdmin ? '/admin' : '/dashboard';
+      router.push(redirectTo);
+      router.refresh();
+    } catch {
+      setFormError('An error occurred during login. Please try again.');
+    } finally {
+      setIsPending(false);
     }
-
-    if (!password.trim()) {
-      nextErrors.password = 'Password cannot be empty.';
-    } else if (password.trim().length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters.';
-    }
-
-    if (!agreed) {
-      nextErrors.terms =
-        'You need to agree to the Terms of Service to continue.';
-    }
-
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      return false;
-    }
-
-    setErrors({});
-    return true;
-  }
-
-  function handleError(message: string) {
-    setErrors({ form: message });
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -65,28 +87,20 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           autoFocus
-          aria-invalid={Boolean(errors.email)}
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            if (errors.email || errors.form) {
-              setErrors((prev) => ({
-                ...prev,
-                email: undefined,
-                form: undefined,
-              }));
-            }
-          }}
+          {...form.register('email')}
+          aria-invalid={!!form.formState.errors.email}
           className={cn(
             'h-10 rounded-md shadow-sm',
-            errors.email &&
+            form.formState.errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
           placeholder="name@company.com"
         />
-        {errors.email ? (
-          <p className="text-xs text-destructive">{errors.email}</p>
-        ) : null}
+        {form.formState.errors.email && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.email.message}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -96,22 +110,11 @@ export function LoginForm() {
             id="password"
             type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
-            minLength={8}
-            aria-invalid={Boolean(errors.password)}
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              if (errors.password || errors.form) {
-                setErrors((prev) => ({
-                  ...prev,
-                  password: undefined,
-                  form: undefined,
-                }));
-              }
-            }}
+            {...form.register('password')}
+            aria-invalid={!!form.formState.errors.password}
             className={cn(
               'h-10 rounded-md pr-10 shadow-sm',
-              errors.password &&
+              form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
             placeholder="Enter your password"
@@ -131,23 +134,26 @@ export function LoginForm() {
             )}
           </Button>
         </div>
-        {errors.password ? (
-          <p className="text-xs text-destructive">{errors.password}</p>
-        ) : null}
+        {form.formState.errors.password && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.password.message}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-start gap-3">
-          <Checkbox
-            id="terms"
-            checked={agreed}
-            onCheckedChange={(checked: boolean | 'indeterminate') => {
-              setAgreed(checked === true);
-              if (errors.terms) {
-                setErrors((prev) => ({ ...prev, terms: undefined }));
-              }
-            }}
-            className="mt-1 shrink-0 cursor-pointer"
+          <Controller
+            control={form.control}
+            name="terms"
+            render={({ field }) => (
+              <Checkbox
+                id="terms"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                className="mt-1 shrink-0 cursor-pointer"
+              />
+            )}
           />
           <Label
             htmlFor="terms"
@@ -175,21 +181,28 @@ export function LoginForm() {
           </Label>
         </div>
 
-        {errors.terms ? (
-          <p className="text-xs text-destructive">{errors.terms}</p>
-        ) : null}
+        {form.formState.errors.terms && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.terms.message}
+          </p>
+        )}
       </div>
 
-      {errors.form ? (
-        <p className="text-xs text-destructive">{errors.form}</p>
-      ) : null}
+      {/* Server Error */}
+      {formError && <p className="text-xs text-destructive">{formError}</p>}
 
-      <LoginButton
-        email={email}
-        password={password}
-        onError={handleError}
-        onBeforeLogin={validateForm}
-      />
-    </div>
+      <Button
+        type="submit"
+        variant="brand"
+        size="lg"
+        disabled={isPending}
+        className="mt-2 h-10 w-full rounded-md shadow-sm"
+      >
+        {isPending ? (
+          <Loader2 className="animate-spin" data-icon="inline-start" />
+        ) : null}
+        {isPending ? 'Processing...' : 'Login'}
+      </Button>
+    </form>
   );
 }
