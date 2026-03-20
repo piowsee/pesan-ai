@@ -67,7 +67,6 @@ export function LoginForm() {
 
       const redirectTo = isAdmin ? '/admin' : '/dashboard';
       router.push(redirectTo);
-      router.refresh();
     } catch {
       setFormError('An error occurred during login. Please try again.');
     } finally {
