@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { UserPlus, Webhook } from 'lucide-react';
+import { CircleUser, UserPlus, Webhook } from 'lucide-react';
 import Link from 'next/link';
 
 const ADMIN_NAVIGATION = [
@@ -14,6 +14,12 @@ const ADMIN_NAVIGATION = [
     label: 'Manage Webhook',
     description: 'Configure and monitor active webhooks.',
     icon: Webhook,
+  },
+  {
+    href: '/admin/waba',
+    label: 'Manage User WABA',
+    description: 'Assign Webhook to WABA',
+    icon: CircleUser,
   },
 ] as const;
 
