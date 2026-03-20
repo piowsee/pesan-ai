@@ -8,7 +8,7 @@ export async function requireUser() {
   if (!session?.user) {
     return redirect('/login');
   }
-  return session.user.id;
+  return session.user;
 }
 
 export async function requireAdmin() {
@@ -19,5 +19,5 @@ export async function requireAdmin() {
   if (session.user.role !== 'admin') {
     return redirect('/dashboard');
   }
-  return session.user.id;
+  return session.user;
 }
