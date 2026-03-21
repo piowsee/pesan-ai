@@ -1,5 +1,4 @@
 import { withApiAuth } from '@/lib/api-handler';
-import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { jsend } from '@/lib/jsend';
 import { WabaService } from '@/services/waba.service';
 
@@ -12,9 +11,7 @@ import { WabaService } from '@/services/waba.service';
  * @access Authenticated users (admins get all WABAs, strictly paginated/unpaginated)
  * @description List WhatsApp Business Accounts (WABAs). If admin, lists all. If regular user, lists own.
  */
-// TODO: consider refactor withApiAuth to avoid recall requireUser (for performance)
-export const GET = withApiAuth(async ({ req, userId }) => {
-  const user = await AuthHelper.requireUser();
+export const GET = withApiAuth(async ({ req, user }) => {
   const isAdmin = user.role === 'admin';
 
   const { searchParams } = new URL(req.url);
@@ -27,7 +24,7 @@ export const GET = withApiAuth(async ({ req, userId }) => {
   if (!hasPagination) {
     const wabas = isAdmin
       ? await WabaService.getAllWabas()
-      : await WabaService.getWabasByUserId(userId);
+      : await WabaService.getWabasByUserId(user.id);
     return jsend.success({ wabas });
   }
 
@@ -38,7 +35,7 @@ export const GET = withApiAuth(async ({ req, userId }) => {
   const { wabas, total } = await WabaService.getWabasPaginated({
     page,
     limit,
-    userId: isAdmin ? undefined : userId,
+    userId: isAdmin ? undefined : user.id,
   });
 
   return jsend.success({

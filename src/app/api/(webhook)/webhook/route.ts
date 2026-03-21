@@ -11,7 +11,7 @@ import { WebhookService } from '@/services/webhook.service';
  * @description take input webhook and passphrase, verify webhook by sending a GET request, and save it if valid.
  */
 
-export const POST = withApiAdmin(async ({ req, userId }) => {
+export const POST = withApiAdmin(async ({ req, user }) => {
   const rawBody = await req.json();
 
   const validated = CreateWebhookSchema.safeParse(rawBody);
@@ -34,7 +34,7 @@ export const POST = withApiAdmin(async ({ req, userId }) => {
   // Validate the webhook URL by sending GET request
   await WebhookService.validateWebhookUrl(webhookUrl, passphrase);
 
-  const webhook = await WebhookService.createWebhook(userId, data);
+  const webhook = await WebhookService.createWebhook(user.id, data);
 
   return jsend.success({
     webhook,
