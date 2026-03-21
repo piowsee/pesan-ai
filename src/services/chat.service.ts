@@ -170,7 +170,6 @@ export const ChatService = {
     return body;
   },
 
-  // We temporarily use 'any' strictly for internal mapping methods
   // since the Zod inferred types are complex nested arrays
   async _processEntries(entries: WebhookEntry[]): Promise<number> {
     let processedCount = 0;

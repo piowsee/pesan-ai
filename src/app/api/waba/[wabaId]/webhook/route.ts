@@ -14,26 +14,27 @@ const AssignWebhookSchema = z.object({
  * @access Admin only
  * @description Assigns or unassigns a webhook to all phone numbers under a WABA.
  */
-export const PATCH = withApiAdmin(async ({ req, params }) => {
-  const { wabaId } = (await params) as { wabaId: string };
-  const rawBody = await req.json();
+export const PATCH = withApiAdmin<{ wabaId: string }>(
+  async ({ req, params: { wabaId } }) => {
+    const rawBody = await req.json();
 
-  const validated = AssignWebhookSchema.safeParse(rawBody);
-  if (!validated.success) {
-    const fieldErrors = validated.error.flatten().fieldErrors;
-    const flatErrors = Object.entries(fieldErrors).reduce(
-      (acc, [key, errors]) => {
-        acc[key] = errors?.[0] || 'Invalid value';
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
+    const validated = AssignWebhookSchema.safeParse(rawBody);
+    if (!validated.success) {
+      const fieldErrors = validated.error.flatten().fieldErrors;
+      const flatErrors = Object.entries(fieldErrors).reduce(
+        (acc, [key, errors]) => {
+          acc[key] = errors?.[0] || 'Invalid value';
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
 
-    return jsend.fail(flatErrors, 400);
-  }
+      return jsend.fail(flatErrors, 400);
+    }
 
-  const { webhookId } = validated.data;
-  const result = await WabaService.assignWebhookToWaba(wabaId, webhookId);
+    const { webhookId } = validated.data;
+    const result = await WabaService.assignWebhookToWaba(wabaId, webhookId);
 
-  return jsend.success(result);
-});
+    return jsend.success(result);
+  },
+);

@@ -1,11 +1,12 @@
 import { logError } from '@/logger/logger';
+import { User } from '@/types/user';
 
 import { AuthHelper } from './auth/auth-api-helper';
 import { ApiError } from './error';
 import { jsend } from './jsend';
 
 type ApiHandlerContext<T = unknown> = {
-  userId: string;
+  user: User;
   params: T;
   req: Request;
 };
@@ -25,7 +26,7 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
       const user = await AuthHelper.requireUser();
       const resolvedParams = await params;
 
-      return await handler({ userId: user.id, params: resolvedParams, req });
+      return await handler({ user, params: resolvedParams, req });
     } catch (err) {
       const action = req.method + ' ' + new URL(req.url).pathname;
       logError(err, { action });
@@ -53,7 +54,7 @@ export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
       const user = await AuthHelper.requireAdmin();
       const resolvedParams = await params;
 
-      return await handler({ userId: user.id, params: resolvedParams, req });
+      return await handler({ user, params: resolvedParams, req });
     } catch (err) {
       const action = req.method + ' ' + new URL(req.url).pathname;
       logError(err, { action });

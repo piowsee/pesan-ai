@@ -10,8 +10,8 @@ import { ChatService } from '@/services/chat.service';
  * @description List all conversations for a specific WABA, validated by user ownership.
  */
 export const GET = withApiAuth<{ wabaId: string }>(
-  async ({ userId, params: { wabaId } }) => {
-    const chatList = await ChatService.getChatsByWabaId(wabaId, userId);
+  async ({ user, params: { wabaId } }) => {
+    const chatList = await ChatService.getChatsByWabaId(wabaId, user.id);
 
     if (chatList === null) {
       return jsend.fail({ message: 'WABA not found or access denied' }, 404);
