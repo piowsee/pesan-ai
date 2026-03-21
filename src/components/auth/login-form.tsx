@@ -62,8 +62,7 @@ export function LoginForm() {
         return;
       }
 
-      const session = await authClient.getSession();
-      const isAdmin = session?.data?.user?.role === 'admin';
+      const isAdmin = result?.data?.user?.role === 'admin';
 
       const redirectTo = isAdmin ? '/admin' : '/dashboard';
       router.push(redirectTo);
