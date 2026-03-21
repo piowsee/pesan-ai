@@ -4,12 +4,19 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { requireUser } from '@/lib/auth/auth-page-helper';
 import { ReactNode } from 'react';
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const user = await requireUser();
+
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar user={user} />
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b px-4 shrink-0">
           <SidebarTrigger className="-ml-1" />

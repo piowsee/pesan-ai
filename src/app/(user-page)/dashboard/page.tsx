@@ -4,11 +4,11 @@ import { WelcomeHeader } from '@/components/dashboard/welcome-header';
 import { requireUser } from '@/lib/auth/auth-page-helper';
 
 export default async function DashboardPage() {
-  await requireUser();
+  const user = await requireUser();
 
   return (
     <div className="max-w-6xl mx-auto w-full">
-      <WelcomeHeader />
+      <WelcomeHeader user={user} />
       <WabaStatusCards />
       <QuickActions />
     </div>

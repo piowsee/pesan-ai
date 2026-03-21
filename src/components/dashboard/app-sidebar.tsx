@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { authClient } from '@/lib/auth/auth-client';
+import { User } from '@/types/user';
 import { Home, Layers, LogOut, MessageSquare } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,11 +26,9 @@ const navItems = [
   { title: 'Chat', url: '/dashboard/chat', icon: MessageSquare },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ user }: { user: User | null }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = authClient.useSession();
-  const user = session?.user;
 
   const handleSignOut = async () => {
     await authClient.signOut();
