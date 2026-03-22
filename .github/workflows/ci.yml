@@ -54,6 +54,9 @@ jobs:
       - name: Prettier check
         run: pnpm format:check
 
+      - name: Generate prisma
+        run: pnpm prisma generate
+
       - name: Run migration scripts
         run: pnpm prisma migrate dev
 
