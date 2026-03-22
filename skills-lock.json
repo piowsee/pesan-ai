@@ -25,6 +25,11 @@
       "source": "deckardger/tanstack-agent-skills",
       "sourceType": "github",
       "computedHash": "addf4358803d7746f7fe0475a3370d835775217e00dd5fc7bbd8a7d6c53d81e5"
+    },
+    "vitest": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "github",
+      "computedHash": "3cf0493db5554d6053369f3c3131a5a7a34f85d7e98aa1eb42114060fe25cc39"
     }
   }
 }
