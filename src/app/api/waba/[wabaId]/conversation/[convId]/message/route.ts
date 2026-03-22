@@ -40,13 +40,6 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
       token,
     );
 
-    if (result === null) {
-      return jsend.fail(
-        { message: 'Conversation not found or access denied' },
-        404,
-      );
-    }
-
     return jsend.success({ message: result });
   },
 );
