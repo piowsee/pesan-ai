@@ -13,14 +13,6 @@ import { ChatService } from '@/services/chat.service';
 export const GET = withApiAuth<{ wabaId: string; convId: string }>(
   async ({ user, params: { wabaId, convId } }) => {
     const chatDetail = await ChatService.getChatDetail(convId, wabaId, user.id);
-
-    if (chatDetail === null) {
-      return jsend.fail(
-        { message: 'Conversation not found or access denied' },
-        404,
-      );
-    }
-
     return jsend.success({ conversation: chatDetail });
   },
 );
