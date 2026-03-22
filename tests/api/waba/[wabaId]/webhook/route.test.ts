@@ -10,8 +10,11 @@ import { describe, expect, it, vi } from 'vitest';
  */
 
 describe('PATCH /api/waba/[wabaId]/webhook', () => {
+  const wabaId = 'waba-123';
+  const url = `http://localhost/api/waba/${wabaId}/webhook`;
+
   const createRequest = (body: unknown) => {
-    return new Request('http://localhost/api/waba/waba-123/webhook', {
+    return new Request(url, {
       method: 'PATCH',
       body: JSON.stringify(body),
     });
@@ -31,7 +34,7 @@ describe('PATCH /api/waba/[wabaId]/webhook', () => {
     const response = await PATCH(
       req as never,
       {
-        params: Promise.resolve({ wabaId: 'waba-123' }),
+        params: Promise.resolve({ wabaId }),
       } as never,
     );
 
@@ -41,7 +44,7 @@ describe('PATCH /api/waba/[wabaId]/webhook', () => {
     expect(data.status).toBe('success');
     expect(data.data).toEqual({ success: true });
     expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith(
-      'waba-123',
+      wabaId,
       'webhook-456',
     );
   });
@@ -60,15 +63,12 @@ describe('PATCH /api/waba/[wabaId]/webhook', () => {
     const response = await PATCH(
       req as never,
       {
-        params: Promise.resolve({ wabaId: 'waba-123' }),
+        params: Promise.resolve({ wabaId }),
       } as never,
     );
 
     expect(response.status).toBe(200);
-    expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith(
-      'waba-123',
-      null,
-    );
+    expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith(wabaId, null);
   });
 
   it('returns 400 for invalid payload', async () => {
@@ -81,7 +81,7 @@ describe('PATCH /api/waba/[wabaId]/webhook', () => {
     const response = await PATCH(
       req as never,
       {
-        params: Promise.resolve({ wabaId: 'waba-123' }),
+        params: Promise.resolve({ wabaId }),
       } as never,
     );
 
@@ -102,7 +102,7 @@ describe('PATCH /api/waba/[wabaId]/webhook', () => {
     const response = await PATCH(
       req as never,
       {
-        params: Promise.resolve({ wabaId: 'waba-123' }),
+        params: Promise.resolve({ wabaId }),
       } as never,
     );
 
