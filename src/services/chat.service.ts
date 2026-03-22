@@ -19,15 +19,6 @@ export const ChatService = {
 
     try {
       const chatList = await ChatRepository.findAllByWabaId(wabaId, userId);
-
-      if (chatList === null) {
-        logger.warn('Chat list fetch failed: WABA not found or access denied', {
-          wabaId,
-          userId,
-        });
-        throw new ApiError('WABA not found or access denied', 404);
-      }
-
       logger.info('Chat list fetched successfully', {
         wabaId,
         userId,
@@ -45,16 +36,6 @@ export const ChatService = {
 
     try {
       const chatDetail = await ChatRepository.findById(convId, wabaId, userId);
-
-      if (chatDetail === null) {
-        logger.warn('Chat detail fetch failed: Not found or access denied', {
-          convId,
-          wabaId,
-          userId,
-        });
-        throw new ApiError('Chat not found or access denied', 404);
-      }
-
       logger.info('Chat detail fetched successfully', {
         convId,
         wabaId,

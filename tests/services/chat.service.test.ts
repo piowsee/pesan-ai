@@ -14,13 +14,6 @@ vi.unmock('@/services/chat.service');
 
 describe('ChatService', { tags: ['backend'] }, () => {
   describe('getChatsByWabaId', () => {
-    it('throws 404 if repository returns null (unauthorized)', async () => {
-      vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue(null);
-      await expect(
-        ChatService.getChatsByWabaId('waba-1', 'user-1'),
-      ).rejects.toThrow(ApiError);
-    });
-
     it('returns chat list', async () => {
       vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue([
         { id: 'chat-1' },
@@ -40,13 +33,6 @@ describe('ChatService', { tags: ['backend'] }, () => {
         'user-1',
       );
       expect(result).toEqual(mockChat);
-    });
-
-    it('throws 404 if chat not found', async () => {
-      vi.mocked(ChatRepository.findById).mockResolvedValue(null);
-      await expect(
-        ChatService.getChatDetail('chat-1', 'waba-1', 'user-1'),
-      ).rejects.toThrow(ApiError);
     });
   });
 
