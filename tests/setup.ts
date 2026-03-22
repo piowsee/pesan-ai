@@ -112,7 +112,7 @@ vi.mock('@/services/waba.service', () => ({
 
 vi.mock('@/services/webhook.service', () => ({
   WebhookService: {
-    generateWebhookToken: vi.fn(),
+    _generateWebhookToken: vi.fn(),
     callWebhook: vi.fn(),
     validateWebhookUrl: vi.fn(),
     sendMessageToWebhook: vi.fn(),

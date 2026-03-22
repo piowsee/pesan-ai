@@ -9,7 +9,7 @@ export const WebhookService = {
   /**
    * Generates a JWT token for webhook authentication.
    */
-  async generateWebhookToken(url: string, passphrase: string) {
+  async _generateWebhookToken(url: string, passphrase: string) {
     const secret = new TextEncoder().encode(passphrase);
     return await new SignJWT({ url })
       .setProtectedHeader({ alg: 'HS256' })
@@ -29,7 +29,7 @@ export const WebhookService = {
   ) {
     const action = method === 'GET' ? 'validate' : 'send message to';
     try {
-      const token = await this.generateWebhookToken(url, passphrase);
+      const token = await this._generateWebhookToken(url, passphrase);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
