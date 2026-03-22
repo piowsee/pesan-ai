@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { vi } from 'vitest';
 
 // Global mock for logger
