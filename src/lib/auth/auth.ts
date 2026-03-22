@@ -11,10 +11,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  // disable sign-up using pre-hook
+  // disable sign-up using pre-hook if in production
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
-      if (ctx.path.startsWith('/sign-up')) {
+      const isProduction =
+        !process.env.ENVIRONMENT || process.env.ENVIRONMENT === 'production';
+
+      if (isProduction && ctx.path.startsWith('/sign-up')) {
         throw new APIError('BAD_REQUEST', {
           status: 'fail',
           data: {
