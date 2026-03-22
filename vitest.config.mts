@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: 'jsdom',
+    clearMocks: true,
+    setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8'
     },
