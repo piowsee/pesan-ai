@@ -10,7 +10,7 @@ vi.unmock('@/services/whatsapp.service');
  * We mock global fetch to verify correct payload formation without network calls.
  */
 
-describe('WhatsappService', () => {
+describe('WhatsappService', { tags: ['backend'] }, () => {
   describe('sendTextMessage', () => {
     it('sends message successfully and returns message info', async () => {
       global.fetch = vi.fn().mockResolvedValue({

@@ -12,7 +12,7 @@ vi.unmock('@/services/chat.service');
  * and handles missing data.
  */
 
-describe('ChatService', () => {
+describe('ChatService', { tags: ['backend'] }, () => {
   describe('getChatsByWabaId', () => {
     it('throws 404 if repository returns null (unauthorized)', async () => {
       vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue(null);

@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
  * pagination handling, and role-based logic (admin vs user).
  */
 
-describe('GET /api/waba', () => {
+describe('GET /api/waba', { tags: ['backend'] }, () => {
   const createRequest = (url: string) => {
     return new Request(url);
   };

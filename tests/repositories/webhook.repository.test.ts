@@ -18,7 +18,7 @@ vi.unmock('@/repositories/webhook.repository.ts');
  * Tests are non-destructive to the core seed but verify CRUD and pagination.
  */
 
-describe('WebhookRepository Integration', () => {
+describe('WebhookRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   const SEED_EMAIL = 'user@piowsee.com';
   const SEED_WEBHOOK_ID = 'webhook_seed_123';

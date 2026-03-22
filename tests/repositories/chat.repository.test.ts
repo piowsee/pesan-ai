@@ -19,7 +19,7 @@ vi.unmock('@/repositories/chat.repository.ts');
  * transactions are consistent with the project's standard seed data.
  */
 
-describe('ChatRepository Integration', () => {
+describe('ChatRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbPhoneNumberId: string;
   const SEED_EMAIL = 'user@piowsee.com';

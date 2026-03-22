@@ -3,7 +3,7 @@ import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { WebhookService } from '@/services/webhook.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('Webhook API Routes (/api/webhook)', () => {
+describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

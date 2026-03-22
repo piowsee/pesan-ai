@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
  * and admin-only role access for webhook assignments.
  */
 
-describe('PATCH /api/waba/[wabaId]/webhook', () => {
+describe('PATCH /api/waba/[wabaId]/webhook', { tags: ['backend'] }, () => {
   const wabaId = 'waba-123';
   const url = `http://localhost/api/waba/${wabaId}/webhook`;
 

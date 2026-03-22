@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
  * the payload signature validation (POST) ensuring our implementation is secure.
  */
 
-describe('Meta Webhook Route', () => {
+describe('Meta Webhook Route', { tags: ['backend'] }, () => {
   describe('GET', () => {
     it('verifies webhook on correct token and mode', async () => {
       const req = new Request(

@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
  * and fetching unread counts for the authenticated user.
  */
 
-describe('GET /api/waba/total-unread', () => {
+describe('GET /api/waba/total-unread', { tags: ['backend'] }, () => {
   it('returns total unread counts for authenticated user', async () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',

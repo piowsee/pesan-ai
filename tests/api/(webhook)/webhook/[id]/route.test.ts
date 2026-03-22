@@ -3,7 +3,7 @@ import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { WebhookService } from '@/services/webhook.service';
 import { describe, expect, it, vi } from 'vitest';
 
-describe('DELETE /api/webhook/:id', () => {
+describe('DELETE /api/webhook/:id', { tags: ['backend'] }, () => {
   const id = 'wh-123';
   const url = `http://localhost/api/webhook/${id}`;
 

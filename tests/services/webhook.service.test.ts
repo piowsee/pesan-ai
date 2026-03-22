@@ -12,7 +12,7 @@ vi.unmock('@/services/webhook.service');
  * and formatting responses.
  */
 
-describe('WebhookService', () => {
+describe('WebhookService', { tags: ['backend'] }, () => {
   describe('callWebhook', () => {
     it('calls webhook successfully', async () => {
       global.fetch = vi.fn().mockResolvedValue({

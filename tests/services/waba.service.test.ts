@@ -12,7 +12,7 @@ vi.unmock('@/services/waba.service');
  */
 
 // Provide minimal mock for logger
-describe('WabaService', () => {
+describe('WabaService', { tags: ['backend'] }, () => {
   describe('getWabasByUserId', () => {
     it('fetches and maps wabas correctly', async () => {
       vi.mocked(WabaRepository.findAllByUserId).mockResolvedValue([

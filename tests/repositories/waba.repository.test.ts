@@ -19,7 +19,7 @@ vi.unmock('@/repositories/waba.repository.ts');
  * consistent with the standard project seed.
  */
 
-describe('WabaRepository Integration', () => {
+describe('WabaRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbWabaId: string;
   const SEED_EMAIL = 'user@piowsee.com';

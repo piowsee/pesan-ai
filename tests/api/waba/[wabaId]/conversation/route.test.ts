@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
  * from the ChatService layer.
  */
 
-describe('GET /api/waba/:wabaId/conversation', () => {
+describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
   const wabaId = 'waba-123';
   const url = `http://localhost/api/waba/${wabaId}/conversation`;
 
