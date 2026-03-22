@@ -12,39 +12,6 @@ vi.mock('@/lib/encryption', () => ({
   decrypt: vi.fn((val) => val),
 }));
 
-// Global mock for Prisma
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    whatsappBusinessAccount: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn(),
-      findUnique: vi.fn(),
-    },
-    conversation: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      findFirst: vi.fn(),
-      upsert: vi.fn(),
-    },
-    message: {
-      create: vi.fn(),
-    },
-    phoneNumber: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    botWebhook: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn(),
-      delete: vi.fn(),
-    },
-    $transaction: vi.fn(),
-  },
-}));
-
 // Global mock for Auth helper (only used in API route tests)
 vi.mock('@/lib/auth/auth-api-helper', () => ({
   AuthHelper: {
