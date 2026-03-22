@@ -82,7 +82,7 @@ async function main() {
       create: {
         wabaId: '123456789012345',
         businessName: 'Piowsee Salon',
-        systemUserToken: encrypt('EAAG...fake_token...'), // Encrypted for security
+        systemUserToken: encrypt('EAAG...fake_token...'),
         webhookVerifyToken: 'verify_token_123',
         status: 'active',
         userId: user.id,
@@ -91,7 +91,23 @@ async function main() {
 
     console.log('WABA created:', waba.businessName);
 
-    // 3. Create Phone Number
+    // 3 Create Bot Webhook
+    const webhook = await tx.botWebhook.upsert({
+      where: { id: 'webhook_seed_123' },
+      update: {},
+      create: {
+        id: 'webhook_seed_123',
+        name: 'Seed Webhook',
+        webhookUrl: 'https://example.com/webhook',
+        passphrase: 'secret-passphrase',
+        isActive: true,
+        userId: user.id,
+      },
+    });
+
+    console.log('Bot Webhook created:', webhook.name);
+
+    // 4. Create Phone Number
     const phoneNumber = await tx.phoneNumber.upsert({
       where: { phoneNumberId: '979032335300118' },
       update: {},
@@ -100,12 +116,13 @@ async function main() {
         displayPhoneNumber: '123456789',
         verifiedName: 'Piowsee Support',
         wabaId: waba.id,
+        botWebhookId: webhook.id,
       },
     });
 
     console.log('Phone Number created:', phoneNumber.displayPhoneNumber);
 
-    // 4. Create Business Profile
+    // 5. Create Business Profile
     await tx.businessProfile.upsert({
       where: { phoneNumberId: phoneNumber.id },
       update: {},
@@ -119,7 +136,7 @@ async function main() {
       },
     });
 
-    // 5. Create Conversation
+    // 6. Create Conversation
     const conversation = await tx.conversation.upsert({
       where: {
         unique_conversation: {
@@ -139,7 +156,7 @@ async function main() {
 
     console.log('Conversation created for:', conversation.customerName);
 
-    // 6. Create Messages
+    // 7. Create Messages
     await tx.message.createMany({
       data: [
         {

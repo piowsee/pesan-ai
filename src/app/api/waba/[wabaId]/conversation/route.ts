@@ -13,10 +13,6 @@ export const GET = withApiAuth<{ wabaId: string }>(
   async ({ user, params: { wabaId } }) => {
     const chatList = await ChatService.getChatsByWabaId(wabaId, user.id);
 
-    if (chatList === null) {
-      return jsend.fail({ message: 'WABA not found or access denied' }, 404);
-    }
-
     return jsend.success({ chats: chatList });
   },
 );
