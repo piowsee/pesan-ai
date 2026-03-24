@@ -17,6 +17,12 @@ export async function proxy(request: NextRequest) {
 
   // Auto-redirect authenticated users away from the login page
   if (sessionCookie && isLoginRoute) {
+    if (request.nextUrl.searchParams.get('session_expired') === 'true') {
+      const response = NextResponse.next();
+      response.cookies.delete('better-auth.session_token');
+      response.cookies.delete('__Secure-better-auth.session_token');
+      return response;
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
