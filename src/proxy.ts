@@ -19,8 +19,8 @@ export async function proxy(request: NextRequest) {
   if (sessionCookie && isLoginRoute) {
     if (request.nextUrl.searchParams.get('session_expired') === 'true') {
       const response = NextResponse.next();
-      response.cookies.delete('better-auth.session_token');
       response.cookies.delete('__Secure-better-auth.session_token');
+      response.cookies.delete('__Secure-better-auth.session_data');
       return response;
     }
     return NextResponse.redirect(new URL('/dashboard', request.url));
