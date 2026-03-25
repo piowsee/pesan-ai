@@ -1,5 +1,6 @@
 import { logError } from '@/logger/logger';
 import { User } from '@/types/user';
+import { ZodError } from 'zod';
 
 import { AuthHelper } from './auth/auth-api-helper';
 import { ApiError } from './error';
@@ -35,6 +36,16 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
         return jsend.fail({ message: err.message }, err.status);
       }
 
+      if (err instanceof ZodError) {
+        const fieldErrors = err.flatten().fieldErrors;
+        const flatErrors: Record<string, string> = {};
+        for (const [key, errors] of Object.entries(fieldErrors)) {
+          flatErrors[key] = (errors as string[])?.[0] || 'Invalid value';
+        }
+
+        return jsend.fail(flatErrors, 400);
+      }
+
       return jsend.error(
         err instanceof Error ? err.message : 'Internal Server Error',
         500,
@@ -61,6 +72,16 @@ export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
 
       if (err instanceof ApiError) {
         return jsend.fail({ message: err.message }, err.status);
+      }
+
+      if (err instanceof ZodError) {
+        const fieldErrors = err.flatten().fieldErrors;
+        const flatErrors: Record<string, string> = {};
+        for (const [key, errors] of Object.entries(fieldErrors)) {
+          flatErrors[key] = (errors as string[])?.[0] || 'Invalid value';
+        }
+
+        return jsend.fail(flatErrors, 400);
       }
 
       return jsend.error(

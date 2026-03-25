@@ -1,11 +1,7 @@
 import { withApiAdmin } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
+import { AssignWebhookSchema } from '@/schemas/assign-webhook.schema';
 import { WabaService } from '@/services/waba.service';
-import { z } from 'zod';
-
-const AssignWebhookSchema = z.object({
-  webhookId: z.string().nullable(),
-});
 
 /**
  * @route PATCH /api/waba/[wabaId]/webhook
@@ -20,16 +16,7 @@ export const PATCH = withApiAdmin<{ wabaId: string }>(
 
     const validated = AssignWebhookSchema.safeParse(rawBody);
     if (!validated.success) {
-      const fieldErrors = validated.error.flatten().fieldErrors;
-      const flatErrors = Object.entries(fieldErrors).reduce(
-        (acc, [key, errors]) => {
-          acc[key] = errors?.[0] || 'Invalid value';
-          return acc;
-        },
-        {} as Record<string, string>,
-      );
-
-      return jsend.fail(flatErrors, 400);
+      throw validated.error;
     }
 
     const { webhookId } = validated.data;

@@ -16,16 +16,7 @@ export const POST = withApiAdmin(async ({ req, user }) => {
 
   const validated = CreateWebhookSchema.safeParse(rawBody);
   if (!validated.success) {
-    const fieldErrors = validated.error.flatten().fieldErrors;
-    const flatErrors = Object.entries(fieldErrors).reduce(
-      (acc, [key, errors]) => {
-        acc[key] = errors?.[0] || 'Invalid value';
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-
-    return jsend.fail(flatErrors, 400);
+    throw validated.error;
   }
 
   const data = validated.data;
