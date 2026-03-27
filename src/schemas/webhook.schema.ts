@@ -29,12 +29,31 @@ const WebhookMetadataSchema = z.object({
   phone_number_id: z.string(),
 });
 
+const WebhookStatusErrorSchema = z
+  .object({
+    code: z.number().optional(),
+    title: z.string().optional(),
+    message: z.string().optional(),
+  })
+  .passthrough();
+
+const WebhookStatusSchema = z
+  .object({
+    id: z.string(),
+    status: z.string(),
+    timestamp: z.string().optional(),
+    recipient_id: z.string().optional(),
+    errors: z.array(WebhookStatusErrorSchema).optional(),
+  })
+  .passthrough();
+
 const WebhookValueSchema = z
   .object({
     messaging_product: z.string(),
     metadata: WebhookMetadataSchema,
     contacts: z.array(ContactSchema).optional(),
     messages: z.array(WebhookMessageSchema).optional(),
+    statuses: z.array(WebhookStatusSchema).optional(),
   })
   .passthrough();
 
@@ -58,3 +77,4 @@ export type WebhookEntry = z.infer<typeof WebhookEntrySchema>;
 export type WebhookValue = z.infer<typeof WebhookValueSchema>;
 export type WebhookMessage = z.infer<typeof WebhookMessageSchema>;
 export type Contact = z.infer<typeof ContactSchema>;
+export type WebhookStatus = z.infer<typeof WebhookStatusSchema>;
