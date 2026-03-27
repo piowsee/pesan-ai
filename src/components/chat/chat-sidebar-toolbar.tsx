@@ -54,7 +54,7 @@ export function ChatSidebarToolbar({
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-2">
         <Button
           variant={filter === 'all' ? 'secondary' : 'ghost'}
           size="sm"
@@ -92,7 +92,7 @@ export function ChatSidebarToolbar({
             onPhoneNumberChange(value === 'all' ? undefined : value)
           }
         >
-          <SelectTrigger className="ml-auto h-8 w-auto cursor-pointer gap-2 rounded-full border-none bg-muted/30 px-3 transition-colors hover:bg-muted/50">
+          <SelectTrigger className="ml-auto h-8 w-[170px] cursor-pointer gap-2 rounded-full border-none bg-muted/30 px-3 transition-colors hover:bg-muted/50 [&>span]:block [&>span]:truncate">
             <SelectValue placeholder="All Phones" />
           </SelectTrigger>
           <SelectContent>

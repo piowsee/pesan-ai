@@ -19,7 +19,7 @@ export function ConversationListItem({
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full items-start gap-3 px-4 py-3 text-left transition-all border-b last:border-b-0 hover:bg-muted/50',
+        'flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-all hover:bg-muted/50',
         isActive ? 'bg-muted/60' : 'bg-transparent',
       )}
     >

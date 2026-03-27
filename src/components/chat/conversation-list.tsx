@@ -14,7 +14,7 @@ function ConversationListSkeleton() {
   return (
     <div className="flex flex-col">
       {Array.from({ length: 8 }).map((_, index) => (
-        <div key={index} className="flex px-4 py-3 gap-3 border-b">
+        <div key={index} className="flex gap-3 px-4 py-3">
           <Skeleton className="size-11 rounded-full shrink-0" />
           <div className="flex-1 flex flex-col gap-2 justify-center">
             <Skeleton className="h-4 w-32" />
