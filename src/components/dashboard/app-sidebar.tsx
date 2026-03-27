@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
@@ -40,11 +41,8 @@ export function AppSidebar({ user }: { user: User | null }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="hover:bg-transparent cursor-default"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
+            <div className="flex items-center w-full gap-2 px-1 py-1">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg group-data-[collapsible=icon]:hidden">
                 <Image
                   src="/pesan-ai-black-logo.png"
                   alt="pesan-ai"
@@ -53,12 +51,15 @@ export function AppSidebar({ user }: { user: User | null }) {
                   className="w-full h-auto object-contain dark:invert"
                 />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-bold text-lg tracking-tight">
                   pesan-ai
                 </span>
               </div>
-            </SidebarMenuButton>
+              <SidebarTrigger
+                className={pathname === '/dashboard/chat' ? 'bg-muted' : ''}
+              />
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
