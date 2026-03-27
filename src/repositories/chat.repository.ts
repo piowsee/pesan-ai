@@ -34,7 +34,16 @@ export const ChatRepository = {
 
     const where = {
       phoneNumber: {
-        wabaId,
+        OR: [
+          {
+            wabaId,
+          },
+          {
+            waba: {
+              wabaId,
+            },
+          },
+        ],
         waba: {
           userId,
         },
@@ -97,7 +106,16 @@ export const ChatRepository = {
       where: {
         id: convId,
         phoneNumber: {
-          wabaId,
+          OR: [
+            {
+              wabaId,
+            },
+            {
+              waba: {
+                wabaId,
+              },
+            },
+          ],
           waba: {
             userId,
           },
@@ -137,7 +155,16 @@ export const ChatRepository = {
         conversationId: convId,
         conversation: {
           phoneNumber: {
-            wabaId,
+            OR: [
+              {
+                wabaId,
+              },
+              {
+                waba: {
+                  wabaId,
+                },
+              },
+            ],
             waba: {
               userId,
             },
@@ -168,15 +195,37 @@ export const ChatRepository = {
    */
   async getChatMetaForSending(
     convId: string,
-    wabaId: string | undefined,
-    userId: string,
-    includeToken = true,
+    wabaIdOrUserId: string | undefined,
+    userIdOrIncludeToken: string | boolean,
+    includeTokenArg = true,
   ) {
+    const isLegacySignature = typeof userIdOrIncludeToken === 'boolean';
+    const wabaId = isLegacySignature ? undefined : wabaIdOrUserId;
+    const userId = isLegacySignature
+      ? (wabaIdOrUserId ?? '')
+      : userIdOrIncludeToken;
+    const includeToken = isLegacySignature
+      ? userIdOrIncludeToken
+      : includeTokenArg;
+
     return prisma.conversation.findFirst({
       where: {
         id: convId,
         phoneNumber: {
-          ...(wabaId ? { wabaId } : {}),
+          ...(wabaId
+            ? {
+                OR: [
+                  {
+                    wabaId,
+                  },
+                  {
+                    waba: {
+                      wabaId,
+                    },
+                  },
+                ],
+              }
+            : {}),
           waba: {
             userId,
           },
@@ -344,7 +393,16 @@ export const ChatRepository = {
         where: {
           id: convId,
           phoneNumber: {
-            wabaId,
+            OR: [
+              {
+                wabaId,
+              },
+              {
+                waba: {
+                  wabaId,
+                },
+              },
+            ],
             waba: {
               userId,
             },

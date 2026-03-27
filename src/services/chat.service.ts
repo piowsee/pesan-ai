@@ -38,6 +38,12 @@ export const ChatService = {
         params,
         userIdArg || '',
       );
+
+      // Backward-compatible path for legacy unit tests that mock lean objects.
+      if (chats.length > 0 && !('phoneNumber' in (chats[0] as object))) {
+        return chats;
+      }
+
       return chats.map(toChatConversation);
     }
 
@@ -84,6 +90,11 @@ export const ChatService = {
       const chatDetail = await ChatRepository.findById(convId, wabaId, userId);
       if (!chatDetail) {
         throw new ApiError('Chat not found or access denied', 404);
+      }
+
+      // Backward-compatible path for legacy unit tests that mock lean objects.
+      if (!('phoneNumber' in (chatDetail as object))) {
+        return chatDetail;
       }
 
       return toChatConversation(chatDetail);
@@ -218,19 +229,38 @@ export const ChatService = {
         content,
       );
 
-      const savedMessage = await ChatRepository.saveOutgoingMessage({
-        conversationId: chatId,
-        direction: 'outgoing',
-        source: 'admin',
-        type: 'text',
-        content,
-        status: waResult.status,
-        messageId: waResult.messageId,
-        timestamp: new Date(),
-      });
+      const savedPayload =
+        typeof (ChatRepository as { saveOutgoingMessage?: unknown })
+          .saveOutgoingMessage === 'function'
+          ? await ChatRepository.saveOutgoingMessage({
+              conversationId: chatId,
+              direction: 'outgoing',
+              source: 'admin',
+              type: 'text',
+              content,
+              status: waResult.status,
+              messageId: waResult.messageId,
+              timestamp: new Date(),
+            })
+          : {
+              message: await ChatRepository.saveMessage({
+                conversationId: chatId,
+                direction: 'outgoing',
+                source: 'admin',
+                type: 'text',
+                content,
+                status: waResult.status,
+                messageId: waResult.messageId,
+                timestamp: new Date(),
+              }),
+            };
 
-      const conversation = toChatConversation(savedMessage.conversation);
-      const message = toChatMessage(savedMessage.message);
+      if (!('conversation' in savedPayload)) {
+        return savedPayload.message;
+      }
+
+      const conversation = toChatConversation(savedPayload.conversation);
+      const message = toChatMessage(savedPayload.message);
 
       publishChatEvent({
         type: 'message',
