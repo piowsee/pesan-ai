@@ -285,7 +285,7 @@ export function ChatWorkspace({
 
         <div className="relative flex min-h-0 flex-1 overflow-hidden bg-background">
           <div
-            className={`absolute inset-0 z-10 flex h-full w-full flex-col overflow-hidden bg-background lg:static lg:w-[380px] lg:shrink-0 lg:border-r ${showMobileDetail ? 'hidden lg:flex' : 'flex'}`}
+            className={`absolute inset-0 z-10 flex h-full w-full flex-col overflow-hidden bg-background transition-transform duration-200 ease-out lg:static lg:w-[380px] lg:shrink-0 lg:border-r lg:translate-x-0 lg:transition-none ${showMobileDetail ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
           >
             <ChatSidebar
               searchValue={searchValue}
@@ -335,7 +335,7 @@ export function ChatWorkspace({
           </div>
 
           <div
-            className={`min-w-0 flex-1 flex-col overflow-hidden ${!showMobileDetail ? 'hidden lg:flex' : 'flex'}`}
+            className={`absolute inset-0 z-20 min-w-0 flex-1 flex-col overflow-hidden bg-background transition-transform duration-200 ease-out lg:static lg:z-0 lg:flex lg:translate-x-0 lg:transition-none ${showMobileDetail ? 'translate-x-0' : 'translate-x-full pointer-events-none lg:pointer-events-auto'}`}
           >
             {selectedConversation ? (
               <ChatDetail

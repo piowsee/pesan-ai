@@ -19,9 +19,7 @@ export default async function DashboardLayout({
       <AppSidebar user={user} />
       <SidebarInset>
         <main className="flex flex-1 flex-col h-[100dvh] bg-background">
-          <div className="h-full w-full flex-1 overflow-hidden pb-16 md:pb-0">
-            {children}
-          </div>
+          <div className="h-full w-full flex-1 overflow-hidden">{children}</div>
           <MobileBottomNav />
         </main>
       </SidebarInset>
