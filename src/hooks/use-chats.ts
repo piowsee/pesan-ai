@@ -684,6 +684,10 @@ export function useMarkConversationRead(input: SidebarQueryInput | null) {
               }
             : oldData,
       );
+
+      queryClient.invalidateQueries({
+        queryKey: [...chatKeys.all, 'sidebar'],
+      });
     },
   });
 }
