@@ -1,3 +1,6 @@
+import { serializeDate } from '@/lib/chat';
+import { publishChatEvent } from '@/lib/chat-events';
+import { toChatConversation, toChatMessage } from '@/lib/chat-mappers';
 import { decrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import { logError, logger } from '@/logger/logger';
@@ -8,23 +11,66 @@ import {
   MetaWebhookPayloadSchema,
   WebhookEntry,
   WebhookMessage,
+  WebhookStatus,
   WebhookValue,
 } from '@/schemas/webhook.schema';
+import type { ChatMessageStatus, ChatSidebarFilter } from '@/types/chat';
 
 import { WhatsappService } from './whatsapp.service';
 
 export const ChatService = {
-  async getChatsByWabaId(wabaId: string, userId: string) {
-    logger.info('Fetching chat list for WABA', { wabaId, userId });
+  async getChatsByWabaId(
+    params:
+      | {
+          wabaId: string;
+          userId: string;
+          page: number;
+          limit: number;
+          search?: string;
+          filter?: ChatSidebarFilter;
+          phoneNumberId?: string;
+        }
+      | string,
+    userIdArg?: string,
+  ) {
+    if (typeof params === 'string') {
+      const chats = await ChatRepository.findAllByWabaId(
+        params,
+        userIdArg || '',
+      );
+      return chats.map(toChatConversation);
+    }
+
+    const { wabaId, userId, page, limit, search, filter, phoneNumberId } =
+      params;
+
+    logger.info('Fetching chat list for WABA', {
+      wabaId,
+      userId,
+      page,
+      limit,
+      filter,
+      phoneNumberId,
+    });
 
     try {
-      const chatList = await ChatRepository.findAllByWabaId(wabaId, userId);
-      logger.info('Chat list fetched successfully', {
+      const { chats, total } = await ChatRepository.findPagedByWabaId({
         wabaId,
         userId,
-        count: chatList.length,
+        page,
+        limit,
+        search,
+        filter,
+        phoneNumberId,
       });
-      return chatList;
+
+      return {
+        chats: chats.map(toChatConversation),
+        total,
+        page,
+        limit,
+        hasNextPage: page * limit < total,
+      };
     } catch (err) {
       logError(err, { action: 'getChatsByWabaId', wabaId, userId });
       throw err;
@@ -36,37 +82,119 @@ export const ChatService = {
 
     try {
       const chatDetail = await ChatRepository.findById(convId, wabaId, userId);
-      logger.info('Chat detail fetched successfully', {
-        convId,
-        wabaId,
-        userId,
-      });
-      return chatDetail;
+      if (!chatDetail) {
+        throw new ApiError('Chat not found or access denied', 404);
+      }
+
+      return toChatConversation(chatDetail);
     } catch (err) {
       logError(err, { action: 'getChatDetail', convId, wabaId, userId });
       throw err;
     }
   },
 
-  async sendAdminMessage(
-    chatId: string,
-    userId: string,
-    content: string,
-    requestToken?: string,
-  ) {
-    logger.info('Admin sending message', { chatId, userId });
+  async getChatMessages(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+    before?: Date;
+    limit: number;
+  }) {
+    const { convId, wabaId, userId, before, limit } = params;
+
+    logger.info('Fetching chat messages', {
+      convId,
+      wabaId,
+      userId,
+      limit,
+      before: before?.toISOString(),
+    });
 
     try {
-      // 1. Fetch metadata and validate ownership
+      const fetchedMessages = await ChatRepository.findMessagesByConversationId(
+        {
+          convId,
+          wabaId,
+          userId,
+          before,
+          limit: limit + 1,
+        },
+      );
+
+      const hasMore = fetchedMessages.length > limit;
+      const visibleMessages = hasMore
+        ? fetchedMessages.slice(1)
+        : fetchedMessages;
+
+      return {
+        messages: visibleMessages.map(toChatMessage),
+        nextBefore:
+          hasMore && visibleMessages[0]
+            ? serializeDate(visibleMessages[0].timestamp)
+            : null,
+        limit,
+      };
+    } catch (err) {
+      logError(err, { action: 'getChatMessages', convId, wabaId, userId });
+      throw err;
+    }
+  },
+
+  async markConversationAsRead(convId: string, wabaId: string, userId: string) {
+    logger.info('Marking chat as read', { convId, wabaId, userId });
+
+    try {
+      const result = await ChatRepository.markConversationAsRead(
+        convId,
+        wabaId,
+        userId,
+      );
+
+      if (!result) {
+        throw new ApiError('Chat not found or access denied', 404);
+      }
+
+      return result;
+    } catch (err) {
+      logError(err, {
+        action: 'markConversationAsRead',
+        convId,
+        wabaId,
+        userId,
+      });
+      throw err;
+    }
+  },
+
+  async sendAdminMessage(
+    chatId: string,
+    wabaIdOrUserId: string,
+    userIdOrContent: string,
+    contentOrRequestToken?: string,
+    requestToken?: string,
+  ) {
+    const isLegacySignature = contentOrRequestToken === undefined;
+    const wabaId = isLegacySignature ? undefined : wabaIdOrUserId;
+    const userId = isLegacySignature ? wabaIdOrUserId : userIdOrContent;
+    const content = isLegacySignature
+      ? userIdOrContent
+      : contentOrRequestToken || '';
+
+    logger.info('Admin sending message', { chatId, wabaId, userId });
+
+    try {
       const chatMeta = await ChatRepository.getChatMetaForSending(
         chatId,
+        wabaId,
         userId,
         !requestToken,
       );
+
       if (!chatMeta) {
         logger.warn('Chat meta fetch failed: Not found or access denied', {
           chatId,
           userId,
+          wabaId,
         });
         throw new ApiError('Chat not found or access denied', 404);
       }
@@ -83,7 +211,6 @@ export const ChatService = {
         throw new ApiError('WhatsApp token is missing or invalid', 403);
       }
 
-      // 2. Send via WhatsApp API
       const waResult = await WhatsappService.sendTextMessage(
         phoneNumberId,
         tokenToUse,
@@ -91,8 +218,7 @@ export const ChatService = {
         content,
       );
 
-      // 3. Save to database
-      const savedMessage = await ChatRepository.saveMessage({
+      const savedMessage = await ChatRepository.saveOutgoingMessage({
         conversationId: chatId,
         direction: 'outgoing',
         source: 'admin',
@@ -103,9 +229,24 @@ export const ChatService = {
         timestamp: new Date(),
       });
 
-      return savedMessage;
+      const conversation = toChatConversation(savedMessage.conversation);
+      const message = toChatMessage(savedMessage.message);
+
+      publishChatEvent({
+        type: 'message',
+        wabaId: wabaId ?? chatMeta.phoneNumber.wabaId,
+        conversation,
+        message,
+      });
+
+      const result = {
+        conversation,
+        message,
+      };
+
+      return isLegacySignature ? result.message : result;
     } catch (err) {
-      logError(err, { action: 'sendAdminMessage', chatId, userId });
+      logError(err, { action: 'sendAdminMessage', chatId, userId, wabaId });
       throw err;
     }
   },
@@ -128,8 +269,6 @@ export const ChatService = {
     }
   },
 
-  // --- Private Helper Methods ---
-
   _validatePayload(payload: unknown): MetaWebhookPayload | null {
     const parsed = MetaWebhookPayloadSchema.safeParse(payload);
 
@@ -142,7 +281,6 @@ export const ChatService = {
 
     const body = parsed.data;
 
-    // Ensure it's a WhatsApp event
     if (body.object !== 'whatsapp_business_account') {
       logger.info('Ignoring non-WABA webhook event', { object: body.object });
       return null;
@@ -151,7 +289,6 @@ export const ChatService = {
     return body;
   },
 
-  // since the Zod inferred types are complex nested arrays
   async _processEntries(entries: WebhookEntry[]): Promise<number> {
     let processedCount = 0;
 
@@ -184,11 +321,18 @@ export const ChatService = {
     }
 
     const contactsMap = this._mapContacts(value.contacts);
-    return this._processMessagesList(
+    const incomingCount = await this._processMessagesList(
       value.messages,
       internalPhoneResult.id,
       contactsMap,
+      internalPhoneResult.wabaId,
     );
+    const statusCount = await this._processStatusesList(
+      value.statuses,
+      internalPhoneResult.wabaId,
+    );
+
+    return incomingCount + statusCount;
   },
 
   _mapContacts(contacts: Contact[] = []): Record<string, string> {
@@ -205,6 +349,7 @@ export const ChatService = {
     messages: WebhookMessage[] = [],
     internalPhoneId: string,
     contactsMap: Record<string, string>,
+    wabaId: string,
   ): Promise<number> {
     let count = 0;
 
@@ -214,6 +359,7 @@ export const ChatService = {
           message,
           internalPhoneId,
           contactsMap,
+          wabaId,
         );
         if (wasProcessed) count++;
       } catch (msgErr) {
@@ -231,6 +377,7 @@ export const ChatService = {
     message: WebhookMessage,
     internalPhoneId: string,
     contactsMap: Record<string, string>,
+    wabaId: string,
   ): Promise<boolean> {
     if (message.type !== 'text') {
       logger.info('Skipping non-text message', {
@@ -245,7 +392,7 @@ export const ChatService = {
     const content = message.text?.body;
     const timestamp = new Date(parseInt(message.timestamp) * 1000);
 
-    await ChatRepository.processIncomingMessage({
+    const savedPayload = await ChatRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
       customerPhone,
       customerName,
@@ -258,11 +405,93 @@ export const ChatService = {
       },
     });
 
+    publishChatEvent({
+      type: 'message',
+      wabaId,
+      conversation: toChatConversation(savedPayload.conversation),
+      message: toChatMessage(savedPayload.message),
+    });
+
     logger.info('Saved incoming message to DB successfully', {
       messageId: message.id,
       customerPhone,
     });
 
     return true;
+  },
+
+  async _processStatusesList(
+    statuses: WebhookStatus[] = [],
+    fallbackWabaId: string,
+  ): Promise<number> {
+    let count = 0;
+
+    for (const status of statuses) {
+      try {
+        const wasProcessed = await this._processSingleStatus(
+          status,
+          fallbackWabaId,
+        );
+        if (wasProcessed) count++;
+      } catch (statusErr) {
+        logError(statusErr, {
+          action: 'process_single_status',
+          messageId: status.id,
+        });
+      }
+    }
+
+    return count;
+  },
+
+  async _processSingleStatus(
+    status: WebhookStatus,
+    fallbackWabaId: string,
+  ): Promise<boolean> {
+    const normalizedStatus = this._normalizeMessageStatus(status.status);
+
+    if (!normalizedStatus) {
+      logger.info('Skipping unsupported message status', {
+        status: status.status,
+        messageId: status.id,
+      });
+      return false;
+    }
+
+    const updatedMessage = await ChatRepository.updateMessageStatusByMessageId({
+      messageId: status.id,
+      status: normalizedStatus,
+      errorMessage:
+        status.errors?.[0]?.message ?? status.errors?.[0]?.title ?? undefined,
+    });
+
+    if (!updatedMessage) {
+      logger.warn('Received status update for unknown message id', {
+        messageId: status.id,
+        status: normalizedStatus,
+      });
+      return false;
+    }
+
+    publishChatEvent({
+      type: 'status',
+      wabaId: updatedMessage.conversation.phoneNumber.wabaId ?? fallbackWabaId,
+      conversationId: updatedMessage.conversationId,
+      message: toChatMessage(updatedMessage),
+    });
+
+    return true;
+  },
+
+  _normalizeMessageStatus(status: string): ChatMessageStatus | null {
+    if (status === 'sent' || status === 'delivered' || status === 'read') {
+      return status;
+    }
+
+    if (status === 'failed') {
+      return 'failed';
+    }
+
+    return null;
   },
 };

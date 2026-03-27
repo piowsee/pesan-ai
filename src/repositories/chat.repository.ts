@@ -1,45 +1,163 @@
 import prisma from '@/lib/prisma';
+import type { ChatSidebarFilter } from '@/types/chat';
 
 export const ChatRepository = {
   async findAllByWabaId(wabaId: string, userId: string) {
-    return prisma.conversation.findMany({
+    const { chats } = await this.findPagedByWabaId({
+      wabaId,
+      userId,
+      page: 1,
+      limit: 500,
+    });
+
+    return chats;
+  },
+
+  async findPagedByWabaId(params: {
+    wabaId: string;
+    userId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    filter?: ChatSidebarFilter;
+    phoneNumberId?: string;
+  }) {
+    const {
+      wabaId,
+      userId,
+      page,
+      limit,
+      search,
+      filter = 'all',
+      phoneNumberId,
+    } = params;
+
+    const where = {
+      phoneNumber: {
+        wabaId,
+        waba: {
+          userId,
+        },
+        ...(phoneNumberId ? { id: phoneNumberId } : {}),
+      },
+      ...(filter === 'unread' ? { unreadCount: { gt: 0 } } : {}),
+      ...(search
+        ? {
+            OR: [
+              {
+                customerName: {
+                  contains: search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                customerPhone: {
+                  contains: search,
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [chats, total] = await prisma.$transaction([
+      prisma.conversation.findMany({
+        where,
+        include: {
+          phoneNumber: {
+            include: {
+              businessProfile: {
+                select: {
+                  profilePictureUrl: true,
+                },
+              },
+            },
+          },
+          messages: {
+            take: 1,
+            orderBy: {
+              timestamp: 'desc',
+            },
+          },
+        },
+        orderBy: {
+          lastMessageAt: 'desc',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.conversation.count({ where }),
+    ]);
+
+    return { chats, total };
+  },
+
+  async findById(convId: string, wabaId: string, userId: string) {
+    return prisma.conversation.findFirst({
       where: {
+        id: convId,
         phoneNumber: {
+          wabaId,
           waba: {
-            wabaId: wabaId,
-            userId: userId,
+            userId,
           },
         },
       },
       include: {
-        phoneNumber: true,
-      },
-      orderBy: {
-        lastMessageAt: 'desc',
+        phoneNumber: {
+          include: {
+            businessProfile: {
+              select: {
+                profilePictureUrl: true,
+              },
+            },
+          },
+        },
+        messages: {
+          take: 1,
+          orderBy: {
+            timestamp: 'desc',
+          },
+        },
       },
     });
   },
 
-  async findById(convId: string, wabaId: string, userId: string) {
-    return prisma.conversation.findUnique({
+  async findMessagesByConversationId(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+    before?: Date;
+    limit: number;
+  }) {
+    const { convId, wabaId, userId, before, limit } = params;
+
+    const messages = await prisma.message.findMany({
       where: {
-        id: convId,
-        phoneNumber: {
-          waba: {
-            wabaId: wabaId,
-            userId: userId,
+        conversationId: convId,
+        conversation: {
+          phoneNumber: {
+            wabaId,
+            waba: {
+              userId,
+            },
           },
         },
+        ...(before
+          ? {
+              timestamp: {
+                lt: before,
+              },
+            }
+          : {}),
       },
-      include: {
-        phoneNumber: true,
-        messages: {
-          orderBy: {
-            timestamp: 'asc',
-          },
-        },
+      orderBy: {
+        timestamp: 'desc',
       },
+      take: limit,
     });
+
+    return messages.reverse();
   },
 
   /**
@@ -50,6 +168,7 @@ export const ChatRepository = {
    */
   async getChatMetaForSending(
     convId: string,
+    wabaId: string | undefined,
     userId: string,
     includeToken = true,
   ) {
@@ -57,8 +176,9 @@ export const ChatRepository = {
       where: {
         id: convId,
         phoneNumber: {
+          ...(wabaId ? { wabaId } : {}),
           waba: {
-            userId: userId,
+            userId,
           },
         },
       },
@@ -66,9 +186,59 @@ export const ChatRepository = {
         phoneNumber: {
           include: {
             waba: includeToken,
+            businessProfile: {
+              select: {
+                profilePictureUrl: true,
+              },
+            },
           },
         },
       },
+    });
+  },
+
+  async saveOutgoingMessage(data: {
+    conversationId: string;
+    direction: 'incoming' | 'outgoing';
+    source: 'customer' | 'admin' | 'bot';
+    type: string;
+    content?: string;
+    status: string;
+    messageId?: string;
+    timestamp: Date;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data,
+      });
+
+      const conversation = await tx.conversation.update({
+        where: {
+          id: data.conversationId,
+        },
+        data: {
+          lastMessageAt: data.timestamp,
+        },
+        include: {
+          phoneNumber: {
+            include: {
+              businessProfile: {
+                select: {
+                  profilePictureUrl: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return {
+        message,
+        conversation: {
+          ...conversation,
+          messages: [message],
+        },
+      };
     });
   },
 
@@ -94,7 +264,7 @@ export const ChatRepository = {
   },
 
   async processIncomingMessage(params: {
-    phoneNumberId: string; // Internal ID
+    phoneNumberId: string;
     customerPhone: string;
     customerName?: string;
     message: {
@@ -108,7 +278,6 @@ export const ChatRepository = {
     const { phoneNumberId, customerPhone, customerName, message } = params;
 
     return prisma.$transaction(async (tx) => {
-      // 1. Upsert conversation
       const conversation = await tx.conversation.upsert({
         where: {
           unique_conversation: {
@@ -117,7 +286,7 @@ export const ChatRepository = {
           },
         },
         update: {
-          customerName, // Update name if provided
+          customerName,
           lastMessageAt: message.timestamp,
           lastCustomerMessageAt: message.timestamp,
           unreadCount: { increment: 1 },
@@ -132,7 +301,6 @@ export const ChatRepository = {
         },
       });
 
-      // 2. Create message
       const savedMessage = await tx.message.create({
         data: {
           conversationId: conversation.id,
@@ -143,17 +311,141 @@ export const ChatRepository = {
           content: message.content,
           timestamp: message.timestamp,
           metadata: message.metadata,
-          status: 'delivered', // Incoming messages from Meta are delivered
+          status: 'delivered',
         },
       });
 
-      // 3. Update parent PhoneNumber unread count
-      await tx.phoneNumber.update({
+      const phoneNumber = await tx.phoneNumber.update({
         where: { id: phoneNumberId },
         data: { unreadCount: { increment: 1 } },
+        include: {
+          businessProfile: {
+            select: {
+              profilePictureUrl: true,
+            },
+          },
+        },
       });
 
-      return { conversation, message: savedMessage };
+      return {
+        conversation: {
+          ...conversation,
+          phoneNumber,
+          messages: [savedMessage],
+        },
+        message: savedMessage,
+      };
+    });
+  },
+
+  async markConversationAsRead(convId: string, wabaId: string, userId: string) {
+    return prisma.$transaction(async (tx) => {
+      const conversation = await tx.conversation.findFirst({
+        where: {
+          id: convId,
+          phoneNumber: {
+            wabaId,
+            waba: {
+              userId,
+            },
+          },
+        },
+        include: {
+          phoneNumber: true,
+        },
+      });
+
+      if (!conversation) {
+        return null;
+      }
+
+      const conversationUnreadCount = conversation.unreadCount;
+
+      if (conversationUnreadCount <= 0) {
+        return {
+          conversationId: conversation.id,
+          unreadCount: 0,
+          phoneNumberId: conversation.phoneNumberId,
+          phoneNumberUnreadCount: conversation.phoneNumber.unreadCount,
+        };
+      }
+
+      await tx.conversation.update({
+        where: {
+          id: conversation.id,
+        },
+        data: {
+          unreadCount: 0,
+        },
+      });
+
+      const nextPhoneUnreadCount = Math.max(
+        0,
+        conversation.phoneNumber.unreadCount - conversationUnreadCount,
+      );
+
+      await tx.phoneNumber.update({
+        where: {
+          id: conversation.phoneNumberId,
+        },
+        data: {
+          unreadCount: nextPhoneUnreadCount,
+        },
+      });
+
+      return {
+        conversationId: conversation.id,
+        unreadCount: 0,
+        phoneNumberId: conversation.phoneNumberId,
+        phoneNumberUnreadCount: nextPhoneUnreadCount,
+      };
+    });
+  },
+
+  async updateMessageStatusByMessageId(params: {
+    messageId: string;
+    status: string;
+    errorMessage?: string;
+  }) {
+    const existingMessage = await prisma.message.findUnique({
+      where: {
+        messageId: params.messageId,
+      },
+    });
+
+    if (!existingMessage) {
+      return null;
+    }
+
+    return prisma.message.update({
+      where: {
+        messageId: params.messageId,
+      },
+      data: {
+        status: params.status,
+        errorMessage: params.errorMessage,
+      },
+      include: {
+        conversation: {
+          include: {
+            phoneNumber: {
+              include: {
+                businessProfile: {
+                  select: {
+                    profilePictureUrl: true,
+                  },
+                },
+              },
+            },
+            messages: {
+              take: 1,
+              orderBy: {
+                timestamp: 'desc',
+              },
+            },
+          },
+        },
+      },
     });
   },
 };
