@@ -114,4 +114,13 @@ export const WabaRepository = {
       where: { id },
     });
   },
+
+  async findByIdAndUserId(id: string, userId: string) {
+    return prisma.whatsappBusinessAccount.findFirst({
+      where: {
+        id,
+        userId,
+      },
+    });
+  },
 };
