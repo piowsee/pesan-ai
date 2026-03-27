@@ -9,19 +9,19 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div
       className={cn(
-        'flex w-full',
+        'flex min-w-0 w-full',
         isOutgoing ? 'justify-end' : 'justify-start',
       )}
     >
       <div
         className={cn(
-          'min-w-[7.5rem] max-w-[85%] rounded-2xl border border-border/40 px-3 py-2 shadow-sm',
+          'min-w-[7.5rem] max-w-[85%] overflow-hidden rounded-2xl border border-border/40 px-3 py-2 shadow-sm',
           isOutgoing
             ? 'rounded-tr-sm bg-primary/10 text-foreground'
             : 'rounded-tl-sm bg-card text-card-foreground',
         )}
       >
-        <div className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">
+        <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-relaxed">
           {message.type === 'text'
             ? message.content
             : `Unsupported ${message.type} message`}

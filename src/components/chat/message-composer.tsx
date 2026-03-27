@@ -100,7 +100,7 @@ export function MessageComposer({
                 ? `Message...`
                 : 'Template message required'
             }
-            className="min-h-10 max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:opacity-50"
+            className="min-h-10 max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:opacity-50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           />
 
           <Button
