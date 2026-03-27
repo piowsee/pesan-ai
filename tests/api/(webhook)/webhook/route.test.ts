@@ -88,13 +88,14 @@ describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
   });
 
   describe('GET', () => {
-    it('returns all webhooks without pagination', async () => {
+    it('returns paginated webhooks when no query params are provided', async () => {
       vi.mocked(AuthHelper.requireAdmin).mockResolvedValue({
         id: 'admin-1',
       } as never);
-      vi.mocked(WebhookService.getAllWebhooks).mockResolvedValue([
-        { id: 'wh-1' },
-      ] as never);
+      vi.mocked(WebhookService.getWebhooksPaginated).mockResolvedValue({
+        webhooks: [{ id: 'wh-1' }],
+        total: 1,
+      } as never);
 
       const req = new Request('http://localhost/api/webhook');
       const response = await GET(req, { params: Promise.resolve({}) } as never);
@@ -102,7 +103,9 @@ describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
 
       expect(response.status).toBe(200);
       expect(data.data.webhooks).toEqual([{ id: 'wh-1' }]);
-      expect(WebhookService.getAllWebhooks).toHaveBeenCalled();
+      expect(data.data.page).toBe(1);
+      expect(data.data.limit).toBe(10);
+      expect(WebhookService.getWebhooksPaginated).toHaveBeenCalledWith(1, 10);
     });
 
     it('returns paginated webhooks when query params are provided', async () => {

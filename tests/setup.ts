@@ -40,7 +40,6 @@ vi.mock('@/repositories/chat.repository', () => ({
 vi.mock('@/repositories/waba.repository', () => ({
   WabaRepository: {
     findAllByUserId: vi.fn(),
-    findAll: vi.fn(),
     findPaginated: vi.fn(),
     findPaginatedByUserId: vi.fn(),
     getTotalUnreadListByUserId: vi.fn(),
@@ -52,7 +51,6 @@ vi.mock('@/repositories/waba.repository', () => ({
 vi.mock('@/repositories/webhook.repository', () => ({
   WebhookRepository: {
     createWebhook: vi.fn(),
-    findAll: vi.fn(),
     findPaginated: vi.fn(),
     deleteWebhook: vi.fn(),
   },

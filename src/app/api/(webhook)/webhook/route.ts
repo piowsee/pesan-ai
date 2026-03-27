@@ -1,5 +1,6 @@
 import { withApiAdmin } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
+import { getPaginationParams } from '@/lib/pagination';
 import { CreateWebhookSchema } from '@/schemas/create-webhook.schema';
 import { WebhookService } from '@/services/webhook.service';
 
@@ -42,18 +43,7 @@ export const POST = withApiAdmin(async ({ req, user }) => {
  */
 export const GET = withApiAdmin(async ({ req }) => {
   const { searchParams } = new URL(req.url);
-  const rawPage = searchParams.get('page');
-  const rawLimit = searchParams.get('limit');
-
-  const hasPagination = rawPage !== null || rawLimit !== null;
-
-  if (!hasPagination) {
-    const webhooks = await WebhookService.getAllWebhooks();
-    return jsend.success({ webhooks });
-  }
-
-  const page = Math.max(1, Number(rawPage ?? 1));
-  const limit = Math.max(1, Math.min(100, Number(rawLimit ?? 10)));
+  const { page, limit } = getPaginationParams(searchParams);
 
   const { webhooks, total } = await WebhookService.getWebhooksPaginated(
     page,
