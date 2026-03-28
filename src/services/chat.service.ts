@@ -14,19 +14,42 @@ import {
 import { WhatsappService } from './whatsapp.service';
 
 export const ChatService = {
-  async getChatsByWabaId(wabaId: string, userId: string) {
-    logger.info('Fetching chat list for WABA', { wabaId, userId });
+  async getChatsPaginated(
+    wabaId: string,
+    userId: string,
+    page: number,
+    limit: number,
+  ) {
+    logger.info('Fetching paginated chat list for WABA', {
+      wabaId,
+      userId,
+      page,
+      limit,
+    });
 
     try {
-      const chatList = await ChatRepository.findAllByWabaId(wabaId, userId);
-      logger.info('Chat list fetched successfully', {
+      const offset = (page - 1) * limit;
+      const { chats, total } = await ChatRepository.findPaginatedByWabaId(
         wabaId,
         userId,
-        count: chatList.length,
+        limit,
+        offset,
+      );
+      logger.info('Paginated chat list fetched successfully', {
+        wabaId,
+        userId,
+        count: chats.length,
+        total,
       });
-      return chatList;
+      return { chats, total };
     } catch (err) {
-      logError(err, { action: 'getChatsByWabaId', wabaId, userId });
+      logError(err, {
+        action: 'getChatsPaginated',
+        wabaId,
+        userId,
+        page,
+        limit,
+      });
       throw err;
     }
   },

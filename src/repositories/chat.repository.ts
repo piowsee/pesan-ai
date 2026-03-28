@@ -1,23 +1,41 @@
 import prisma from '@/lib/prisma';
 
 export const ChatRepository = {
-  async findAllByWabaId(wabaId: string, userId: string) {
-    return prisma.conversation.findMany({
-      where: {
-        phoneNumber: {
-          waba: {
-            wabaId: wabaId,
-            userId: userId,
-          },
+  async findPaginatedByWabaId(
+    wabaId: string,
+    userId: string,
+    limit: number,
+    offset: number,
+  ) {
+    const where = {
+      phoneNumber: {
+        waba: {
+          wabaId,
+          userId,
         },
       },
-      include: {
-        phoneNumber: true,
-      },
-      orderBy: {
-        lastMessageAt: 'desc',
-      },
-    });
+    };
+
+    const [chats, total] = await prisma.$transaction([
+      prisma.conversation.findMany({
+        where,
+        include: {
+          phoneNumber: true,
+          messages: {
+            orderBy: { timestamp: 'desc' as const },
+            take: 1,
+          },
+        },
+        orderBy: {
+          lastMessageAt: 'desc',
+        },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.conversation.count({ where }),
+    ]);
+
+    return { chats, total };
   },
 
   async findById(convId: string, wabaId: string, userId: string) {

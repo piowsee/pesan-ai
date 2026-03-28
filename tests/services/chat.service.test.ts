@@ -13,13 +13,20 @@ vi.unmock('@/services/chat.service');
  */
 
 describe('ChatService', { tags: ['backend'] }, () => {
-  describe('getChatsByWabaId', () => {
-    it('returns chat list', async () => {
-      vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue([
-        { id: 'chat-1' },
-      ] as never);
-      const result = await ChatService.getChatsByWabaId('waba-1', 'user-1');
-      expect(result).toEqual([{ id: 'chat-1' }]);
+  describe('getChatsPaginated', () => {
+    it('returns paginated chat list', async () => {
+      vi.mocked(ChatRepository.findPaginatedByWabaId).mockResolvedValue({
+        chats: [{ id: 'chat-1' }],
+        total: 1,
+      } as never);
+      const result = await ChatService.getChatsPaginated(
+        'waba-1',
+        'user-1',
+        1,
+        10,
+      );
+      expect(result.chats).toEqual([{ id: 'chat-1' }]);
+      expect(result.total).toBeGreaterThanOrEqual(1);
     });
   });
 
