@@ -36,7 +36,7 @@ export const GET = withApiAuth<{ wabaId: string; convId: string }>(
 );
 
 export const POST = withApiAuth<{ wabaId: string; convId: string }>(
-  async ({ user, params: { convId }, req }) => {
+  async ({ user, params: { convId, wabaId }, req }) => {
     const body = await req.json();
     const validated = SendMessageSchema.safeParse(body);
 
@@ -48,16 +48,12 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
 
     const result = await ChatService.sendAdminMessage(
       convId,
+      wabaId,
       user.id,
       message,
       token,
     );
 
-    return jsend.success({
-      message:
-        result && typeof result === 'object' && 'message' in result
-          ? result.message
-          : result,
-    });
+    return jsend.success(result);
   },
 );

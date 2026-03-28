@@ -13,23 +13,6 @@ import type { ChatSidebarFilter } from '@/types/chat';
 export const GET = withApiAuth<{ wabaId: string }>(
   async ({ req, user, params: { wabaId } }) => {
     const { searchParams } = new URL(req.url);
-    const hasModernParams =
-      searchParams.has('page') ||
-      searchParams.has('limit') ||
-      searchParams.has('q') ||
-      searchParams.has('filter') ||
-      searchParams.has('phoneNumberId');
-
-    if (!hasModernParams) {
-      const legacyChats = await ChatService.getChatsByWabaId(wabaId, user.id);
-
-      if (Array.isArray(legacyChats)) {
-        return jsend.success({ chats: legacyChats });
-      }
-
-      return jsend.success(legacyChats);
-    }
-
     const page = Math.max(1, Number(searchParams.get('page') ?? 1));
     const limit = Math.max(
       1,
