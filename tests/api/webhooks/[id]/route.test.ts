@@ -1,11 +1,11 @@
-import { DELETE } from '@/app/api/(webhook)/webhook/[id]/route';
+import { DELETE } from '@/app/api/webhooks/[id]/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { WebhookService } from '@/services/webhook.service';
 import { describe, expect, it, vi } from 'vitest';
 
-describe('DELETE /api/webhook/:id', { tags: ['backend'] }, () => {
+describe('DELETE /api/webhooks/:id', { tags: ['backend'] }, () => {
   const id = 'wh-123';
-  const url = `http://localhost/api/webhook/${id}`;
+  const url = `http://localhost/api/webhooks/${id}`;
 
   it('returns 200 on success', async () => {
     vi.mocked(AuthHelper.requireAdmin).mockResolvedValue({

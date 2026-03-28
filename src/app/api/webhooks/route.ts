@@ -5,7 +5,7 @@ import { CreateWebhookSchema } from '@/schemas/create-webhook.schema';
 import { WebhookService } from '@/services/webhook.service';
 
 /**
- * @route POST /api/webhook
+ * @route POST /api/webhooks
  * @body { name: string, webhookUrl: string, passphrase: string }
  * @response { status: 'success', data: { webhook: BotWebhook } }
  * @access Admin only
@@ -34,7 +34,7 @@ export const POST = withApiAdmin(async ({ req, user }) => {
 });
 
 /**
- * @route GET /api/webhook
+ * @route GET /api/webhooks
  * @query page {number} - Page number (optional, enables pagination)
  * @query limit {number} - Items per page (default: 10, only used with page)
  * @response { status: 'success', data: { webhooks, total?, page?, limit? } }

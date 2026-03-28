@@ -1,15 +1,15 @@
-import { GET, POST } from '@/app/api/(webhook)/webhook/route';
+import { GET, POST } from '@/app/api/webhooks/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { WebhookService } from '@/services/webhook.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
+describe('Webhook API Routes (/api/webhooks)', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('POST', () => {
-    const url = 'http://localhost/api/webhook';
+    const url = 'http://localhost/api/webhooks';
 
     it('returns 200 and created webhook on success', async () => {
       vi.mocked(AuthHelper.requireAdmin).mockResolvedValue({
@@ -97,7 +97,7 @@ describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
         total: 1,
       } as never);
 
-      const req = new Request('http://localhost/api/webhook');
+      const req = new Request('http://localhost/api/webhooks');
       const response = await GET(req, { params: Promise.resolve({}) } as never);
       const data = await response.json();
 
@@ -117,7 +117,7 @@ describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
         total: 1,
       } as never);
 
-      const req = new Request('http://localhost/api/webhook?page=2&limit=5');
+      const req = new Request('http://localhost/api/webhooks?page=2&limit=5');
       const response = await GET(req, { params: Promise.resolve({}) } as never);
       const data = await response.json();
 
@@ -134,7 +134,7 @@ describe('Webhook API Routes (/api/webhook)', { tags: ['backend'] }, () => {
         new Error('Unauthorized'),
       );
 
-      const req = new Request('http://localhost/api/webhook');
+      const req = new Request('http://localhost/api/webhooks');
       const response = await GET(req, { params: Promise.resolve({}) } as never);
 
       expect(response.status).toBe(500);

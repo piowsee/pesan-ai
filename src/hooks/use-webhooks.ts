@@ -80,7 +80,7 @@ async function fetchWebhooks(
     limit: String(limit),
   });
 
-  const response = await fetch(`/api/webhook?${params.toString()}`);
+  const response = await fetch(`/api/webhooks?${params.toString()}`);
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -96,7 +96,7 @@ async function fetchWebhooks(
 }
 
 async function createWebhook(payload: CreateWebhookPayload): Promise<void> {
-  const response = await fetch('/api/webhook', {
+  const response = await fetch('/api/webhooks', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -110,7 +110,7 @@ async function createWebhook(payload: CreateWebhookPayload): Promise<void> {
 }
 
 async function deleteWebhook(id: string): Promise<void> {
-  const response = await fetch(`/api/webhook/${id}`, {
+  const response = await fetch(`/api/webhooks/${id}`, {
     method: 'DELETE',
   });
 
