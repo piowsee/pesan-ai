@@ -1,7 +1,7 @@
 import { POST } from '@/app/api/waba/[wabaId]/conversation/[convId]/message/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { ApiError } from '@/lib/error';
-import { ChatService } from '@/services/chat.service';
+import { MessageService } from '@/services/message.service';
 import { describe, expect, it, vi } from 'vitest';
 
 describe(
@@ -16,7 +16,7 @@ describe(
       vi.mocked(AuthHelper.requireUser).mockResolvedValue({
         id: 'user-1',
       } as never);
-      vi.mocked(ChatService.sendAdminMessage).mockResolvedValue({
+      vi.mocked(MessageService.sendAdminMessage).mockResolvedValue({
         id: 'msg-1',
         content: 'hello',
       } as never);
@@ -32,7 +32,7 @@ describe(
 
       expect(response.status).toBe(200);
       expect(data.data.message).toEqual({ id: 'msg-1', content: 'hello' });
-      expect(ChatService.sendAdminMessage).toHaveBeenCalledWith(
+      expect(MessageService.sendAdminMessage).toHaveBeenCalledWith(
         convId,
         'user-1',
         'hello',
@@ -62,7 +62,7 @@ describe(
       vi.mocked(AuthHelper.requireUser).mockResolvedValue({
         id: 'user-1',
       } as never);
-      vi.mocked(ChatService.sendAdminMessage).mockRejectedValue(
+      vi.mocked(MessageService.sendAdminMessage).mockRejectedValue(
         new ApiError('Chat not found or access denied', 404),
       );
 

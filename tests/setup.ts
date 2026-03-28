@@ -31,9 +31,15 @@ vi.mock('@/repositories/chat.repository', () => ({
     findPaginatedByWabaId: vi.fn(),
     findById: vi.fn(),
     getChatMetaForSending: vi.fn(),
-    saveMessage: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
     processIncomingMessage: vi.fn(),
+  },
+}));
+
+vi.mock('@/repositories/message.repository', () => ({
+  MessageRepository: {
+    findMessagesPaginated: vi.fn(),
+    saveMessage: vi.fn(),
   },
 }));
 
@@ -61,8 +67,14 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: {
     getChatsPaginated: vi.fn(),
     getChatDetail: vi.fn(),
-    sendAdminMessage: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/message.service', () => ({
+  MessageService: {
+    getMessagesPaginated: vi.fn(),
+    sendAdminMessage: vi.fn(),
   },
 }));
 

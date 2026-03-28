@@ -90,21 +90,6 @@ export const ChatRepository = {
     });
   },
 
-  async saveMessage(data: {
-    conversationId: string;
-    direction: 'incoming' | 'outgoing';
-    source: 'customer' | 'admin' | 'bot';
-    type: string;
-    content?: string;
-    status: string;
-    messageId?: string;
-    timestamp: Date;
-  }) {
-    return prisma.message.create({
-      data,
-    });
-  },
-
   async findPhoneNumberByMetaId(metaPhoneNumberId: string) {
     return prisma.phoneNumber.findUnique({
       where: { phoneNumberId: metaPhoneNumberId },

@@ -12,13 +12,6 @@ import {
 
 vi.unmock('@/repositories/chat.repository.ts');
 
-/**
- * ChatRepository Integration Tests (Synced with Seed)
- * Reasoning: Verifies chat logic against the baseline seeded data.
- * Ensures conversation ownership, message history retrieval, and atomic
- * transactions are consistent with the project's standard seed data.
- */
-
 describe('ChatRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbPhoneNumberId: string;
@@ -59,8 +52,6 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
   });
 
   afterEach(async () => {
-    // Cleanup only test-specific messages or conversations
-    // We target customer phones that start with '999' for test isolation
     const testCustomerPrefix = '999';
     await prisma.message.deleteMany({
       where: {
@@ -119,31 +110,6 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
       expect(result?.phoneNumber.phoneNumberId).toBe(SEED_PHONE_ID);
       expect(result?.phoneNumber.waba?.userId).toBe(userId);
-    });
-  });
-
-  describe('saveMessage', () => {
-    it('saves a message to a test conversation', async () => {
-      // Create a test conversation to avoid polluting the seed's message history
-      const testConv = await prisma.conversation.create({
-        data: {
-          customerPhone: '999001',
-          phoneNumberId: dbPhoneNumberId,
-        },
-      });
-
-      const result = await ChatRepository.saveMessage({
-        conversationId: testConv.id,
-        direction: 'outgoing',
-        source: 'admin',
-        type: 'text',
-        content: 'Test Reply',
-        status: 'sent',
-        timestamp: new Date(),
-      });
-
-      expect(result.content).toBe('Test Reply');
-      expect(result.conversationId).toBe(testConv.id);
     });
   });
 

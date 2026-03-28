@@ -1,7 +1,5 @@
-import { ApiError } from '@/lib/error';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { ChatService } from '@/services/chat.service';
-import { WhatsappService } from '@/services/whatsapp.service';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/chat.service');
@@ -40,47 +38,6 @@ describe('ChatService', { tags: ['backend'] }, () => {
         'user-1',
       );
       expect(result).toEqual(mockChat);
-    });
-  });
-
-  describe('sendAdminMessage', () => {
-    it('sends message and saves to db', async () => {
-      vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue({
-        phoneNumber: {
-          phoneNumberId: 'pn-1',
-          waba: { systemUserToken: 'token' },
-        },
-        customerPhone: '+123456',
-      } as never);
-      vi.mocked(WhatsappService.sendTextMessage).mockResolvedValue({
-        status: 'sent',
-        messageId: 'wa-msg-1',
-      });
-      vi.mocked(ChatRepository.saveMessage).mockResolvedValue({
-        id: 'msg-1',
-      } as never);
-
-      const result = await ChatService.sendAdminMessage(
-        'chat-1',
-        'user-1',
-        'Hello Admin',
-      );
-
-      expect(result.id).toBe('msg-1');
-      expect(WhatsappService.sendTextMessage).toHaveBeenCalledWith(
-        'pn-1',
-        'token',
-        '+123456',
-        'Hello Admin',
-      );
-      expect(ChatRepository.saveMessage).toHaveBeenCalled();
-    });
-
-    it('throws ApiError if chat meta is null', async () => {
-      vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue(null);
-      await expect(
-        ChatService.sendAdminMessage('chat-1', 'user-1', 'Hello'),
-      ).rejects.toThrow(ApiError);
     });
   });
 

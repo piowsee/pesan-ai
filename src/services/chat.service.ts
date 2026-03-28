@@ -1,5 +1,3 @@
-import { decrypt } from '@/lib/encryption';
-import { ApiError } from '@/lib/error';
 import { logError, logger } from '@/logger/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import {
@@ -10,8 +8,6 @@ import {
   WebhookMessage,
   WebhookValue,
 } from '@/schemas/webhook.schema';
-
-import { WhatsappService } from './whatsapp.service';
 
 export const ChatService = {
   async getChatsPaginated(
@@ -71,68 +67,6 @@ export const ChatService = {
     }
   },
 
-  async sendAdminMessage(
-    chatId: string,
-    userId: string,
-    content: string,
-    requestToken?: string,
-  ) {
-    logger.info('Admin sending message', { chatId, userId });
-
-    try {
-      // 1. Fetch metadata and validate ownership
-      const chatMeta = await ChatRepository.getChatMetaForSending(
-        chatId,
-        userId,
-        !requestToken,
-      );
-      if (!chatMeta) {
-        logger.warn('Chat meta fetch failed: Not found or access denied', {
-          chatId,
-          userId,
-        });
-        throw new ApiError('Chat not found or access denied', 404);
-      }
-
-      const { phoneNumber, customerPhone } = chatMeta;
-      const { phoneNumberId } = phoneNumber;
-
-      const tokenToUse = requestToken
-        ? decrypt(requestToken)
-        : decrypt(phoneNumber.waba?.systemUserToken || '');
-
-      if (!tokenToUse) {
-        logger.error('No WhatsApp token available for sending', { chatId });
-        throw new ApiError('WhatsApp token is missing or invalid', 403);
-      }
-
-      // 2. Send via WhatsApp API
-      const waResult = await WhatsappService.sendTextMessage(
-        phoneNumberId,
-        tokenToUse,
-        customerPhone,
-        content,
-      );
-
-      // 3. Save to database
-      const savedMessage = await ChatRepository.saveMessage({
-        conversationId: chatId,
-        direction: 'outgoing',
-        source: 'admin',
-        type: 'text',
-        content,
-        status: waResult.status,
-        messageId: waResult.messageId,
-        timestamp: new Date(),
-      });
-
-      return savedMessage;
-    } catch (err) {
-      logError(err, { action: 'sendAdminMessage', chatId, userId });
-      throw err;
-    }
-  },
-
   async processMetaWebhookPayload(payload: unknown) {
     logger.info('Processing Meta Webhook payload in ChatService');
 
@@ -174,7 +108,6 @@ export const ChatService = {
     return body;
   },
 
-  // since the Zod inferred types are complex nested arrays
   async _processEntries(entries: WebhookEntry[]): Promise<number> {
     let processedCount = 0;
 
