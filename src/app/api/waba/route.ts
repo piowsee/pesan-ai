@@ -1,5 +1,6 @@
 import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
+import { getPaginationParams } from '@/lib/pagination';
 import { WabaService } from '@/services/waba.service';
 
 /**
@@ -15,22 +16,7 @@ export const GET = withApiAuth(async ({ req, user }) => {
   const isAdmin = user.role === 'admin';
 
   const { searchParams } = new URL(req.url);
-  const rawPage = searchParams.get('page');
-  const rawLimit = searchParams.get('limit');
-
-  const hasPagination = rawPage !== null || rawLimit !== null;
-
-  // No Paganition response
-  if (!hasPagination) {
-    const wabas = isAdmin
-      ? await WabaService.getAllWabas()
-      : await WabaService.getWabasByUserId(user.id);
-    return jsend.success({ wabas });
-  }
-
-  // Pagination response
-  const page = Math.max(1, Number(rawPage ?? 1));
-  const limit = Math.max(1, Math.min(100, Number(rawLimit ?? 10)));
+  const { page, limit } = getPaginationParams(searchParams);
 
   const { wabas, total } = await WabaService.getWabasPaginated({
     page,

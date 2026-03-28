@@ -62,17 +62,6 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     await prisma.$disconnect();
   });
 
-  describe('findAll', () => {
-    it('returns all wabas including the seeded "Piowsee Salon"', async () => {
-      const result = await WabaRepository.findAll();
-
-      expect(result.length).toBeGreaterThanOrEqual(1);
-      const seeded = result.find((w) => w.wabaId === SEED_WABA_ID);
-      expect(seeded).toBeDefined();
-      expect(seeded?.user.email).toBe(SEED_EMAIL);
-    });
-  });
-
   describe('findAllByUserId', () => {
     it('returns wabas belonging to the seeded user', async () => {
       const result = await WabaRepository.findAllByUserId(userId);

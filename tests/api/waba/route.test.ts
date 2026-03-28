@@ -14,14 +14,15 @@ describe('GET /api/waba', { tags: ['backend'] }, () => {
     return new Request(url);
   };
 
-  it('returns unpaginated wabas for regular user', async () => {
+  it('returns paginated wabas for regular user when no params provided', async () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',
       role: 'user',
     } as never);
-    vi.mocked(WabaService.getWabasByUserId).mockResolvedValue([
-      { id: 'waba-1' },
-    ] as never);
+    vi.mocked(WabaService.getWabasPaginated).mockResolvedValue({
+      wabas: [{ id: 'waba-1' }],
+      total: 1,
+    } as never);
 
     const req = createRequest('http://localhost/api/waba');
     const response = await GET(req, { params: Promise.resolve({}) } as never);
@@ -30,17 +31,24 @@ describe('GET /api/waba', { tags: ['backend'] }, () => {
     expect(response.status).toBe(200);
     expect(data.status).toBe('success');
     expect(data.data.wabas).toEqual([{ id: 'waba-1' }]);
-    expect(WabaService.getWabasByUserId).toHaveBeenCalledWith('user-1');
+    expect(data.data.page).toBe(1);
+    expect(data.data.limit).toBe(10);
+    expect(WabaService.getWabasPaginated).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      userId: 'user-1',
+    });
   });
 
-  it('returns unpaginated wabas for admin', async () => {
+  it('returns paginated wabas for admin when no params provided', async () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'admin-1',
       role: 'admin',
     } as never);
-    vi.mocked(WabaService.getAllWabas).mockResolvedValue([
-      { id: 'waba-admin' },
-    ] as never);
+    vi.mocked(WabaService.getWabasPaginated).mockResolvedValue({
+      wabas: [{ id: 'waba-admin' }],
+      total: 1,
+    } as never);
 
     const req = createRequest('http://localhost/api/waba');
     const response = await GET(req, { params: Promise.resolve({}) } as never);
@@ -48,7 +56,13 @@ describe('GET /api/waba', { tags: ['backend'] }, () => {
 
     expect(response.status).toBe(200);
     expect(data.data.wabas).toEqual([{ id: 'waba-admin' }]);
-    expect(WabaService.getAllWabas).toHaveBeenCalledTimes(1);
+    expect(data.data.page).toBe(1);
+    expect(data.data.limit).toBe(10);
+    expect(WabaService.getWabasPaginated).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      userId: undefined,
+    });
   });
 
   it('handles pagination for regular user', async () => {

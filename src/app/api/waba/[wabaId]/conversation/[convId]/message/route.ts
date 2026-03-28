@@ -1,7 +1,8 @@
 import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
+import { getPaginationParams } from '@/lib/pagination';
 import { SendMessageSchema } from '@/schemas/message.schema';
-import { ChatService } from '@/services/chat.service';
+import { MessageService } from '@/services/message.service';
 
 /**
  * @route POST /api/waba/:wabaId/conversation/:convId/message
@@ -24,7 +25,7 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
 
     const { message, token } = validated.data;
 
-    const result = await ChatService.sendAdminMessage(
+    const result = await MessageService.sendAdminMessage(
       convId,
       user.id,
       message,
@@ -32,5 +33,37 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
     );
 
     return jsend.success({ message: result });
+  },
+);
+
+/**
+ * @route GET /api/waba/:wabaId/conversation/:convId/message
+ * @param wabaId {string}
+ * @param convId {string}
+ * @query page {number} - Optional, sets the page for pagination
+ * @query limit {number} - Optional, sets items per page
+ * @response { status: 'success', data: { messages: Message[], total: number, page: number, limit: number } }
+ * @access Authenticated users
+ * @description Get paginated chat history for a specific conversation.
+ */
+export const GET = withApiAuth<{ wabaId: string; convId: string }>(
+  async ({ req, user, params: { wabaId, convId } }) => {
+    const { searchParams } = new URL(req.url);
+    const { page, limit } = getPaginationParams(searchParams);
+
+    const { messages, total } = await MessageService.getMessagesPaginated({
+      convId,
+      wabaId,
+      userId: user.id,
+      page,
+      limit,
+    });
+
+    return jsend.success({
+      messages,
+      total,
+      page,
+      limit,
+    });
   },
 );

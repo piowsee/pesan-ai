@@ -110,19 +110,6 @@ export const WebhookService = {
     };
   },
 
-  async getAllWebhooks() {
-    const webhooks = await WebhookRepository.findAll();
-    return webhooks.map((webhook) => ({
-      id: webhook.id,
-      name: webhook.name,
-      webhookUrl: webhook.webhookUrl,
-      isActive: webhook.isActive,
-      createdAt: webhook.createdAt,
-      updatedAt: webhook.updatedAt,
-      userId: webhook.userId,
-    }));
-  },
-
   async getWebhooksPaginated(page: number, limit: number) {
     const offset = (page - 1) * limit;
     const { webhooks, total } = await WebhookRepository.findPaginated(

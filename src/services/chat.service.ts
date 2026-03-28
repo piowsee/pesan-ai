@@ -1,5 +1,3 @@
-import { decrypt } from '@/lib/encryption';
-import { ApiError } from '@/lib/error';
 import { logError, logger } from '@/logger/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import {
@@ -11,101 +9,43 @@ import {
   WebhookValue,
 } from '@/schemas/webhook.schema';
 
-import { WhatsappService } from './whatsapp.service';
-
 export const ChatService = {
-  async getChatsByWabaId(wabaId: string, userId: string) {
-    logger.info('Fetching chat list for WABA', { wabaId, userId });
-
-    try {
-      const chatList = await ChatRepository.findAllByWabaId(wabaId, userId);
-      logger.info('Chat list fetched successfully', {
-        wabaId,
-        userId,
-        count: chatList.length,
-      });
-      return chatList;
-    } catch (err) {
-      logError(err, { action: 'getChatsByWabaId', wabaId, userId });
-      throw err;
-    }
-  },
-
-  async getChatDetail(convId: string, wabaId: string, userId: string) {
-    logger.info('Fetching chat details', { convId, wabaId, userId });
-
-    try {
-      const chatDetail = await ChatRepository.findById(convId, wabaId, userId);
-      logger.info('Chat detail fetched successfully', {
-        convId,
-        wabaId,
-        userId,
-      });
-      return chatDetail;
-    } catch (err) {
-      logError(err, { action: 'getChatDetail', convId, wabaId, userId });
-      throw err;
-    }
-  },
-
-  async sendAdminMessage(
-    chatId: string,
+  async getChatsPaginated(
+    wabaId: string,
     userId: string,
-    content: string,
-    requestToken?: string,
+    page: number,
+    limit: number,
   ) {
-    logger.info('Admin sending message', { chatId, userId });
+    logger.info('Fetching paginated chat list for WABA', {
+      wabaId,
+      userId,
+      page,
+      limit,
+    });
 
     try {
-      // 1. Fetch metadata and validate ownership
-      const chatMeta = await ChatRepository.getChatMetaForSending(
-        chatId,
+      const offset = (page - 1) * limit;
+      const { chats, total } = await ChatRepository.findPaginatedByWabaId(
+        wabaId,
         userId,
-        !requestToken,
+        limit,
+        offset,
       );
-      if (!chatMeta) {
-        logger.warn('Chat meta fetch failed: Not found or access denied', {
-          chatId,
-          userId,
-        });
-        throw new ApiError('Chat not found or access denied', 404);
-      }
-
-      const { phoneNumber, customerPhone } = chatMeta;
-      const { phoneNumberId } = phoneNumber;
-
-      const tokenToUse = requestToken
-        ? decrypt(requestToken)
-        : decrypt(phoneNumber.waba?.systemUserToken || '');
-
-      if (!tokenToUse) {
-        logger.error('No WhatsApp token available for sending', { chatId });
-        throw new ApiError('WhatsApp token is missing or invalid', 403);
-      }
-
-      // 2. Send via WhatsApp API
-      const waResult = await WhatsappService.sendTextMessage(
-        phoneNumberId,
-        tokenToUse,
-        customerPhone,
-        content,
-      );
-
-      // 3. Save to database
-      const savedMessage = await ChatRepository.saveMessage({
-        conversationId: chatId,
-        direction: 'outgoing',
-        source: 'admin',
-        type: 'text',
-        content,
-        status: waResult.status,
-        messageId: waResult.messageId,
-        timestamp: new Date(),
+      logger.info('Paginated chat list fetched successfully', {
+        wabaId,
+        userId,
+        count: chats.length,
+        total,
       });
-
-      return savedMessage;
+      return { chats, total };
     } catch (err) {
-      logError(err, { action: 'sendAdminMessage', chatId, userId });
+      logError(err, {
+        action: 'getChatsPaginated',
+        wabaId,
+        userId,
+        page,
+        limit,
+      });
       throw err;
     }
   },
@@ -151,7 +91,6 @@ export const ChatService = {
     return body;
   },
 
-  // since the Zod inferred types are complex nested arrays
   async _processEntries(entries: WebhookEntry[]): Promise<number> {
     let processedCount = 0;
 

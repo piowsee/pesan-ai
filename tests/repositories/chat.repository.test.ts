@@ -12,13 +12,6 @@ import {
 
 vi.unmock('@/repositories/chat.repository.ts');
 
-/**
- * ChatRepository Integration Tests (Synced with Seed)
- * Reasoning: Verifies chat logic against the baseline seeded data.
- * Ensures conversation ownership, message history retrieval, and atomic
- * transactions are consistent with the project's standard seed data.
- */
-
 describe('ChatRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbPhoneNumberId: string;
@@ -59,8 +52,6 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
   });
 
   afterEach(async () => {
-    // Cleanup only test-specific messages or conversations
-    // We target customer phones that start with '999' for test isolation
     const testCustomerPrefix = '999';
     await prisma.message.deleteMany({
       where: {
@@ -76,27 +67,23 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
     await prisma.$disconnect();
   });
 
-  describe('findAllByWabaId', () => {
-    it('returns conversations for the seeded WABA', async () => {
-      const result = await ChatRepository.findAllByWabaId(SEED_WABA_ID, userId);
-
-      expect(result?.length).toBeGreaterThanOrEqual(1);
-      const seeded = result?.find((c) => c.id === SEED_CONV_ID);
-      expect(seeded).toBeDefined();
-      expect(seeded?.customerPhone).toBe(SEED_CUSTOMER_PHONE);
-    });
-  });
-
-  describe('findById', () => {
-    it('returns the seeded conversation with history', async () => {
-      const result = await ChatRepository.findById(
-        SEED_CONV_ID,
+  describe('findPaginatedByWabaId', () => {
+    it('returns paginated conversations for the seeded WABA', async () => {
+      const { chats, total } = await ChatRepository.findPaginatedByWabaId(
         SEED_WABA_ID,
         userId,
+        10,
+        0,
       );
 
-      expect(result?.id).toBe(SEED_CONV_ID);
-      expect(result?.messages.length).toBeGreaterThanOrEqual(1);
+      expect(chats?.length).toBeGreaterThanOrEqual(1);
+      expect(total).toBeGreaterThanOrEqual(1);
+      const seeded = chats?.find((c) => c.id === SEED_CONV_ID);
+      expect(seeded).toBeDefined();
+      expect(seeded?.customerPhone).toBe(SEED_CUSTOMER_PHONE);
+      // Verify latest message is included
+      expect(seeded?.messages).toBeDefined();
+      expect(seeded?.messages.length).toBeLessThanOrEqual(1);
     });
   });
 
@@ -110,31 +97,6 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
       expect(result?.phoneNumber.phoneNumberId).toBe(SEED_PHONE_ID);
       expect(result?.phoneNumber.waba?.userId).toBe(userId);
-    });
-  });
-
-  describe('saveMessage', () => {
-    it('saves a message to a test conversation', async () => {
-      // Create a test conversation to avoid polluting the seed's message history
-      const testConv = await prisma.conversation.create({
-        data: {
-          customerPhone: '999001',
-          phoneNumberId: dbPhoneNumberId,
-        },
-      });
-
-      const result = await ChatRepository.saveMessage({
-        conversationId: testConv.id,
-        direction: 'outgoing',
-        source: 'admin',
-        type: 'text',
-        content: 'Test Reply',
-        status: 'sent',
-        timestamp: new Date(),
-      });
-
-      expect(result.content).toBe('Test Reply');
-      expect(result.conversationId).toBe(testConv.id);
     });
   });
 

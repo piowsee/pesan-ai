@@ -28,19 +28,24 @@ process.env.META_APP_SECRET = 'app-secret';
 // --- Mocks for Repositories ---
 vi.mock('@/repositories/chat.repository', () => ({
   ChatRepository: {
-    findAllByWabaId: vi.fn(),
+    findPaginatedByWabaId: vi.fn(),
     findById: vi.fn(),
     getChatMetaForSending: vi.fn(),
-    saveMessage: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
     processIncomingMessage: vi.fn(),
+  },
+}));
+
+vi.mock('@/repositories/message.repository', () => ({
+  MessageRepository: {
+    findMessagesPaginated: vi.fn(),
+    saveMessage: vi.fn(),
   },
 }));
 
 vi.mock('@/repositories/waba.repository', () => ({
   WabaRepository: {
     findAllByUserId: vi.fn(),
-    findAll: vi.fn(),
     findPaginated: vi.fn(),
     findPaginatedByUserId: vi.fn(),
     getTotalUnreadListByUserId: vi.fn(),
@@ -52,7 +57,6 @@ vi.mock('@/repositories/waba.repository', () => ({
 vi.mock('@/repositories/webhook.repository', () => ({
   WebhookRepository: {
     createWebhook: vi.fn(),
-    findAll: vi.fn(),
     findPaginated: vi.fn(),
     deleteWebhook: vi.fn(),
   },
@@ -61,10 +65,16 @@ vi.mock('@/repositories/webhook.repository', () => ({
 // --- Mocks for Services ---
 vi.mock('@/services/chat.service', () => ({
   ChatService: {
-    getChatsByWabaId: vi.fn(),
+    getChatsPaginated: vi.fn(),
     getChatDetail: vi.fn(),
-    sendAdminMessage: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/message.service', () => ({
+  MessageService: {
+    getMessagesPaginated: vi.fn(),
+    sendAdminMessage: vi.fn(),
   },
 }));
 

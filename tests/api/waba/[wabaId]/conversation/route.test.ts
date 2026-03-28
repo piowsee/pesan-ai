@@ -18,9 +18,10 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',
     } as never);
-    vi.mocked(ChatService.getChatsByWabaId).mockResolvedValue([
-      { id: 'chat-1' },
-    ] as never);
+    vi.mocked(ChatService.getChatsPaginated).mockResolvedValue({
+      chats: [{ id: 'chat-1' }],
+      total: 1,
+    } as never);
 
     const req = new Request(url);
     const response = await GET(req, {
@@ -29,8 +30,15 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.data.chats).toEqual([{ id: 'chat-1' }]);
-    expect(ChatService.getChatsByWabaId).toHaveBeenCalledWith(wabaId, 'user-1');
+    expect(data.data.total).toBeGreaterThanOrEqual(1);
+    expect(data.data.page).toBe(1);
+    expect(data.data.limit).toBe(10);
+    expect(ChatService.getChatsPaginated).toHaveBeenCalledWith(
+      wabaId,
+      'user-1',
+      1,
+      10,
+    );
   });
 
   it('returns 404 when access is denied or WABA not found', async () => {
@@ -38,7 +46,7 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
       id: 'user-1',
     } as never);
 
-    vi.mocked(ChatService.getChatsByWabaId).mockRejectedValue(
+    vi.mocked(ChatService.getChatsPaginated).mockRejectedValue(
       new ApiError('WABA not found or access denied', 404),
     );
 

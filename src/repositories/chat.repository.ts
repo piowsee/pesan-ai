@@ -1,45 +1,41 @@
 import prisma from '@/lib/prisma';
 
 export const ChatRepository = {
-  async findAllByWabaId(wabaId: string, userId: string) {
-    return prisma.conversation.findMany({
-      where: {
-        phoneNumber: {
-          waba: {
-            wabaId: wabaId,
-            userId: userId,
-          },
+  async findPaginatedByWabaId(
+    wabaId: string,
+    userId: string,
+    limit: number,
+    offset: number,
+  ) {
+    const where = {
+      phoneNumber: {
+        waba: {
+          wabaId,
+          userId,
         },
       },
-      include: {
-        phoneNumber: true,
-      },
-      orderBy: {
-        lastMessageAt: 'desc',
-      },
-    });
-  },
+    };
 
-  async findById(convId: string, wabaId: string, userId: string) {
-    return prisma.conversation.findUnique({
-      where: {
-        id: convId,
-        phoneNumber: {
-          waba: {
-            wabaId: wabaId,
-            userId: userId,
+    const [chats, total] = await prisma.$transaction([
+      prisma.conversation.findMany({
+        where,
+        include: {
+          phoneNumber: true,
+          messages: {
+            orderBy: { timestamp: 'desc' as const },
+            take: 1,
           },
         },
-      },
-      include: {
-        phoneNumber: true,
-        messages: {
-          orderBy: {
-            timestamp: 'asc',
-          },
+        orderBy: {
+          lastMessageAt: 'desc',
         },
-      },
-    });
+        take: limit,
+        skip: offset,
+      }),
+      prisma.conversation.count({ where }),
+    ]);
+
+    return { chats, total };
   },
 
   /**
@@ -69,21 +65,6 @@ export const ChatRepository = {
           },
         },
       },
-    });
-  },
-
-  async saveMessage(data: {
-    conversationId: string;
-    direction: 'incoming' | 'outgoing';
-    source: 'customer' | 'admin' | 'bot';
-    type: string;
-    content?: string;
-    status: string;
-    messageId?: string;
-    timestamp: Date;
-  }) {
-    return prisma.message.create({
-      data,
     });
   },
 

@@ -1,20 +1,6 @@
 import prisma from '@/lib/prisma';
 
 export const WabaRepository = {
-  async findAll() {
-    return prisma.whatsappBusinessAccount.findMany({
-      include: {
-        phoneNumbers: {
-          include: {
-            botWebhook: true,
-          },
-        },
-        user: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  },
-
   async findAllByUserId(userId: string) {
     return prisma.whatsappBusinessAccount.findMany({
       where: { userId },

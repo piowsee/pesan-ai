@@ -1,7 +1,5 @@
-import { ApiError } from '@/lib/error';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { ChatService } from '@/services/chat.service';
-import { WhatsappService } from '@/services/whatsapp.service';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/chat.service');
@@ -13,67 +11,20 @@ vi.unmock('@/services/chat.service');
  */
 
 describe('ChatService', { tags: ['backend'] }, () => {
-  describe('getChatsByWabaId', () => {
-    it('returns chat list', async () => {
-      vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue([
-        { id: 'chat-1' },
-      ] as never);
-      const result = await ChatService.getChatsByWabaId('waba-1', 'user-1');
-      expect(result).toEqual([{ id: 'chat-1' }]);
-    });
-  });
-
-  describe('getChatDetail', () => {
-    it('returns chat detail', async () => {
-      const mockChat = { id: 'chat-1', title: 'Test Chat' };
-      vi.mocked(ChatRepository.findById).mockResolvedValue(mockChat as never);
-      const result = await ChatService.getChatDetail(
-        'chat-1',
+  describe('getChatsPaginated', () => {
+    it('returns paginated chat list', async () => {
+      vi.mocked(ChatRepository.findPaginatedByWabaId).mockResolvedValue({
+        chats: [{ id: 'chat-1' }],
+        total: 1,
+      } as never);
+      const result = await ChatService.getChatsPaginated(
         'waba-1',
         'user-1',
+        1,
+        10,
       );
-      expect(result).toEqual(mockChat);
-    });
-  });
-
-  describe('sendAdminMessage', () => {
-    it('sends message and saves to db', async () => {
-      vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue({
-        phoneNumber: {
-          phoneNumberId: 'pn-1',
-          waba: { systemUserToken: 'token' },
-        },
-        customerPhone: '+123456',
-      } as never);
-      vi.mocked(WhatsappService.sendTextMessage).mockResolvedValue({
-        status: 'sent',
-        messageId: 'wa-msg-1',
-      });
-      vi.mocked(ChatRepository.saveMessage).mockResolvedValue({
-        id: 'msg-1',
-      } as never);
-
-      const result = await ChatService.sendAdminMessage(
-        'chat-1',
-        'user-1',
-        'Hello Admin',
-      );
-
-      expect(result.id).toBe('msg-1');
-      expect(WhatsappService.sendTextMessage).toHaveBeenCalledWith(
-        'pn-1',
-        'token',
-        '+123456',
-        'Hello Admin',
-      );
-      expect(ChatRepository.saveMessage).toHaveBeenCalled();
-    });
-
-    it('throws ApiError if chat meta is null', async () => {
-      vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue(null);
-      await expect(
-        ChatService.sendAdminMessage('chat-1', 'user-1', 'Hello'),
-      ).rejects.toThrow(ApiError);
+      expect(result.chats).toEqual([{ id: 'chat-1' }]);
+      expect(result.total).toBeGreaterThanOrEqual(1);
     });
   });
 
