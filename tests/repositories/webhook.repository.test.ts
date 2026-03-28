@@ -22,7 +22,6 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   const SEED_EMAIL = 'user@piowsee.com';
   const SEED_WEBHOOK_ID = 'webhook_seed_123';
-  const SEED_WEBHOOK_NAME = 'Seed Webhook';
 
   beforeEach(async () => {
     // Sync with seeded user
@@ -80,18 +79,6 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
       });
       expect(saved).not.toBeNull();
       expect(saved?.userId).toBe(userId);
-    });
-  });
-
-  describe('findAll', () => {
-    it('finds all webhooks including the seeded baseline', async () => {
-      const result = await WebhookRepository.findAll();
-
-      // Should at least find the one from seed.ts
-      expect(result.length).toBeGreaterThanOrEqual(1);
-      const seeded = result.find((w) => w.id === SEED_WEBHOOK_ID);
-      expect(seeded).toBeDefined();
-      expect(seeded?.name).toBe(SEED_WEBHOOK_NAME);
     });
   });
 

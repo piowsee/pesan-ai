@@ -14,14 +14,6 @@ export const WebhookRepository = {
     });
   },
 
-  async findAll() {
-    return prisma.botWebhook.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  },
-
   async findPaginated(limit: number, offset: number) {
     const [webhooks, total] = await prisma.$transaction([
       prisma.botWebhook.findMany({

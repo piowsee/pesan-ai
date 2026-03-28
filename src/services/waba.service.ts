@@ -64,18 +64,6 @@ export const WabaService = {
       throw err;
     }
   },
-
-  async getAllWabas() {
-    logger.info('Fetching WABA list for admin');
-    try {
-      const wabaList = await WabaRepository.findAll();
-      return wabaList.map(this._mapWaba);
-    } catch (err) {
-      logError(err, { action: 'getAllWabas' });
-      throw err;
-    }
-  },
-
   async getWabasPaginated({
     page,
     limit,
