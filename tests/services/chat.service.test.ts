@@ -28,19 +28,6 @@ describe('ChatService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('getChatDetail', () => {
-    it('returns chat detail', async () => {
-      const mockChat = { id: 'chat-1', title: 'Test Chat' };
-      vi.mocked(ChatRepository.findById).mockResolvedValue(mockChat as never);
-      const result = await ChatService.getChatDetail(
-        'chat-1',
-        'waba-1',
-        'user-1',
-      );
-      expect(result).toEqual(mockChat);
-    });
-  });
-
   describe('processMetaWebhookPayload', () => {
     it('processes payload correctly', async () => {
       const payload = {

@@ -38,28 +38,6 @@ export const ChatRepository = {
     return { chats, total };
   },
 
-  async findById(convId: string, wabaId: string, userId: string) {
-    return prisma.conversation.findUnique({
-      where: {
-        id: convId,
-        phoneNumber: {
-          waba: {
-            wabaId: wabaId,
-            userId: userId,
-          },
-        },
-      },
-      include: {
-        phoneNumber: true,
-        messages: {
-          orderBy: {
-            timestamp: 'asc',
-          },
-        },
-      },
-    });
-  },
-
   /**
    * Fetches metadata and verifies ownership for sending a message.
    * PERFORMANCE: To avoid DB ownership checks on every message, consider generating a

@@ -87,19 +87,6 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('findById', () => {
-    it('returns the seeded conversation with history', async () => {
-      const result = await ChatRepository.findById(
-        SEED_CONV_ID,
-        SEED_WABA_ID,
-        userId,
-      );
-
-      expect(result?.id).toBe(SEED_CONV_ID);
-      expect(result?.messages.length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
   describe('getChatMetaForSending', () => {
     it('fetches metadata for the seeded conversation', async () => {
       const result = await ChatRepository.getChatMetaForSending(

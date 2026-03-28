@@ -50,23 +50,6 @@ export const ChatService = {
     }
   },
 
-  async getChatDetail(convId: string, wabaId: string, userId: string) {
-    logger.info('Fetching chat details', { convId, wabaId, userId });
-
-    try {
-      const chatDetail = await ChatRepository.findById(convId, wabaId, userId);
-      logger.info('Chat detail fetched successfully', {
-        convId,
-        wabaId,
-        userId,
-      });
-      return chatDetail;
-    } catch (err) {
-      logError(err, { action: 'getChatDetail', convId, wabaId, userId });
-      throw err;
-    }
-  },
-
   async processMetaWebhookPayload(payload: unknown) {
     logger.info('Processing Meta Webhook payload in ChatService');
 
