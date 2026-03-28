@@ -1,6 +1,5 @@
 'use client';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,29 +56,24 @@ export function MessageComposer({
   }
 
   return (
-    <div className="bg-background w-full z-10">
+    <div className="w-full shrink-0 bg-transparent pb-3">
       {!conversation.canSendFreeform ? (
-        <Alert
-          variant="warning"
-          className="mb-2 mx-4 mt-2 border-0 shadow-none bg-amber-50 dark:bg-amber-950/30"
-        >
-          <div className="flex items-start gap-3">
-            <AlertTriangleIcon className="mt-0.5 size-5 text-amber-700 dark:text-amber-200" />
-            <div>
-              <AlertTitle className="text-sm font-semibold">
-                Use template message required
-              </AlertTitle>
-              <AlertDescription className="text-xs">
-                Free-form replies expire 24 hours after the latest customer
-                message. Send a template message to reopen the conversation.
-              </AlertDescription>
-            </div>
+        <div className="mx-4 my-2 flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+          <AlertTriangleIcon className="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+              Use template message required
+            </p>
+            <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
+              Free-form replies expire 24 hours after the latest customer
+              message. Send a template message to reopen the conversation.
+            </p>
           </div>
-        </Alert>
+        </div>
       ) : null}
 
-      <div className="flex items-end gap-2 bg-background px-4 py-3">
-        <div className="flex-1 flex items-end rounded-2xl border border-border bg-muted/40 px-4 py-2">
+      <div className="flex items-end gap-2 bg-transparent px-4 py-1">
+        <div className="flex flex-1 items-end rounded-2xl border border-brand/15 bg-brand/5 px-4 py-2 shadow-sm transition-colors focus-within:border-brand/30 focus-within:bg-brand/10">
           <Textarea
             ref={textareaRef}
             value={draft}

@@ -3,6 +3,7 @@
 import { ChatDetail } from '@/components/chat/chat-detail';
 import { ChatEmptyState } from '@/components/chat/chat-empty-state';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
+import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -58,6 +59,12 @@ export function ChatWorkspace({
   const searchParams = useSearchParams();
 
   const [searchValue, setSearchValue] = useState('');
+  const [isContactInfoOpen, setIsContactInfoOpen] = useState(false);
+  const [prevConversationId, setPrevConversationId] = useState<
+    string | undefined
+  >(undefined);
+  const [contactDetailsByConversation, setContactDetailsByConversation] =
+    useState<Record<string, { label: string; notes: string }>>({});
   const deferredSearchValue = useDeferredValue(searchValue.trim());
 
   const resolvedWabaId =
@@ -66,6 +73,11 @@ export function ChatWorkspace({
     searchParams.get('conversationId') ??
     initialSearchParams.conversationId ??
     undefined;
+
+  if (resolvedConversationId !== prevConversationId) {
+    setPrevConversationId(resolvedConversationId);
+    setIsContactInfoOpen(false);
+  }
   const resolvedFilter = getFilterValue(
     searchParams.get('filter') ?? initialSearchParams.filter,
   );
@@ -155,6 +167,12 @@ export function ChatWorkspace({
     );
   const allCount = allCountQuery.data?.pages[0]?.total ?? 0;
   const unreadCount = unreadCountQuery.data?.pages[0]?.total ?? 0;
+  const selectedContactDraft = selectedConversation
+    ? (contactDetailsByConversation[selectedConversation.id] ?? {
+        label: '',
+        notes: '',
+      })
+    : { label: '', notes: '' };
 
   const replaceSearchParams = useCallback(
     (nextValues: Record<string, string | null | undefined>) => {
@@ -249,6 +267,8 @@ export function ChatWorkspace({
     selectedConversation?.unreadCount,
   ]);
 
+  // State reset handled in render phase
+
   if (isLoadingWabas) {
     return <ChatWorkspaceLoading />;
   }
@@ -267,9 +287,9 @@ export function ChatWorkspace({
   const showMobileDetail = Boolean(resolvedConversationId);
 
   return (
-    <div className="flex h-full w-full overflow-hidden rounded-[30px] border bg-background">
-      <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-        <div className="flex h-[60px] shrink-0 items-center border-b bg-background px-4">
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
+      <div className="shrink-0 bg-background z-10 relative border-b border-brand/15">
+        <div className="flex h-15 items-center px-4">
           <WabaSwitcher
             wabas={wabas}
             activeWabaId={activeWaba?.id}
@@ -282,109 +302,143 @@ export function ChatWorkspace({
             }}
           />
         </div>
+      </div>
 
-        <div className="relative flex min-h-0 flex-1 overflow-hidden bg-background">
-          <div
-            className={`absolute inset-0 z-10 flex h-full w-full flex-col overflow-hidden bg-background transition-transform duration-200 ease-out lg:static lg:w-[380px] lg:shrink-0 lg:border-r lg:translate-x-0 lg:transition-none ${showMobileDetail ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
-          >
-            <ChatSidebar
-              searchValue={searchValue}
-              onSearchChange={setSearchValue}
-              filter={resolvedFilter}
-              onFilterChange={(value) => {
-                replaceSearchParams({
-                  filter: value,
-                  conversationId: null,
-                });
-              }}
-              phoneNumbers={phoneNumbers}
-              selectedPhoneNumberId={resolvedPhoneNumberId}
-              onPhoneNumberChange={(value) => {
-                replaceSearchParams({
-                  phoneNumberId: value,
-                  conversationId: null,
-                });
-              }}
-              conversations={conversations}
-              activeConversationId={resolvedConversationId}
-              isLoading={chatsQuery.isLoading}
-              isError={chatsQuery.isError}
-              errorMessage={
-                chatsQuery.error instanceof Error
-                  ? chatsQuery.error.message
-                  : undefined
+      <div
+        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
+        style={{ contain: 'strict' }}
+      >
+        <div
+          className={`absolute inset-0 z-10 flex h-full w-full flex-col bg-background transition-transform duration-200 ease-out lg:static lg:w-95 lg:shrink-0 lg:border-r lg:border-brand/10 lg:translate-x-0 ${showMobileDetail ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
+        >
+          <ChatSidebar
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            filter={resolvedFilter}
+            onFilterChange={(value) => {
+              replaceSearchParams({
+                filter: value,
+              });
+            }}
+            phoneNumbers={phoneNumbers}
+            selectedPhoneNumberId={resolvedPhoneNumberId}
+            onPhoneNumberChange={(value) => {
+              replaceSearchParams({
+                phoneNumberId: value,
+              });
+            }}
+            conversations={conversations}
+            activeConversationId={resolvedConversationId}
+            isLoading={chatsQuery.isLoading}
+            isError={chatsQuery.isError}
+            errorMessage={
+              chatsQuery.error instanceof Error
+                ? chatsQuery.error.message
+                : undefined
+            }
+            hasNextPage={Boolean(chatsQuery.hasNextPage)}
+            isFetchingNextPage={chatsQuery.isFetchingNextPage}
+            onLoadMore={() => {
+              if (chatsQuery.hasNextPage && !chatsQuery.isFetchingNextPage) {
+                void chatsQuery.fetchNextPage();
               }
-              hasNextPage={Boolean(chatsQuery.hasNextPage)}
-              isFetchingNextPage={chatsQuery.isFetchingNextPage}
-              onLoadMore={() => {
-                if (chatsQuery.hasNextPage && !chatsQuery.isFetchingNextPage) {
-                  void chatsQuery.fetchNextPage();
+            }}
+            onRetry={() => {
+              void chatsQuery.refetch();
+            }}
+            onSelectConversation={(conversationId) => {
+              replaceSearchParams({
+                conversationId,
+              });
+            }}
+            allCount={allCount}
+            unreadCount={unreadCount}
+          />
+        </div>
+
+        <div
+          className={`absolute inset-0 z-20 flex min-w-0 flex-1 flex-col bg-background transition-transform duration-200 ease-out lg:static lg:z-0 lg:translate-x-0 ${!showMobileDetail ? 'translate-x-full pointer-events-none' : isContactInfoOpen ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
+        >
+          {selectedConversation ? (
+            <ChatDetail
+              conversation={selectedConversation}
+              messages={messages}
+              isLoading={conversationQuery.isLoading || messagesQuery.isLoading}
+              hasNextPage={Boolean(messagesQuery.hasNextPage)}
+              isFetchingNextPage={messagesQuery.isFetchingNextPage}
+              onLoadOlder={() => {
+                if (
+                  messagesQuery.hasNextPage &&
+                  !messagesQuery.isFetchingNextPage
+                ) {
+                  void messagesQuery.fetchNextPage();
                 }
               }}
-              onRetry={() => {
-                void chatsQuery.refetch();
-              }}
-              onSelectConversation={(conversationId) => {
-                replaceSearchParams({
-                  conversationId,
+              isSending={sendMessageMutation.isPending}
+              onSend={async (content) => {
+                if (!activeWaba || !resolvedConversationId) {
+                  return;
+                }
+
+                await sendMessageMutation.mutateAsync({
+                  wabaId: activeWaba.id,
+                  conversationId: resolvedConversationId,
+                  content,
                 });
               }}
-              allCount={allCount}
-              unreadCount={unreadCount}
+              showBackButton={showMobileDetail}
+              onBack={() => {
+                replaceSearchParams({
+                  conversationId: null,
+                });
+              }}
+              onContactAreaClick={() => {
+                setIsContactInfoOpen((previous) => !previous);
+              }}
+            />
+          ) : (
+            <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
+              <ChatEmptyState
+                title="No chat selected"
+                description="Select a chat from the sidebar to view the conversation."
+                icon={InboxIcon}
+                className="w-full"
+              />
+            </div>
+          )}
+        </div>
+
+        {selectedConversation && isContactInfoOpen ? (
+          <div className="absolute inset-0 z-30 flex flex-col bg-background lg:static lg:z-0 lg:w-95 lg:shrink-0 lg:overflow-hidden lg:border-l lg:border-brand/10">
+            <ContactInfoPanel
+              conversation={selectedConversation}
+              label={selectedContactDraft.label}
+              notes={selectedContactDraft.notes}
+              onLabelChange={(value) => {
+                setContactDetailsByConversation((previous) => ({
+                  ...previous,
+                  [selectedConversation.id]: {
+                    ...selectedContactDraft,
+                    label: value,
+                  },
+                }));
+              }}
+              onNotesChange={(value) => {
+                setContactDetailsByConversation((previous) => ({
+                  ...previous,
+                  [selectedConversation.id]: {
+                    ...selectedContactDraft,
+                    notes: value,
+                  },
+                }));
+              }}
+              onClose={() => {
+                setIsContactInfoOpen(false);
+              }}
+              showMobileBackButton={showMobileDetail}
             />
           </div>
-
-          <div
-            className={`absolute inset-0 z-20 min-w-0 flex-1 flex-col overflow-hidden bg-background transition-transform duration-200 ease-out lg:static lg:z-0 lg:flex lg:translate-x-0 lg:transition-none ${showMobileDetail ? 'translate-x-0' : 'translate-x-full pointer-events-none lg:pointer-events-auto'}`}
-          >
-            {selectedConversation ? (
-              <ChatDetail
-                conversation={selectedConversation}
-                messages={messages}
-                isLoading={
-                  conversationQuery.isLoading || messagesQuery.isLoading
-                }
-                hasNextPage={Boolean(messagesQuery.hasNextPage)}
-                isFetchingNextPage={messagesQuery.isFetchingNextPage}
-                onLoadOlder={() => {
-                  if (
-                    messagesQuery.hasNextPage &&
-                    !messagesQuery.isFetchingNextPage
-                  ) {
-                    void messagesQuery.fetchNextPage();
-                  }
-                }}
-                isSending={sendMessageMutation.isPending}
-                onSend={async (content) => {
-                  if (!activeWaba || !resolvedConversationId) {
-                    return;
-                  }
-
-                  await sendMessageMutation.mutateAsync({
-                    wabaId: activeWaba.id,
-                    conversationId: resolvedConversationId,
-                    content,
-                  });
-                }}
-                showBackButton={showMobileDetail}
-                onBack={() => {
-                  replaceSearchParams({
-                    conversationId: null,
-                  });
-                }}
-              />
-            ) : (
-              <div className="flex h-full flex-1 items-center justify-center bg-muted/30">
-                <ChatEmptyState
-                  title="No chat selected"
-                  description="Select a chat from the sidebar to view the conversation."
-                  icon={InboxIcon}
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );

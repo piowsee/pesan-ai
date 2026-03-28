@@ -19,8 +19,10 @@ export function ConversationListItem({
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-all hover:bg-muted/50',
-        isActive ? 'bg-muted/60' : 'bg-transparent',
+        'flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-all',
+        isActive
+          ? 'bg-brand/10 hover:bg-brand/10'
+          : 'bg-transparent hover:bg-brand/5',
       )}
     >
       <Avatar className="size-11 mt-0.5 border">
@@ -51,11 +53,11 @@ export function ConversationListItem({
             {getMessagePreview(conversation.lastMessage)}
           </p>
 
-          <div className="flex shrink-0 items-center justify-end gap-2 min-w-[2.5rem]">
+          <div className="flex shrink-0 items-center justify-end gap-2 min-w-10">
             {conversation.unreadCount > 0 && (
               <Badge
                 variant="default"
-                className="rounded-full px-1.5 h-5 min-w-5 flex items-center justify-center text-[10px] font-bold"
+                className="rounded-full px-1.5 h-5 min-w-5 flex items-center justify-center text-[10px] font-bold bg-brand text-brand-foreground"
               >
                 {conversation.unreadCount}
               </Badge>

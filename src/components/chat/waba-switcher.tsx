@@ -86,7 +86,9 @@ export function WabaSwitcher({
                     {index > 0 ? <CommandSeparator /> : null}
                     <CommandItem
                       onSelect={() => {
-                        onSelectWaba(waba.id);
+                        if (waba.id !== activeWabaId) {
+                          onSelectWaba(waba.id);
+                        }
                         setOpen(false);
                         setQuery('');
                       }}

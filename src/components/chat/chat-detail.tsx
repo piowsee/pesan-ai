@@ -9,7 +9,7 @@ import { MessageSquareIcon } from 'lucide-react';
 function ChatDetailSkeleton() {
   return (
     <div className="flex h-full w-full flex-col bg-background/50">
-      <div className="border-b bg-background px-6 py-4">
+      <div className="bg-background px-6 py-4">
         <div className="flex items-center gap-4">
           <Skeleton className="size-11 rounded-full shrink-0" />
           <div className="flex flex-col gap-2">
@@ -50,6 +50,7 @@ export function ChatDetail({
   onSend,
   showBackButton,
   onBack,
+  onContactAreaClick,
 }: {
   conversation?: ChatConversation;
   messages: ChatMessage[];
@@ -61,6 +62,7 @@ export function ChatDetail({
   onSend: (content: string) => Promise<void>;
   showBackButton: boolean;
   onBack?: () => void;
+  onContactAreaClick?: () => void;
 }) {
   if (isLoading && !conversation) {
     return <ChatDetailSkeleton />;
@@ -78,12 +80,13 @@ export function ChatDetail({
   }
 
   return (
-    <section className="flex h-full w-full flex-col bg-[#efeae2]/10 dark:bg-background relative">
-      <div className="border-b bg-background">
+    <section className="relative flex h-full w-full flex-col bg-brand/5 dark:bg-brand/10">
+      <div className="bg-background">
         <ChatHeader
           conversation={conversation}
           showBackButton={showBackButton}
           onBack={onBack}
+          onContactAreaClick={onContactAreaClick}
         />
       </div>
 
@@ -103,7 +106,7 @@ export function ChatDetail({
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10">
+      <div className="z-10 shrink-0 bg-transparent">
         <MessageComposer
           key={conversation.id}
           conversation={conversation}

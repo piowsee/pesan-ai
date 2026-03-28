@@ -4,9 +4,15 @@ import { Suspense } from 'react';
 
 function ChatPageFallback() {
   return (
-    <div className="grid min-h-[72vh] gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
-      <Skeleton className="h-[72vh] rounded-[30px]" />
-      <Skeleton className="h-[72vh] rounded-[30px]" />
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
+      <div className="grid h-full gap-0 lg:grid-cols-[380px_minmax(0,1fr)]">
+        <div className="border-r border-brand/20 p-4">
+          <Skeleton className="h-full w-full rounded-2xl" />
+        </div>
+        <div className="p-4">
+          <Skeleton className="h-full w-full rounded-2xl" />
+        </div>
+      </div>
     </div>
   );
 }

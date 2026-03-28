@@ -33,7 +33,7 @@ export function ChatSidebarToolbar({
   unreadCount?: number;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b px-4 py-4">
+    <div className="flex flex-col gap-3 px-4 py-4">
       {/*
       <div className="flex items-center justify-between gap-3">
         <div className="text-lg font-bold tracking-tight">Chats</div>
@@ -45,12 +45,12 @@ export function ChatSidebarToolbar({
       */}
 
       <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground size-4" />
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-brand/70" />
         <Input
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search number or name"
-          className="pl-9 h-9 bg-muted/30 border-none"
+          className="h-9 border border-brand/20 bg-brand/5 pl-9 placeholder:text-brand/60"
         />
       </div>
 
@@ -60,13 +60,13 @@ export function ChatSidebarToolbar({
           size="sm"
           className={
             filter === 'all'
-              ? 'h-8 px-3 rounded-full cursor-pointer'
-              : 'h-8 px-3 rounded-full text-muted-foreground cursor-pointer'
+              ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
+              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
           }
           onClick={() => onFilterChange('all')}
         >
           All
-          <span className="ml-1.5 flex h-5 items-center justify-center rounded-full bg-muted-foreground/15 px-2 text-[10px] font-medium text-muted-foreground">
+          <span className="ml-1.5 flex h-5 items-center justify-center rounded-full bg-brand/20 px-2 text-[10px] font-medium text-brand">
             {allCount}
           </span>
         </Button>
@@ -75,13 +75,13 @@ export function ChatSidebarToolbar({
           size="sm"
           className={
             filter === 'unread'
-              ? 'h-8 px-3 rounded-full cursor-pointer'
-              : 'h-8 px-3 rounded-full text-muted-foreground cursor-pointer'
+              ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
+              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
           }
           onClick={() => onFilterChange('unread')}
         >
           Unread
-          <span className="ml-1.5 flex h-5 items-center justify-center rounded-full bg-primary/10 px-2 text-[10px] font-medium text-primary">
+          <span className="ml-1.5 flex h-5 items-center justify-center rounded-full bg-brand/20 px-2 text-[10px] font-medium text-brand">
             {unreadCount}
           </span>
         </Button>
@@ -92,7 +92,7 @@ export function ChatSidebarToolbar({
             onPhoneNumberChange(value === 'all' ? undefined : value)
           }
         >
-          <SelectTrigger className="ml-auto h-8 w-[170px] cursor-pointer gap-2 rounded-full border-none bg-muted/30 px-3 transition-colors hover:bg-muted/50 [&>span]:block [&>span]:truncate">
+          <SelectTrigger className="ml-auto h-8 w-42.5 cursor-pointer gap-2 rounded-full border border-brand/20 bg-brand/5 px-3 text-brand transition-colors hover:bg-brand/10 [&>span]:block [&>span]:truncate">
             <SelectValue placeholder="All Phones" />
           </SelectTrigger>
           <SelectContent>
