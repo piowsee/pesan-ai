@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * @route GET /api/meta-webhook
+ * @route GET /api/webhooks/meta
  * @description Handle Meta Webhook verification.
  */
 export async function GET(req: NextRequest) {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * @route POST /api/meta-webhook
+ * @route POST /api/webhooks/meta
  * @description Handle Meta Webhook event notifications.
  */
 export async function POST(req: NextRequest) {

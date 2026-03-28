@@ -1,10 +1,10 @@
-import { GET, POST } from '@/app/api/(webhook)/meta-webhook/route';
+import { GET, POST } from '@/app/api/webhooks/meta/route';
 import { ChatService } from '@/services/chat.service';
 import crypto from 'crypto';
 import { describe, expect, it, vi } from 'vitest';
 
 /**
- * API Route: GET & POST /api/meta-webhook
+ * API Route: GET & POST /api/webhooks/meta
  * Reasoning: Test the verification handshake of Meta Webhooks (GET) and
  * the payload signature validation (POST) ensuring our implementation is secure.
  */
@@ -13,7 +13,7 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
   describe('GET', () => {
     it('verifies webhook on correct token and mode', async () => {
       const req = new Request(
-        'http://localhost/api/meta-webhook?hub.mode=subscribe&hub.verify_token=secret&hub.challenge=1234',
+        'http://localhost/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=secret&hub.challenge=1234',
       );
       const response = await GET(req as never);
 
@@ -23,7 +23,7 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
 
     it('rejects verification on wrong token', async () => {
       const req = new Request(
-        'http://localhost/api/meta-webhook?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=1234',
+        'http://localhost/api/webhooks/meta?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=1234',
       );
       const response = await GET(req as never);
 
@@ -33,7 +33,7 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
 
   describe('POST', () => {
     const createReq = (body: string, signature: string) => {
-      return new Request('http://localhost/api/meta-webhook', {
+      return new Request('http://localhost/api/webhooks/meta', {
         method: 'POST',
         headers: { 'x-hub-signature-256': `sha256=${signature}` },
         body,
