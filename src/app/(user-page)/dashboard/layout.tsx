@@ -1,9 +1,6 @@
 import { AppSidebar } from '@/components/dashboard/app-sidebar';
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
+import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { requireUser } from '@/lib/auth/auth-page-helper';
 import { ReactNode } from 'react';
 
@@ -21,11 +18,9 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <AppSidebar user={user} />
       <SidebarInset>
-        <header className="flex h-14 items-center gap-4 border-b px-4 shrink-0">
-          <SidebarTrigger className="-ml-1" />
-        </header>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:p-6 lg:p-8">
-          {children}
+        <main className="flex flex-1 flex-col h-dvh bg-background">
+          <div className="h-full w-full flex-1 overflow-hidden">{children}</div>
+          <MobileBottomNav />
         </main>
       </SidebarInset>
     </SidebarProvider>
