@@ -1,5 +1,6 @@
 import { decrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
 import { logError, logger } from '@/logger/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { MessageRepository } from '@/repositories/message.repository';
@@ -95,6 +96,13 @@ export const MessageService = {
         status: waResult.status,
         messageId: waResult.messageId,
         timestamp: new Date(),
+      });
+
+      // Emit real-time event via SSE to the specific user channel
+      eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+        ...savedMessage,
+        conversation: chatMeta,
+        userId,
       });
 
       return savedMessage;

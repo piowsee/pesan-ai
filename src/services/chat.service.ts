@@ -1,3 +1,4 @@
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
 import { logError, logger } from '@/logger/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import {
@@ -184,7 +185,11 @@ export const ChatService = {
     const content = message.text?.body;
     const timestamp = new Date(parseInt(message.timestamp) * 1000);
 
-    await ChatRepository.processIncomingMessage({
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+    } = await ChatRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
       customerPhone,
       customerName,
@@ -200,6 +205,20 @@ export const ChatService = {
     logger.info('Saved incoming message to DB successfully', {
       messageId: message.id,
       customerPhone,
+    });
+
+    if (!userId) {
+      logger.error('Could not determine userId for real-time notification', {
+        phoneNumberId: internalPhoneId,
+      });
+      return true;
+    }
+
+    // Emit real-time event via SSE to the specific user channel
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...savedMessage,
+      conversation,
+      userId,
     });
 
     return true;
