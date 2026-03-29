@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { type Waba, useWabas } from '@/hooks/use-wabas';
+import { type Waba } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
 import { CheckIcon, ChevronDownIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -24,17 +24,16 @@ function getWabaLabel(waba: Waba) {
 }
 
 export function WabaSwitcher({
+  wabas,
   activeWabaId,
   onSelectWaba,
 }: {
+  wabas: Waba[];
   activeWabaId?: string;
   onSelectWaba: (wabaId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-
-  const { data } = useWabas(1, 100);
-  const wabas = data?.wabas ?? [];
 
   const activeWaba = wabas.find((waba) => waba.id === activeWabaId);
   const normalizedQuery = query.trim().toLowerCase();

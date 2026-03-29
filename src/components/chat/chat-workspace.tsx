@@ -170,6 +170,7 @@ export function ChatWorkspace() {
       <div className="shrink-0 bg-background z-10 relative border-b border-brand/15">
         <div className="flex h-15 items-center px-4">
           <WabaSwitcher
+            wabas={wabas}
             activeWabaId={activeWaba?.id}
             onSelectWaba={(wabaId) => {
               setUserSelectedWabaId(wabaId);
