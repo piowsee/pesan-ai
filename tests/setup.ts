@@ -45,7 +45,7 @@ process.env.META_APP_SECRET = 'app-secret';
 // --- Mocks for Repositories ---
 vi.mock('@/repositories/chat.repository', () => ({
   ChatRepository: {
-    findPaginatedByWabaId: vi.fn(),
+    findAllByWabaId: vi.fn(),
     findById: vi.fn(),
     getChatMetaForSending: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
@@ -82,7 +82,7 @@ vi.mock('@/repositories/webhook.repository', () => ({
 // --- Mocks for Services ---
 vi.mock('@/services/chat.service', () => ({
   ChatService: {
-    getChatsPaginated: vi.fn(),
+    getAllChats: vi.fn(),
     getChatDetail: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
   },
