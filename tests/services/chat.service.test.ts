@@ -16,18 +16,12 @@ describe('ChatService', { tags: ['backend'] }, () => {
     vi.clearAllMocks();
   });
 
-  describe('getChatsPaginated', () => {
-    it('returns paginated chat list', async () => {
-      vi.mocked(ChatRepository.findPaginatedByWabaId).mockResolvedValue({
+  describe('getAllChats', () => {
+    it('returns all chat list', async () => {
+      vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue({
         chats: [{ id: 'chat-1' }],
-        total: 1,
       } as never);
-      const result = await ChatService.getChatsPaginated(
-        'waba-1',
-        'user-1',
-        1,
-        10,
-      );
+      const result = await ChatService.getAllChats('waba-1', 'user-1');
       expect(result.chats).toEqual([{ id: 'chat-1' }]);
       expect(result.total).toBeGreaterThanOrEqual(1);
     });

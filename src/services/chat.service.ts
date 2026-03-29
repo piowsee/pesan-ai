@@ -11,41 +11,25 @@ import {
 } from '@/schemas/webhook.schema';
 
 export const ChatService = {
-  async getChatsPaginated(
-    wabaId: string,
-    userId: string,
-    page: number,
-    limit: number,
-  ) {
-    logger.info('Fetching paginated chat list for WABA', {
+  async getAllChats(wabaId: string, userId: string) {
+    logger.info('Fetching all chats for WABA without pagination', {
       wabaId,
       userId,
-      page,
-      limit,
     });
 
     try {
-      const offset = (page - 1) * limit;
-      const { chats, total } = await ChatRepository.findPaginatedByWabaId(
-        wabaId,
-        userId,
-        limit,
-        offset,
-      );
-      logger.info('Paginated chat list fetched successfully', {
+      const { chats } = await ChatRepository.findAllByWabaId(wabaId, userId);
+      logger.info('All chat list fetched successfully', {
         wabaId,
         userId,
         count: chats.length,
-        total,
       });
-      return { chats, total };
+      return { chats, total: chats.length };
     } catch (err) {
       logError(err, {
-        action: 'getChatsPaginated',
+        action: 'getAllChats',
         wabaId,
         userId,
-        page,
-        limit,
       });
       throw err;
     }

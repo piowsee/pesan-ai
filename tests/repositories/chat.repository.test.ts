@@ -67,17 +67,14 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
     await prisma.$disconnect();
   });
 
-  describe('findPaginatedByWabaId', () => {
-    it('returns paginated conversations for the seeded WABA', async () => {
-      const { chats, total } = await ChatRepository.findPaginatedByWabaId(
+  describe('findAllByWabaId', () => {
+    it('returns all conversations for the seeded WABA', async () => {
+      const { chats } = await ChatRepository.findAllByWabaId(
         SEED_WABA_ID,
         userId,
-        10,
-        0,
       );
 
       expect(chats?.length).toBeGreaterThanOrEqual(1);
-      expect(total).toBeGreaterThanOrEqual(1);
       const seeded = chats?.find((c) => c.id === SEED_CONV_ID);
       expect(seeded).toBeDefined();
       expect(seeded?.customerPhone).toBe(SEED_CUSTOMER_PHONE);
