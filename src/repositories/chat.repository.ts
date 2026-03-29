@@ -134,7 +134,15 @@ export const ChatRepository = {
         data: { unreadCount: { increment: 1 } },
       });
 
-      return { conversation, message: savedMessage };
+      // 4. Fetch the userId associated with the owner (WABA)
+      const waba = await tx.whatsappBusinessAccount.findFirst({
+        where: { phoneNumbers: { some: { id: phoneNumberId } } },
+        select: {
+          userId: true,
+        },
+      });
+
+      return { conversation, message: savedMessage, userId: waba?.userId };
     });
   },
 };

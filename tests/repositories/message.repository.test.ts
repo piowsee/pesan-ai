@@ -45,7 +45,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
   });
 
   afterEach(async () => {
-    const testCustomerPrefix = '999';
+    const testCustomerPrefix = '998';
     await prisma.message.deleteMany({
       where: {
         conversation: { customerPhone: { startsWith: testCustomerPrefix } },
@@ -93,7 +93,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     it('saves a message successfully', async () => {
       const testConv = await prisma.conversation.create({
         data: {
-          customerPhone: '999005',
+          customerPhone: '998005',
           phoneNumberId: dbPhoneNumberId,
         },
       });

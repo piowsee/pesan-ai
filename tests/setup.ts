@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { EventEmitter } from 'node:events';
 import { vi } from 'vitest';
 
 // Global mock for logger
@@ -20,6 +21,22 @@ vi.mock('@/lib/auth/auth-api-helper', () => ({
     requireAdmin: vi.fn(),
   },
 }));
+
+vi.mock('@/lib/event-bus', async () => {
+  const actual = await vi.importActual('@/lib/event-bus');
+  const mockBus = new EventEmitter();
+
+  // Create spies while preserving EventEmitter functionality
+  vi.spyOn(mockBus, 'on');
+  vi.spyOn(mockBus, 'off');
+  vi.spyOn(mockBus, 'emit');
+
+  return {
+    ...actual,
+    __esModule: true,
+    default: mockBus,
+  };
+});
 
 // Global environment variables that are repetitive
 process.env.META_WEBHOOK_SECRET = 'secret';
