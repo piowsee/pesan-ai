@@ -2,13 +2,10 @@
 
 import { ChatEmptyState } from '@/components/chat/chat-empty-state';
 import { ConversationListItem } from '@/components/chat/conversation-list-item';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
 import type { ChatConversation } from '@/types/chat';
 import { MessageSquareIcon, RefreshCwIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
 
 function ConversationListSkeleton() {
   return (
@@ -32,9 +29,6 @@ export function ConversationList({
   isLoading,
   isError,
   errorMessage,
-  hasNextPage,
-  isFetchingNextPage,
-  onLoadMore,
   onRetry,
   onSelectConversation,
 }: {
@@ -43,44 +37,9 @@ export function ConversationList({
   isLoading: boolean;
   isError: boolean;
   errorMessage?: string;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  onLoadMore: () => void;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
 }) {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const root = scrollAreaRef.current?.querySelector(
-      '[data-slot="scroll-area-viewport"]',
-    ) as HTMLDivElement | null;
-    const target = sentinelRef.current;
-
-    if (!root || !target || !hasNextPage || isFetchingNextPage) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          onLoadMore();
-        }
-      },
-      {
-        root,
-        rootMargin: '200px',
-      },
-    );
-
-    observer.observe(target);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [conversations.length, hasNextPage, isFetchingNextPage, onLoadMore]);
-
   if (isLoading) {
     return <ConversationListSkeleton />;
   }
@@ -114,7 +73,7 @@ export function ConversationList({
   }
 
   return (
-    <div ref={scrollAreaRef} className="h-full w-full">
+    <div className="h-full w-full">
       <ScrollArea className="h-full">
         <div className="flex flex-col">
           {conversations.map((conversation) => (
@@ -125,23 +84,6 @@ export function ConversationList({
               onSelect={() => onSelectConversation(conversation.id)}
             />
           ))}
-
-          <div ref={sentinelRef} className="flex justify-center py-4">
-            {isFetchingNextPage ? <Spinner /> : null}
-          </div>
-
-          {hasNextPage ? (
-            <div className="flex justify-center pb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLoadMore}
-                disabled={isFetchingNextPage}
-              >
-                Load more
-              </Button>
-            </div>
-          ) : null}
         </div>
       </ScrollArea>
     </div>

@@ -5,12 +5,10 @@ import { ChatEmptyState } from '@/components/chat/chat-empty-state';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
+import { useConversations } from '@/hooks/use-conversations';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useWabas } from '@/hooks/use-wabas';
-import type {
-  ChatConversation,
-  ChatMessage,
-  ChatSidebarFilter,
-} from '@/types/chat';
+import type { ChatMessage, ChatSidebarFilter } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -32,6 +30,7 @@ export function ChatWorkspace() {
   >(undefined);
   const [filter, setFilter] = useState<ChatSidebarFilter>('all');
   const [searchValue, setSearchValue] = useState('');
+  const debouncedSearchValue = useDebounce(searchValue, 400);
   const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<
     string | undefined
   >(undefined);
@@ -42,25 +41,41 @@ export function ChatWorkspace() {
     Record<string, ChatMessage[]>
   >({});
 
+  // ── Queries ──
+  const {
+    data: msgData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useConversations(activeWabaId);
+
   // ── Derived ──
   const activeWaba = wabas.find((w) => w.id === activeWabaId);
   const phoneNumbers = activeWaba?.phoneNumbers ?? [];
 
-  const filteredConversations = useMemo(() => {
-    let result: ChatConversation[] = [];
+  const allConversations = useMemo(
+    () => msgData?.chats ?? [],
+    [msgData?.chats],
+  );
 
-    // Filter by phone number
+  const filteredConversations = useMemo(() => {
+    let result = allConversations;
+
+    // Filter by phone number locally
     if (selectedPhoneNumberId) {
       result = result.filter((c) => c.phoneNumber.id === selectedPhoneNumberId);
     }
 
-    // Filter by unread
-    if (filter === 'unread') {
-      result = result.filter((c) => c.unreadCount > 0);
+    // Filter by Admin/Bot
+    if (filter === 'admin') {
+      result = result.filter((c) => c.adminTakeover === true);
+    } else if (filter === 'bot') {
+      result = result.filter((c) => c.adminTakeover === false);
     }
 
-    // Search
-    const q = searchValue.trim().toLowerCase();
+    // Filter by Search
+    const q = debouncedSearchValue.trim().toLowerCase();
     if (q) {
       result = result.filter(
         (c) =>
@@ -70,43 +85,12 @@ export function ChatWorkspace() {
     }
 
     return result;
-  }, [filter, searchValue, selectedPhoneNumberId]);
+  }, [allConversations, selectedPhoneNumberId, filter, debouncedSearchValue]);
 
-  const allCount = useMemo(() => {
-    let result: ChatConversation[] = [];
-    if (selectedPhoneNumberId) {
-      result = result.filter((c) => c.phoneNumber.id === selectedPhoneNumberId);
-    }
-    const q = searchValue.trim().toLowerCase();
-    if (q) {
-      result = result.filter(
-        (c) =>
-          c.displayName.toLowerCase().includes(q) ||
-          c.customerPhone.toLowerCase().includes(q),
-      );
-    }
-    return result.length;
-  }, [searchValue, selectedPhoneNumberId]);
-
-  const unreadCount = useMemo(() => {
-    let result: ChatConversation[] = [];
-    if (selectedPhoneNumberId) {
-      result = result.filter((c) => c.phoneNumber.id === selectedPhoneNumberId);
-    }
-    const q = searchValue.trim().toLowerCase();
-    if (q) {
-      result = result.filter(
-        (c) =>
-          c.displayName.toLowerCase().includes(q) ||
-          c.customerPhone.toLowerCase().includes(q),
-      );
-    }
-    return result.length;
-  }, [searchValue, selectedPhoneNumberId]);
-
-  const selectedConversation = (
-    selectedConversationId ? undefined : undefined
-  ) as ChatConversation | undefined;
+  const selectedConversation = useMemo(() => {
+    if (!selectedConversationId) return undefined;
+    return allConversations.find((c) => c.id === selectedConversationId);
+  }, [allConversations, selectedConversationId]);
 
   const messages = useMemo(() => {
     if (!selectedConversationId) return [];
@@ -199,15 +183,11 @@ export function ChatWorkspace() {
             onPhoneNumberChange={setSelectedPhoneNumberId}
             conversations={filteredConversations}
             activeConversationId={selectedConversationId}
-            isLoading={false}
-            isError={false}
-            hasNextPage={false}
-            isFetchingNextPage={false}
-            onLoadMore={() => {}}
-            onRetry={() => {}}
+            isLoading={isLoading}
+            isError={isError}
+            errorMessage={error?.message}
+            onRetry={() => refetch()}
             onSelectConversation={handleSelectConversation}
-            allCount={allCount}
-            unreadCount={unreadCount}
           />
         </div>
 

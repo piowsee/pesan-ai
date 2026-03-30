@@ -1,4 +1,4 @@
-export type ChatSidebarFilter = 'all' | 'unread';
+export type ChatSidebarFilter = 'all' | 'admin' | 'bot';
 
 export type ChatMessageStatus = 'sent' | 'delivered' | 'read' | 'failed';
 

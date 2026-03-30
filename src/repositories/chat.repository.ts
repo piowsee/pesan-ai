@@ -6,7 +6,7 @@ export const ChatRepository = {
     const where: Prisma.ConversationWhereInput = {
       phoneNumber: {
         waba: {
-          wabaId,
+          id: wabaId,
           userId,
         },
       },
