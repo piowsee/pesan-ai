@@ -13,7 +13,8 @@ export const MessageRepository = {
         id: convId,
         phoneNumber: {
           waba: {
-            wabaId,
+            // we use our own wabaId
+            id: wabaId,
             userId,
           },
         },
