@@ -10,6 +10,8 @@ import {
   vi,
 } from 'vitest';
 
+import { SEED_DATA } from '../seed-data';
+
 vi.unmock('@/repositories/waba.repository.ts');
 
 /**
@@ -22,30 +24,38 @@ vi.unmock('@/repositories/waba.repository.ts');
 describe('WabaRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbWabaId: string;
-  const SEED_EMAIL = 'user@piowsee.com';
-  const SEED_WABA_ID = '123456789012345';
-  const SEED_WEBHOOK_ID = 'webhook_seed_123';
+  let dbWebhookId: string;
 
   beforeEach(async () => {
     const user = await prisma.user.findUnique({
-      where: { email: SEED_EMAIL },
+      where: { email: SEED_DATA.REGULAR_USER_EMAIL },
     });
     if (!user) {
       throw new Error(
-        `Seed user ${SEED_EMAIL} not found. Please run prisma db seed.`,
+        `Seed user ${SEED_DATA.REGULAR_USER_EMAIL} not found. Please run prisma db seed.`,
       );
     }
     userId = user.id;
 
-    const waba = await prisma.whatsappBusinessAccount.findFirst({
-      where: { wabaId: SEED_WABA_ID, userId },
+    const waba = await prisma.whatsappBusinessAccount.findUnique({
+      where: { wabaId: SEED_DATA.WABA_META_ID },
     });
     if (!waba) {
       throw new Error(
-        `Seeded WABA ${SEED_WABA_ID} not found. Please run prisma db seed.`,
+        `Seeded WABA ${SEED_DATA.WABA_META_ID} not found. Please run prisma db seed.`,
       );
     }
     dbWabaId = waba.id;
+
+    const webhook = await prisma.botWebhook.findFirst({
+      where: { name: SEED_DATA.WEBHOOK_NAME, userId: userId },
+    });
+    if (!webhook) {
+      throw new Error(
+        `Seeded Webhook ${SEED_DATA.WEBHOOK_NAME} not found. Please run prisma db seed.`,
+      );
+    }
+    dbWebhookId = webhook.id;
   });
 
   afterEach(async () => {
@@ -67,7 +77,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       const result = await WabaRepository.findAllByUserId(userId);
 
       expect(result.length).toBeGreaterThanOrEqual(1);
-      const seeded = result.find((w) => w.wabaId === SEED_WABA_ID);
+      const seeded = result.find((w) => w.id === dbWabaId);
       expect(seeded).toBeDefined();
     });
   });
@@ -77,7 +87,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       const result = await WabaRepository.findPaginated(10, 0);
 
       expect(result.total).toBeGreaterThanOrEqual(1);
-      expect(result.wabas.some((w) => w.wabaId === SEED_WABA_ID)).toBe(true);
+      expect(result.wabas.some((w) => w.id === dbWabaId)).toBe(true);
     });
   });
 
@@ -86,7 +96,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       const result = await WabaRepository.findPaginatedByUserId(10, 0, userId);
 
       expect(result.total).toBeGreaterThanOrEqual(1);
-      expect(result.wabas.some((w) => w.wabaId === SEED_WABA_ID)).toBe(true);
+      expect(result.wabas.some((w) => w.id === dbWabaId)).toBe(true);
       expect(result.wabas.every((w) => w.userId === userId)).toBe(true);
     });
   });
@@ -96,7 +106,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       const result = await WabaRepository.getTotalUnreadListByUserId(userId);
 
       expect(result.length).toBeGreaterThanOrEqual(1);
-      const seeded = result.find((w) => w.wabaId === SEED_WABA_ID);
+      const seeded = result.find((w) => w.id === dbWabaId);
       expect(seeded).toBeDefined();
       expect(seeded?.totalUnread).toBeDefined();
     });
@@ -106,7 +116,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     it('updates phone numbers associated with the seeded WABA', async () => {
       const result = await WabaRepository.updateWabaWebhook(
         dbWabaId,
-        SEED_WEBHOOK_ID,
+        dbWebhookId,
       );
 
       expect(result.count).toBeGreaterThanOrEqual(1);
@@ -114,7 +124,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       const check = await prisma.phoneNumber.findFirst({
         where: { wabaId: dbWabaId },
       });
-      expect(check?.botWebhookId).toBe(SEED_WEBHOOK_ID);
+      expect(check?.botWebhookId).toBe(dbWebhookId);
     });
   });
 
@@ -123,7 +133,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       const result = await WabaRepository.findById(dbWabaId);
 
       expect(result?.id).toBe(dbWabaId);
-      expect(result?.wabaId).toBe(SEED_WABA_ID);
+      expect(result?.wabaId).toBe(SEED_DATA.WABA_META_ID);
     });
   });
 });

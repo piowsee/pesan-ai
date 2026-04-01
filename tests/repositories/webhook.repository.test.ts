@@ -10,6 +10,8 @@ import {
   vi,
 } from 'vitest';
 
+import { SEED_DATA } from '../seed-data';
+
 vi.unmock('@/repositories/webhook.repository.ts');
 
 /**
@@ -20,29 +22,36 @@ vi.unmock('@/repositories/webhook.repository.ts');
 
 describe('WebhookRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
-  const SEED_EMAIL = 'user@piowsee.com';
-  const SEED_WEBHOOK_ID = 'webhook_seed_123';
+  let dbWebhookId: string;
 
   beforeEach(async () => {
+    // Pre-test cleanup for robustness
+    await prisma.botWebhook.deleteMany({
+      where: {
+        name: { contains: 'Test-WH-' },
+      },
+    });
+
     // Sync with seeded user
     const user = await prisma.user.findUnique({
-      where: { email: SEED_EMAIL },
+      where: { email: SEED_DATA.REGULAR_USER_EMAIL },
     });
     if (!user) {
       throw new Error(
-        `Seed user ${SEED_EMAIL} not found. Please run prisma db seed.`,
+        `Seed user ${SEED_DATA.REGULAR_USER_EMAIL} not found. Please run prisma db seed.`,
       );
     }
     userId = user.id;
 
-    const webhook = await prisma.botWebhook.findUnique({
-      where: { id: SEED_WEBHOOK_ID },
+    const webhook = await prisma.botWebhook.findFirst({
+      where: { name: SEED_DATA.WEBHOOK_NAME, userId: userId },
     });
     if (!webhook) {
       throw new Error(
-        `Seeded Webhook ${SEED_WEBHOOK_ID} not found. Please run prisma db seed.`,
+        `Seeded Webhook ${SEED_DATA.WEBHOOK_NAME} not found. Please run prisma db seed.`,
       );
     }
+    dbWebhookId = webhook.id;
   });
 
   afterEach(async () => {
@@ -87,7 +96,7 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
       const result = await WebhookRepository.findPaginated(10, 0);
 
       expect(result.total).toBeGreaterThanOrEqual(1);
-      expect(result.webhooks.some((w) => w.id === SEED_WEBHOOK_ID)).toBe(true);
+      expect(result.webhooks.some((w) => w.id === dbWebhookId)).toBe(true);
     });
   });
 

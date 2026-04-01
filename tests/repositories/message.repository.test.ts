@@ -10,38 +10,58 @@ import {
   vi,
 } from 'vitest';
 
+import { SEED_DATA } from '../seed-data';
+
 vi.unmock('@/repositories/message.repository');
 
 describe('MessageRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
+  let dbWabaId: string;
   let dbPhoneNumberId: string;
-  const SEED_EMAIL = 'user@piowsee.com';
-  const SEED_WABA_ID = '123456789012345';
-  const SEED_PHONE_ID = '979032335300118';
-  const SEED_CONV_ID = 'convs_seed_123';
+  let dbConvId: string;
 
   beforeEach(async () => {
     const user = await prisma.user.findUnique({
-      where: { email: SEED_EMAIL },
+      where: { email: SEED_DATA.REGULAR_USER_EMAIL },
     });
     if (!user) {
-      throw new Error(`Seed user ${SEED_EMAIL} not found.`);
+      throw new Error(`Seed user ${SEED_DATA.REGULAR_USER_EMAIL} not found.`);
     }
     userId = user.id;
 
-    const waba = await prisma.whatsappBusinessAccount.findFirst({
-      where: { wabaId: SEED_WABA_ID, userId },
+    const waba = await prisma.whatsappBusinessAccount.findUnique({
+      where: { wabaId: SEED_DATA.WABA_META_ID },
       include: { phoneNumbers: true },
     });
     if (!waba) {
-      throw new Error(`Seeded WABA ${SEED_WABA_ID} not found.`);
+      throw new Error(`Seeded WABA ${SEED_DATA.WABA_META_ID} not found.`);
     }
+    dbWabaId = waba.id;
 
-    const pn = waba.phoneNumbers.find((p) => p.phoneNumberId === SEED_PHONE_ID);
+    const pn = waba.phoneNumbers.find(
+      (p) => p.phoneNumberId === SEED_DATA.PHONE_META_ID,
+    );
     if (!pn) {
-      throw new Error(`Seeded Phone Number ${SEED_PHONE_ID} not found.`);
+      throw new Error(
+        `Seeded Phone Number ${SEED_DATA.PHONE_META_ID} not found.`,
+      );
     }
     dbPhoneNumberId = pn.id;
+
+    const conv = await prisma.conversation.findUnique({
+      where: {
+        unique_conversation: {
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: SEED_DATA.CUSTOMER_PHONE,
+        },
+      },
+    });
+    if (!conv) {
+      throw new Error(
+        `Seeded Conversation for ${SEED_DATA.CUSTOMER_PHONE} not found.`,
+      );
+    }
+    dbConvId = conv.id;
   });
 
   afterEach(async () => {
@@ -63,8 +83,8 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
   describe('findMessagesPaginated', () => {
     it('returns paginated messages for the seeded conversation', async () => {
       const result = await MessageRepository.findMessagesPaginated(
-        SEED_CONV_ID,
-        SEED_WABA_ID,
+        dbConvId,
+        dbWabaId,
         userId,
         5,
         0,
@@ -79,8 +99,8 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
 
     it('returns null for unowned conversation', async () => {
       const result = await MessageRepository.findMessagesPaginated(
-        SEED_CONV_ID,
-        SEED_WABA_ID,
+        dbConvId,
+        dbWabaId,
         'wrong-user-id',
         5,
         0,
