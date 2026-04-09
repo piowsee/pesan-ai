@@ -19,13 +19,16 @@ export async function proxy(request: NextRequest) {
   if (sessionCookie && isLoginRoute) {
     if (request.nextUrl.searchParams.get('session_expired') === 'true') {
       const response = NextResponse.next();
+      const isSecureRequest =
+        request.nextUrl.protocol === 'https:' ||
+        process.env.NODE_ENV === 'production';
 
       const cookieOptions = {
         path: '/',
         maxAge: 0,
         expires: new Date(0),
         httpOnly: true,
-        secure: true,
+        secure: isSecureRequest,
       };
 
       response.cookies.set(
