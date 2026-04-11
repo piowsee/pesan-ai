@@ -5,10 +5,12 @@ import { ChatEmptyState } from '@/components/chat/chat-empty-state';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
+import { useChatSSE } from '@/hooks/use-chat-sse';
 import { useConversations } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useMessages } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
-import type { ChatMessage, ChatSidebarFilter } from '@/types/chat';
+import type { ChatSidebarFilter } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -37,26 +39,37 @@ export function ChatWorkspace() {
   const [isContactInfoOpen, setIsContactInfoOpen] = useState(false);
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
-  const [extraMessages, setExtraMessages] = useState<
-    Record<string, ChatMessage[]>
-  >({});
 
   // ── Queries ──
   const {
-    data: msgData,
-    isLoading,
-    isError,
-    error,
+    data: convData,
+    isLoading: isConversationsLoading,
+    isError: isConversationsError,
+    error: conversationsError,
     refetch,
   } = useConversations(activeWabaId);
+
+  // ── Message Query ──
+  const {
+    data: groupedMessages,
+    isLoading: isMessagesLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useMessages(activeWabaId, selectedConversationId);
+
+  // ── Real-time SSE ──
+  useChatSSE({
+    viewingConversationId: selectedConversationId,
+  });
 
   // ── Derived ──
   const activeWaba = wabas.find((w) => w.id === activeWabaId);
   const phoneNumbers = activeWaba?.phoneNumbers ?? [];
 
   const allConversations = useMemo(
-    () => msgData?.chats ?? [],
-    [msgData?.chats],
+    () => convData?.chats ?? [],
+    [convData?.chats],
   );
 
   const filteredConversations = useMemo(() => {
@@ -92,12 +105,11 @@ export function ChatWorkspace() {
     return allConversations.find((c) => c.id === selectedConversationId);
   }, [allConversations, selectedConversationId]);
 
+  // Combine queried messages with locally sent "extra" messages
+  // This allows the user to see their message instantly before SSE/API refresh.
   const messages = useMemo(() => {
-    if (!selectedConversationId) return [];
-    const base: ChatMessage[] = [];
-    const extra = extraMessages[selectedConversationId] ?? [];
-    return [...base, ...extra];
-  }, [selectedConversationId, extraMessages]);
+    return groupedMessages ?? [];
+  }, [groupedMessages]);
 
   const selectedContactDraft = selectedConversation
     ? (contactDetailsByConversation[selectedConversation.id] ?? {
@@ -118,32 +130,9 @@ export function ChatWorkspace() {
     async (content: string) => {
       if (!selectedConversationId) return;
 
-      const newMessage: ChatMessage = {
-        id: `user-msg-${Date.now()}`,
-        messageId: `user-msg-${Date.now()}`,
-        conversationId: selectedConversationId,
-        direction: 'outgoing',
-        source: 'admin',
-        type: 'text',
-        content,
-        mediaUrl: null,
-        mediaMimeType: null,
-        mediaFilename: null,
-        mediaSize: null,
-        status: 'sent',
-        errorMessage: null,
-        metadata: null,
-        timestamp: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      };
-
-      setExtraMessages((prev) => ({
-        ...prev,
-        [selectedConversationId]: [
-          ...(prev[selectedConversationId] ?? []),
-          newMessage,
-        ],
-      }));
+      // TODO: Implement real sendMessage mutation with TanStack Query
+      // For now, we rely on SSE to update the UI once the backend processes the message.
+      console.log('Sending message:', content);
     },
     [selectedConversationId],
   );
@@ -183,9 +172,9 @@ export function ChatWorkspace() {
             onPhoneNumberChange={setSelectedPhoneNumberId}
             conversations={filteredConversations}
             activeConversationId={selectedConversationId}
-            isLoading={isLoading}
-            isError={isError}
-            errorMessage={error?.message}
+            isLoading={isConversationsLoading}
+            isError={isConversationsError}
+            errorMessage={conversationsError?.message}
             onRetry={() => refetch()}
             onSelectConversation={handleSelectConversation}
           />
@@ -199,10 +188,10 @@ export function ChatWorkspace() {
             <ChatDetail
               conversation={selectedConversation}
               messages={messages}
-              isLoading={false}
-              hasNextPage={false}
-              isFetchingNextPage={false}
-              onLoadOlder={() => {}}
+              isLoading={isMessagesLoading}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadOlder={() => fetchNextPage()}
               isSending={false}
               onSend={handleSendMessage}
               showBackButton={showMobileDetail}

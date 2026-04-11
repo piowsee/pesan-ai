@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import type { ChatMessage } from '@/types/chat';
+import type { MessageGroup } from '@/hooks/use-message';
 import { ChevronUpIcon } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
@@ -35,14 +35,16 @@ export function MessageTimeline({
   onLoadOlder,
 }: {
   conversationId?: string;
-  messages: ChatMessage[];
+  messages: MessageGroup[];
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
 }) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const latestMessageId = messages[messages.length - 1]?.id;
+  const lastGroup = messages[messages.length - 1];
+  const latestMessageId =
+    lastGroup?.messages[lastGroup.messages.length - 1]?.id;
 
   useEffect(() => {
     const viewport = scrollAreaRef.current?.querySelector(
@@ -90,8 +92,21 @@ export function MessageTimeline({
           ) : null}
 
           {!isLoading
-            ? messages.map((message) => (
-                <MessageBubble key={message.id} message={message} />
+            ? messages.map((group) => (
+                <div key={group.date} className="flex flex-col gap-4">
+                  <div className="flex justify-center my-2">
+                    <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand/70 uppercase tracking-wider backdrop-blur-sm">
+                      {new Date(group.date).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  {group.messages.map((message) => (
+                    <MessageBubble key={message.id} message={message} />
+                  ))}
+                </div>
               ))
             : null}
         </div>
