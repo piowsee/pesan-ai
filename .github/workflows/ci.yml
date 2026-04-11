@@ -9,7 +9,7 @@ on:
 
 # .env only for CI
 env:
-  ENVIRONMENT: test
+  NODE_ENV: test
   POSTGRES_USER: testuser
   POSTGRES_PASSWORD: testpassword
   POSTGRES_DB: testdb
