@@ -9,7 +9,7 @@ export const auth = betterAuth({
     provider: 'postgresql',
   }),
   advanced: {
-    useSecureCookies: true,
+    useSecureCookies: process.env.NODE_ENV === 'production',
   },
   session: {
     cookieCache: {
@@ -24,7 +24,7 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       const isProduction =
-        !process.env.ENVIRONMENT || process.env.ENVIRONMENT === 'production';
+        !process.env.NODE_ENV || process.env.NODE_ENV === 'production';
 
       if (isProduction && ctx.path.startsWith('/sign-up')) {
         throw new APIError('BAD_REQUEST', {
