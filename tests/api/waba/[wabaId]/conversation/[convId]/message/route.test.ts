@@ -36,7 +36,6 @@ describe(
         convId,
         'user-1',
         'hello',
-        'token-123',
       );
     });
 

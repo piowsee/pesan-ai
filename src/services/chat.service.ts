@@ -173,6 +173,7 @@ export const ChatService = {
       message: savedMessage,
       conversation,
       userId,
+      wabaId,
     } = await ChatRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
       customerPhone,
@@ -203,6 +204,7 @@ export const ChatService = {
       ...savedMessage,
       conversation,
       userId,
+      wabaId,
     });
 
     return true;

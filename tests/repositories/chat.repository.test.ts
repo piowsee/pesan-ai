@@ -103,7 +103,6 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
       const result = await ChatRepository.getChatMetaForSending(
         dbConvId,
         userId,
-        true,
       );
 
       expect(result?.phoneNumber.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);

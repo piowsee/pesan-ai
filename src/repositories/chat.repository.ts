@@ -36,11 +36,7 @@ export const ChatRepository = {
    * signed JWT 'chat token' when the user opens a specific conversation (GET Detail).
    * This allows the 'Send' (POST) action to use that token to stay stateless.
    */
-  async getChatMetaForSending(
-    convId: string,
-    userId: string,
-    includeToken = true,
-  ) {
+  async getChatMetaForSending(convId: string, userId: string) {
     return prisma.conversation.findFirst({
       where: {
         id: convId,
@@ -53,7 +49,7 @@ export const ChatRepository = {
       include: {
         phoneNumber: {
           include: {
-            waba: includeToken,
+            waba: true,
           },
         },
       },
@@ -130,11 +126,17 @@ export const ChatRepository = {
       const waba = await tx.whatsappBusinessAccount.findFirst({
         where: { phoneNumbers: { some: { id: phoneNumberId } } },
         select: {
+          id: true,
           userId: true,
         },
       });
 
-      return { conversation, message: savedMessage, userId: waba?.userId };
+      return {
+        conversation,
+        message: savedMessage,
+        userId: waba?.userId,
+        wabaId: waba?.id,
+      };
     });
   },
 };
