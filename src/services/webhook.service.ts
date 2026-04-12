@@ -1,6 +1,6 @@
 import { encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
-import { logger } from '@/logger/logger';
+import { logger } from '@/lib/logger';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { CreateWebhookPayload } from '@/schemas/create-webhook.schema';
 import { SignJWT } from 'jose';

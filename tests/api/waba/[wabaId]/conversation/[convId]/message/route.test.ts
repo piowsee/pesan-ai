@@ -17,9 +17,9 @@ describe(
         id: 'user-1',
       } as never);
       vi.mocked(MessageService.sendAdminMessage).mockResolvedValue({
-        id: 'msg-1',
-        content: 'hello',
-      } as never);
+        message: { id: 'msg-1', content: 'hello' } as never,
+        conversation: { id: convId } as never,
+      });
 
       const req = new Request(url, {
         method: 'POST',
@@ -32,11 +32,11 @@ describe(
 
       expect(response.status).toBe(200);
       expect(data.data.message).toEqual({ id: 'msg-1', content: 'hello' });
+      expect(data.data.conversation).toBeDefined();
       expect(MessageService.sendAdminMessage).toHaveBeenCalledWith(
         convId,
         'user-1',
         'hello',
-        'token-123',
       );
     });
 

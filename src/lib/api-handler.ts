@@ -1,4 +1,4 @@
-import { logError } from '@/logger/logger';
+import { logError } from '@/lib/logger';
 import { User } from '@/types/user';
 import { ZodError } from 'zod';
 

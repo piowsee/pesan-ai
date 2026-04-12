@@ -1,41 +1,33 @@
+import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 
 export const ChatRepository = {
-  async findPaginatedByWabaId(
-    wabaId: string,
-    userId: string,
-    limit: number,
-    offset: number,
-  ) {
-    const where = {
+  async findAllByWabaId(wabaId: string, userId: string) {
+    const where: Prisma.ConversationWhereInput = {
       phoneNumber: {
         waba: {
-          wabaId,
+          // we use our own wabaId
+          id: wabaId,
           userId,
         },
       },
     };
 
-    const [chats, total] = await prisma.$transaction([
-      prisma.conversation.findMany({
-        where,
-        include: {
-          phoneNumber: true,
-          messages: {
-            orderBy: { timestamp: 'desc' as const },
-            take: 1,
-          },
+    const chats = await prisma.conversation.findMany({
+      where,
+      include: {
+        phoneNumber: true,
+        messages: {
+          orderBy: { timestamp: 'desc' as const },
+          take: 1,
         },
-        orderBy: {
-          lastMessageAt: 'desc',
-        },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.conversation.count({ where }),
-    ]);
+      },
+      orderBy: {
+        lastMessageAt: 'desc',
+      },
+    });
 
-    return { chats, total };
+    return { chats };
   },
 
   /**
@@ -44,11 +36,7 @@ export const ChatRepository = {
    * signed JWT 'chat token' when the user opens a specific conversation (GET Detail).
    * This allows the 'Send' (POST) action to use that token to stay stateless.
    */
-  async getChatMetaForSending(
-    convId: string,
-    userId: string,
-    includeToken = true,
-  ) {
+  async getChatMetaForSending(convId: string, userId: string) {
     return prisma.conversation.findFirst({
       where: {
         id: convId,
@@ -61,10 +49,40 @@ export const ChatRepository = {
       include: {
         phoneNumber: {
           include: {
-            waba: includeToken,
+            waba: true,
           },
         },
       },
+    });
+  },
+
+  async markConversationAsRead(convId: string, userId: string) {
+    return prisma.$transaction(async (tx) => {
+      const conversation = await tx.conversation.findFirst({
+        where: {
+          id: convId,
+          phoneNumber: { waba: { userId } },
+        },
+        select: { id: true, unreadCount: true, phoneNumberId: true },
+      });
+
+      if (!conversation || conversation.unreadCount === 0) {
+        return { updated: false };
+      }
+
+      await tx.conversation.update({
+        where: { id: convId },
+        data: { unreadCount: 0 },
+      });
+
+      await tx.phoneNumber.update({
+        where: { id: conversation.phoneNumberId },
+        data: {
+          unreadCount: { decrement: conversation.unreadCount },
+        },
+      });
+
+      return { updated: true };
     });
   },
 
@@ -138,11 +156,17 @@ export const ChatRepository = {
       const waba = await tx.whatsappBusinessAccount.findFirst({
         where: { phoneNumbers: { some: { id: phoneNumberId } } },
         select: {
+          id: true,
           userId: true,
         },
       });
 
-      return { conversation, message: savedMessage, userId: waba?.userId };
+      return {
+        conversation,
+        message: savedMessage,
+        userId: waba?.userId,
+        wabaId: waba?.id,
+      };
     });
   },
 };

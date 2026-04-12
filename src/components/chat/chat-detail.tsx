@@ -3,7 +3,8 @@ import { ChatHeader } from '@/components/chat/chat-header';
 import { MessageComposer } from '@/components/chat/message-composer';
 import { MessageTimeline } from '@/components/chat/message-timeline';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ChatConversation, ChatMessage } from '@/types/chat';
+import type { MessageGroup } from '@/hooks/use-message';
+import type { ChatConversation } from '@/types/chat';
 import { MessageSquareIcon } from 'lucide-react';
 
 function ChatDetailSkeleton() {
@@ -53,13 +54,13 @@ export function ChatDetail({
   onContactAreaClick,
 }: {
   conversation?: ChatConversation;
-  messages: ChatMessage[];
+  messages: MessageGroup[];
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
   isSending: boolean;
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string) => void;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;

@@ -1,7 +1,7 @@
 import { decrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { logError, logger } from '@/logger/logger';
+import { logError, logger } from '@/lib/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 
@@ -43,12 +43,7 @@ export const MessageService = {
     }
   },
 
-  async sendAdminMessage(
-    chatId: string,
-    userId: string,
-    content: string,
-    requestToken?: string,
-  ) {
+  async sendAdminMessage(chatId: string, userId: string, content: string) {
     logger.info('Admin sending message', { chatId, userId });
 
     try {
@@ -56,7 +51,6 @@ export const MessageService = {
       const chatMeta = await ChatRepository.getChatMetaForSending(
         chatId,
         userId,
-        !requestToken,
       );
       if (!chatMeta) {
         logger.warn('Chat meta fetch failed: Not found or access denied', {
@@ -69,9 +63,7 @@ export const MessageService = {
       const { phoneNumber, customerPhone } = chatMeta;
       const { phoneNumberId } = phoneNumber;
 
-      const tokenToUse = requestToken
-        ? decrypt(requestToken)
-        : decrypt(phoneNumber.waba?.systemUserToken || '');
+      const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
       if (!tokenToUse) {
         logger.error('No WhatsApp token available for sending', { chatId });
@@ -103,9 +95,10 @@ export const MessageService = {
         ...savedMessage,
         conversation: chatMeta,
         userId,
+        wabaId: chatMeta.phoneNumber.wabaId,
       });
 
-      return savedMessage;
+      return { message: savedMessage, conversation: chatMeta };
     } catch (err) {
       logError(err, { action: 'sendAdminMessage', chatId, userId });
       throw err;

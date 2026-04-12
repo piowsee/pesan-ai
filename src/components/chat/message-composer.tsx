@@ -15,7 +15,7 @@ export function MessageComposer({
 }: {
   conversation: ChatConversation;
   isSending: boolean;
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string) => void;
 }) {
   const [draft, setDraft] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -45,12 +45,12 @@ export function MessageComposer({
   const trimmedDraft = draft.trim();
   const canSendMessage = Boolean(trimmedDraft) && !isSending;
 
-  async function handleSend() {
+  function handleSend() {
     if (!conversation.canSendFreeform || !canSendMessage) {
       return;
     }
 
-    await onSend(trimmedDraft);
+    onSend(trimmedDraft);
     setDraft('');
     resetTextarea();
   }
@@ -81,10 +81,10 @@ export function MessageComposer({
               setDraft(event.target.value);
               resizeTextarea(event.currentTarget);
             }}
-            onKeyDown={async (event) => {
+            onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                await handleSend();
+                handleSend();
               }
             }}
             maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}

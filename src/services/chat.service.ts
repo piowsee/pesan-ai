@@ -1,5 +1,5 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { logError, logger } from '@/logger/logger';
+import { logError, logger } from '@/lib/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import {
   Contact,
@@ -11,42 +11,42 @@ import {
 } from '@/schemas/webhook.schema';
 
 export const ChatService = {
-  async getChatsPaginated(
-    wabaId: string,
-    userId: string,
-    page: number,
-    limit: number,
-  ) {
-    logger.info('Fetching paginated chat list for WABA', {
+  async getAllChats(wabaId: string, userId: string) {
+    logger.info('Fetching all chats for WABA without pagination', {
       wabaId,
       userId,
-      page,
-      limit,
     });
 
     try {
-      const offset = (page - 1) * limit;
-      const { chats, total } = await ChatRepository.findPaginatedByWabaId(
-        wabaId,
-        userId,
-        limit,
-        offset,
-      );
-      logger.info('Paginated chat list fetched successfully', {
+      const { chats } = await ChatRepository.findAllByWabaId(wabaId, userId);
+      logger.info('All chat list fetched successfully', {
         wabaId,
         userId,
         count: chats.length,
-        total,
       });
-      return { chats, total };
+      return { chats, total: chats.length };
     } catch (err) {
       logError(err, {
-        action: 'getChatsPaginated',
+        action: 'getAllChats',
         wabaId,
         userId,
-        page,
-        limit,
       });
+      throw err;
+    }
+  },
+
+  async markAsRead(convId: string, userId: string) {
+    logger.info('Marking conversation as read', { convId, userId });
+
+    try {
+      const result = await ChatRepository.markConversationAsRead(
+        convId,
+        userId,
+      );
+      logger.info('Mark as read completed', { convId, userId, ...result });
+      return result;
+    } catch (err) {
+      logError(err, { action: 'markAsRead', convId, userId });
       throw err;
     }
   },
@@ -189,6 +189,7 @@ export const ChatService = {
       message: savedMessage,
       conversation,
       userId,
+      wabaId,
     } = await ChatRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
       customerPhone,
@@ -219,6 +220,7 @@ export const ChatService = {
       ...savedMessage,
       conversation,
       userId,
+      wabaId,
     });
 
     return true;

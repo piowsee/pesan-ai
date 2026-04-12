@@ -1,6 +1,6 @@
 import { withApiAuth } from '@/lib/api-handler';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { logError, logger } from '@/logger/logger';
+import { logError, logger } from '@/lib/logger';
 
 /**
  * @route GET /api/sse

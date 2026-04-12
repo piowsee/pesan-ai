@@ -74,7 +74,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         'Hello Admin',
       );
 
-      expect(result.id).toBe('msg-1');
+      expect(result.message.id).toBe('msg-1');
       expect(WhatsappService.sendTextMessage).toHaveBeenCalledWith(
         'pn-1',
         'token',

@@ -14,18 +14,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { type Waba } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
 import { CheckIcon, ChevronDownIcon } from 'lucide-react';
 import { useState } from 'react';
 
-export interface ChatWaba {
-  id: string;
-  wabaId: string;
-  businessName: string | null;
-  phoneNumbers: Array<{ id: string; displayPhoneNumber: string }>;
-}
-
-function getWabaLabel(waba: ChatWaba) {
+function getWabaLabel(waba: Waba) {
   return waba.businessName?.trim() || waba.wabaId;
 }
 
@@ -34,7 +28,7 @@ export function WabaSwitcher({
   activeWabaId,
   onSelectWaba,
 }: {
-  wabas: ChatWaba[];
+  wabas: Waba[];
   activeWabaId?: string;
   onSelectWaba: (wabaId: string) => void;
 }) {

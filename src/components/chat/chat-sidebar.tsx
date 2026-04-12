@@ -17,13 +17,8 @@ export function ChatSidebar({
   isLoading,
   isError,
   errorMessage,
-  hasNextPage,
-  isFetchingNextPage,
-  onLoadMore,
   onRetry,
   onSelectConversation,
-  allCount,
-  unreadCount,
 }: {
   className?: string;
   searchValue: string;
@@ -38,13 +33,8 @@ export function ChatSidebar({
   isLoading: boolean;
   isError: boolean;
   errorMessage?: string;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
-  onLoadMore: () => void;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
-  allCount: number;
-  unreadCount: number;
 }) {
   return (
     <aside className={cn('flex h-full flex-col bg-background', className)}>
@@ -56,8 +46,6 @@ export function ChatSidebar({
         phoneNumbers={phoneNumbers}
         selectedPhoneNumberId={selectedPhoneNumberId}
         onPhoneNumberChange={onPhoneNumberChange}
-        allCount={allCount}
-        unreadCount={unreadCount}
       />
 
       <div className="min-h-0 flex-1">
@@ -67,9 +55,6 @@ export function ChatSidebar({
           isLoading={isLoading}
           isError={isError}
           errorMessage={errorMessage}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadMore={onLoadMore}
           onRetry={onRetry}
           onSelectConversation={onSelectConversation}
         />

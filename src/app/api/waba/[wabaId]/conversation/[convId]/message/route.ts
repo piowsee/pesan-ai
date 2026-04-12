@@ -8,7 +8,7 @@ import { MessageService } from '@/services/message.service';
  * @route POST /api/waba/:wabaId/conversation/:convId/message
  * @param wabaId {string}
  * @param convId {string}
- * @body { message: string, token?: string }
+ * @body { message: string }
  * @response { status: 'success', data: { message: Message } }
  * @access Authenticated users
  * @description Send a text message to a customer via WhatsApp Business API inside a specific conversation.
@@ -23,16 +23,15 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
       throw validated.error;
     }
 
-    const { message, token } = validated.data;
+    const { message } = validated.data;
 
     const result = await MessageService.sendAdminMessage(
       convId,
       user.id,
       message,
-      token,
     );
 
-    return jsend.success({ message: result });
+    return jsend.success(result);
   },
 );
 

@@ -1,15 +1,7 @@
-export type ChatSidebarFilter = 'all' | 'unread';
-
-export type ChatMessageStatus = 'sent' | 'delivered' | 'read' | 'failed';
+export type ChatSidebarFilter = 'all' | 'admin' | 'bot';
 
 export interface ChatBusinessProfile {
   profilePictureUrl: string | null;
-}
-
-export interface ChatPhoneNumberSummary {
-  id: string;
-  displayPhoneNumber: string;
-  businessProfile?: ChatBusinessProfile | null;
 }
 
 export interface ChatMessage {
@@ -24,7 +16,7 @@ export interface ChatMessage {
   mediaMimeType: string | null;
   mediaFilename: string | null;
   mediaSize: string | null;
-  status: ChatMessageStatus | string;
+  status: string;
   errorMessage: string | null;
   metadata: string | null;
   timestamp: string;
@@ -45,20 +37,10 @@ export interface ChatConversation {
   updatedAt: string;
   canSendFreeform: boolean;
   freeformWindowEndsAt: string | null;
-  phoneNumber: ChatPhoneNumberSummary;
+  phoneNumber: {
+    id: string;
+    displayPhoneNumber: string;
+    businessProfile?: ChatBusinessProfile | null;
+  };
   lastMessage: ChatMessage | null;
-}
-
-export interface ChatConversationListResponse {
-  chats: ChatConversation[];
-  page: number;
-  limit: number;
-  total: number;
-  hasNextPage: boolean;
-}
-
-export interface ChatMessageListResponse {
-  messages: ChatMessage[];
-  nextBefore: string | null;
-  limit: number;
 }

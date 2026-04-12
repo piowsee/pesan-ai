@@ -19,8 +19,6 @@ export function ChatSidebarToolbar({
   phoneNumbers,
   selectedPhoneNumberId,
   onPhoneNumberChange,
-  allCount = 0,
-  unreadCount = 0,
 }: {
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -29,8 +27,6 @@ export function ChatSidebarToolbar({
   phoneNumbers: Array<{ id: string; displayPhoneNumber: string }>;
   selectedPhoneNumberId?: string;
   onPhoneNumberChange: (value?: string) => void;
-  allCount?: number;
-  unreadCount?: number;
 }) {
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
@@ -56,24 +52,30 @@ export function ChatSidebarToolbar({
           onClick={() => onFilterChange('all')}
         >
           All
-          <span className="ml-1.5 flex h-5 items-center justify-center rounded-full bg-brand/20 px-2 text-[10px] font-medium text-brand">
-            {allCount}
-          </span>
         </Button>
         <Button
-          variant={filter === 'unread' ? 'secondary' : 'ghost'}
+          variant={filter === 'admin' ? 'secondary' : 'ghost'}
           size="sm"
           className={
-            filter === 'unread'
+            filter === 'admin'
               ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
               : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
           }
-          onClick={() => onFilterChange('unread')}
+          onClick={() => onFilterChange('admin')}
         >
-          Unread
-          <span className="ml-1.5 flex h-5 items-center justify-center rounded-full bg-brand/20 px-2 text-[10px] font-medium text-brand">
-            {unreadCount}
-          </span>
+          Admin
+        </Button>
+        <Button
+          variant={filter === 'bot' ? 'secondary' : 'ghost'}
+          size="sm"
+          className={
+            filter === 'bot'
+              ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
+              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
+          }
+          onClick={() => onFilterChange('bot')}
+        >
+          Bot
         </Button>
 
         <Select
