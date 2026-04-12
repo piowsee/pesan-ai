@@ -49,8 +49,17 @@ export const MessageRepository = {
     messageId?: string;
     timestamp: Date;
   }) {
-    return prisma.message.create({
-      data,
+    return prisma.$transaction(async (tx) => {
+      const savedMessage = await tx.message.create({
+        data,
+      });
+
+      await tx.conversation.update({
+        where: { id: data.conversationId },
+        data: { lastMessageAt: data.timestamp },
+      });
+
+      return savedMessage;
     });
   },
 };

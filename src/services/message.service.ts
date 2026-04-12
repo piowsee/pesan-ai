@@ -98,7 +98,7 @@ export const MessageService = {
         wabaId: chatMeta.phoneNumber.wabaId,
       });
 
-      return savedMessage;
+      return { message: savedMessage, conversation: chatMeta };
     } catch (err) {
       logError(err, { action: 'sendAdminMessage', chatId, userId });
       throw err;

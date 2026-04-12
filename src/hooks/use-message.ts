@@ -1,7 +1,19 @@
 'use client';
 
-import type { ChatMessage } from '@/types/chat';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import type { ChatConversation, ChatMessage } from '@/types/chat';
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+import {
+  type RawConversation,
+  conversationKeys,
+  mapRawConversationToChatConversation,
+} from './use-conversations';
 
 // ─── Query Keys ──────────────────────────────────────────────────────
 
@@ -102,5 +114,214 @@ export function useMessages(
     enabled: !!wabaId && !!convId,
     // Keep data fresh, let real-time updates (SSE) handle new messages
     staleTime: Infinity,
+  });
+}
+
+// ─── Mutation Hook ──────────────────────────────────────────────────
+
+interface SendMessageData {
+  wabaId: string;
+  convId: string;
+  content: string;
+}
+
+/**
+ * useSendMessage
+ * Hook to send a text message to a WhatsApp customer within a conversation.
+ * Manually updates the messages and conversations cache upon success for instant UI feedback.
+ */
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ wabaId, convId, content }: SendMessageData) => {
+      const response = await fetch(
+        `/api/waba/${wabaId}/conversation/${convId}/message`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: content }),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const message = body?.data?.message ?? 'Failed to send message';
+        throw new Error(message);
+      }
+
+      const json = await response.json();
+      return json.data as {
+        message: ChatMessage;
+        conversation: RawConversation;
+      };
+    },
+    onMutate: async ({ convId, content }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
+
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData<
+        InfiniteData<MessageFetchResponse>
+      >(messageKeys.all(convId));
+
+      // Create an optimistic message
+      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticMessage: ChatMessage = {
+        id: optimisticId,
+        messageId: null,
+        conversationId: convId,
+        direction: 'outgoing',
+        source: 'admin',
+        type: 'text',
+        content,
+        mediaUrl: null,
+        mediaMimeType: null,
+        mediaFilename: null,
+        mediaSize: null,
+        status: 'sending',
+        errorMessage: null,
+        metadata: null,
+        timestamp: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
+        messageKeys.all(convId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page, index) => {
+              if (index === 0) {
+                return {
+                  ...page,
+                  messages: [optimisticMessage, ...page.messages],
+                  total: page.total + 1,
+                };
+              }
+              return page;
+            }),
+          };
+        },
+      );
+
+      return { previousMessages, optimisticId };
+    },
+    onError: (err, { convId }, context) => {
+      // Show error toast
+      toast.error(err.message || 'Failed to send message');
+
+      // Instead of rolling back the entire list, just mark the optimistic message as failed
+      if (context?.optimisticId) {
+        queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
+          messageKeys.all(convId),
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                messages: page.messages.map((m) =>
+                  m.id === context.optimisticId
+                    ? { ...m, status: 'failed', errorMessage: err.message }
+                    : m,
+                ),
+              })),
+            };
+          },
+        );
+      }
+    },
+    onSuccess: ({ message, conversation }, { wabaId, convId }, context) => {
+      // 1. Update Messages Timeline Cache
+      queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
+        messageKeys.all(convId),
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            pages: old.pages.map((page, index) => {
+              // Only modify the first page (newest messages)
+              if (index !== 0) return page;
+
+              // Filter out the optimistic message if it exists
+              const filteredMessages = page.messages.filter(
+                (m) => m.id !== context?.optimisticId,
+              );
+
+              // Check if the real message already exists (e.g. from SSE)
+              const exists = filteredMessages.some((m) => m.id === message.id);
+
+              if (exists) {
+                return {
+                  ...page,
+                  messages: filteredMessages,
+                  // total count: if we removed optimistic and real exists, total-1
+                  total: page.total - 1,
+                };
+              }
+
+              return {
+                ...page,
+                messages: [message, ...filteredMessages],
+                // total count: if we replaced optimistic with real, total stays same as after onMutate
+              };
+            }),
+          };
+        },
+      );
+
+      // 2. Update Conversations Sidebar Cache
+      queryClient.setQueryData<{ chats: ChatConversation[]; total: number }>(
+        conversationKeys.all(wabaId),
+        (old) => {
+          if (!old) return old;
+
+          let found = false;
+          const updatedChats = old.chats.map((chat) => {
+            if (chat.id === convId) {
+              found = true;
+              return {
+                ...chat,
+                lastMessage: message,
+                lastMessageAt: message.timestamp,
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            return chat;
+          });
+
+          if (!found) {
+            const newChat = mapRawConversationToChatConversation({
+              ...conversation,
+              messages: [message],
+            });
+
+            return {
+              ...old,
+              chats: [newChat, ...old.chats],
+              total: old.total + 1,
+            };
+          }
+
+          const sortedChats = [...updatedChats].sort((a, b) => {
+            const timeA = a.lastMessageAt
+              ? new Date(a.lastMessageAt).getTime()
+              : 0;
+            const timeB = b.lastMessageAt
+              ? new Date(b.lastMessageAt).getTime()
+              : 0;
+            return timeB - timeA;
+          });
+
+          return { ...old, chats: sortedChats };
+        },
+      );
+    },
   });
 }

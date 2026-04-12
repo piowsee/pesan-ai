@@ -60,7 +60,7 @@ export function ChatDetail({
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
   isSending: boolean;
-  onSend: (content: string) => Promise<void>;
+  onSend: (content: string) => void;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;

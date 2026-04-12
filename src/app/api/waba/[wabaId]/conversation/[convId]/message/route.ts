@@ -31,7 +31,7 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
       message,
     );
 
-    return jsend.success({ message: result });
+    return jsend.success(result);
   },
 );
 

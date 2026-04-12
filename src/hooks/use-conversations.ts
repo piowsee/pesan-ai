@@ -1,5 +1,6 @@
 'use client';
 
+import { isFreeformWindowOpen } from '@/lib/chat';
 import type { ChatConversation } from '@/types/chat';
 import {
   keepPreviousData,
@@ -15,19 +16,19 @@ export const conversationKeys = {
 
 // ─── Types ───────────────────────────────────────────────────────────
 
-interface RawConversation {
+export interface RawConversation {
   id: string;
   customerPhone: string;
   customerName: string | null;
   adminTakeover: boolean;
-  lastMessageAt: string | null;
-  lastCustomerMessageAt: string | null;
+  lastMessageAt: string | Date | null;
+  lastCustomerMessageAt: string | Date | null;
   unreadCount: number;
   status: string;
-  createdAt: string;
-  updatedAt: string;
-  canSendFreeform: boolean;
-  freeformWindowEndsAt: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  canSendFreeform?: boolean;
+  freeformWindowEndsAt: string | Date | null;
   phoneNumber?: {
     id: string;
     displayPhoneNumber: string;
@@ -47,9 +48,43 @@ interface RawConversation {
     status: string;
     errorMessage: string | null;
     metadata: string | null;
-    timestamp: string;
-    createdAt: string;
+    timestamp: string | Date;
+    createdAt: string | Date;
   }> | null;
+}
+
+export function mapRawConversationToChatConversation(
+  chat: RawConversation,
+): ChatConversation {
+  const lastCustomerMessageAt = chat.lastCustomerMessageAt?.toString() || null;
+
+  return {
+    id: chat.id,
+    customerPhone: chat.customerPhone,
+    customerName: chat.customerName,
+    displayName: chat.customerName || chat.customerPhone,
+    adminTakeover: chat.adminTakeover,
+    lastMessageAt: chat.lastMessageAt?.toString() || null,
+    lastCustomerMessageAt,
+    unreadCount: chat.unreadCount,
+    status: chat.status,
+    createdAt: chat.createdAt.toString(),
+    updatedAt: chat.updatedAt.toString(),
+    canSendFreeform: isFreeformWindowOpen(lastCustomerMessageAt),
+    freeformWindowEndsAt: chat.freeformWindowEndsAt?.toString() || null,
+    phoneNumber: {
+      id: chat.phoneNumber?.id ?? '',
+      displayPhoneNumber: chat.phoneNumber?.displayPhoneNumber ?? '',
+    },
+    lastMessage: chat.messages?.[0]
+      ? {
+          ...chat.messages[0],
+          mediaSize: chat.messages[0].mediaSize?.toString() ?? null,
+          timestamp: chat.messages[0].timestamp.toString(),
+          createdAt: chat.messages[0].createdAt.toString(),
+        }
+      : null,
+  };
 }
 
 // ─── API Functions ───────────────────────────────────────────────────
@@ -69,31 +104,9 @@ async function fetchAllConversations(
   const json = await response.json();
   const rawChats: RawConversation[] = json.data?.chats ?? [];
 
-  const chats: ChatConversation[] = rawChats.map((chat) => ({
-    id: chat.id,
-    customerPhone: chat.customerPhone,
-    customerName: chat.customerName,
-    displayName: chat.customerName || chat.customerPhone,
-    adminTakeover: chat.adminTakeover,
-    lastMessageAt: chat.lastMessageAt || null,
-    lastCustomerMessageAt: chat.lastCustomerMessageAt || null,
-    unreadCount: chat.unreadCount,
-    status: chat.status,
-    createdAt: chat.createdAt,
-    updatedAt: chat.updatedAt,
-    canSendFreeform: chat.canSendFreeform,
-    freeformWindowEndsAt: chat.freeformWindowEndsAt || null,
-    phoneNumber: {
-      id: chat.phoneNumber?.id ?? '',
-      displayPhoneNumber: chat.phoneNumber?.displayPhoneNumber ?? '',
-    },
-    lastMessage: chat.messages?.[0]
-      ? {
-          ...chat.messages[0],
-          mediaSize: chat.messages[0].mediaSize?.toString() ?? null,
-        }
-      : null,
-  }));
+  const chats: ChatConversation[] = rawChats.map(
+    mapRawConversationToChatConversation,
+  );
 
   return {
     chats,

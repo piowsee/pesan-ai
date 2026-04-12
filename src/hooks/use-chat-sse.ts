@@ -4,7 +4,11 @@ import type { ChatConversation, ChatMessage } from '@/types/chat';
 import { type InfiniteData, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 
-import { conversationKeys } from './use-conversations';
+import {
+  type RawConversation,
+  conversationKeys,
+  mapRawConversationToChatConversation,
+} from './use-conversations';
 import { messageKeys } from './use-message';
 
 interface UseChatSSEOptions {
@@ -13,6 +17,7 @@ interface UseChatSSEOptions {
 
 interface SSEMessagePayload extends ChatMessage {
   wabaId: string;
+  conversation: RawConversation;
 }
 
 export function useChatSSE({ viewingConversationId }: UseChatSSEOptions) {
@@ -34,7 +39,7 @@ export function useChatSSE({ viewingConversationId }: UseChatSSEOptions) {
     const eventSource = new EventSource('/api/sse');
 
     const handleNewMessage = (payload: SSEMessagePayload) => {
-      const { wabaId, conversationId, ...newMessage } = payload;
+      const { wabaId, conversationId, conversation, ...newMessage } = payload;
 
       // 1. Update Messages Timeline Cache
       queryClient.setQueryData(
@@ -55,6 +60,12 @@ export function useChatSSE({ viewingConversationId }: UseChatSSEOptions) {
             ...old,
             pages: old.pages.map((page, index) => {
               if (index === 0) {
+                // Check if message already exists (e.g. added by useSendMessage)
+                const exists = page.messages.some(
+                  (m) => m.id === newMessage.id,
+                );
+                if (exists) return page;
+
                 return {
                   ...page,
                   messages: [newMessage, ...page.messages],
@@ -92,10 +103,17 @@ export function useChatSSE({ viewingConversationId }: UseChatSSEOptions) {
           });
 
           if (!found) {
-            queryClient.invalidateQueries({
-              queryKey: conversationKeys.all(wabaId),
+            // Instead of invalidating, construct and add the new conversation
+            const newChat = mapRawConversationToChatConversation({
+              ...conversation,
+              messages: [{ ...newMessage, conversationId }],
             });
-            return old;
+
+            return {
+              ...old,
+              chats: [newChat, ...old.chats],
+              total: old.total + 1,
+            };
           }
 
           const sortedChats = [...updatedChats].sort((a, b) => {

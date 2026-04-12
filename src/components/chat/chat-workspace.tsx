@@ -8,7 +8,7 @@ import { WabaSwitcher } from '@/components/chat/waba-switcher';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import { useConversations } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useMessages } from '@/hooks/use-message';
+import { useMessages, useSendMessage } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
@@ -126,15 +126,19 @@ export function ChatWorkspace() {
     setIsContactInfoOpen(false);
   }, []);
 
-  const handleSendMessage = useCallback(
-    async (content: string) => {
-      if (!selectedConversationId) return;
+  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
 
-      // TODO: Implement real sendMessage mutation with TanStack Query
-      // For now, we rely on SSE to update the UI once the backend processes the message.
-      console.log('Sending message:', content);
+  const handleSendMessage = useCallback(
+    (content: string) => {
+      if (!selectedConversationId || !activeWabaId) return;
+
+      sendMessage({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+        content,
+      });
     },
-    [selectedConversationId],
+    [activeWabaId, selectedConversationId, sendMessage],
   );
 
   // ── Render ──
@@ -192,7 +196,7 @@ export function ChatWorkspace() {
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               onLoadOlder={() => fetchNextPage()}
-              isSending={false}
+              isSending={isSending}
               onSend={handleSendMessage}
               showBackButton={showMobileDetail}
               onBack={() => {
