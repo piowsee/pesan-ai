@@ -1,4 +1,4 @@
-import { logError, logger } from '@/logger/logger';
+import { logError, logger } from '@/lib/logger';
 import CryptoJS from 'crypto-js';
 
 /**
