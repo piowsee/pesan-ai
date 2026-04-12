@@ -5,7 +5,9 @@ import type { ChatConversation } from '@/types/chat';
 import {
   keepPreviousData,
   queryOptions,
+  useMutation,
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 
 // ─── Query Keys ──────────────────────────────────────────────────────
@@ -132,5 +134,67 @@ export function useConversations(wabaId: string | undefined) {
   return useQuery({
     ...conversationQueries.all(wabaId || ''),
     enabled: !!wabaId,
+  });
+}
+
+// ─── Mutations ──────────────────────────────────────────────────────
+
+interface MarkAsReadData {
+  wabaId: string;
+  convId: string;
+}
+
+export function useMarkAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ wabaId, convId }: MarkAsReadData) => {
+      const response = await fetch(
+        `/api/waba/${wabaId}/conversation/${convId}/read`,
+        { method: 'PATCH' },
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const message =
+          body?.data?.message ?? 'Failed to mark conversation as read';
+        throw new Error(message);
+      }
+
+      return response.json();
+    },
+    onMutate: async ({ wabaId, convId }) => {
+      await queryClient.cancelQueries({
+        queryKey: conversationKeys.all(wabaId),
+      });
+
+      const previous = queryClient.getQueryData<{
+        chats: ChatConversation[];
+        total: number;
+      }>(conversationKeys.all(wabaId));
+
+      queryClient.setQueryData<{ chats: ChatConversation[]; total: number }>(
+        conversationKeys.all(wabaId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            chats: old.chats.map((chat) =>
+              chat.id === convId ? { ...chat, unreadCount: 0 } : chat,
+            ),
+          };
+        },
+      );
+
+      return { previous };
+    },
+    onError: (_err, { wabaId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          conversationKeys.all(wabaId),
+          context.previous,
+        );
+      }
+    },
   });
 }

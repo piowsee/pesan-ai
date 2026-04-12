@@ -6,7 +6,7 @@ import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
 import { useChatSSE } from '@/hooks/use-chat-sse';
-import { useConversations } from '@/hooks/use-conversations';
+import { useConversations, useMarkAsRead } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useMessages, useSendMessage } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
@@ -120,11 +120,25 @@ export function ChatWorkspace() {
 
   const showMobileDetail = Boolean(selectedConversationId);
 
-  // ── Handlers ──
-  const handleSelectConversation = useCallback((conversationId: string) => {
-    setSelectedConversationId(conversationId);
-    setIsContactInfoOpen(false);
-  }, []);
+  const { mutate: markAsRead } = useMarkAsRead();
+
+  const handleSelectConversation = useCallback(
+    (conversationId: string) => {
+      setSelectedConversationId(conversationId);
+      setIsContactInfoOpen(false);
+
+      // Mark as read in database + optimistic UI update
+      if (activeWabaId) {
+        const conversation = allConversations.find(
+          (c) => c.id === conversationId,
+        );
+        if (conversation && conversation.unreadCount > 0) {
+          markAsRead({ wabaId: activeWabaId, convId: conversationId });
+        }
+      }
+    },
+    [activeWabaId, allConversations, markAsRead],
+  );
 
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
 

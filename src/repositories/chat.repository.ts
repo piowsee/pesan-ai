@@ -56,6 +56,36 @@ export const ChatRepository = {
     });
   },
 
+  async markConversationAsRead(convId: string, userId: string) {
+    return prisma.$transaction(async (tx) => {
+      const conversation = await tx.conversation.findFirst({
+        where: {
+          id: convId,
+          phoneNumber: { waba: { userId } },
+        },
+        select: { id: true, unreadCount: true, phoneNumberId: true },
+      });
+
+      if (!conversation || conversation.unreadCount === 0) {
+        return { updated: false };
+      }
+
+      await tx.conversation.update({
+        where: { id: convId },
+        data: { unreadCount: 0 },
+      });
+
+      await tx.phoneNumber.update({
+        where: { id: conversation.phoneNumberId },
+        data: {
+          unreadCount: { decrement: conversation.unreadCount },
+        },
+      });
+
+      return { updated: true };
+    });
+  },
+
   async findPhoneNumberByMetaId(metaPhoneNumberId: string) {
     return prisma.phoneNumber.findUnique({
       where: { phoneNumberId: metaPhoneNumberId },

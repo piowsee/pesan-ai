@@ -35,6 +35,22 @@ export const ChatService = {
     }
   },
 
+  async markAsRead(convId: string, userId: string) {
+    logger.info('Marking conversation as read', { convId, userId });
+
+    try {
+      const result = await ChatRepository.markConversationAsRead(
+        convId,
+        userId,
+      );
+      logger.info('Mark as read completed', { convId, userId, ...result });
+      return result;
+    } catch (err) {
+      logError(err, { action: 'markAsRead', convId, userId });
+      throw err;
+    }
+  },
+
   async processMetaWebhookPayload(payload: unknown) {
     logger.info('Processing Meta Webhook payload in ChatService');
 
