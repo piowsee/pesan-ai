@@ -11,9 +11,18 @@ export const SSE_EVENTS = {
  */
 class GlobalEventBus extends EventEmitter {}
 
-const eventBus = new GlobalEventBus();
+// ─── Singleton Pattern for Next.js ──────────────────────────────────
+// HMR creates new instances of local variables. We store the bus on
+// the global object to keep the same instance across hot reloads.
+const globalForEventBus = global as unknown as { eventBus: GlobalEventBus };
 
-eventBus.setMaxListeners(10);
+const eventBus = globalForEventBus.eventBus ?? new GlobalEventBus();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForEventBus.eventBus = eventBus;
+}
+
+eventBus.setMaxListeners(20);
 
 /**
  * Standardizes the event name for a specific user to enable targeted subscriptions.
