@@ -1,4 +1,5 @@
 import { QueryProvider } from '@/components/query-provider';
+import { RealtimeProvider } from '@/components/realtime-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Metadata } from 'next';
@@ -35,7 +36,9 @@ export default function RootLayout({
         className={`font-sans ${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}
       >
         <QueryProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          <RealtimeProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </RealtimeProvider>
         </QueryProvider>
         <Toaster />
       </body>
