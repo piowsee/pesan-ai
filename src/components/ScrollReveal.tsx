@@ -8,6 +8,7 @@ type ScrollRevealProps = {
   className?: string;
   delay?: number;
   distance?: number;
+  onRevealComplete?: () => void;
 };
 
 export function ScrollReveal({
@@ -15,9 +16,11 @@ export function ScrollReveal({
   className,
   delay = 0,
   distance = 28,
+  onRevealComplete,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const hasNotifiedCompleteRef = useRef(false);
 
   useEffect(() => {
     const element = ref.current;
@@ -45,6 +48,21 @@ export function ScrollReveal({
       observer.disconnect();
     };
   }, []);
+
+  useEffect(() => {
+    if (!isVisible || hasNotifiedCompleteRef.current || !onRevealComplete) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      hasNotifiedCompleteRef.current = true;
+      onRevealComplete();
+    }, delay + 700);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [delay, isVisible, onRevealComplete]);
 
   return (
     <div
