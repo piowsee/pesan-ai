@@ -52,7 +52,7 @@ export function Footer() {
           >
             <Link
               href="/"
-              className="inline-flex w-fit items-center gap-2 pointer-events-auto"
+              className="-mt-2 inline-flex w-fit items-center gap-2 pointer-events-auto"
             >
               <Image
                 src="/pesan-ai-black-logo.png"
