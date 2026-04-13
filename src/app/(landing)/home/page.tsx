@@ -1,17 +1,14 @@
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { Hero } from '@/components/landing/hero';
-import { auth } from '@/lib/auth/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 
-export default async function HomePage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+export const metadata: Metadata = {
+  title: 'Landing Page',
+  description: 'Welcome to the landing page of pesan-ai.',
+};
 
-  if (session?.user) {
-    redirect('/dashboard');
-  }
-
+export default function LandingRoutePage() {
   return (
     <div className="min-h-screen bg-background font-sans">
       <Navbar />
