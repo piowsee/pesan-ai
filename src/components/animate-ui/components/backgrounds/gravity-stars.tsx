@@ -283,21 +283,6 @@ function GravityStarsBackground({
     [dpr, glowIntensity, readColor],
   );
 
-  const animate = React.useCallback(() => {
-    function tick() {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      updateStars();
-      drawStars(ctx);
-      animRef.current = requestAnimationFrame(tick);
-    }
-
-    tick();
-  }, [updateStars, drawStars]);
-
   React.useEffect(() => {
     resizeCanvas();
     const container = containerRef.current;
@@ -337,6 +322,41 @@ function GravityStarsBackground({
     canvasSize.height,
     initStars,
   ]);
+
+  const isVisibleRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisibleRef.current = entry.isIntersecting;
+      },
+      { threshold: 0 },
+    );
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const animate = React.useCallback(() => {
+    function tick() {
+      const canvas = canvasRef.current;
+      if (isVisibleRef.current && canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          updateStars();
+          drawStars(ctx);
+        }
+      }
+      animRef.current = requestAnimationFrame(tick);
+    }
+
+    tick();
+  }, [updateStars, drawStars]);
 
   React.useEffect(() => {
     if (animRef.current) cancelAnimationFrame(animRef.current);
