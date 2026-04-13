@@ -96,7 +96,10 @@ export function FAQSection() {
     <section id="faq" className="bg-background py-20 sm:py-24">
       <Container>
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
-          <ScrollReveal className="max-w-xl lg:pt-1" distance={24}>
+          <ScrollReveal
+            className="max-w-xl lg:sticky lg:top-28 lg:self-start lg:pt-1"
+            distance={24}
+          >
             <p className="text-sm font-semibold tracking-[0.18em] text-brand/70">
               {copy.title}
             </p>

@@ -3,10 +3,14 @@
 import { Container } from '@/components/Container';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
+import { Highlighter } from '@/components/ui/highlighter';
+import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
+import { Meteors } from '@/components/ui/meteors';
 import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const heroCopy = {
   id: {
@@ -37,6 +41,25 @@ export function Hero() {
   const pathname = usePathname();
   const locale = getLocaleFromPathname(pathname);
   const copy = heroCopy[locale];
+  const consultationHref = 'https://wa.me/6285129646215';
+  const [descriptionStart, descriptionEnd = ''] =
+    copy.description.split('24/7');
+  const [showOtomatisHighlight, setShowOtomatisHighlight] = useState(false);
+  const [show247Highlight, setShow247Highlight] = useState(false);
+
+  useEffect(() => {
+    if (!showOtomatisHighlight) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setShow247Highlight(true);
+    }, 700);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [showOtomatisHighlight]);
 
   return (
     <section className="bg-background font-sans">
@@ -51,7 +74,18 @@ export function Hero() {
             priority
             className="h-full w-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-black/30" />
+          <div className="pointer-events-none absolute inset-0 overflow-hidden mask-[linear-gradient(to_bottom,white,white,transparent_92%)]">
+            <Meteors
+              number={18}
+              minDelay={0.5}
+              maxDelay={2}
+              minDuration={4}
+              maxDuration={9}
+              angle={215}
+              className="bg-white/80 opacity-70 shadow-[0_0_0_1px_#ffffff60] [&>div]:from-white/75"
+            />
+          </div>
+          <div className="absolute inset-0 bg-black/60" />
         </div>
 
         <Container className="relative z-10 flex min-h-dvh flex-col items-center px-4 pt-30 pb-12 sm:px-8 lg:pb-20">
@@ -69,9 +103,52 @@ export function Hero() {
               className="text-2xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl lg:text-[3.35rem]"
               delay={80}
               distance={24}
+              onRevealComplete={() => {
+                setShowOtomatisHighlight(true);
+              }}
             >
               <h1>
-                <span className="block">{copy.titleLineOne}</span>
+                <span className="block">
+                  {locale === 'id' ? (
+                    <>
+                      AI Balas Chat{' '}
+                      {showOtomatisHighlight ? (
+                        <Highlighter
+                          action="underline"
+                          color="#ffffff"
+                          strokeWidth={2.2}
+                          animationDuration={700}
+                          iterations={4}
+                        >
+                          Otomatis
+                        </Highlighter>
+                      ) : (
+                        'Otomatis'
+                      )}
+                      ,
+                    </>
+                  ) : locale === 'en' ? (
+                    <>
+                      AI Handles Your{' '}
+                      {showOtomatisHighlight ? (
+                        <Highlighter
+                          action="underline"
+                          color="#ffffff"
+                          strokeWidth={2.2}
+                          animationDuration={700}
+                          iterations={4}
+                        >
+                          Replies
+                        </Highlighter>
+                      ) : (
+                        'Replies'
+                      )}
+                      ,
+                    </>
+                  ) : (
+                    copy.titleLineOne
+                  )}
+                </span>
                 <span className="mt-2 block lg:whitespace-nowrap">
                   {copy.titleLineTwo}
                 </span>
@@ -83,7 +160,23 @@ export function Hero() {
               delay={180}
               distance={24}
             >
-              <p>{copy.description}</p>
+              <p>
+                {descriptionStart}
+                {show247Highlight ? (
+                  <Highlighter
+                    action="highlight"
+                    color="#475569"
+                    strokeWidth={2}
+                    animationDuration={700}
+                    iterations={1}
+                  >
+                    24/7
+                  </Highlighter>
+                ) : (
+                  '24/7'
+                )}
+                {descriptionEnd}
+              </p>
             </ScrollReveal>
 
             <ScrollReveal
@@ -94,25 +187,24 @@ export function Hero() {
               <Button
                 asChild
                 size="lg"
-                variant="brand"
-                className="h-11 w-full rounded-md px-5 text-sm sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
-              >
-                <a
-                  href="https://wa.me/6285129646215"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {copy.consultation}
-                </a>
-              </Button>
-              <Button
-                asChild
-                size="lg"
                 variant="outline"
-                className="h-11 w-full rounded-md border-white/70 bg-transparent px-5 text-sm text-white hover:bg-transparent hover:text-white/85 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
+                className="h-11 w-full rounded-md border-white/70 bg-transparent px-8 text-sm text-white hover:bg-transparent hover:text-white/85 sm:h-12 sm:w-auto sm:rounded-full sm:px-10 sm:text-base"
               >
                 <Link href={toLocalePath(locale, '/login')}>{copy.login}</Link>
               </Button>
+              <InteractiveHoverButton
+                type="button"
+                className="h-11 w-full rounded-md border-0 bg-white px-5 text-sm text-zinc-900 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
+                onClick={() => {
+                  window.open(
+                    consultationHref,
+                    '_blank',
+                    'noopener,noreferrer',
+                  );
+                }}
+              >
+                {copy.consultation}
+              </InteractiveHoverButton>
             </ScrollReveal>
           </div>
 
