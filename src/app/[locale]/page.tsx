@@ -1,5 +1,6 @@
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
+import { FAQSection } from '@/components/landing/faq-section';
 import { Hero } from '@/components/landing/hero';
 import { auth } from '@/lib/auth/auth';
 import { isAppLocale } from '@/lib/locale';
@@ -42,6 +43,7 @@ export default async function LocalizedHomePage({ params }: LocalePageProps) {
       <Navbar />
       <main>
         <Hero />
+        <FAQSection />
       </main>
       <Footer />
     </div>
