@@ -5,40 +5,103 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authClient } from '@/lib/auth/auth-client';
+import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-// ─── Schema ──────────────────────────────────────────────────────────
+const loginFormCopy = {
+  id: {
+    labels: {
+      password: 'Kata Sandi',
+      agreePrefix: 'Saya menyetujui',
+      terms: 'Syarat Layanan',
+      and: 'dan',
+      privacy: 'Kebijakan Privasi',
+      submit: 'Masuk',
+      submitting: 'Memproses...',
+      passwordPlaceholder: 'Masukkan kata sandi Anda',
+      hidePassword: 'Sembunyikan kata sandi',
+      showPassword: 'Tampilkan kata sandi',
+    },
+    errors: {
+      invalidEmail: 'Format email tidak valid',
+      passwordRequired: 'Kata sandi wajib diisi',
+      passwordLength: 'Kata sandi minimal 8 karakter',
+      termsRequired: 'Anda harus menyetujui Syarat dan Privasi untuk lanjut',
+      invalidCredentials: 'Email atau kata sandi tidak valid.',
+      unknownError: 'Terjadi kesalahan saat login. Silakan coba lagi.',
+    },
+  },
+  en: {
+    labels: {
+      password: 'Password',
+      agreePrefix: 'I agree to the',
+      terms: 'Terms of Service',
+      and: 'and',
+      privacy: 'Privacy Policy',
+      submit: 'Login',
+      submitting: 'Processing...',
+      passwordPlaceholder: 'Enter your password',
+      hidePassword: 'Hide password',
+      showPassword: 'Show password',
+    },
+    errors: {
+      invalidEmail: 'Invalid email format',
+      passwordRequired: 'Password is required',
+      passwordLength: 'Password must be at least 8 characters',
+      termsRequired: 'You need to agree to the Terms and Privacy to continue',
+      invalidCredentials: 'Invalid email or password.',
+      unknownError: 'An error occurred during login. Please try again.',
+    },
+  },
+} as const;
 
-const loginSchema = z.object({
-  email: z.email('Invalid email format'),
-  password: z
-    .string()
-    .min(1, 'Password is required')
-    .min(8, 'Password must be at least 8 characters'),
-  terms: z.boolean().refine((val) => val === true, {
-    message: 'You need to agree to the Terms and Privacy to continue',
-  }),
-});
+type LoginFormCopy = (typeof loginFormCopy)[keyof typeof loginFormCopy];
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+function createLoginSchema(copy: LoginFormCopy) {
+  return z.object({
+    email: z.email(copy.errors.invalidEmail),
+    password: z
+      .string()
+      .min(1, copy.errors.passwordRequired)
+      .min(8, copy.errors.passwordLength),
+    terms: z.boolean().refine((val) => val === true, {
+      message: copy.errors.termsRequired,
+    }),
+  });
+}
 
-// ─── Component ───────────────────────────────────────────────────────
+type LoginFormValues = {
+  email: string;
+  password: string;
+  terms: boolean;
+};
+
+// Component
 
 export function LoginForm() {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = loginFormCopy[locale];
+
+  const termsHref = toLocalePath(locale, '/terms');
+  const privacyHref = toLocalePath(locale, '/privacy');
+
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const schema = useMemo(() => createLoginSchema(copy), [copy]);
+
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       email: '',
       password: '',
@@ -58,7 +121,7 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        setFormError(result.error.message || 'Invalid email or password.');
+        setFormError(result.error.message || copy.errors.invalidCredentials);
         return;
       }
 
@@ -67,7 +130,7 @@ export function LoginForm() {
       const redirectTo = isAdmin ? '/admin' : '/dashboard';
       router.push(redirectTo);
     } catch {
-      setFormError('An error occurred during login. Please try again.');
+      setFormError(copy.errors.unknownError);
     } finally {
       setIsPending(false);
     }
@@ -102,7 +165,7 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{copy.labels.password}</Label>
         <div className="relative">
           <Input
             id="password"
@@ -115,7 +178,7 @@ export function LoginForm() {
               form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
-            placeholder="Enter your password"
+            placeholder={copy.labels.passwordPlaceholder}
           />
           <Button
             type="button"
@@ -123,7 +186,9 @@ export function LoginForm() {
             size="icon"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute inset-y-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground hover:bg-transparent"
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-label={
+              showPassword ? copy.labels.hidePassword : copy.labels.showPassword
+            }
           >
             {showPassword ? (
               <EyeOff className="size-4" />
@@ -157,23 +222,23 @@ export function LoginForm() {
             htmlFor="terms"
             className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground select-none"
           >
-            I agree to the{' '}
+            {copy.labels.agreePrefix}{' '}
             <Link
-              href="/terms"
+              href={termsHref}
               className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Terms of Service
+              {copy.labels.terms}
             </Link>{' '}
-            and{' '}
+            {copy.labels.and}{' '}
             <Link
-              href="/privacy"
+              href={privacyHref}
               className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
               target="_blank"
               rel="noopener noreferrer"
             >
-              Privacy Policy
+              {copy.labels.privacy}
             </Link>
             .
           </Label>
@@ -199,7 +264,7 @@ export function LoginForm() {
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
         ) : null}
-        {isPending ? 'Processing...' : 'Login'}
+        {isPending ? copy.labels.submitting : copy.labels.submit}
       </Button>
     </form>
   );

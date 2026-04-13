@@ -1,9 +1,29 @@
+'use client';
+
 import { MetaTechPartner } from '@/components/auth/meta-tech-partner';
-import { Mail, MessageCircle } from 'lucide-react';
+import { getLocaleFromPathname } from '@/lib/locale';
+import { Mail } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { FaWhatsapp } from 'react-icons/fa';
+
+const loginBrandPanelCopy = {
+  id: {
+    headline:
+      'Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI.',
+  },
+  en: {
+    headline:
+      'Boost your business efficiency through WhatsApp chat automation with AI support.',
+  },
+} as const;
 
 export function LoginBrandPanel() {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = loginBrandPanelCopy[locale];
+
   return (
     <section className="relative hidden min-h-svh overflow-hidden lg:flex">
       <div
@@ -29,8 +49,7 @@ export function LoginBrandPanel() {
 
         <div className="my-auto max-w-2xl space-y-6">
           <p className="text-[38px] leading-[1.3] font-bold text-white">
-            Boost your business efficiency through WhatsApp chat automation with
-            AI support.
+            {copy.headline}
           </p>
           <MetaTechPartner />
         </div>
@@ -49,7 +68,7 @@ export function LoginBrandPanel() {
             rel="noopener noreferrer"
             className="inline-flex w-fit items-center gap-2 transition-colors hover:text-white cursor-pointer"
           >
-            <MessageCircle className="size-5 text-xs" />
+            <FaWhatsapp className="size-5" />
             <span className="text-xs">+62 851 9556 3454</span>
           </Link>
         </div>

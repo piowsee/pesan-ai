@@ -1,10 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Container } from './Container';
@@ -16,12 +18,32 @@ const languageOptions = [
 
 type LanguageCode = (typeof languageOptions)[number]['value'];
 
+const navbarCopy = {
+  id: {
+    login: 'Masuk',
+    consultation: 'Konsultasi Sekarang',
+    openMenu: 'Buka menu',
+    closeMenu: 'Tutup menu',
+  },
+  en: {
+    login: 'Login',
+    consultation: 'Book a Consultation',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+  },
+} as const;
+
 type LanguageDropdownProps = {
   scrolled: boolean;
+  locale: LanguageCode;
+  onLanguageChange: (lang: LanguageCode) => void;
 };
 
-function LanguageDropdown({ scrolled }: LanguageDropdownProps) {
-  const [language, setLanguage] = useState<LanguageCode>('id');
+function LanguageDropdown({
+  scrolled,
+  locale,
+  onLanguageChange,
+}: LanguageDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -52,7 +74,7 @@ function LanguageDropdown({ scrolled }: LanguageDropdownProps) {
   }, [clearCloseTimeout]);
 
   const activeLanguage =
-    languageOptions.find((option) => option.value === language)?.label ??
+    languageOptions.find((option) => option.value === locale)?.label ??
     'Indonesia';
 
   return (
@@ -95,12 +117,12 @@ function LanguageDropdown({ scrolled }: LanguageDropdownProps) {
             role="menuitem"
             className={cn(
               'block w-full px-4 py-2.5 text-left text-sm font-medium transition-colors',
-              language === option.value
+              locale === option.value
                 ? 'text-brand'
                 : 'text-brand/50 hover:text-brand focus:text-brand',
             )}
             onClick={() => {
-              setLanguage(option.value);
+              onLanguageChange(option.value);
               setIsOpen(false);
             }}
           >
@@ -179,9 +201,33 @@ function MobileLanguageSelect({
 }
 
 export function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const currentLocale = getLocaleFromPathname(pathname);
+  const copy = navbarCopy[currentLocale];
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileLanguage, setMobileLanguage] = useState<LanguageCode>('id');
+  const [mobileLanguage, setMobileLanguage] =
+    useState<LanguageCode>(currentLocale);
+
+  useEffect(() => {
+    setMobileLanguage(currentLocale);
+  }, [currentLocale]);
+
+  const homeHref = toLocalePath(currentLocale, '/');
+  const loginHref = toLocalePath(currentLocale, '/login');
+
+  const handleLanguageChange = useCallback(
+    (nextLocale: LanguageCode) => {
+      const currentPath = pathname ?? '/';
+      const nextPath = toLocalePath(nextLocale, currentPath);
+
+      setMobileLanguage(nextLocale);
+      router.push(nextPath);
+    },
+    [pathname, router],
+  );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -208,12 +254,12 @@ export function Navbar() {
       >
         <Container className="flex h-18 items-center justify-between gap-4">
           <Link
-            href="/"
+            href={homeHref}
             className="inline-flex items-center gap-2"
             draggable={false}
             onClick={(event) => {
               event.preventDefault();
-              window.location.assign('/');
+              window.location.assign(homeHref);
             }}
           >
             <Image
@@ -241,10 +287,14 @@ export function Navbar() {
 
           {/* Desktop nav */}
           <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
-            <LanguageDropdown scrolled={scrolled} />
+            <LanguageDropdown
+              scrolled={scrolled}
+              locale={currentLocale}
+              onLanguageChange={handleLanguageChange}
+            />
 
             <Link
-              href="/login"
+              href={loginHref}
               className={cn(
                 'inline-flex h-9 items-center px-2 text-sm font-semibold transition-colors',
                 scrolled
@@ -252,7 +302,7 @@ export function Navbar() {
                   : 'text-white/85 hover:text-white',
               )}
             >
-              Masuk
+              {copy.login}
             </Link>
 
             <Button
@@ -266,7 +316,7 @@ export function Navbar() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Konsultasi Sekarang
+                {copy.consultation}
               </a>
             </Button>
           </div>
@@ -274,7 +324,7 @@ export function Navbar() {
           {/* Mobile hamburger */}
           <button
             type="button"
-            aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
+            aria-label={mobileMenuOpen ? copy.closeMenu : copy.openMenu}
             className={cn(
               'inline-flex size-10 items-center justify-center rounded-lg transition-colors md:hidden',
               scrolled || mobileMenuOpen
@@ -305,7 +355,7 @@ export function Navbar() {
         <nav className="mx-auto flex w-full max-w-md flex-col gap-4 px-5 py-6">
           <MobileLanguageSelect
             language={mobileLanguage}
-            onLanguageChange={setMobileLanguage}
+            onLanguageChange={handleLanguageChange}
           />
 
           <Button
@@ -314,8 +364,8 @@ export function Navbar() {
             variant="outline"
             className="h-12 w-full rounded-sm border-brand/25 bg-transparent text-base font-semibold text-brand hover:bg-brand/10"
           >
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              Masuk
+            <Link href={loginHref} onClick={() => setMobileMenuOpen(false)}>
+              {copy.login}
             </Link>
           </Button>
 
@@ -331,7 +381,7 @@ export function Navbar() {
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Konsultasi Sekarang
+              {copy.consultation}
             </a>
           </Button>
         </nav>

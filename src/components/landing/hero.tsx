@@ -2,18 +2,49 @@
 
 import { Container } from '@/components/Container';
 import { Button } from '@/components/ui/button';
+import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const heroCopy = {
+  id: {
+    badge: 'AI Agent WhatsApp Custom #1 Sesuai Kebutuhan Bisnismu',
+    titleLineOne: 'AI Balas Chat Otomatis,',
+    titleLineTwo: 'Booking Tanpa Ribet',
+    description:
+      'AI WhatsApp Agent yang menjawab pelanggan dan mengatur booking secara otomatis 24/7.',
+    consultation: 'Konsultasi Sekarang',
+    login: 'Masuk',
+    heroAlt: 'Latar suasana malam untuk hero section Pesan AI',
+    demoAlt: 'Demo produk Pesan AI',
+  },
+  en: {
+    badge: 'Custom #1 WhatsApp AI Agent for Your Business Needs',
+    titleLineOne: 'AI Handles Your Replies,',
+    titleLineTwo: 'Bookings Made Effortless',
+    description:
+      'A WhatsApp AI agent that replies to customers and schedules bookings automatically 24/7.',
+    consultation: 'Book a Consultation',
+    login: 'Login',
+    heroAlt: 'Night atmosphere background for Pesan AI hero section',
+    demoAlt: 'Pesan AI product demo',
+  },
+} as const;
 
 export function Hero() {
+  const pathname = usePathname();
+  const locale = getLocaleFromPathname(pathname);
+  const copy = heroCopy[locale];
+
   return (
     <section className="bg-background font-sans">
       <div className="relative isolate overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src="/landing/hero.jpg"
-            alt="Latar suasana malam untuk hero section Pesan AI"
+            alt={copy.heroAlt}
             width={1440}
             height={2560}
             sizes="100vw"
@@ -32,7 +63,7 @@ export function Hero() {
               className="mb-4 flex justify-center sm:mb-5"
             >
               <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-2 text-[11px] font-medium leading-snug tracking-wide text-white/90 backdrop-blur-sm sm:px-4 sm:py-2 sm:text-sm">
-                AI Agent WhatsApp Custom #1 Sesuai Kebutuhan Bisnismu
+                {copy.badge}
               </span>
             </motion.div>
 
@@ -42,9 +73,9 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.08, ease: 'easeOut' }}
               className="text-2xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl lg:text-[3.35rem]"
             >
-              <span className="block">AI Balas Chat Otomatis,</span>
+              <span className="block">{copy.titleLineOne}</span>
               <span className="mt-2 block lg:whitespace-nowrap">
-                Booking Tanpa Ribet
+                {copy.titleLineTwo}
               </span>
             </motion.h1>
 
@@ -54,8 +85,7 @@ export function Hero() {
               transition={{ duration: 0.48, delay: 0.18, ease: 'easeOut' }}
               className="mx-auto mt-4 max-w-4xl text-pretty text-sm leading-relaxed text-white/90 sm:mt-6 sm:text-base md:text-lg"
             >
-              AI WhatsApp Agent yang menjawab pelanggan dan mengatur booking
-              secara otomatis 24/7.
+              {copy.description}
             </motion.p>
 
             <motion.div
@@ -75,7 +105,7 @@ export function Hero() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Konsultasi Sekarang
+                  {copy.consultation}
                 </a>
               </Button>
               <Button
@@ -84,7 +114,7 @@ export function Hero() {
                 variant="outline"
                 className="h-11 w-full rounded-md border-white/70 bg-transparent px-5 text-sm text-white hover:bg-transparent hover:text-white/85 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
               >
-                <Link href="/login">Masuk</Link>
+                <Link href={toLocalePath(locale, '/login')}>{copy.login}</Link>
               </Button>
             </motion.div>
           </div>
@@ -97,7 +127,7 @@ export function Hero() {
           >
             <Image
               src="/landing/demo-hero.png"
-              alt="Demo produk Pesan AI"
+              alt={copy.demoAlt}
               width={1919}
               height={1079}
               priority

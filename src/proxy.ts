@@ -2,19 +2,23 @@ import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const isProd = process.env.NODE_ENV === 'production';
+const localePrefixRegex = /^\/(id|en)(?=\/|$)/;
 
 export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   const pathName = request.nextUrl.pathname;
+  const localePrefix = pathName.match(localePrefixRegex)?.[0] ?? '/id';
+  const normalizedPath = pathName.replace(localePrefixRegex, '') || '/';
 
-  const isLoginRoute = pathName.startsWith('/login');
+  const isLoginRoute = normalizedPath.startsWith('/login');
   const isProtectedRoute =
-    pathName.startsWith('/dashboard') || pathName.startsWith('/admin');
+    normalizedPath.startsWith('/dashboard') ||
+    normalizedPath.startsWith('/admin');
 
   // Protect secure routes when entirely unauthenticated
   if (!sessionCookie && isProtectedRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
   }
 
   // Auto-redirect authenticated users away from the login page
@@ -53,5 +57,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/:locale/login'],
 };

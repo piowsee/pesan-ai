@@ -1,6 +1,3 @@
-import { Footer } from '@/components/Footer';
-import { Navbar } from '@/components/Navbar';
-import { Hero } from '@/components/landing/hero';
 import { auth } from '@/lib/auth/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -12,13 +9,5 @@ export default async function HomePage() {
     redirect('/dashboard');
   }
 
-  return (
-    <div className="min-h-screen bg-background font-sans">
-      <Navbar />
-      <main>
-        <Hero />
-      </main>
-      <Footer />
-    </div>
-  );
+  redirect('/id');
 }
