@@ -68,6 +68,9 @@ importers:
       react-icons:
         specifier: ^5.6.0
         version: 5.6.0(react@19.2.3)
+      rough-notation:
+        specifier: ^0.5.1
+        version: 0.5.1
       shadcn:
         specifier: ^4.0.8
         version: 4.0.8(@types/node@20.19.37)(typescript@5.9.3)
@@ -4784,6 +4787,9 @@ packages:
 
   rou3@0.7.12:
     resolution: {integrity: sha512-iFE4hLDuloSWcD7mjdCDhx2bKcIsYbtOTpfH5MHHLSKMOUyjqQXTeZVa289uuwEGEKFoE/BAPbhaU4B774nceg==}
+
+  rough-notation@0.5.1:
+    resolution: {integrity: sha512-ITHofTzm13cWFVfoGsh/4c/k2Mg8geKgBCwex71UZLnNuw403tCRjYPQ68jSAd37DMbZIePXPjDgY0XdZi9HPw==}
 
   router@2.2.0:
     resolution: {integrity: sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==}
@@ -10141,6 +10147,8 @@ snapshots:
       - '@emnapi/runtime'
 
   rou3@0.7.12: {}
+
+  rough-notation@0.5.1: {}
 
   router@2.2.0:
     dependencies:
