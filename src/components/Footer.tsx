@@ -1,8 +1,8 @@
 'use client';
 
+import { ScrollReveal } from '@/components/ScrollReveal';
 import { GravityStarsBackground } from '@/components/animate-ui/components/backgrounds/gravity-stars';
 import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
-import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -69,13 +69,7 @@ export function Footer() {
       </div>
 
       <Container className="relative z-10 pointer-events-none pt-12 sm:pt-8">
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.42, ease: 'easeOut' }}
-          className="flex justify-center"
-        >
+        <ScrollReveal className="flex justify-center" distance={20}>
           <div className="inline-flex items-center gap-3 bg-background/40 px-5 py-3 text-brand backdrop-blur-sm sm:px-6">
             <Image
               src="/meta-logo.png"
@@ -88,15 +82,13 @@ export function Footer() {
               {copy.metaPartner}
             </span>
           </div>
-        </motion.div>
+        </ScrollReveal>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_auto]">
-          <motion.div
-            initial={{ y: 24, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.48, delay: 0.08, ease: 'easeOut' }}
+          <ScrollReveal
             className="flex flex-col items-center gap-5 text-center lg:items-start lg:text-left"
+            delay={80}
+            distance={22}
           >
             <Link
               href={homeHref}
@@ -128,15 +120,13 @@ export function Footer() {
               <FaWhatsapp className="size-5" />
               <span className="text-base">WhatsApp</span>
             </a>
-          </motion.div>
+          </ScrollReveal>
 
           {/* 3-column links: all left-aligned, evenly spaced */}
-          <motion.div
-            initial={{ y: 24, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: 0.48, delay: 0.18, ease: 'easeOut' }}
+          <ScrollReveal
             className="grid grid-cols-2 gap-x-10 gap-y-8 text-base sm:grid-cols-3 sm:gap-x-14 lg:flex lg:gap-20"
+            delay={160}
+            distance={22}
           >
             <div className="flex flex-col gap-3 text-brand/75">
               <p className="text-base font-medium text-brand">{copy.company}</p>
@@ -186,14 +176,18 @@ export function Footer() {
                 {copy.privacy}
               </Link>
             </div>
-          </motion.div>
+          </ScrollReveal>
         </div>
 
-        <p className="mt-10 text-center text-sm text-brand/75">{copy.rights}</p>
+        <ScrollReveal className="mt-10" delay={220} distance={18}>
+          <p className="text-center text-sm text-brand/75">{copy.rights}</p>
+        </ScrollReveal>
 
-        <p className="pointer-events-none mt-2 -mb-2 w-full bg-linear-to-b from-brand/30 to-transparent bg-clip-text text-center text-[clamp(5rem,20vw,18.5rem)] font-semibold leading-[0.9] tracking-tight text-transparent">
-          pesan.ai
-        </p>
+        <ScrollReveal className="mt-2 -mb-2" delay={280} distance={18}>
+          <p className="pointer-events-none w-full bg-linear-to-b from-brand/30 to-transparent bg-clip-text text-center text-[clamp(5rem,20vw,18.5rem)] font-semibold leading-[0.9] tracking-tight text-transparent">
+            pesan.ai
+          </p>
+        </ScrollReveal>
       </Container>
     </footer>
   );

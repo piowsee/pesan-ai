@@ -1,9 +1,9 @@
 'use client';
 
 import { Container } from '@/components/Container';
+import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
-import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -56,43 +56,40 @@ export function Hero() {
 
         <Container className="relative z-10 flex min-h-dvh flex-col items-center px-4 pt-30 pb-12 sm:px-8 lg:pb-20">
           <div className="mx-auto max-w-4xl text-center">
-            <motion.div
-              initial={{ y: 22, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.42, ease: 'easeOut' }}
+            <ScrollReveal
               className="mb-4 flex justify-center sm:mb-5"
+              distance={22}
             >
               <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-2 text-[11px] font-medium leading-snug tracking-wide text-white/90 backdrop-blur-sm sm:px-4 sm:py-2 sm:text-sm">
                 {copy.badge}
               </span>
-            </motion.div>
+            </ScrollReveal>
 
-            <motion.h1
-              initial={{ y: 24, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.08, ease: 'easeOut' }}
+            <ScrollReveal
               className="text-2xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl lg:text-[3.35rem]"
+              delay={80}
+              distance={24}
             >
-              <span className="block">{copy.titleLineOne}</span>
-              <span className="mt-2 block lg:whitespace-nowrap">
-                {copy.titleLineTwo}
-              </span>
-            </motion.h1>
+              <h1>
+                <span className="block">{copy.titleLineOne}</span>
+                <span className="mt-2 block lg:whitespace-nowrap">
+                  {copy.titleLineTwo}
+                </span>
+              </h1>
+            </ScrollReveal>
 
-            <motion.p
-              initial={{ y: 24, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.48, delay: 0.18, ease: 'easeOut' }}
+            <ScrollReveal
               className="mx-auto mt-4 max-w-4xl text-pretty text-sm leading-relaxed text-white/90 sm:mt-6 sm:text-base md:text-lg"
+              delay={180}
+              distance={24}
             >
-              {copy.description}
-            </motion.p>
+              <p>{copy.description}</p>
+            </ScrollReveal>
 
-            <motion.div
-              initial={{ y: 24, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.48, delay: 0.26, ease: 'easeOut' }}
+            <ScrollReveal
               className="mx-auto mt-5 flex w-full max-w-md flex-col items-center gap-2.5 sm:mt-8 sm:max-w-none sm:flex-row sm:justify-center sm:gap-3"
+              delay={260}
+              distance={24}
             >
               <Button
                 asChild
@@ -116,14 +113,13 @@ export function Hero() {
               >
                 <Link href={toLocalePath(locale, '/login')}>{copy.login}</Link>
               </Button>
-            </motion.div>
+            </ScrollReveal>
           </div>
 
-          <motion.div
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.34, ease: 'easeOut' }}
+          <ScrollReveal
             className="mt-8 w-full max-w-5xl overflow-hidden rounded-xl border border-white/25 bg-black/15 shadow-[0_16px_48px_-30px_rgba(255,255,255,0.35)] sm:mt-15 sm:rounded-2xl xl:rounded-3xl"
+            delay={340}
+            distance={30}
           >
             <Image
               src="/landing/demo-hero.png"
@@ -134,7 +130,7 @@ export function Hero() {
               sizes="(max-width: 640px) 94vw, (max-width: 1024px) 90vw, 1100px"
               className="h-auto w-full"
             />
-          </motion.div>
+          </ScrollReveal>
         </Container>
       </div>
     </section>
