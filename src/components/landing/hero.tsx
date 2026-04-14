@@ -85,7 +85,7 @@ export function Hero() {
               className="bg-white/80 opacity-70 shadow-[0_0_0_1px_#ffffff60] [&>div]:from-white/75"
             />
           </div>
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-black/20" />
         </div>
 
         <Container className="relative z-10 flex min-h-dvh flex-col items-center px-4 pt-30 pb-12 sm:px-8 lg:pb-20">

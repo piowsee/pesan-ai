@@ -1,6 +1,6 @@
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
-import { FAQSection } from '@/components/landing/faq-section';
+import { FAQSection } from '@/components/landing/faq';
 import { Hero } from '@/components/landing/hero';
 import { auth } from '@/lib/auth/auth';
 import { isAppLocale } from '@/lib/locale';
