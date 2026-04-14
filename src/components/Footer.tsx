@@ -62,9 +62,9 @@ export function Footer() {
       <div className="absolute inset-0 z-0 opacity-100">
         <GravityStarsBackground
           className="text-brand/45"
-          glowIntensity={100}
-          starsCount={300}
-          starsOpacity={0.6}
+          glowIntensity={10}
+          starsCount={50}
+          starsOpacity={0.5}
         />
       </div>
 
