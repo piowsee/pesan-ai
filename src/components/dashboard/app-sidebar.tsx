@@ -33,7 +33,7 @@ export function AppSidebar({ user }: { user: User | null }) {
 
   const handleSignOut = async () => {
     await authClient.signOut();
-    router.push('/login');
+    router.push('/id/login');
   };
 
   return (

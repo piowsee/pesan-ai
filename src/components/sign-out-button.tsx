@@ -14,7 +14,7 @@ export function SignOutButton() {
 
     try {
       await authClient.signOut();
-      router.push('/login');
+      router.push('/id/login');
     } finally {
       setIsPending(false);
     }
