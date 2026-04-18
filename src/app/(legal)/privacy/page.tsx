@@ -23,47 +23,48 @@ const privacyContent = {
     ],
     introductionHeading: '1. Pendahuluan',
     introductionText:
-      'Selamat datang di piowsee ("kami"). Kami adalah software house Indonesia yang berfokus pada produk digital cerdas, termasuk namun tidak terbatas pada integrasi AI, aplikasi web kustom, dan sistem data seperti pocv dan Pesan AI. Kami menghormati privasi Anda dan berkomitmen melindungi data pribadi Anda. Kebijakan privasi ini menjelaskan bagaimana kami mengelola data pribadi Anda saat mengunjungi website kami atau menggunakan layanan kami.',
+      'Selamat datang di Pesan AI ("kami"). Kami adalah platform manajemen dan otomasi pesan cerdas melalui WhatsApp Business API. Kami menghormati privasi Anda dan berkomitmen melindungi data pribadi Anda. Kebijakan privasi ini menjelaskan bagaimana kami mengelola data pribadi Anda dan data pelanggan Anda saat Anda mengunjungi website kami atau menggunakan layanan kami.',
     collectionHeading: '2. Data yang Kami Kumpulkan',
     collectionIntro:
-      'Kami dapat mengumpulkan, menggunakan, menyimpan, dan mentransfer berbagai jenis data pribadi Anda. Saat Anda berkonsultasi dengan engineer kami atau menggunakan platform kami, data yang dapat kami kumpulkan meliputi:',
+      'Kami dapat mengumpulkan, menggunakan, menyimpan, dan mentransfer berbagai jenis data untuk mengoperasikan layanan kami:',
     collectionItems: [
       {
         label: 'Data Identitas dan Kontak:',
         value:
-          'Mencakup nama depan, nama belakang, username, alamat email, nomor telepon, dan nama perusahaan.',
+          'Mencakup nama, alamat email, nomor telepon WhatsApp, profil bisnis, dan informasi login Anda.',
+      },
+      {
+        label: 'Data Pesan dan Pelanggan:',
+        value:
+          'Mencakup isi pesan, riwayat percakapan, kontak pelanggan, dan data interaksi yang Anda proses menggunakan platform kami.',
       },
       {
         label: 'Data Teknis:',
         value:
-          'Mencakup alamat internet protocol (IP), data login, jenis dan versi browser, zona waktu dan lokasi, jenis dan versi plug-in browser, sistem operasi, serta platform.',
+          'Mencakup alamat internet protocol (IP), data login, jenis browser, webhook payload, integrasi API, dan sistem operasi.',
       },
       {
         label: 'Data Penggunaan:',
         value:
-          'Mencakup informasi tentang cara Anda menggunakan website, produk, dan layanan kami (misalnya interaksi dengan agen AI kami seperti Pesan AI).',
-      },
-      {
-        label: 'Data Kandidat (melalui pocv):',
-        value:
-          'Jika menggunakan AI Resume Builder kami, kami memproses data resume sementara untuk tujuan eksplisit optimasi ATS dan penulisan ulang, serta tidak digunakan untuk pelatihan AI umum.',
+          'Mencakup informasi tentang cara Anda menggunakan website, metrik pengiriman pesan, dan otomasi AI di dalam platform kami.',
       },
     ],
     usageHeading: '3. Cara Kami Menggunakan Data Anda',
     usageIntro:
-      'Kami hanya akan menggunakan data pribadi Anda jika diizinkan oleh hukum. Umumnya, data pribadi Anda digunakan dalam kondisi berikut:',
+      'Kami menggunakan data pribadi dan data operasional Anda dalam kondisi berikut:',
     usageItems: [
-      'Untuk menyediakan dan menjalankan layanan pengembangan software serta produk digital kami.',
-      'Untuk mengelola hubungan kami dengan Anda, termasuk konsultasi dan dukungan platform.',
-      'Untuk meningkatkan platform kami (pocv, Pesan AI) dan memastikan integrasi AI berjalan efisien serta aman.',
-      'Untuk memenuhi kewajiban hukum atau regulasi yang berlaku di Indonesia.',
+      'Untuk mengoperasikan dan menyediakan layanan pengiriman dan otomasi pesan WhatsApp Business.',
+      'Untuk memproses interaksi AI pada percakapan Anda dengan pelanggan sesuai pengaturan yang Anda buat.',
+      'Untuk mengelola akun Anda dan memberikan dukungan layanan pelanggan teknis.',
+      'Untuk meningkatkan algoritma AI dan antarmuka platform demi kenyamanan pengguna.',
+      'Untuk memenuhi kewajiban operasional dari Meta/WhatsApp dan regulasi lokal yang berlaku.',
     ],
     securityHeading: '4. Keamanan Data',
     securityText:
-      'Kami telah menerapkan langkah-langkah keamanan yang memadai untuk mencegah data pribadi Anda hilang secara tidak sengaja, digunakan, diakses tanpa izin, diubah, atau diungkapkan. Akses terhadap data pribadi Anda dibatasi hanya kepada karyawan, agen, kontraktor, dan pihak ketiga yang memiliki kebutuhan bisnis untuk mengetahui data tersebut.',
+      'Kami mengimplementasikan standar keamanan industri yang kuat untuk melindungi data komunikasi bisnis dan data pribadi Anda dari akses yang tidak sah. Konversi pesan dengan AI diproses secara aman, dan akses ke percakapan Anda dibatasi hanya kepada pemilik akun dan anggota tim yang Anda percayakan.',
     contactHeading: '5. Kontak',
     contactText:
-      'Jika Anda memiliki pertanyaan mengenai kebijakan privasi ini atau praktik privasi kami, silakan hubungi kami. piowsee dikembangkan dan berkantor pusat di Indonesia.',
+      'Jika Anda memiliki pertanyaan tentang kebijakan privasi ini atau cara pengelolaan data pesan Anda, silakan hubungi tim dukungan kami di website Pesan AI.',
   },
   en: {
     title: 'Privacy Policy',
@@ -79,47 +80,48 @@ const privacyContent = {
     ],
     introductionHeading: '1. Introduction',
     introductionText:
-      'Welcome to piowsee ("we," "our," or "us"). We are an Indonesian software house specializing in intelligent digital products, including but not limited to AI integrations, custom web applications, and data systems like pocv and Pesan AI. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) or use our services.',
+      'Welcome to Pesan AI ("we," "our," or "us"). We are an intelligent messaging and automation platform powered by the WhatsApp Business API. We respect your privacy and are committed to protecting your personal data. This privacy policy informs you how we look after your personal data and your customers\' messaging data when you use our services.',
     collectionHeading: '2. The Data We Collect',
     collectionIntro:
-      'We may collect, use, store, and transfer different kinds of personal data about you. When you consult with our engineers or use our platforms, we may collect:',
+      'We may collect, use, store, and transfer different kinds of data necessary to operate our platform:',
     collectionItems: [
       {
         label: 'Identity and Contact Data:',
         value:
-          'Includes your first name, last name, username, email address, telephone numbers, and company name.',
+          'Includes your name, email address, WhatsApp phone numbers, business profiles, and login credentials.',
+      },
+      {
+        label: 'Messaging and Customer Data:',
+        value:
+          'Includes message content, conversation history, customer contacts, and interaction data processed through our platform.',
       },
       {
         label: 'Technical Data:',
         value:
-          'Includes internet protocol (IP) address, your login data, browser type and version, time zone setting and location, browser plug-in types and versions, operating system, and platform.',
+          'Includes internet protocol (IP) address, login data, browser types, webhook payloads, API integrations, and operating systems.',
       },
       {
         label: 'Usage Data:',
         value:
-          'Includes information about how you use our website, products, and services (e.g., interactions with our AI agents like Pesan AI).',
-      },
-      {
-        label: 'Candidate Data (via pocv):',
-        value:
-          'If utilizing our AI Resume Builder, we temporarily process resume data for the explicit purpose of ATS optimization and rewriting, which is not used for generalized AI training.',
+          'Includes information about how you use our website, messaging metrics, and AI automation interactions.',
       },
     ],
     usageHeading: '3. How We Use Your Data',
     usageIntro:
-      'We will only use your personal data when the law allows us to. Most commonly, we will use your personal data in the following circumstances:',
+      'We use your personal and operational data primarily in the following circumstances:',
     usageItems: [
-      'To provide and deliver our software development services and digital products.',
-      'To manage our relationship with you, including consulting and platform support.',
-      'To improve our platforms (pocv, Pesan AI) and ensure our AI integrations function efficiently and securely.',
-      'To comply with a legal or regulatory obligation in Indonesia.',
+      'To operate and provide WhatsApp Business messaging and automation services.',
+      'To process AI interactions in your customer conversations based on your configurations.',
+      'To manage your account and provide technical customer support.',
+      'To improve our AI algorithms, user interface, and overall platform reliability.',
+      "To comply with Meta/WhatsApp's operational guidelines and applicable local regulations.",
     ],
     securityHeading: '4. Data Security',
     securityText:
-      'We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used, or accessed in an unauthorized way, altered, or disclosed. We limit access to your personal data to those employees, agents, contractors, and other third parties who have a business need to know.',
+      'We implement robust industry-standard security measures to protect your business communication and personal data against unauthorized access. AI-processed conversations are handled securely, and access to your conversation history is restricted strictly to you and your authorized team members.',
     contactHeading: '5. Contact Details',
     contactText:
-      'If you have any questions about this privacy policy or our privacy practices, please contact us. piowsee is engineered and headquartered in Indonesia.',
+      'If you have any questions about this privacy policy or our data management practices, please contact our support team through the Pesan AI website.',
   },
 } as const;
 

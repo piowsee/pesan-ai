@@ -24,27 +24,28 @@ const termsContent = {
     ],
     acceptanceHeading: '1. Penerimaan Syarat',
     acceptanceText:
-      'Dengan mengakses atau menggunakan website piowsee, berkonsultasi dengan engineer kami, atau menggunakan platform software kami (termasuk namun tidak terbatas pada pocv dan Pesan AI), Anda setuju untuk terikat oleh Syarat Layanan ini. Jika Anda tidak menyetujui bagian mana pun dari syarat ini, Anda tidak diperkenankan mengakses layanan kami.',
+      'Dengan mengakses atau menggunakan website Pesan AI, Anda setuju untuk terikat dan mematuhi Syarat Layanan ini. Jika Anda tidak menyetujui bagian mana pun dari syarat ini, Anda tidak diperkenankan mengakses atau menggunakan layanan kami.',
     serviceHeading: '2. Deskripsi Layanan',
     serviceText:
-      'piowsee adalah software house yang menyediakan pengembangan produk digital kustom, integrasi AI, aplikasi web, dan platform internal proprietari untuk mengotomatisasi kompleksitas. Deliverable dan layanan spesifik kami tunduk pada master service agreement (MSA) atau statement of work (SOW) terpisah yang disepakati bersama klien.',
+      'Pesan AI adalah platform manajemen percakapan dan otomasi pesan cerdas yang terintegrasi dengan WhatsApp Business API. Kami menyediakan fitur agent AI, webhook eksternal, dan pengelolaan database percakapan (WABA) untuk mempermudah bisnis Anda melayani pelanggan.',
     ipHeading: '3. Hak Kekayaan Intelektual',
     ipText:
-      'Website piowsee beserta konten asli, fitur, dan fungsionalitasnya adalah dan akan tetap menjadi milik eksklusif piowsee dan para pemberi lisensinya. Kecuali dinyatakan secara eksplisit dalam kontrak pengembangan software kustom, piowsee mempertahankan hak kekayaan intelektual atas codebase proprietari, model AI, dan tools internal kami.',
+      'Website dan platform Pesan AI beserta konten asli, struktur database, model AI dan fungsionalitasnya adalah dan akan tetap menjadi milik eksklusif platform kami. Anda tidak diberikan lisensi untuk menggunakan merek dagang kami tanpa izin tertulis dari kami.',
     obligationsHeading: '4. Kewajiban Pengguna',
     obligationsIntro:
-      'Saat berinteraksi dengan website atau platform kami, Anda setuju untuk tidak:',
+      'Saat mendaftar dan menggunakan platform kami, Anda setuju untuk tidak:',
     obligationsItems: [
-      'Menggunakan layanan untuk tujuan ilegal atau tanpa otorisasi.',
-      'Mencoba melakukan reverse engineering, dekompilasi, atau mengekstrak source code software yang disediakan oleh piowsee.',
-      'Mengganggu integritas atau kinerja layanan maupun data yang terdapat di dalamnya.',
+      'Mengirimkan konten atau materi pesanan yang melanggar kebijakan WhatsApp (Commerce/Business Policy) atau aturan hukum di Indonesia.',
+      'Mencoba melakukan reverse engineering, dekompilasi, atau mengeksploitasi celah keamanan sistem Pesan AI dan server kami.',
+      'Mengganggu kinerja sistem atau mengirim antrean pesan secara berlebihan yang mengarah ke tindakan serangan server (seperti DDoS).',
+      'Menyalahgunakan kredensial webhook dan nomor WABA yang diregistrasikan di luar batas kewajaran.',
     ],
     liabilityHeading: '5. Batasan Tanggung Jawab',
     liabilityText:
-      'Dalam kondisi apa pun, piowsee, direktur, karyawan, partner, agen, pemasok, atau afiliasinya tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, konsekuensial, atau hukuman, termasuk namun tidak terbatas pada kehilangan keuntungan, data, penggunaan, goodwill, atau kerugian tidak berwujud lainnya, yang timbul dari akses, penggunaan, atau ketidakmampuan Anda dalam mengakses atau menggunakan layanan.',
+      'Pesan AI memfasilitasi koneksi ke Meta/WhatsApp API. Kami tidak bertanggung jawab atas pemblokiran nomor WABA Anda oleh pihak Meta, kerugian finansial atau kehilangan data pelanggan, serta downtime yang disebabkan oleh penyedia layanan pihak ketiga. Penggunaan layanan kami merupakan risiko Anda sendiri.',
     lawHeading: '6. Hukum yang Berlaku',
     lawText:
-      'Syarat ini diatur dan ditafsirkan sesuai hukum yang berlaku di Indonesia, tanpa memperhatikan ketentuan konflik hukum. Kegagalan kami untuk menegakkan hak atau ketentuan apa pun dalam Syarat ini tidak dianggap sebagai pelepasan hak tersebut.',
+      'Syarat ini diatur dan ditafsirkan sesuai hukum yang berlaku di Indonesia. Setiap perselisihan yang timbul dari layanan ini atau Syarat Layanan ini akan diselesaikan secara eksklusif dalam yurisdiksi pengadilan di Indonesia.',
   },
   en: {
     title: 'Terms of Service',
@@ -61,27 +62,28 @@ const termsContent = {
     ],
     acceptanceHeading: '1. Acceptance of Terms',
     acceptanceText:
-      'By accessing or using the piowsee website, consulting with our engineers, or utilizing our software platforms (including but not limited to pocv and Pesan AI), you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services.',
+      'By accessing or using the Pesan AI website and platform, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services.',
     serviceHeading: '2. Description of Service',
     serviceText:
-      'piowsee is a software house providing custom digital product development, AI integrations, web applications, and proprietary internal platforms designed to automate complexity. Our specific deliverables and services are subject to separate master service agreements (MSAs) or statements of work (SOWs) established with clients.',
+      'Pesan AI is an intelligent conversation management and messaging automation platform integrated with the WhatsApp Business API. We provide AI chat agents, webhook integrations, and WABA conversation management features to help streamline your business communication.',
     ipHeading: '3. Intellectual Property',
     ipText:
-      'The piowsee website and its original content, features, and functionality are and will remain the exclusive property of piowsee and its licensors. Unless explicitly stated in a custom software development contract, piowsee retains the underlying intellectual property rights to our proprietary codebases, AI models, and internal tools.',
+      'The Pesan AI website, platform, original content, database structure, and AI models are and will remain the exclusive property of our platform. You are not granted any license to use our trademarks without prior written consent.',
     obligationsHeading: '4. User Obligations',
     obligationsIntro:
-      'When interacting with our website or platforms, you agree not to:',
+      'When registering and utilizing our platform, you agree not to:',
     obligationsItems: [
-      'Use the services for any illegal or unauthorized purpose.',
-      'Attempt to reverse engineer, decompile, or otherwise extract the source code of the software provided by piowsee.',
-      'Interfere with or disrupt the integrity or performance of the services or the data contained therein.',
+      "Transmit any content that violates Meta's WhatsApp Commerce/Business Policies or any applicable laws.",
+      'Attempt to reverse engineer, decompile, or exploit our underlying code or server infrastructure.',
+      'Disrupt service performance or dispatch excessive malicious message queues resulting in DDoS or abuse.',
+      'Misuse webhook credentials or WABA numbers registered under your account.',
     ],
     liabilityHeading: '5. Limitation of Liability',
     liabilityText:
-      'In no event shall piowsee, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the services.',
+      'Pesan AI facilitates connection to Meta/WhatsApp API. We are not liable for WABA number suspensions enacted by Meta, direct or indirect financial loss, data loss, or downtime caused by third-party providers. Your use of our service is securely at your own risk.',
     lawHeading: '6. Governing Law',
     lawText:
-      'These Terms shall be governed and construed in accordance with the laws of Indonesia, without regard to its conflict of law provisions. Our failure to enforce any right or provision of these Terms will not be considered a waiver of those rights.',
+      'These Terms shall be governed and construed in accordance with the laws of Indonesia. Any dispute arising from these services or these Terms shall be resolved exclusively within the jurisdiction of Indonesian courts.',
   },
 } as const;
 
