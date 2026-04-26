@@ -1,23 +1,14 @@
 'use client';
 
+import { loginCardCopy } from '@/components/auth/content';
 import { LoginForm } from '@/components/auth/login-form';
-import { getLocaleFromPathname } from '@/lib/locale';
-import { usePathname } from 'next/navigation';
+import type { AppLocale } from '@/lib/locale';
 
-const loginCardCopy = {
-  id: {
-    title: 'Masuk ke Akun Anda',
-    subtitle: 'Masukkan email dan kata sandi Anda.',
-  },
-  en: {
-    title: 'Login to Your Account',
-    subtitle: 'Enter your email and password.',
-  },
-} as const;
+type Props = {
+  locale: AppLocale;
+};
 
-export function LoginCard() {
-  const pathname = usePathname();
-  const locale = getLocaleFromPathname(pathname);
+export function LoginCard({ locale }: Props) {
   const copy = loginCardCopy[locale];
 
   return (
@@ -30,7 +21,7 @@ export function LoginCard() {
           {copy.subtitle}
         </p>
       </div>
-      <LoginForm />
+      <LoginForm locale={locale} />
     </div>
   );
 }
