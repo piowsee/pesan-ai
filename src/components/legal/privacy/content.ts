@@ -1,14 +1,36 @@
-'use client';
+import type { AppLocale } from '@/lib/locale';
 
-import { Footer } from '@/components/Footer';
-import { Navbar } from '@/components/Navbar';
-import { getDateLocale, getLocaleFromPathname } from '@/lib/locale';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+export interface PrivacySection {
+  id: string;
+  label: string;
+}
 
-const privacyContent = {
+export interface CollectionItem {
+  label: string;
+  value: string;
+}
+
+export interface PrivacyContent {
+  title: string;
+  heroAlt: string;
+  updatedLabel: string;
+  tocTitle: string;
+  sections: PrivacySection[];
+  introductionHeading: string;
+  introductionText: string;
+  collectionHeading: string;
+  collectionIntro: string;
+  collectionItems: CollectionItem[];
+  usageHeading: string;
+  usageIntro: string;
+  usageItems: string[];
+  securityHeading: string;
+  securityText: string;
+  contactHeading: string;
+  contactText: string;
+}
+
+export const privacyContent: Record<AppLocale, PrivacyContent> = {
   id: {
     title: 'Kebijakan Privasi',
     heroAlt: 'Hero kebijakan privasi',
@@ -123,181 +145,4 @@ const privacyContent = {
     contactText:
       'If you have any questions about this privacy policy or our data management practices, please contact our support team through the Pesan AI website.',
   },
-} as const;
-
-export default function PrivacyPolicyPage() {
-  const pathname = usePathname();
-  const locale = getLocaleFromPathname(pathname);
-  const copy = privacyContent[locale];
-  const sections = copy.sections;
-
-  const [activeSection, setActiveSection] = useState<string>(sections[0].id);
-
-  useEffect(() => {
-    setActiveSection(sections[0].id);
-  }, [sections]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleSections = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-
-        if (visibleSections[0]) {
-          setActiveSection(visibleSections[0].target.id);
-        }
-      },
-      {
-        rootMargin: '-120px 0px -70% 0px',
-        threshold: 0.15,
-      },
-    );
-
-    sections.forEach((section) => {
-      const element = document.getElementById(section.id);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, [sections]);
-
-  return (
-    <main className="min-h-screen flex flex-col bg-background font-sans">
-      <Navbar />
-
-      <section className="relative -mt-22 h-100 w-full overflow-hidden">
-        <Image
-          src="/landing/hero.jpg"
-          alt={copy.heroAlt}
-          fill
-          priority
-          sizes="100vw"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-
-        <div className="absolute inset-0 bg-black/30" />
-
-        <div className="relative z-10 flex h-full flex-col items-center justify-end px-6 pb-24 pt-32 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
-            {copy.title}
-          </h1>
-
-          <p className="mt-4 text-lg text-white/80">
-            {copy.updatedLabel}:{' '}
-            {new Date().toLocaleDateString(getDateLocale(locale), {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })}
-          </p>
-        </div>
-      </section>
-
-      <section className="flex justify-center px-6 py-20">
-        <div className="grid w-full max-w-6xl grid-cols-1 gap-14 md:grid-cols-[240px_1fr]">
-          <aside className="sticky top-30 hidden h-fit md:block">
-            <h3 className="mb-5 text-sm font-semibold text-brand">
-              {copy.tocTitle}
-            </h3>
-
-            <ul className="space-y-3 text-sm text-brand/70">
-              {sections.map((section) => {
-                const isActive = activeSection === section.id;
-
-                return (
-                  <li key={section.id}>
-                    <a
-                      href={`#${section.id}`}
-                      className={cn(
-                        'transition',
-                        isActive
-                          ? 'text-brand'
-                          : 'text-brand/70 hover:text-brand',
-                      )}
-                    >
-                      {section.label}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </aside>
-
-          <div className="prose prose-zinc max-w-none lg:prose-lg">
-            <h2
-              id="introduction"
-              className="scroll-mt-25 mt-0 mb-4 text-2xl font-bold text-zinc-900"
-            >
-              {copy.introductionHeading}
-            </h2>
-
-            <p className="mb-6 leading-relaxed text-zinc-600">
-              {copy.introductionText}
-            </p>
-
-            <h2
-              id="data-collection"
-              className="mt-8 mb-4 scroll-mt-25 text-2xl font-bold text-zinc-900"
-            >
-              {copy.collectionHeading}
-            </h2>
-
-            <p className="mb-6 leading-relaxed text-zinc-600">
-              {copy.collectionIntro}
-            </p>
-
-            <ul className="mb-6 list-disc space-y-2 pl-6 text-zinc-600">
-              {copy.collectionItems.map((item) => (
-                <li key={item.label}>
-                  <strong>{item.label}</strong> {item.value}
-                </li>
-              ))}
-            </ul>
-
-            <h2
-              id="data-use"
-              className="mt-8 mb-4 scroll-mt-25 text-2xl font-bold text-zinc-900"
-            >
-              {copy.usageHeading}
-            </h2>
-
-            <p className="mb-6 leading-relaxed text-zinc-600">
-              {copy.usageIntro}
-            </p>
-
-            <ul className="mb-6 list-disc space-y-2 pl-6 text-zinc-600">
-              {copy.usageItems.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-
-            <h2
-              id="security"
-              className="mt-8 mb-4 scroll-mt-25 text-2xl font-bold text-zinc-900"
-            >
-              {copy.securityHeading}
-            </h2>
-
-            <p className="mb-6 leading-relaxed text-zinc-600">
-              {copy.securityText}
-            </p>
-
-            <h2
-              id="contact"
-              className="mt-8 mb-4 scroll-mt-25 text-2xl font-bold text-zinc-900"
-            >
-              {copy.contactHeading}
-            </h2>
-
-            <p className="mb-6 leading-relaxed text-zinc-600">
-              {copy.contactText}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <Footer />
-    </main>
-  );
-}
+};

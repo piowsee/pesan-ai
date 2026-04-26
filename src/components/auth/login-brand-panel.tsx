@@ -1,27 +1,19 @@
 'use client';
 
+import { loginBrandPanelCopy } from '@/components/auth/content';
 import { MetaTechPartner } from '@/components/auth/meta-tech-partner';
-import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
+import type { AppLocale } from '@/lib/locale';
+import { toLocalePath } from '@/lib/locale';
 import { Mail } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { FaWhatsapp } from 'react-icons/fa';
 
-const loginBrandPanelCopy = {
-  id: {
-    headline:
-      'Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI.',
-  },
-  en: {
-    headline:
-      'Boost your business efficiency through WhatsApp chat automation with AI support.',
-  },
-} as const;
+type Props = {
+  locale: AppLocale;
+};
 
-export function LoginBrandPanel() {
-  const pathname = usePathname();
-  const locale = getLocaleFromPathname(pathname);
+export function LoginBrandPanel({ locale }: Props) {
   const copy = loginBrandPanelCopy[locale];
   const homeHref = toLocalePath(locale, '/');
 

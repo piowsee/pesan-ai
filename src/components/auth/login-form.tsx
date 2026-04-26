@@ -1,68 +1,22 @@
 'use client';
 
+import { loginFormCopy } from '@/components/auth/content';
+import type { LoginFormCopy } from '@/components/auth/content';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { authClient } from '@/lib/auth/auth-client';
-import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
+import type { AppLocale } from '@/lib/locale';
+import { toLocalePath } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
-
-const loginFormCopy = {
-  id: {
-    labels: {
-      password: 'Kata Sandi',
-      agreePrefix: 'Saya menyetujui',
-      terms: 'Syarat Layanan',
-      and: 'dan',
-      privacy: 'Kebijakan Privasi',
-      submit: 'Masuk',
-      submitting: 'Memproses...',
-      passwordPlaceholder: 'Masukkan kata sandi Anda',
-      hidePassword: 'Sembunyikan kata sandi',
-      showPassword: 'Tampilkan kata sandi',
-    },
-    errors: {
-      invalidEmail: 'Format email tidak valid',
-      passwordRequired: 'Kata sandi wajib diisi',
-      passwordLength: 'Kata sandi minimal 8 karakter',
-      termsRequired: 'Anda harus menyetujui Syarat dan Privasi untuk lanjut',
-      invalidCredentials: 'Email atau kata sandi tidak valid.',
-      unknownError: 'Terjadi kesalahan saat login. Silakan coba lagi.',
-    },
-  },
-  en: {
-    labels: {
-      password: 'Password',
-      agreePrefix: 'I agree to the',
-      terms: 'Terms of Service',
-      and: 'and',
-      privacy: 'Privacy Policy',
-      submit: 'Login',
-      submitting: 'Processing...',
-      passwordPlaceholder: 'Enter your password',
-      hidePassword: 'Hide password',
-      showPassword: 'Show password',
-    },
-    errors: {
-      invalidEmail: 'Invalid email format',
-      passwordRequired: 'Password is required',
-      passwordLength: 'Password must be at least 8 characters',
-      termsRequired: 'You need to agree to the Terms and Privacy to continue',
-      invalidCredentials: 'Invalid email or password.',
-      unknownError: 'An error occurred during login. Please try again.',
-    },
-  },
-} as const;
-
-type LoginFormCopy = (typeof loginFormCopy)[keyof typeof loginFormCopy];
 
 function createLoginSchema(copy: LoginFormCopy) {
   return z.object({
@@ -83,11 +37,11 @@ type LoginFormValues = {
   terms: boolean;
 };
 
-// Component
+type Props = {
+  locale: AppLocale;
+};
 
-export function LoginForm() {
-  const pathname = usePathname();
-  const locale = getLocaleFromPathname(pathname);
+export function LoginForm({ locale }: Props) {
   const copy = loginFormCopy[locale];
 
   const termsHref = toLocalePath(locale, '/terms');

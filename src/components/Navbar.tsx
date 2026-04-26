@@ -1,7 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
+import type { AppLocale } from '@/lib/locale';
+import { toLocalePath } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Menu, X } from 'lucide-react';
 import Image from 'next/image';
@@ -200,23 +201,25 @@ function MobileLanguageSelect({
   );
 }
 
-export function Navbar() {
+type Props = {
+  locale: AppLocale;
+};
+
+export function Navbar({ locale }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const currentLocale = getLocaleFromPathname(pathname);
-  const copy = navbarCopy[currentLocale];
+  const copy = navbarCopy[locale];
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileLanguage, setMobileLanguage] =
-    useState<LanguageCode>(currentLocale);
+  const [mobileLanguage, setMobileLanguage] = useState<LanguageCode>(locale);
 
   useEffect(() => {
-    setMobileLanguage(currentLocale);
-  }, [currentLocale]);
+    setMobileLanguage(locale);
+  }, [locale]);
 
-  const homeHref = toLocalePath(currentLocale, '/');
-  const loginHref = toLocalePath(currentLocale, '/login');
+  const homeHref = toLocalePath(locale, '/');
+  const loginHref = toLocalePath(locale, '/login');
 
   const handleLanguageChange = useCallback(
     (nextLocale: LanguageCode) => {
@@ -289,7 +292,7 @@ export function Navbar() {
           <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
             <LanguageDropdown
               scrolled={scrolled}
-              locale={currentLocale}
+              locale={locale}
               onLanguageChange={handleLanguageChange}
             />
 

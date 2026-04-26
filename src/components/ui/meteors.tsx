@@ -44,15 +44,14 @@ export const Meteors = ({
         const durationRatio = seededRandom(baseSeed + 37);
 
         return {
-          '--angle': -angle + 'deg',
+          '--angle': `-${angle}deg`,
+          '--delay': `${(delayRatio * (maxDelay - minDelay) + minDelay).toFixed(2)}s`,
+          '--duration': `${Math.floor(durationRatio * (maxDuration - minDuration) + minDuration)}s`,
           top: '-5%',
           left: `${Math.floor(leftRatio * 100)}%`,
-          animationDelay: delayRatio * (maxDelay - minDelay) + minDelay + 's',
-          animationDuration:
-            Math.floor(
-              durationRatio * (maxDuration - minDuration) + minDuration,
-            ) + 's',
-        };
+          animationDelay: 'var(--delay)',
+          animationDuration: 'var(--duration)',
+        } as React.CSSProperties;
       }),
     [number, minDelay, maxDelay, minDuration, maxDuration, angle],
   );

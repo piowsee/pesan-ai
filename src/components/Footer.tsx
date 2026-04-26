@@ -2,10 +2,10 @@
 
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { GravityStarsBackground } from '@/components/animate-ui/components/backgrounds/gravity-stars';
-import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
+import type { AppLocale } from '@/lib/locale';
+import { toLocalePath } from '@/lib/locale';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { FaWhatsapp } from 'react-icons/fa';
 
 import { Container } from './Container';
@@ -47,9 +47,11 @@ const footerCopy = {
   },
 } as const;
 
-export function Footer() {
-  const pathname = usePathname();
-  const locale = getLocaleFromPathname(pathname);
+type Props = {
+  locale: AppLocale;
+};
+
+export function Footer({ locale }: Props) {
   const copy = footerCopy[locale];
 
   const homeHref = toLocalePath(locale, '/');

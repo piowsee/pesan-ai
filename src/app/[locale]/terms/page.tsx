@@ -1,16 +1,14 @@
-import TermsOfServicePage from '@/app/(legal)/terms/page';
+import { TermsMain } from '@/components/legal/terms/terms-main';
 import { isAppLocale } from '@/lib/locale';
 import { buildLocalizedMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-type LocaleTermsPageProps = {
+type Props = {
   params: Promise<{ locale: string }>;
 };
 
-export async function generateMetadata({
-  params,
-}: LocaleTermsPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
 
   if (!isAppLocale(locale)) {
@@ -20,14 +18,12 @@ export async function generateMetadata({
   return buildLocalizedMetadata(locale, 'terms');
 }
 
-export default async function LocalizedTermsPage({
-  params,
-}: LocaleTermsPageProps) {
+export default async function LocalizedTermsPage({ params }: Props) {
   const { locale } = await params;
 
   if (!isAppLocale(locale)) {
     notFound();
   }
 
-  return <TermsOfServicePage />;
+  return <TermsMain locale={locale} />;
 }
