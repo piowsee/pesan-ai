@@ -53,7 +53,7 @@ export function TermsMain({ locale }: Props) {
 
   return (
     <main className="min-h-screen flex flex-col bg-background font-sans">
-      <Navbar />
+      <Navbar locale={locale} />
 
       <LegalHero
         locale={locale}
@@ -73,7 +73,7 @@ export function TermsMain({ locale }: Props) {
         </div>
       </section>
 
-      <Footer />
+      <Footer locale={locale} />
     </main>
   );
 }

@@ -2,44 +2,22 @@
 
 import { Container } from '@/components/Container';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { heroCopy } from '@/components/landing/content';
 import { Button } from '@/components/ui/button';
 import { Highlighter } from '@/components/ui/highlighter';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 import { Meteors } from '@/components/ui/meteors';
-import { getLocaleFromPathname, toLocalePath } from '@/lib/locale';
+import type { AppLocale } from '@/lib/locale';
+import { toLocalePath } from '@/lib/locale';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const heroCopy = {
-  id: {
-    badge: 'AI Agent WhatsApp Custom #1 Sesuai Kebutuhan Bisnismu',
-    titleLineOne: 'AI Balas Chat Otomatis,',
-    titleLineTwo: 'Booking Tanpa Ribet',
-    description:
-      'AI WhatsApp Agent yang menjawab pelanggan dan mengatur booking secara otomatis 24/7.',
-    consultation: 'Konsultasi Sekarang',
-    login: 'Masuk',
-    heroAlt: 'Latar suasana malam untuk hero section Pesan AI',
-    demoAlt: 'Demo produk Pesan AI',
-  },
-  en: {
-    badge: 'Custom #1 WhatsApp AI Agent for Your Business Needs',
-    titleLineOne: 'AI Handles Your Replies,',
-    titleLineTwo: 'Bookings Made Effortless',
-    description:
-      'A WhatsApp AI agent that replies to customers and schedules bookings automatically 24/7.',
-    consultation: 'Book a Consultation',
-    login: 'Login',
-    heroAlt: 'Night atmosphere background for Pesan AI hero section',
-    demoAlt: 'Pesan AI product demo',
-  },
-} as const;
+type Props = {
+  locale: AppLocale;
+};
 
-export function Hero() {
-  const pathname = usePathname();
-  const locale = getLocaleFromPathname(pathname);
+export function Hero({ locale }: Props) {
   const copy = heroCopy[locale];
   const consultationHref = 'https://wa.me/6285129646215';
   const [descriptionStart, descriptionEnd = ''] =

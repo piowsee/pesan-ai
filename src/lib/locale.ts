@@ -8,22 +8,6 @@ export function isAppLocale(value: string): value is AppLocale {
   return SUPPORTED_LOCALES.includes(value as AppLocale);
 }
 
-export function getLocaleFromPathname(
-  pathname: string | null | undefined,
-): AppLocale {
-  if (!pathname) {
-    return DEFAULT_LOCALE;
-  }
-
-  const [, firstSegment] = pathname.split('/');
-
-  if (firstSegment && isAppLocale(firstSegment)) {
-    return firstSegment;
-  }
-
-  return DEFAULT_LOCALE;
-}
-
 function normalizePath(path: string): string {
   if (!path || path === '/') {
     return '/';

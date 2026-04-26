@@ -40,12 +40,12 @@ export default async function LocalizedHomePage({ params }: LocalePageProps) {
 
   return (
     <div className="min-h-screen bg-background font-sans">
-      <Navbar />
+      <Navbar locale={locale} />
       <main>
-        <Hero />
-        <FAQSection />
+        <Hero locale={locale} />
+        <FAQSection locale={locale} />
       </main>
-      <Footer />
+      <Footer locale={locale} />
     </div>
   );
 }
