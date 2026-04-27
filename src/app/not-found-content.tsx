@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { HyperText } from '@/components/ui/hyper-text';
+import { LightRays } from '@/components/ui/light-rays';
 import { WordRotate } from '@/components/ui/word-rotate';
 import {
   type AppLocale,
@@ -52,10 +53,11 @@ export default function NotFoundContent() {
             alt=""
             fill
             priority
-            sizes="100vw"
+            sizes="1000vw"
             className="object-cover object-bottom"
           />
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-black/50" />
+          <LightRays color="#475569" count={5} opacity={0.6} />
         </div>
 
         <div className="pointer-events-none absolute -left-24 top-18 size-72 rounded-full bg-brand/25 blur-3xl" />
