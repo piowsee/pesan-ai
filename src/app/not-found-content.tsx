@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { HyperText } from '@/components/ui/hyper-text';
+import { WordRotate } from '@/components/ui/word-rotate';
 import {
   type AppLocale,
   DEFAULT_LOCALE,
@@ -19,15 +20,13 @@ const notFoundCopy = {
   id: {
     badge: '404',
     title: 'Ups, halaman yang kamu cari tidak tersedia.',
-    description:
-      'Link mungkin sudah dipindahkan atau tidak pernah ada. Kamu bisa kembali ke beranda.',
+    description: 'Link mungkin sudah dipindahkan atau tidak pernah ada.',
     home: 'Kembali ke Beranda',
   },
   en: {
     badge: '404',
     title: "We couldn't find the page you were looking for.",
-    description:
-      'The link may have moved or never existed. You can return home.',
+    description: 'The link may have moved or never existed.',
     home: 'Back to Home',
   },
 } as const;
@@ -71,13 +70,11 @@ export default function NotFoundContent() {
               {copy.badge}
             </HyperText>
 
-            <h1 className="mt-8 text-3xl leading-tight font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              {copy.title}
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-4xl text-base leading-relaxed text-white/80 sm:text-lg">
-              {copy.description}
-            </p>
+            <WordRotate
+              className="mt-8 text-3xl leading-tight font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+              words={[copy.title, copy.description]}
+              duration={3000}
+            />
 
             <div className="mt-10 flex justify-center">
               <Button
