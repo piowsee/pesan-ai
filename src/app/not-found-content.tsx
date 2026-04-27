@@ -10,7 +10,6 @@ import {
   isAppLocale,
   toLocalePath,
 } from '@/lib/locale';
-import { Home } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -72,7 +71,7 @@ export default function NotFoundContent() {
               {copy.title}
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg">
+            <p className="mx-auto mt-6 max-w-4xl text-base leading-relaxed text-white/80 sm:text-lg">
               {copy.description}
             </p>
 
@@ -83,10 +82,7 @@ export default function NotFoundContent() {
                 variant="brand"
                 className="h-12 rounded-full px-8 text-base font-semibold"
               >
-                <Link href={toLocalePath(locale, '/')}>
-                  <Home className="mr-2 size-5" />
-                  {copy.home}
-                </Link>
+                <Link href={toLocalePath(locale, '/')}>{copy.home}</Link>
               </Button>
             </div>
           </section>
