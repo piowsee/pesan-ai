@@ -20,7 +20,7 @@ const notFoundCopy = {
   id: {
     badge: '404',
     title: 'Ups, halaman yang kamu cari tidak tersedia.',
-    description: 'Link mungkin sudah dipindahkan atau tidak pernah ada.',
+    description: 'Link mungkin dipindahkan atau tidak pernah ada.',
     home: 'Kembali ke Beranda',
   },
   en: {
@@ -63,15 +63,17 @@ export default function NotFoundContent() {
 
         <Container className="relative z-10">
           <section className="mx-auto max-w-4xl text-center">
-            <HyperText
-              className="text-8xl font-black tracking-tighter text-white sm:text-9xl"
-              animateOnHover={true}
-            >
-              {copy.badge}
-            </HyperText>
+            <Link href={toLocalePath(locale, '/')}>
+              <HyperText
+                className="cursor-pointer select-none text-8xl font-black tracking-tighter text-white sm:text-9xl"
+                animateOnHover={true}
+              >
+                {copy.badge}
+              </HyperText>
+            </Link>
 
             <WordRotate
-              className="mt-8 text-3xl leading-tight font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+              className="mt-4 text-3xl leading-tight font-bold tracking-tight text-white sm:text-4xl lg:text-4xl"
               words={[copy.title, copy.description]}
               duration={3000}
             />
