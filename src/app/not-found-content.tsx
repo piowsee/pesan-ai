@@ -57,7 +57,7 @@ export default function NotFoundContent() {
             className="object-cover object-bottom"
           />
           <div className="absolute inset-0 bg-black/50" />
-          <LightRays color="#475569" count={5} opacity={0.6} />
+          <LightRays color="#475569" count={3} opacity={0.4} blur={20} />
         </div>
 
         <div className="pointer-events-none absolute -left-24 top-18 size-72 rounded-full bg-brand/25 blur-3xl" />
