@@ -4,6 +4,7 @@ import { Container } from '@/components/Container';
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
+import { HyperText } from '@/components/ui/hyper-text';
 import {
   type AppLocale,
   DEFAULT_LOCALE,
@@ -63,9 +64,12 @@ export default function NotFoundContent() {
 
         <Container className="relative z-10">
           <section className="mx-auto max-w-4xl text-center">
-            <span className="text-8xl font-black tracking-tighter text-white sm:text-9xl">
+            <HyperText
+              className="text-8xl font-black tracking-tighter text-white sm:text-9xl"
+              animateOnHover={true}
+            >
               {copy.badge}
-            </span>
+            </HyperText>
 
             <h1 className="mt-8 text-3xl leading-tight font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {copy.title}
