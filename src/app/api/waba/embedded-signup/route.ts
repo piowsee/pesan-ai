@@ -38,8 +38,8 @@ export const POST = withApiAuth(async ({ req, user }) => {
     {
       wabaId: waba.wabaId,
       wabaDbId: waba.id,
-      phoneNumberId: phoneNumber.phoneNumberId,
-      phoneNumberDbId: phoneNumber.id,
+      phoneNumberId: phoneNumber?.phoneNumberId,
+      phoneNumberDbId: phoneNumber?.id,
     },
     201,
   );

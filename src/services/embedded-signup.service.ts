@@ -102,7 +102,7 @@ export const EmbeddedSignUpService = {
   async exchange_token(
     code: string,
     wabaId: string,
-    phoneNumberId: string,
+    phoneNumberId: string | null,
     userId: string,
   ) {
     const appId = process.env.NEXT_PUBLIC_META_APP_ID;
@@ -154,7 +154,9 @@ export const EmbeddedSignUpService = {
     // Step 2 — Fetch additional metadata from Meta (non-fatal)
     const [wabaDetails, phoneDetails] = await Promise.all([
       this._fetchWabaDetails(wabaId, systemUserToken),
-      this._fetchPhoneNumberDetails(phoneNumberId, systemUserToken),
+      phoneNumberId
+        ? this._fetchPhoneNumberDetails(phoneNumberId, systemUserToken)
+        : Promise.resolve(null),
     ]);
 
     // Step 3 — Upsert the WhatsappBusinessAccount, encrypting the token at rest
@@ -171,20 +173,23 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    // Step 4 — Upsert the PhoneNumber linked to our internal WABA record
-    const phoneNumber = await WabaRepository.upsertPhoneNumber({
-      phoneNumberId,
-      wabaDbId: waba.id,
-      displayPhoneNumber: phoneDetails.displayPhoneNumber,
-      verifiedName: phoneDetails.verifiedName,
-      qualityRating: phoneDetails.qualityRating,
-    });
+    // Step 4 — Upsert the PhoneNumber linked to our internal WABA record (only if provided)
+    let phoneNumber = null;
+    if (phoneNumberId && phoneDetails) {
+      phoneNumber = await WabaRepository.upsertPhoneNumber({
+        phoneNumberId,
+        wabaDbId: waba.id,
+        displayPhoneNumber: phoneDetails.displayPhoneNumber,
+        verifiedName: phoneDetails.verifiedName,
+        qualityRating: phoneDetails.qualityRating,
+      });
 
-    logger.info('PhoneNumber upserted successfully', {
-      phoneNumberDbId: phoneNumber.id,
-      phoneNumberId,
-      wabaId,
-    });
+      logger.info('PhoneNumber upserted successfully', {
+        phoneNumberDbId: phoneNumber.id,
+        phoneNumberId,
+        wabaId,
+      });
+    }
 
     return { waba, phoneNumber };
   },

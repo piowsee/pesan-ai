@@ -4,7 +4,13 @@ import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { useWabaSignup } from '@/hooks/use-waba-signup';
 import Script from 'next/script';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { toast } from 'sonner';
 
 import { WabaSignupChecklist } from './waba-signup-checklist';
@@ -98,6 +104,14 @@ export function WabaEmbeddedSignupCard() {
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
     null,
   );
+
+  // Use a ref to always have access to the latest session data inside the stale
+  // FB.login callback closure.
+  const sessionRef = useRef(session);
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
   // Detect HTTPS only on the client side.
   const isHttpsPage = useSyncExternalStore(
     () => () => {}, // protocol doesn't change during session
@@ -120,13 +134,14 @@ export function WabaEmbeddedSignupCard() {
 
       setAuthorizationCode(code);
 
-      if (!session?.wabaId || !session?.phoneNumberId) {
+      // Check the latest session data via ref to avoid stale closure issues
+      if (!sessionRef.current?.wabaId) {
         toast.message(
-          'Authorization code received. Waiting for WABA and phone number IDs from the embedded signup event.',
+          'Authorization code received. But failed to get WABA, Please Try Again.',
         );
       }
     },
-    [session],
+    [],
   );
 
   // Trigger the mutation only when both the authorization code and session data are available.
@@ -135,7 +150,6 @@ export function WabaEmbeddedSignupCard() {
     if (
       authorizationCode &&
       session?.wabaId &&
-      session?.phoneNumberId &&
       !signupMutation.isPending &&
       !signupMutation.isSuccess
     ) {
@@ -144,7 +158,7 @@ export function WabaEmbeddedSignupCard() {
           await signupMutation.mutateAsync({
             code: authorizationCode,
             wabaId: session.wabaId!,
-            phoneNumberId: session.phoneNumberId!,
+            phoneNumberId: session.phoneNumberId ?? null,
             sessionPayload: session.payload ?? null,
           });
           toast.success(
