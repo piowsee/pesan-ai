@@ -1,4 +1,4 @@
-import { WabaEmbeddedSignupCard } from '@/components/dashboard/waba-embedded-signup-card';
+import { WabaEmbeddedSignupCard } from '@/components/dashboard/waba/waba-embedded-signup-card';
 import { Badge } from '@/components/ui/badge';
 
 export default function WabaPage() {
