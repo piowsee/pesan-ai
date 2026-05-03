@@ -4,7 +4,7 @@ import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { useWabaSignup } from '@/hooks/use-waba-signup';
 import Script from 'next/script';
-import { useCallback, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 
 import { WabaSignupChecklist } from './waba-signup-checklist';
@@ -125,27 +125,43 @@ export function WabaEmbeddedSignupCard() {
           'Authorization code received. Waiting for WABA and phone number IDs from the embedded signup event.',
         );
       }
-
-      try {
-        await signupMutation.mutateAsync({
-          code,
-          wabaId: session?.wabaId ?? null,
-          phoneNumberId: session?.phoneNumberId ?? null,
-          sessionPayload: session?.payload ?? null,
-        });
-        toast.success(
-          'Facebook signup completed. The authorization code was sent to the backend.',
-        );
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : 'Failed to send signup data to the backend',
-        );
-      }
     },
-    [session, signupMutation],
+    [session],
   );
+
+  // Trigger the mutation only when both the authorization code and session data are available.
+  // This avoids stale closure issues with FB.login callbacks.
+  useEffect(() => {
+    if (
+      authorizationCode &&
+      session?.wabaId &&
+      session?.phoneNumberId &&
+      !signupMutation.isPending &&
+      !signupMutation.isSuccess
+    ) {
+      const submitData = async () => {
+        try {
+          await signupMutation.mutateAsync({
+            code: authorizationCode,
+            wabaId: session.wabaId!,
+            phoneNumberId: session.phoneNumberId!,
+            sessionPayload: session.payload ?? null,
+          });
+          toast.success(
+            'Facebook signup completed. The authorization code was sent to the backend.',
+          );
+        } catch (error) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : 'Failed to send signup data to the backend',
+          );
+        }
+      };
+
+      void submitData();
+    }
+  }, [authorizationCode, session, signupMutation]);
 
   const launchWhatsAppSignup = useCallback(() => {
     if (!isHttpsPage) {

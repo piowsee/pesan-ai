@@ -105,7 +105,7 @@ export const EmbeddedSignUpService = {
     phoneNumberId: string,
     userId: string,
   ) {
-    const appId = process.env.META_APP_ID;
+    const appId = process.env.NEXT_PUBLIC_META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
 
     if (!appId || !appSecret) {
