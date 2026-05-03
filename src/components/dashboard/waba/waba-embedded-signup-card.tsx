@@ -14,8 +14,8 @@ import { WabaSignupForm } from './waba-signup-form';
 // Constants
 // ---------------------------------------------------------------------------
 
-const FACEBOOK_CONFIG_ID = process.env.FACEBOOK_CONFIG_ID ?? '';
-const META_APP_ID = process.env.META_APP_ID ?? '';
+const FACEBOOK_CONFIG_ID = process.env.NEXT_PUBLIC_FACEBOOK_CONFIG_ID ?? '';
+const META_APP_ID = process.env.NEXT_PUBLIC_META_APP_ID ?? '';
 
 type FacebookLoginResponse = {
   authResponse?: { code?: string } | null;
