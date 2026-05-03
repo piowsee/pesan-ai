@@ -85,7 +85,6 @@ async function main() {
         wabaId: '123456789012345',
         businessName: 'Piowsee Salon',
         systemUserToken: encrypt('EAAG...fake_token...'),
-        webhookVerifyToken: 'verify_token_123',
         status: 'active',
         userId: user.id,
       },

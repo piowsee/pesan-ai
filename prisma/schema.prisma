@@ -94,7 +94,6 @@ model WhatsappBusinessAccount {
   businessAddress     String?
   businessDescription String? 
   systemUserToken     String
-  webhookVerifyToken  String
   status              String   @default("active") // active, disconnected, suspended
   qualityRating       String?  // GREEN, YELLOW, RED
   createdAt           DateTime @default(now())
