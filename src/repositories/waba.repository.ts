@@ -100,4 +100,63 @@ export const WabaRepository = {
       where: { id },
     });
   },
+
+  /**
+   * Creates or updates a WhatsappBusinessAccount by its Meta wabaId.
+   * Safe to call multiple times (idempotent via upsert).
+   */
+  async upsertWaba(data: {
+    wabaId: string;
+    userId: string;
+    systemUserToken: string;
+    businessName?: string | null;
+  }) {
+    return prisma.whatsappBusinessAccount.upsert({
+      where: { wabaId: data.wabaId },
+      create: {
+        wabaId: data.wabaId,
+        userId: data.userId,
+        systemUserToken: data.systemUserToken,
+        businessName: data.businessName ?? null,
+        status: 'active',
+      },
+      update: {
+        userId: data.userId,
+        systemUserToken: data.systemUserToken,
+        status: 'active',
+        businessName: data.businessName ?? undefined,
+      },
+    });
+  },
+
+  /**
+   * Creates or updates a PhoneNumber by its Meta phoneNumberId.
+   * Safe to call multiple times (idempotent via upsert).
+   */
+  async upsertPhoneNumber(data: {
+    phoneNumberId: string;
+    wabaDbId: string; // our internal CUID, not the Meta wabaId
+    displayPhoneNumber: string;
+    verifiedName?: string | null;
+    qualityRating?: string | null;
+  }) {
+    return prisma.phoneNumber.upsert({
+      where: { phoneNumberId: data.phoneNumberId },
+      create: {
+        phoneNumberId: data.phoneNumberId,
+        wabaId: data.wabaDbId,
+        displayPhoneNumber: data.displayPhoneNumber,
+        verifiedName: data.verifiedName ?? null,
+        qualityRating: data.qualityRating ?? null,
+        codeVerificationStatus: 'VERIFIED',
+        botEnabled: true,
+      },
+      update: {
+        wabaId: data.wabaDbId,
+        displayPhoneNumber: data.displayPhoneNumber,
+        verifiedName: data.verifiedName ?? undefined,
+        qualityRating: data.qualityRating ?? undefined,
+      },
+    });
+  },
 };
