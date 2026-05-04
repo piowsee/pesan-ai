@@ -6,8 +6,8 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 
 /**
  * @route POST /api/waba/embedded-signup
- * @body { code: string, wabaId: string, phoneNumberId: string, sessionPayload?: unknown }
- * @response { status: 'success', data: { wabaId, phoneNumberId } }
+ * @body { code: string, wabaId: string, sessionPayload?: unknown }
+ * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers } }
  * @access Authenticated users
  * @description Receives the Embedded Signup authorization code, exchanges it for a
  *              System User Access Token with Meta, then persists the WABA and

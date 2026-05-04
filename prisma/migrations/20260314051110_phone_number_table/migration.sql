@@ -4,6 +4,7 @@ CREATE TABLE "phone_number" (
     "phoneNumberId" TEXT NOT NULL,
     "displayPhoneNumber" TEXT NOT NULL,
     "verifiedName" TEXT,
+    "registrationPin" TEXT,
     "codeVerificationStatus" TEXT NOT NULL DEFAULT 'VERIFIED',
     "qualityRating" TEXT,
     "botEnabled" BOOLEAN NOT NULL DEFAULT true,

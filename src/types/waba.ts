@@ -1,8 +1,8 @@
 export interface PhoneNumberMetaResponse {
   id: string;
   display_phone_number: string;
-  verified_name?: string;
-  quality_rating?: string; // GREEN, YELLOW, RED
+  verified_name?: string | null;
+  quality_rating?: string | null; // GREEN, YELLOW, RED
   error?: { message: string };
 }
 

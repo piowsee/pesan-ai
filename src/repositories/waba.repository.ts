@@ -1,6 +1,10 @@
 import prisma from '@/lib/prisma';
 import { PhoneNumberMetaResponse } from '@/types/waba';
 
+type UpsertPhoneNumberInput = PhoneNumberMetaResponse & {
+  registrationPin?: string | null;
+};
+
 const PHONE_NUMBER_INCLUDE = {
   include: {
     botWebhook: true,
@@ -128,7 +132,7 @@ export const WabaRepository = {
    */
   async upsertPhoneNumbers(params: {
     wabaDbId: string; // our internal CUID, not the Meta wabaId
-    phoneNumberDatas: PhoneNumberMetaResponse[];
+    phoneNumberDatas: UpsertPhoneNumberInput[];
   }) {
     const { wabaDbId, phoneNumberDatas } = params;
 
@@ -141,6 +145,7 @@ export const WabaRepository = {
             wabaId: wabaDbId,
             displayPhoneNumber: phoneNumber.display_phone_number,
             verifiedName: phoneNumber.verified_name ?? null,
+            registrationPin: phoneNumber.registrationPin ?? null,
             qualityRating: phoneNumber.quality_rating ?? null,
             codeVerificationStatus: 'VERIFIED',
             botEnabled: true,
@@ -149,6 +154,7 @@ export const WabaRepository = {
             wabaId: wabaDbId,
             displayPhoneNumber: phoneNumber.display_phone_number,
             verifiedName: phoneNumber.verified_name ?? null,
+            registrationPin: phoneNumber.registrationPin ?? undefined,
             qualityRating: phoneNumber.quality_rating ?? null,
           },
         }),

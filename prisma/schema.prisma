@@ -114,6 +114,7 @@ model PhoneNumber {
   phoneNumberId          String   @unique // Meta Phone Number ID — already indexed
   displayPhoneNumber     String
   verifiedName           String?
+  registrationPin        String?
   codeVerificationStatus String   @default("VERIFIED") // VERIFIED, NOT_VERIFIED
   qualityRating          String?  // GREEN, YELLOW, RED
   botEnabled             Boolean  @default(true)

@@ -8,20 +8,75 @@ import {
   WabaDetails,
   WabaMetaResponse,
 } from '@/types/waba';
+import { randomInt } from 'node:crypto';
 
 const GRAPH_API_VERSION = 'v25.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-const appId = process.env.NEXT_PUBLIC_META_APP_ID;
-const appSecret = process.env.META_APP_SECRET;
+const ALREADY_REGISTERED_PHONE_ERROR = /already registered/i;
+
+type PhoneRegistration = PhoneNumberMetaResponse & {
+  encryptedRegistrationPin: string;
+  registrationPin: string;
+};
+
+function getMetaAppCredentials() {
+  return {
+    appId: process.env.META_APP_ID,
+    appSecret: process.env.META_APP_SECRET,
+  };
+}
 
 /**
  * Exchanges the short-lived Embedded Signup `code` for a System User Access Token
  * via Meta's OAuth endpoint, then persists the WABA and PhoneNumber records.
  */
 export const EmbeddedSignUpService = {
+  _generateRegistrationPin(): string {
+    return randomInt(0, 1_000_000).toString().padStart(6, '0');
+  },
+
+  _buildPhoneRegistrations(
+    phoneNumberDatas: PhoneNumberMetaResponse[],
+  ): PhoneRegistration[] {
+    return phoneNumberDatas.map((phoneNumber) => {
+      const registrationPin = this._generateRegistrationPin();
+
+      return {
+        ...phoneNumber,
+        registrationPin,
+        encryptedRegistrationPin: encrypt(registrationPin),
+      };
+    });
+  },
+
+  async _extractMetaErrorMessage(
+    response: Response,
+    fallbackMessage: string,
+  ): Promise<string> {
+    try {
+      const data = await response.json();
+
+      if (
+        typeof data === 'object' &&
+        data !== null &&
+        'error' in data &&
+        typeof data.error === 'object' &&
+        data.error !== null &&
+        'message' in data.error &&
+        typeof data.error.message === 'string'
+      ) {
+        return data.error.message;
+      }
+    } catch {
+      // Ignore JSON parsing errors and fall back to the provided message.
+    }
+
+    return fallbackMessage;
+  },
+
   /**
    * Fetches WABA metadata from the Meta Graph API.
-   * Non-fatal — failures are logged but do not block the signup.
+   * Non-fatal: failures are logged but do not block the signup.
    */
   async _fetchWabaDetails(wabaId: string, token: string): Promise<WabaDetails> {
     try {
@@ -43,7 +98,7 @@ export const EmbeddedSignUpService = {
 
   /**
    * Fetches phone number details from the Meta Graph API.
-   * Non-fatal — failures are logged but do not block the signup.
+   * Non-fatal: failures are logged but do not block the signup.
    */
   async _fetchPhoneNumberDetails(
     wabaId: string,
@@ -59,8 +114,6 @@ export const EmbeddedSignUpService = {
       }
 
       const data = await res.json();
-      // Handle the case where 'data' might be an object with a 'data' array property (standard Meta paginated response)
-      // or a direct array. The previous code assumed direct array.
       return Array.isArray(data) ? data : data.data || [];
     } catch (err) {
       logError(err, { action: '_fetchPhoneNumberDetails', wabaId });
@@ -68,14 +121,63 @@ export const EmbeddedSignUpService = {
     }
   },
 
+  async _registerPhoneNumber(
+    phoneNumberId: string,
+    token: string,
+    pin: string,
+  ): Promise<void> {
+    const response = await fetch(`${GRAPH_BASE}/${phoneNumberId}/register`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        pin,
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to register phone number ${phoneNumberId} with Meta`,
+      );
+      throw new ApiError(
+        message,
+        ALREADY_REGISTERED_PHONE_ERROR.test(message) ? 403 : 502,
+      );
+    }
+  },
+
+  async _subscribeWabaApps(wabaId: string, token: string): Promise<void> {
+    const response = await fetch(`${GRAPH_BASE}/${wabaId}/subscribed_apps`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to subscribe apps for WABA ${wabaId}`,
+      );
+      throw new ApiError(message, 502);
+    }
+  },
+
   /**
    * Main flow:
    * 1. Exchange the short-lived `code` for a System User Access Token.
    * 2. Fetch WABA and phone number details from Meta.
-   * 3. Upsert WhatsappBusinessAccount (linked to `userId`).
-   * 4. Upsert PhoneNumbers linked to the WABA.
+   * 3. Generate and persist the encrypted registration PIN.
+   * 4. Register phone numbers and subscribe the app in Meta.
+   * 5. Upsert PhoneNumbers linked to the WABA.
    */
   async exchangeToken(code: string, wabaId: string, userId: string) {
+    const { appId, appSecret } = getMetaAppCredentials();
+
     if (!appId || !appSecret) {
       throw new ApiError(
         'Meta app credentials are not configured on the server',
@@ -83,7 +185,6 @@ export const EmbeddedSignUpService = {
       );
     }
 
-    // Step 1 — Exchange authorization code for a System User Access Token
     logger.info('Exchanging Meta Embedded Signup code for access token', {
       wabaId,
       userId,
@@ -118,13 +219,11 @@ export const EmbeddedSignUpService = {
 
     logger.info('Meta token exchange successful', { wabaId, userId });
 
-    // Step 2 — Fetch additional metadata from Meta (non-fatal)
     const [wabaDetails, phoneNumberDatas] = await Promise.all([
       this._fetchWabaDetails(wabaId, systemUserToken),
       this._fetchPhoneNumberDetails(wabaId, systemUserToken),
     ]);
 
-    // Step 3 — Upsert the WhatsappBusinessAccount, encrypting the token at rest
     const waba = await WabaRepository.upsertWaba({
       wabaId,
       userId,
@@ -138,10 +237,32 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    // Step 4 — Upsert all PhoneNumbers linked to our internal WABA record
+    const phoneRegistrations = this._buildPhoneRegistrations(phoneNumberDatas);
+
+    await Promise.all([
+      ...phoneRegistrations.map((phoneNumber) =>
+        this._registerPhoneNumber(
+          phoneNumber.id,
+          systemUserToken,
+          phoneNumber.registrationPin,
+        ),
+      ),
+      this._subscribeWabaApps(wabaId, systemUserToken),
+    ]);
+
+    logger.info('Meta phone registration and app subscription completed', {
+      phoneNumberCount: phoneRegistrations.length,
+      wabaId,
+    });
+
     const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
       wabaDbId: waba.id,
-      phoneNumberDatas,
+      phoneNumberDatas: phoneRegistrations.map(
+        ({ encryptedRegistrationPin, ...phoneNumber }) => ({
+          ...phoneNumber,
+          registrationPin: encryptedRegistrationPin,
+        }),
+      ),
     });
 
     logger.info('PhoneNumbers upserted successfully', {
