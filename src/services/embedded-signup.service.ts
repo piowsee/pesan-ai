@@ -1,5 +1,6 @@
 import { encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
+import * as retryableFetch from '@/lib/fetch-with-retry';
 import { logError, logger } from '@/lib/logger';
 import { WabaRepository } from '@/repositories/waba.repository';
 import {
@@ -80,9 +81,13 @@ export const EmbeddedSignUpService = {
    */
   async _fetchWabaDetails(wabaId: string, token: string): Promise<WabaDetails> {
     try {
-      const res = await fetch(`${GRAPH_BASE}/${wabaId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await retryableFetch.fetchWithRetry(
+        `${GRAPH_BASE}/${wabaId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+        { action: '_fetchWabaDetails' },
+      );
 
       if (!res.ok) {
         throw new Error(`Meta API error: ${res.status} ${res.statusText}`);
@@ -105,9 +110,13 @@ export const EmbeddedSignUpService = {
     token: string,
   ): Promise<PhoneNumberMetaResponse[]> {
     try {
-      const res = await fetch(`${GRAPH_BASE}/${wabaId}/phone_numbers`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await retryableFetch.fetchWithRetry(
+        `${GRAPH_BASE}/${wabaId}/phone_numbers`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+        { action: '_fetchPhoneNumberDetails' },
+      );
 
       if (!res.ok) {
         throw new Error(`Meta API error: ${res.status} ${res.statusText}`);
@@ -126,17 +135,24 @@ export const EmbeddedSignUpService = {
     token: string,
     pin: string,
   ): Promise<void> {
-    const response = await fetch(`${GRAPH_BASE}/${phoneNumberId}/register`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}/register`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          pin,
+        }),
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        pin,
-      }),
-    });
+      {
+        action: '_registerPhoneNumber',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
 
     if (!response.ok) {
       const message = await this._extractMetaErrorMessage(
@@ -151,12 +167,16 @@ export const EmbeddedSignUpService = {
   },
 
   async _subscribeWabaApps(wabaId: string, token: string): Promise<void> {
-    const response = await fetch(`${GRAPH_BASE}/${wabaId}/subscribed_apps`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${wabaId}/subscribed_apps`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+      { action: '_subscribeWabaApps' },
+    );
 
     if (!response.ok) {
       const message = await this._extractMetaErrorMessage(
@@ -190,16 +210,20 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    const tokenRes = await fetch(`${GRAPH_BASE}/oauth/access_token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        client_id: appId,
-        client_secret: appSecret,
-        grant_type: 'authorization_code',
-        code,
-      }),
-    });
+    const tokenRes = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/oauth/access_token`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_id: appId,
+          client_secret: appSecret,
+          grant_type: 'authorization_code',
+          code,
+        }),
+      },
+      { action: 'exchangeToken.oauthAccessToken' },
+    );
     const tokenData: TokenExchangeResponse = await tokenRes.json();
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
