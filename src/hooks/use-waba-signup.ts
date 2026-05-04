@@ -1,6 +1,8 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { wabaKeys } from './use-wabas';
 
 export interface WabaSignupPayload {
   code: string;
@@ -14,6 +16,8 @@ export interface WabaSignupPayload {
  * about the WABA and phone number identifiers.
  */
 export function useWabaSignup() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: WabaSignupPayload) => {
       const response = await fetch('/api/waba/embedded-signup', {
@@ -29,6 +33,9 @@ export function useWabaSignup() {
       }
 
       return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: wabaKeys.all });
     },
   });
 }

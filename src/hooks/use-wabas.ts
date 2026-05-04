@@ -51,7 +51,7 @@ const DEFAULT_PAGE_SIZE = 10;
 // ─── Query Keys ──────────────────────────────────────────────────────
 
 export const wabaKeys = {
-  all: ['admin', 'wabas'] as const,
+  all: ['wabas'] as const,
   lists: () => [...wabaKeys.all, 'list'] as const,
   list: (page: number, limit: number) =>
     [...wabaKeys.lists(), { page, limit }] as const,
