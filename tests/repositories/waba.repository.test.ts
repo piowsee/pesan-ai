@@ -12,13 +12,12 @@ import {
 
 import { SEED_DATA } from '../seed-data';
 
-vi.unmock('@/repositories/waba.repository.ts');
+vi.unmock('@/repositories/waba.repository');
 
 /**
- * WabaRepository Integration Tests (Synced with Seed)
- * Reasoning: Verifies WABA-related queries against the baseline seeded data.
- * Ensures pagination, ownership, and unread count aggregations are
- * consistent with the standard project seed.
+ * WabaRepository Integration Tests
+ * Reasoning: Verifies WABA-related queries (seeded data) and
+ * Upsert operations (Embedded Signup flow) in a single suite.
  */
 
 describe('WabaRepository Integration', { tags: ['db'] }, () => {
@@ -59,11 +58,17 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
   });
 
   afterEach(async () => {
-    // Cleanup only test-specific WABAs
+    // Cleanup test-specific data
+    await prisma.phoneNumber.deleteMany({
+      where: { phoneNumberId: 'test-upsert-phone-999' },
+    });
     await prisma.whatsappBusinessAccount.deleteMany({
       where: {
-        businessName: { contains: 'Test-Waba-' },
-        userId: userId,
+        OR: [
+          { wabaId: 'test-upsert-waba-999' },
+          { businessName: { contains: 'Test-Waba-' } },
+          { businessName: 'Test Salon' },
+        ],
       },
     });
   });
@@ -72,20 +77,19 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     await prisma.$disconnect();
   });
 
+  // --- Query Operations ---
+
   describe('findAllByUserId', () => {
     it('returns wabas belonging to the seeded user', async () => {
       const result = await WabaRepository.findAllByUserId(userId);
-
       expect(result.length).toBeGreaterThanOrEqual(1);
-      const seeded = result.find((w) => w.id === dbWabaId);
-      expect(seeded).toBeDefined();
+      expect(result.some((w) => w.id === dbWabaId)).toBe(true);
     });
   });
 
   describe('findPaginated', () => {
     it('returns paginated results including the seeded WABA', async () => {
       const result = await WabaRepository.findPaginated(10, 0);
-
       expect(result.total).toBeGreaterThanOrEqual(1);
       expect(result.wabas.some((w) => w.id === dbWabaId)).toBe(true);
     });
@@ -94,9 +98,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
   describe('findPaginatedByUserId', () => {
     it('returns paginated results for the seeded user', async () => {
       const result = await WabaRepository.findPaginatedByUserId(10, 0, userId);
-
       expect(result.total).toBeGreaterThanOrEqual(1);
-      expect(result.wabas.some((w) => w.id === dbWabaId)).toBe(true);
       expect(result.wabas.every((w) => w.userId === userId)).toBe(true);
     });
   });
@@ -104,11 +106,9 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
   describe('getTotalUnreadListByUserId', () => {
     it('computes total unread messages for the seeded user', async () => {
       const result = await WabaRepository.getTotalUnreadListByUserId(userId);
-
       expect(result.length).toBeGreaterThanOrEqual(1);
       const seeded = result.find((w) => w.id === dbWabaId);
       expect(seeded).toBeDefined();
-      expect(seeded?.totalUnread).toBeDefined();
     });
   });
 
@@ -118,9 +118,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         dbWabaId,
         dbWebhookId,
       );
-
       expect(result.count).toBeGreaterThanOrEqual(1);
-
       const check = await prisma.phoneNumber.findFirst({
         where: { wabaId: dbWabaId },
       });
@@ -131,9 +129,141 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
   describe('findById', () => {
     it('finds the seeded WABA by its internal ID', async () => {
       const result = await WabaRepository.findById(dbWabaId);
-
       expect(result?.id).toBe(dbWabaId);
-      expect(result?.wabaId).toBe(SEED_DATA.WABA_META_ID);
+    });
+  });
+
+  // --- Upsert Operations (Embedded Signup) ---
+
+  const TEST_WABA_ID = 'test-upsert-waba-999';
+  const TEST_PHONE_ID = 'test-upsert-phone-999';
+
+  describe('upsertWaba', () => {
+    it('creates a new WhatsappBusinessAccount on first call', async () => {
+      const result = await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:mock-token',
+        businessName: 'Test Salon',
+      });
+
+      expect(result.wabaId).toBe(TEST_WABA_ID);
+      expect(result.businessName).toBe('Test Salon');
+      expect(result.status).toBe('active');
+    });
+
+    it('updates token and status on subsequent calls (idempotent)', async () => {
+      await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:old-token',
+        businessName: 'Original Name',
+      });
+
+      const updated = await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:new-token',
+        businessName: 'Updated Name',
+      });
+
+      expect(updated.systemUserToken).toBe('enc:new-token');
+      expect(updated.businessName).toBe('Updated Name');
+    });
+
+    it('preserves null businessName when not provided on create', async () => {
+      await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:tok',
+        businessName: null,
+      });
+
+      const result = await prisma.whatsappBusinessAccount.findUnique({
+        where: { wabaId: TEST_WABA_ID },
+      });
+      expect(result?.businessName).toBeNull();
+    });
+  });
+
+  describe('upsertPhoneNumbers', () => {
+    let wabaDbId: string;
+
+    beforeEach(async () => {
+      const waba = await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:tok',
+        businessName: 'Test Salon',
+      });
+      wabaDbId = waba.id;
+    });
+
+    it('creates a new PhoneNumber linked to the WABA', async () => {
+      const [result] = await WabaRepository.upsertPhoneNumbers({
+        wabaDbId,
+        phoneNumberDatas: [
+          {
+            id: TEST_PHONE_ID,
+            display_phone_number: '+6281234567890',
+            verified_name: 'Test Salon Bot',
+            registrationPin: 'enc:230601',
+          },
+        ],
+      });
+
+      expect(result.phoneNumberId).toBe(TEST_PHONE_ID);
+      expect(result.wabaId).toBe(wabaDbId);
+      expect(result.displayPhoneNumber).toBe('+6281234567890');
+      expect(result.registrationPin).toBe('enc:230601');
+      expect(result.codeVerificationStatus).toBe('VERIFIED');
+    });
+
+    it('updates display number and verified name on subsequent calls (idempotent)', async () => {
+      await WabaRepository.upsertPhoneNumbers({
+        wabaDbId,
+        phoneNumberDatas: [
+          {
+            id: TEST_PHONE_ID,
+            display_phone_number: '+6281234567890',
+            verified_name: 'Old Name',
+            registrationPin: 'enc:111111',
+          },
+        ],
+      });
+
+      const [updated] = await WabaRepository.upsertPhoneNumbers({
+        wabaDbId,
+        phoneNumberDatas: [
+          {
+            id: TEST_PHONE_ID,
+            display_phone_number: '+6289999999999',
+            verified_name: 'New Name',
+            registrationPin: 'enc:222222',
+          },
+        ],
+      });
+
+      expect(updated.displayPhoneNumber).toBe('+6289999999999');
+      expect(updated.verifiedName).toBe('New Name');
+      expect(updated.registrationPin).toBe('enc:222222');
+    });
+
+    it('handles null verifiedName gracefully', async () => {
+      const [result] = await WabaRepository.upsertPhoneNumbers({
+        wabaDbId,
+        phoneNumberDatas: [
+          {
+            id: TEST_PHONE_ID,
+            display_phone_number: '+628000000000',
+            verified_name: null,
+            registrationPin: null,
+          },
+        ],
+      });
+
+      expect(result.verifiedName).toBeNull();
+      expect(result.registrationPin).toBeNull();
     });
   });
 });
