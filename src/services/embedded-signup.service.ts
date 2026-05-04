@@ -2,45 +2,17 @@ import { encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import { logError, logger } from '@/lib/logger';
 import { WabaRepository } from '@/repositories/waba.repository';
+import {
+  PhoneNumberMetaResponse,
+  TokenExchangeResponse,
+  WabaDetails,
+  WabaMetaResponse,
+} from '@/types/waba';
 
 const GRAPH_API_VERSION = 'v25.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-
-interface TokenExchangeResponse {
-  access_token: string;
-  token_type?: string;
-  error?: {
-    message: string;
-    type: string;
-    code: number;
-  };
-}
-
-interface PhoneNumberMetaResponse {
-  id?: string;
-  display_phone_number?: string;
-  verified_name?: string;
-  quality_rating?: string; // GREEN, YELLOW, RED
-  error?: { message: string };
-}
-
-interface WabaMetaResponse {
-  id?: string;
-  name?: string;
-  timezone_id?: string;
-  message_template_namespace?: string;
-  error?: { message: string };
-}
-
-type WabaDetails = {
-  businessName: string | null;
-};
-
-type PhoneNumberDetails = {
-  displayPhoneNumber: string;
-  verifiedName: string | null;
-  qualityRating: string | null;
-};
+const appId = process.env.NEXT_PUBLIC_META_APP_ID;
+const appSecret = process.env.META_APP_SECRET;
 
 /**
  * Exchanges the short-lived Embedded Signup `code` for a System User Access Token
@@ -56,6 +28,11 @@ export const EmbeddedSignUpService = {
       const res = await fetch(`${GRAPH_BASE}/${wabaId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (!res.ok) {
+        throw new Error(`Meta API error: ${res.status} ${res.statusText}`);
+      }
+
       const data: WabaMetaResponse = await res.json();
       return { businessName: data.name ?? null };
     } catch (err) {
@@ -69,26 +46,25 @@ export const EmbeddedSignUpService = {
    * Non-fatal — failures are logged but do not block the signup.
    */
   async _fetchPhoneNumberDetails(
-    phoneNumberId: string,
+    wabaId: string,
     token: string,
-  ): Promise<PhoneNumberDetails> {
+  ): Promise<PhoneNumberMetaResponse[]> {
     try {
-      const res = await fetch(`${GRAPH_BASE}/${phoneNumberId}`, {
+      const res = await fetch(`${GRAPH_BASE}/${wabaId}/phone_numbers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data: PhoneNumberMetaResponse = await res.json();
-      return {
-        displayPhoneNumber: data.display_phone_number ?? phoneNumberId,
-        verifiedName: data.verified_name ?? null,
-        qualityRating: data.quality_rating ?? null,
-      };
+
+      if (!res.ok) {
+        throw new Error(`Meta API error: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      // Handle the case where 'data' might be an object with a 'data' array property (standard Meta paginated response)
+      // or a direct array. The previous code assumed direct array.
+      return Array.isArray(data) ? data : data.data || [];
     } catch (err) {
-      logError(err, { action: '_fetchPhoneNumberDetails', phoneNumberId });
-      return {
-        displayPhoneNumber: phoneNumberId,
-        verifiedName: null,
-        qualityRating: null,
-      };
+      logError(err, { action: '_fetchPhoneNumberDetails', wabaId });
+      return [];
     }
   },
 
@@ -97,17 +73,9 @@ export const EmbeddedSignUpService = {
    * 1. Exchange the short-lived `code` for a System User Access Token.
    * 2. Fetch WABA and phone number details from Meta.
    * 3. Upsert WhatsappBusinessAccount (linked to `userId`).
-   * 4. Upsert PhoneNumber linked to the WABA.
+   * 4. Upsert PhoneNumbers linked to the WABA.
    */
-  async exchange_token(
-    code: string,
-    wabaId: string,
-    phoneNumberId: string | null,
-    userId: string,
-  ) {
-    const appId = process.env.NEXT_PUBLIC_META_APP_ID;
-    const appSecret = process.env.META_APP_SECRET;
-
+  async exchangeToken(code: string, wabaId: string, userId: string) {
     if (!appId || !appSecret) {
       throw new ApiError(
         'Meta app credentials are not configured on the server',
@@ -118,7 +86,6 @@ export const EmbeddedSignUpService = {
     // Step 1 — Exchange authorization code for a System User Access Token
     logger.info('Exchanging Meta Embedded Signup code for access token', {
       wabaId,
-      phoneNumberId,
       userId,
     });
 
@@ -152,11 +119,9 @@ export const EmbeddedSignUpService = {
     logger.info('Meta token exchange successful', { wabaId, userId });
 
     // Step 2 — Fetch additional metadata from Meta (non-fatal)
-    const [wabaDetails, phoneDetails] = await Promise.all([
+    const [wabaDetails, phoneNumberDatas] = await Promise.all([
       this._fetchWabaDetails(wabaId, systemUserToken),
-      phoneNumberId
-        ? this._fetchPhoneNumberDetails(phoneNumberId, systemUserToken)
-        : Promise.resolve(null),
+      this._fetchPhoneNumberDetails(wabaId, systemUserToken),
     ]);
 
     // Step 3 — Upsert the WhatsappBusinessAccount, encrypting the token at rest
@@ -173,24 +138,17 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    // Step 4 — Upsert the PhoneNumber linked to our internal WABA record (only if provided)
-    let phoneNumber = null;
-    if (phoneNumberId && phoneDetails) {
-      phoneNumber = await WabaRepository.upsertPhoneNumber({
-        phoneNumberId,
-        wabaDbId: waba.id,
-        displayPhoneNumber: phoneDetails.displayPhoneNumber,
-        verifiedName: phoneDetails.verifiedName,
-        qualityRating: phoneDetails.qualityRating,
-      });
+    // Step 4 — Upsert all PhoneNumbers linked to our internal WABA record
+    const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
+      wabaDbId: waba.id,
+      phoneNumberDatas,
+    });
 
-      logger.info('PhoneNumber upserted successfully', {
-        phoneNumberDbId: phoneNumber.id,
-        phoneNumberId,
-        wabaId,
-      });
-    }
+    logger.info('PhoneNumbers upserted successfully', {
+      count: phoneNumbers.length,
+      wabaId,
+    });
 
-    return { waba, phoneNumber };
+    return { waba, phoneNumbers };
   },
 };

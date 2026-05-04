@@ -1,17 +1,24 @@
 import prisma from '@/lib/prisma';
+import { PhoneNumberMetaResponse } from '@/types/waba';
+
+const PHONE_NUMBER_INCLUDE = {
+  include: {
+    botWebhook: true,
+  },
+} as const;
+
+const WABA_INCLUDE = {
+  include: {
+    phoneNumbers: PHONE_NUMBER_INCLUDE,
+    user: true,
+  },
+} as const;
 
 export const WabaRepository = {
   async findAllByUserId(userId: string) {
     return prisma.whatsappBusinessAccount.findMany({
       where: { userId },
-      include: {
-        phoneNumbers: {
-          include: {
-            botWebhook: true,
-          },
-        },
-        user: true,
-      },
+      ...WABA_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
   },
@@ -22,14 +29,7 @@ export const WabaRepository = {
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
-        include: {
-          phoneNumbers: {
-            include: {
-              botWebhook: true,
-            },
-          },
-          user: true,
-        },
+        ...WABA_INCLUDE,
       }),
       prisma.whatsappBusinessAccount.count(),
     ]);
@@ -46,14 +46,7 @@ export const WabaRepository = {
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
-        include: {
-          phoneNumbers: {
-            include: {
-              botWebhook: true,
-            },
-          },
-          user: true,
-        },
+        ...WABA_INCLUDE,
       }),
       prisma.whatsappBusinessAccount.count({ where }),
     ]);
@@ -133,30 +126,33 @@ export const WabaRepository = {
    * Creates or updates a PhoneNumber by its Meta phoneNumberId.
    * Safe to call multiple times (idempotent via upsert).
    */
-  async upsertPhoneNumber(data: {
-    phoneNumberId: string;
+  async upsertPhoneNumbers(params: {
     wabaDbId: string; // our internal CUID, not the Meta wabaId
-    displayPhoneNumber: string;
-    verifiedName?: string | null;
-    qualityRating?: string | null;
+    phoneNumberDatas: PhoneNumberMetaResponse[];
   }) {
-    return prisma.phoneNumber.upsert({
-      where: { phoneNumberId: data.phoneNumberId },
-      create: {
-        phoneNumberId: data.phoneNumberId,
-        wabaId: data.wabaDbId,
-        displayPhoneNumber: data.displayPhoneNumber,
-        verifiedName: data.verifiedName ?? null,
-        qualityRating: data.qualityRating ?? null,
-        codeVerificationStatus: 'VERIFIED',
-        botEnabled: true,
-      },
-      update: {
-        wabaId: data.wabaDbId,
-        displayPhoneNumber: data.displayPhoneNumber,
-        verifiedName: data.verifiedName ?? undefined,
-        qualityRating: data.qualityRating ?? undefined,
-      },
-    });
+    const { wabaDbId, phoneNumberDatas } = params;
+
+    return prisma.$transaction(
+      phoneNumberDatas.map((phoneNumber) =>
+        prisma.phoneNumber.upsert({
+          where: { phoneNumberId: phoneNumber.id },
+          create: {
+            phoneNumberId: phoneNumber.id,
+            wabaId: wabaDbId,
+            displayPhoneNumber: phoneNumber.display_phone_number,
+            verifiedName: phoneNumber.verified_name ?? null,
+            qualityRating: phoneNumber.quality_rating ?? null,
+            codeVerificationStatus: 'VERIFIED',
+            botEnabled: true,
+          },
+          update: {
+            wabaId: wabaDbId,
+            displayPhoneNumber: phoneNumber.display_phone_number,
+            verifiedName: phoneNumber.verified_name ?? null,
+            qualityRating: phoneNumber.quality_rating ?? null,
+          },
+        }),
+      ),
+    );
   },
 };

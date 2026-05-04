@@ -16,21 +16,18 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
 
-  const { code, wabaId, phoneNumberId, sessionPayload } =
-    EmbeddedSignupSchema.parse(rawBody);
+  const { code, wabaId, sessionPayload } = EmbeddedSignupSchema.parse(rawBody);
 
   logger.info('Embedded signup payload received', {
     userId: user.id,
     hasCode: Boolean(code),
     wabaId,
-    phoneNumberId,
     hasSessionPayload: sessionPayload !== undefined,
   });
 
-  const { waba, phoneNumber } = await EmbeddedSignUpService.exchange_token(
+  const { waba, phoneNumbers } = await EmbeddedSignUpService.exchangeToken(
     code,
     wabaId,
-    phoneNumberId,
     user.id,
   );
 
@@ -38,8 +35,7 @@ export const POST = withApiAuth(async ({ req, user }) => {
     {
       wabaId: waba.wabaId,
       wabaDbId: waba.id,
-      phoneNumberId: phoneNumber?.phoneNumberId,
-      phoneNumberDbId: phoneNumber?.id,
+      phoneNumbers,
     },
     201,
   );

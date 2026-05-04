@@ -158,7 +158,6 @@ export function WabaEmbeddedSignupCard() {
           await signupMutation.mutateAsync({
             code: authorizationCode,
             wabaId: session.wabaId!,
-            phoneNumberId: session.phoneNumberId ?? null,
             sessionPayload: session.payload ?? null,
           });
           toast.success(

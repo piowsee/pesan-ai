@@ -5,7 +5,6 @@ import { useMutation } from '@tanstack/react-query';
 export interface WabaSignupPayload {
   code: string;
   wabaId: string | null;
-  phoneNumberId: string | null;
   sessionPayload: unknown;
 }
 
