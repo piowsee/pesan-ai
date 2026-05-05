@@ -22,7 +22,7 @@ type PhoneRegistration = PhoneNumberMetaResponse & {
 
 function getMetaAppCredentials() {
   return {
-    appId: process.env.META_APP_ID,
+    appId: process.env.NEXT_PUBLIC_META_APP_ID,
     appSecret: process.env.META_APP_SECRET,
   };
 }

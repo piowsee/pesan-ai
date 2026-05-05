@@ -160,10 +160,11 @@ export function WabaEmbeddedSignupButton({
           wabaId: session.wabaId,
           sessionPayload: session.payload ?? null,
         });
+        setAuthorizationCode(null);
         toast.success('WABA connected successfully.');
         onSuccess?.();
       } catch (error) {
-        handledCodeRef.current = null;
+        setAuthorizationCode(null);
         toast.error(
           error instanceof Error
             ? error.message
