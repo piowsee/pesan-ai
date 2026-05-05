@@ -41,7 +41,7 @@ vi.mock('@/lib/event-bus', async () => {
 // Global environment variables that are repetitive
 process.env.META_WEBHOOK_SECRET = 'secret';
 process.env.META_APP_SECRET = 'app-secret';
-process.env.META_APP_ID = 'test-app-id';
+process.env.NEXT_PUBLIC_META_APP_ID = 'test-app-id';
 
 // --- Mocks for Repositories ---
 vi.mock('@/repositories/chat.repository', () => ({

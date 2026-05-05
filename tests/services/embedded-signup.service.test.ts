@@ -345,15 +345,15 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       ).rejects.toMatchObject({ status: 502 });
     });
 
-    it('throws ApiError(500) when META_APP_ID env var is missing', async () => {
-      const original = process.env.META_APP_ID;
-      delete process.env.META_APP_ID;
+    it('throws ApiError(500) when NEXT_PUBLIC_META_APP_ID env var is missing', async () => {
+      const original = process.env.NEXT_PUBLIC_META_APP_ID;
+      delete process.env.NEXT_PUBLIC_META_APP_ID;
 
       await expect(
         EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
       ).rejects.toMatchObject({ status: 500 });
 
-      process.env.META_APP_ID = original;
+      process.env.NEXT_PUBLIC_META_APP_ID = original;
     });
 
     it('throws ApiError(500) when META_APP_SECRET env var is missing', async () => {
