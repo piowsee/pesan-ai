@@ -6,7 +6,6 @@ CREATE TABLE "whatsapp_business_account" (
     "businessAddress" TEXT,
     "businessDescription" TEXT,
     "systemUserToken" TEXT NOT NULL,
-    "webhookVerifyToken" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'active',
     "qualityRating" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

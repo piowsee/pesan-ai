@@ -94,7 +94,6 @@ model WhatsappBusinessAccount {
   businessAddress     String?
   businessDescription String? 
   systemUserToken     String
-  webhookVerifyToken  String
   status              String   @default("active") // active, disconnected, suspended
   qualityRating       String?  // GREEN, YELLOW, RED
   createdAt           DateTime @default(now())
@@ -115,6 +114,7 @@ model PhoneNumber {
   phoneNumberId          String   @unique // Meta Phone Number ID — already indexed
   displayPhoneNumber     String
   verifiedName           String?
+  registrationPin        String?
   codeVerificationStatus String   @default("VERIFIED") // VERIFIED, NOT_VERIFIED
   qualityRating          String?  // GREEN, YELLOW, RED
   botEnabled             Boolean  @default(true)

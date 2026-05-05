@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { vi } from 'vitest';
 
 // Global mock for logger
-vi.mock('@/logger/logger', () => ({
+vi.mock('@/lib/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   logError: vi.fn(),
 }));
@@ -41,6 +41,7 @@ vi.mock('@/lib/event-bus', async () => {
 // Global environment variables that are repetitive
 process.env.META_WEBHOOK_SECRET = 'secret';
 process.env.META_APP_SECRET = 'app-secret';
+process.env.NEXT_PUBLIC_META_APP_ID = 'test-app-id';
 
 // --- Mocks for Repositories ---
 vi.mock('@/repositories/chat.repository', () => ({
@@ -68,6 +69,8 @@ vi.mock('@/repositories/waba.repository', () => ({
     getTotalUnreadListByUserId: vi.fn(),
     findById: vi.fn(),
     updateWabaWebhook: vi.fn(),
+    upsertWaba: vi.fn(),
+    upsertPhoneNumbers: vi.fn(),
   },
 }));
 
@@ -102,6 +105,16 @@ vi.mock('@/services/waba.service', () => ({
     getWabasPaginated: vi.fn(),
     getTotalUnreadListByUserId: vi.fn(),
     assignWebhookToWaba: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/embedded-signup.service', () => ({
+  EmbeddedSignUpService: {
+    exchangeToken: vi.fn(),
+    _fetchWabaDetails: vi.fn(),
+    _fetchPhoneNumberDetails: vi.fn(),
+    _registerPhoneNumber: vi.fn(),
+    _subscribeWabaApps: vi.fn(),
   },
 }));
 
