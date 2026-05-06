@@ -66,7 +66,7 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
 
       return await handler({ user, params: resolvedParams, req });
     } catch (err) {
-      handleApiError(err, req);
+      return handleApiError(err, req);
     }
   };
 }
@@ -84,7 +84,7 @@ export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
 
       return await handler({ user, params: resolvedParams, req });
     } catch (err) {
-      handleApiError(err, req);
+      return handleApiError(err, req);
     }
   };
 }
