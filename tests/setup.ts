@@ -110,7 +110,8 @@ vi.mock('@/services/waba.service', () => ({
 
 vi.mock('@/services/embedded-signup.service', () => ({
   EmbeddedSignUpService: {
-    exchangeToken: vi.fn(),
+    completeEmbeddedSignup: vi.fn(),
+    _exchangeCodeForToken: vi.fn(),
     _fetchWabaDetails: vi.fn(),
     _fetchPhoneNumberDetails: vi.fn(),
     _registerPhoneNumber: vi.fn(),

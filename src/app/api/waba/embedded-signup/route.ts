@@ -25,11 +25,8 @@ export const POST = withApiAuth(async ({ req, user }) => {
     hasSessionPayload: sessionPayload !== undefined,
   });
 
-  const { waba, phoneNumbers } = await EmbeddedSignUpService.exchangeToken(
-    code,
-    wabaId,
-    user.id,
-  );
+  const { waba, phoneNumbers } =
+    await EmbeddedSignUpService.completeEmbeddedSignup(code, wabaId, user.id);
 
   return jsend.success(
     {

@@ -1,3 +1,4 @@
+import { Prisma } from '@/generated/prisma/client';
 import { logError } from '@/lib/logger';
 import { User } from '@/types/user';
 import { ZodError } from 'zod';
@@ -16,6 +17,42 @@ type ApiHandler<T = unknown> = (
   context: ApiHandlerContext<T>,
 ) => Promise<Response>;
 
+function handleApiError(err: unknown, req: Request) {
+  const action = req.method + ' ' + new URL(req.url).pathname;
+  logError(err, { action });
+
+  if (err instanceof ApiError) {
+    return jsend.fail({ message: err.message }, err.status);
+  }
+
+  if (err instanceof ZodError) {
+    const fieldErrors = err.flatten().fieldErrors;
+    const flatErrors: Record<string, string> = {};
+    for (const [key, errors] of Object.entries(fieldErrors)) {
+      flatErrors[key] = (errors as string[])?.[0] || 'Invalid value';
+    }
+
+    return jsend.fail(flatErrors, 400);
+  }
+
+  // Prisma Error Handling
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const code = err.code;
+
+    if (code === 'P2002') {
+      return jsend.fail({ message: 'Resource already exists' }, 400);
+    }
+    if (code === 'P2025') {
+      return jsend.fail({ message: 'Resource not found' }, 404);
+    }
+  }
+
+  return jsend.error(
+    err instanceof Error ? err.message : 'Internal Server Error',
+    500,
+  );
+}
+
 /**
  * Higher-order function to wrap API routes with authentication and standardized error handling.
  * @param handler The actual route logic
@@ -29,27 +66,7 @@ export function withApiAuth<T = unknown>(handler: ApiHandler<T>) {
 
       return await handler({ user, params: resolvedParams, req });
     } catch (err) {
-      const action = req.method + ' ' + new URL(req.url).pathname;
-      logError(err, { action });
-
-      if (err instanceof ApiError) {
-        return jsend.fail({ message: err.message }, err.status);
-      }
-
-      if (err instanceof ZodError) {
-        const fieldErrors = err.flatten().fieldErrors;
-        const flatErrors: Record<string, string> = {};
-        for (const [key, errors] of Object.entries(fieldErrors)) {
-          flatErrors[key] = (errors as string[])?.[0] || 'Invalid value';
-        }
-
-        return jsend.fail(flatErrors, 400);
-      }
-
-      return jsend.error(
-        err instanceof Error ? err.message : 'Internal Server Error',
-        500,
-      );
+      return handleApiError(err, req);
     }
   };
 }
@@ -67,27 +84,7 @@ export function withApiAdmin<T = unknown>(handler: ApiHandler<T>) {
 
       return await handler({ user, params: resolvedParams, req });
     } catch (err) {
-      const action = req.method + ' ' + new URL(req.url).pathname;
-      logError(err, { action });
-
-      if (err instanceof ApiError) {
-        return jsend.fail({ message: err.message }, err.status);
-      }
-
-      if (err instanceof ZodError) {
-        const fieldErrors = err.flatten().fieldErrors;
-        const flatErrors: Record<string, string> = {};
-        for (const [key, errors] of Object.entries(fieldErrors)) {
-          flatErrors[key] = (errors as string[])?.[0] || 'Invalid value';
-        }
-
-        return jsend.fail(flatErrors, 400);
-      }
-
-      return jsend.error(
-        err instanceof Error ? err.message : 'Internal Server Error',
-        500,
-      );
+      return handleApiError(err, req);
     }
   };
 }

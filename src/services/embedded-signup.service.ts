@@ -13,7 +13,6 @@ import { randomInt } from 'node:crypto';
 
 const GRAPH_API_VERSION = 'v25.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
-const ALREADY_REGISTERED_PHONE_ERROR = /already registered/i;
 
 type PhoneRegistration = PhoneNumberMetaResponse & {
   encryptedRegistrationPin: string;
@@ -25,6 +24,10 @@ function getMetaAppCredentials() {
     appId: process.env.NEXT_PUBLIC_META_APP_ID,
     appSecret: process.env.META_APP_SECRET,
   };
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status >= 500;
 }
 
 /**
@@ -75,6 +78,21 @@ export const EmbeddedSignUpService = {
     return fallbackMessage;
   },
 
+  async _throwIfRetryableResponse(
+    response: Response,
+    fallbackMessage: string,
+  ): Promise<void> {
+    if (!retryableFetch.shouldRetryMetaResponse(response)) {
+      return;
+    }
+
+    const message = await this._extractMetaErrorMessage(
+      response,
+      fallbackMessage,
+    );
+    throw new ApiError(message, response.status);
+  },
+
   /**
    * Fetches WABA metadata from the Meta Graph API.
    * Non-fatal: failures are logged but do not block the signup.
@@ -90,12 +108,20 @@ export const EmbeddedSignUpService = {
       );
 
       if (!res.ok) {
+        await this._throwIfRetryableResponse(
+          res,
+          `Failed to fetch WABA details for ${wabaId}`,
+        );
         throw new Error(`Meta API error: ${res.status} ${res.statusText}`);
       }
 
       const data: WabaMetaResponse = await res.json();
       return { businessName: data.name ?? null };
     } catch (err) {
+      if (err instanceof ApiError && isRetryableStatus(err.status)) {
+        throw err;
+      }
+
       logError(err, { action: '_fetchWabaDetails', wabaId });
       return { businessName: null };
     }
@@ -119,12 +145,20 @@ export const EmbeddedSignUpService = {
       );
 
       if (!res.ok) {
+        await this._throwIfRetryableResponse(
+          res,
+          `Failed to fetch phone numbers for ${wabaId}`,
+        );
         throw new Error(`Meta API error: ${res.status} ${res.statusText}`);
       }
 
       const data = await res.json();
       return Array.isArray(data) ? data : data.data || [];
     } catch (err) {
+      if (err instanceof ApiError && isRetryableStatus(err.status)) {
+        throw err;
+      }
+
       logError(err, { action: '_fetchPhoneNumberDetails', wabaId });
       return [];
     }
@@ -155,14 +189,23 @@ export const EmbeddedSignUpService = {
     );
 
     if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to register phone number ${phoneNumberId} with Meta`,
+      );
       const message = await this._extractMetaErrorMessage(
         response,
         `Failed to register phone number ${phoneNumberId} with Meta`,
       );
-      throw new ApiError(
-        message,
-        ALREADY_REGISTERED_PHONE_ERROR.test(message) ? 403 : 502,
-      );
+
+      if (response.status === 403) {
+        logger.warn('Phone number is already registered in Meta', {
+          phoneNumberId,
+        });
+        return;
+      }
+
+      throw new ApiError(message, 502);
     }
   },
 
@@ -179,23 +222,20 @@ export const EmbeddedSignUpService = {
     );
 
     if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to subscribe apps for WABA ${wabaId}`,
+      );
       const message = await this._extractMetaErrorMessage(
         response,
         `Failed to subscribe apps for WABA ${wabaId}`,
       );
+
       throw new ApiError(message, 502);
     }
   },
 
-  /**
-   * Main flow:
-   * 1. Exchange the short-lived `code` for a System User Access Token.
-   * 2. Fetch WABA and phone number details from Meta.
-   * 3. Generate and persist the encrypted registration PIN.
-   * 4. Register phone numbers and subscribe the app in Meta.
-   * 5. Upsert PhoneNumbers linked to the WABA.
-   */
-  async exchangeToken(code: string, wabaId: string, userId: string) {
+  async _exchangeCodeForToken(code: string, wabaId: string, userId: string) {
     const { appId, appSecret } = getMetaAppCredentials();
 
     if (!appId || !appSecret) {
@@ -222,7 +262,7 @@ export const EmbeddedSignUpService = {
           code,
         }),
       },
-      { action: 'exchangeToken.oauthAccessToken' },
+      { action: 'exchangeCodeForToken.oauthAccessToken' },
     );
     const tokenData: TokenExchangeResponse = await tokenRes.json();
 
@@ -230,6 +270,11 @@ export const EmbeddedSignUpService = {
       const errMsg =
         tokenData.error?.message ??
         'Failed to exchange Meta authorization code';
+
+      if (!tokenRes.ok) {
+        await this._throwIfRetryableResponse(tokenRes, errMsg);
+      }
+
       logger.error('Meta token exchange failed', {
         status: tokenRes.status,
         error: tokenData.error,
@@ -242,6 +287,24 @@ export const EmbeddedSignUpService = {
     const systemUserToken = tokenData.access_token;
 
     logger.info('Meta token exchange successful', { wabaId, userId });
+
+    return systemUserToken;
+  },
+
+  /**
+   * Main flow:
+   * 1. Exchange the short-lived `code` for a System User Access Token.
+   * 2. Fetch WABA and phone number details from Meta.
+   * 3. Generate and persist the encrypted registration PIN.
+   * 4. Register phone numbers and subscribe the app in Meta.
+   * 5. Upsert PhoneNumbers linked to the WABA.
+   */
+  async completeEmbeddedSignup(code: string, wabaId: string, userId: string) {
+    const systemUserToken = await this._exchangeCodeForToken(
+      code,
+      wabaId,
+      userId,
+    );
 
     const [wabaDetails, phoneNumberDatas] = await Promise.all([
       this._fetchWabaDetails(wabaId, systemUserToken),

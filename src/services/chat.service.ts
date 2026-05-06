@@ -17,56 +17,34 @@ export const ChatService = {
       userId,
     });
 
-    try {
-      const { chats } = await ChatRepository.findAllByWabaId(wabaId, userId);
-      logger.info('All chat list fetched successfully', {
-        wabaId,
-        userId,
-        count: chats.length,
-      });
-      return { chats, total: chats.length };
-    } catch (err) {
-      logError(err, {
-        action: 'getAllChats',
-        wabaId,
-        userId,
-      });
-      throw err;
-    }
+    const { chats } = await ChatRepository.findAllByWabaId(wabaId, userId);
+    logger.info('All chat list fetched successfully', {
+      wabaId,
+      userId,
+      count: chats.length,
+    });
+    return { chats, total: chats.length };
   },
 
   async markAsRead(convId: string, userId: string) {
     logger.info('Marking conversation as read', { convId, userId });
 
-    try {
-      const result = await ChatRepository.markConversationAsRead(
-        convId,
-        userId,
-      );
-      logger.info('Mark as read completed', { convId, userId, ...result });
-      return result;
-    } catch (err) {
-      logError(err, { action: 'markAsRead', convId, userId });
-      throw err;
-    }
+    const result = await ChatRepository.markConversationAsRead(convId, userId);
+    logger.info('Mark as read completed', { convId, userId, ...result });
+    return result;
   },
 
   async processMetaWebhookPayload(payload: unknown) {
     logger.info('Processing Meta Webhook payload in ChatService');
 
-    try {
-      const parsedBody = this._validatePayload(payload);
-      if (!parsedBody) {
-        return { processed: false, reason: 'Invalid or ignored payload' };
-      }
-
-      const processedCount = await this._processEntries(parsedBody.entry || []);
-
-      return { processed: true, count: processedCount };
-    } catch (err) {
-      logError(err, { action: 'processWebhookPayload' });
-      throw err;
+    const parsedBody = this._validatePayload(payload);
+    if (!parsedBody) {
+      return { processed: false, reason: 'Invalid or ignored payload' };
     }
+
+    const processedCount = await this._processEntries(parsedBody.entry || []);
+
+    return { processed: true, count: processedCount };
   },
 
   // --- Private Helper Methods ---

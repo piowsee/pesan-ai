@@ -121,9 +121,9 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     vi.restoreAllMocks();
   });
 
-  describe('exchangeToken happy path', () => {
+  describe('completeEmbeddedSignup happy path', () => {
     it('exchanges the code, registers phone numbers, subscribes the app, and persists data', async () => {
-      const result = await EmbeddedSignUpService.exchangeToken(
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
         VALID_CODE,
         WABA_ID,
         USER_ID,
@@ -176,7 +176,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
 
     it('saves the encrypted access token on the WABA record', async () => {
-      await EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID);
+      await EmbeddedSignUpService.completeEmbeddedSignup(
+        VALID_CODE,
+        WABA_ID,
+        USER_ID,
+      );
 
       expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -189,7 +193,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
 
     it('upserts all returned phone numbers against the internal WABA id with per-number pins', async () => {
-      await EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID);
+      await EmbeddedSignUpService.completeEmbeddedSignup(
+        VALID_CODE,
+        WABA_ID,
+        USER_ID,
+      );
 
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
@@ -221,7 +229,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return Promise.reject(new Error('Network error'));
       });
 
-      const result = await EmbeddedSignUpService.exchangeToken(
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
         VALID_CODE,
         WABA_ID,
         USER_ID,
@@ -306,7 +314,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      const result = await EmbeddedSignUpService.exchangeToken(
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
         VALID_CODE,
         WABA_ID,
         USER_ID,
@@ -318,7 +326,51 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('exchangeToken error paths', () => {
+  describe('_exchangeCodeForToken', () => {
+    it('returns the system user access token on success', async () => {
+      await expect(
+        EmbeddedSignUpService._exchangeCodeForToken(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).resolves.toBe('sys-user-token-xyz');
+    });
+
+    it('throws the retryable Meta status to the API layer', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.includes('oauth/access_token')) {
+          return {
+            ok: false,
+            status: 503,
+            statusText: 'Service Unavailable',
+            json: async () => ({
+              error: {
+                message: 'Meta token exchange is temporarily unavailable',
+              },
+            }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        EmbeddedSignUpService._exchangeCodeForToken(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).rejects.toMatchObject({
+        status: 503,
+        message: 'Meta token exchange is temporarily unavailable',
+      });
+    });
+  });
+
+  describe('completeEmbeddedSignup error paths', () => {
     it('throws ApiError(502) when Meta token exchange returns an error body', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
@@ -341,7 +393,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.exchangeToken('bad-code', WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          'bad-code',
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toMatchObject({ status: 502 });
     });
 
@@ -350,7 +406,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       delete process.env.NEXT_PUBLIC_META_APP_ID;
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toMatchObject({ status: 500 });
 
       process.env.NEXT_PUBLIC_META_APP_ID = original;
@@ -361,7 +421,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       delete process.env.META_APP_SECRET;
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toMatchObject({ status: 500 });
 
       process.env.META_APP_SECRET = original;
@@ -382,7 +446,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toMatchObject({ status: 502 });
     });
 
@@ -431,18 +499,26 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toThrow(ApiError);
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Phone registration failed',
       });
     });
 
-    it('throws ApiError(403) when Meta reports the phone is already registered', async () => {
+    it('continues when Meta reports the phone is already registered', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -470,6 +546,8 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         if (url.endsWith('/register')) {
           return {
             ok: false,
+            status: 403,
+            statusText: 'Forbidden',
             json: async () => ({
               error: { message: 'Phone number is already registered' },
             }),
@@ -487,10 +565,15 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
-      ).rejects.toMatchObject({
-        status: 403,
-        message: 'Phone number is already registered',
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).resolves.toMatchObject({
+        waba: expect.objectContaining({
+          id: 'db-waba-cuid',
+        }),
       });
     });
 
@@ -539,8 +622,121 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.exchangeToken(VALID_CODE, WABA_ID, USER_ID),
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
       ).rejects.toMatchObject({ status: 502, message: 'Subscription failed' });
+    });
+
+    it('throws retryable metadata failures instead of swallowing them', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.includes('oauth/access_token')) {
+          return {
+            ok: true,
+            json: async () => ({ access_token: 'sys-user-token-xyz' }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}`)) {
+          return {
+            ok: false,
+            status: 503,
+            statusText: 'Service Unavailable',
+            json: async () => ({
+              error: { message: 'WABA details temporarily unavailable' },
+            }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+          return {
+            ok: true,
+            json: async () => ({ data: META_PHONE_NUMBERS }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).rejects.toMatchObject({
+        status: 503,
+        message: 'WABA details temporarily unavailable',
+      });
+    });
+
+    it('does not throw non-retryable metadata failures to the API layer', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.includes('oauth/access_token')) {
+          return {
+            ok: true,
+            json: async () => ({ access_token: 'sys-user-token-xyz' }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}`)) {
+          return {
+            ok: false,
+            status: 403,
+            statusText: 'Forbidden',
+            json: async () => ({
+              error: { message: 'Missing permission to read WABA details' },
+            }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+          return {
+            ok: true,
+            json: async () => ({ data: META_PHONE_NUMBERS }),
+          } as Response;
+        }
+
+        if (url.endsWith('/register')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        if (url.endsWith('/subscribed_apps')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).resolves.toMatchObject({
+        waba: expect.objectContaining({
+          id: 'db-waba-cuid',
+        }),
+      });
+
+      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
+        expect.objectContaining({
+          businessName: null,
+        }),
+      );
     });
   });
 });
