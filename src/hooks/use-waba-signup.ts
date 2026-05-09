@@ -1,5 +1,7 @@
 'use client';
 
+import { extractJSendErrorMessage } from '@/lib/error';
+import type { JSendResponse } from '@/lib/jsend';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { wabaKeys } from './use-wabas';
@@ -36,13 +38,13 @@ export function useWabaSignup() {
         body: JSON.stringify(payload),
       });
 
-      const json = await response.json().catch(() => null);
+      const json = (await response
+        .json()
+        .catch(() => null)) as JSendResponse | null;
 
       if (!response.ok || json?.status !== 'success') {
         const message =
-          json?.message ??
-          json?.data?.message ??
-          'Failed to hand off signup data';
+          extractJSendErrorMessage(json) ?? 'Failed to hand off signup data';
 
         throw new WabaSignupError(message, response.status);
       }

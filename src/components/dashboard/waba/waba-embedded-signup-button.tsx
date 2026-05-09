@@ -165,13 +165,11 @@ export function WabaEmbeddedSignupButton({
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
-        if (
-          error instanceof WabaSignupError &&
-          error.status === 409 &&
-          error.message ===
-            'This WhatsApp Business Account is already connected to another user'
-        ) {
-          toast.warning(error.message);
+        if (error instanceof WabaSignupError && error.status === 409) {
+          toast.warning(
+            error.message ||
+              'This WhatsApp Business Account is already connected to another user',
+          );
           return;
         }
 
