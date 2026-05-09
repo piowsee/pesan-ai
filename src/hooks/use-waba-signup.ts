@@ -6,6 +6,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { wabaKeys } from './use-wabas';
 
+const WABA_ALREADY_CONNECTED_MESSAGE =
+  'This WhatsApp Business Account is already connected to another user';
+const GENERIC_SIGNUP_ERROR_MESSAGE =
+  'Failed to complete WhatsApp signup. Please try again.';
+
 export class WabaSignupError extends Error {
   status: number;
 
@@ -43,8 +48,12 @@ export function useWabaSignup() {
         .catch(() => null)) as JSendResponse | null;
 
       if (!response.ok || json?.status !== 'success') {
+        const backendMessage = extractJSendErrorMessage(json);
         const message =
-          extractJSendErrorMessage(json) ?? 'Failed to hand off signup data';
+          response.status === 409 &&
+          backendMessage === WABA_ALREADY_CONNECTED_MESSAGE
+            ? backendMessage
+            : GENERIC_SIGNUP_ERROR_MESSAGE;
 
         throw new WabaSignupError(message, response.status);
       }

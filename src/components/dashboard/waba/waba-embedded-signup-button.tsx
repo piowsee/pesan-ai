@@ -165,7 +165,7 @@ export function WabaEmbeddedSignupButton({
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
-        if (error instanceof WabaSignupError && error.status === 409) {
+        if (error instanceof WabaSignupError) {
           toast.warning(
             error.message ||
               'This WhatsApp Business Account is already connected to another user',
@@ -176,7 +176,7 @@ export function WabaEmbeddedSignupButton({
         toast.error(
           error instanceof Error
             ? error.message
-            : 'Failed to send signup data to the backend',
+            : 'Failed to complete WhatsApp signup. Please try again.',
         );
       }
     };
