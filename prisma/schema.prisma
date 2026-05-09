@@ -125,11 +125,13 @@ model PhoneNumber {
   wabaId String
   waba   WhatsappBusinessAccount @relation(fields: [wabaId], references: [id])
 
+  businessProfileId String?          @unique
+  businessProfile   BusinessProfile? @relation(fields: [businessProfileId], references: [id])
+
   botWebhookId String?
   botWebhook   BotWebhook? @relation(fields: [botWebhookId], references: [id])
 
   conversations Conversation[]
-  businessProfile BusinessProfile?
 
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
@@ -201,6 +203,7 @@ model Message {
 
 model BusinessProfile {
   id                String   @id @default(cuid())
+  messagingProduct  String   // "whatsapp"
   address           String?  // Business address
   description       String?  // Business description
   vertical          String?  // Business industry/category
@@ -211,8 +214,7 @@ model BusinessProfile {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  phoneNumberId String      @unique
-  phoneNumber   PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+  phoneNumber PhoneNumber?
 
   @@map("business_profile")
 }

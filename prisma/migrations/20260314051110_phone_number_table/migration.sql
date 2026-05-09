@@ -12,12 +12,16 @@ CREATE TABLE "phone_number" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "wabaId" TEXT NOT NULL,
+    "businessProfileId" TEXT,
 
     CONSTRAINT "phone_number_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "phone_number_phoneNumberId_key" ON "phone_number"("phoneNumberId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "phone_number_businessProfileId_key" ON "phone_number"("businessProfileId");
 
 -- CreateIndex
 CREATE INDEX "idx_phone_number_wabaId" ON "phone_number"("wabaId");
