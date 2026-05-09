@@ -7,6 +7,23 @@ export interface PhoneNumberMetaResponse {
   error?: { message: string };
 }
 
+export interface WhatsappBusinessProfile {
+  messaging_product: 'whatsapp';
+  address?: string | null;
+  description?: string | null;
+  vertical?: string | null;
+  about?: string | null;
+  email?: string | null;
+  websites: string[];
+  profile_picture_url?: string | null;
+}
+
+export interface WhatsappBusinessProfileMetaResponse {
+  data?: Array<{
+    business_profile?: WhatsappBusinessProfile | null;
+  }>;
+}
+
 export interface WabaMetaResponse {
   id?: string;
   name?: string;

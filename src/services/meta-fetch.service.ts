@@ -6,6 +6,8 @@ import {
   TokenExchangeResponse,
   WabaDetails,
   WabaMetaResponse,
+  WhatsappBusinessProfile,
+  WhatsappBusinessProfileMetaResponse,
 } from '@/types/waba';
 
 const GRAPH_API_VERSION = 'v25.0';
@@ -130,6 +132,44 @@ export const MetaFetchService = {
         wabaId,
       });
       return [];
+    }
+  },
+
+  async fetchBusinessProfile(
+    phoneNumberId: string,
+    token: string,
+  ): Promise<WhatsappBusinessProfile | null> {
+    try {
+      const response = await retryableFetch.fetchWithRetry(
+        `${GRAPH_BASE}/${phoneNumberId}/whatsapp_business_profile`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+        { action: 'MetaFetchService.fetchBusinessProfile' },
+      );
+
+      if (!response.ok) {
+        await this._throwIfRetryableResponse(
+          response,
+          `Failed to fetch business profile for ${phoneNumberId}`,
+        );
+        throw new Error(
+          `Meta API error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const data: WhatsappBusinessProfileMetaResponse = await response.json();
+      return data.data?.[0]?.business_profile ?? null;
+    } catch (err) {
+      if (err instanceof ApiError && isRetryableStatus(err.status)) {
+        throw err;
+      }
+
+      logError(err, {
+        action: 'MetaFetchService.fetchBusinessProfile',
+        phoneNumberId,
+      });
+      return null;
     }
   },
 

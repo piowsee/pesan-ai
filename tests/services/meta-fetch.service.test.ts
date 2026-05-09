@@ -51,6 +51,28 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
         } as Response;
       }
 
+      if (url.endsWith(`/${PHONE_NUMBER_ID}/whatsapp_business_profile`)) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                business_profile: {
+                  messaging_product: 'whatsapp',
+                  address: 'business-address',
+                  description: 'business-description',
+                  vertical: 'business-industry',
+                  about: 'profile-about-text',
+                  email: 'business-email',
+                  websites: ['https://website-1', 'https://website-2'],
+                  profile_picture_url: '<PROFILE_PICTURE_URL>',
+                },
+              },
+            ],
+          }),
+        } as Response;
+      }
+
       if (url.endsWith('/register')) {
         return {
           ok: true,
@@ -194,6 +216,59 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
         status: 503,
         message: 'Phone number lookup temporarily unavailable',
       });
+    });
+  });
+
+  describe('fetchBusinessProfile', () => {
+    it('returns the business profile object directly from data[0]', async () => {
+      await expect(
+        MetaFetchService.fetchBusinessProfile(
+          PHONE_NUMBER_ID,
+          'sys-user-token-xyz',
+        ),
+      ).resolves.toEqual({
+        messaging_product: 'whatsapp',
+        address: 'business-address',
+        description: 'business-description',
+        vertical: 'business-industry',
+        about: 'profile-about-text',
+        email: 'business-email',
+        websites: ['https://website-1', 'https://website-2'],
+        profile_picture_url: '<PROFILE_PICTURE_URL>',
+      });
+    });
+
+    it('logs and returns null on non-retryable failure', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.endsWith(`/${PHONE_NUMBER_ID}/whatsapp_business_profile`)) {
+          return {
+            ok: false,
+            status: 403,
+            statusText: 'Forbidden',
+            json: async () => ({
+              error: { message: 'Missing permission to read business profile' },
+            }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.fetchBusinessProfile(
+          PHONE_NUMBER_ID,
+          'sys-user-token-xyz',
+        ),
+      ).resolves.toBeNull();
+      expect(logError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          action: 'MetaFetchService.fetchBusinessProfile',
+          phoneNumberId: PHONE_NUMBER_ID,
+        }),
+      );
     });
   });
 
