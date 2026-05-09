@@ -5,7 +5,7 @@ CREATE TABLE "phone_number" (
     "displayPhoneNumber" TEXT NOT NULL,
     "verifiedName" TEXT,
     "registrationPin" TEXT,
-    "codeVerificationStatus" TEXT NOT NULL DEFAULT 'VERIFIED',
+    "codeVerificationStatus" TEXT NOT NULL DEFAULT 'UNVERIFIED',
     "qualityRating" TEXT,
     "botEnabled" BOOLEAN NOT NULL DEFAULT true,
     "unreadCount" INTEGER NOT NULL DEFAULT 0,

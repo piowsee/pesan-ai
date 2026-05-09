@@ -172,7 +172,7 @@ export const EmbeddedSignUpService = {
   ): Promise<PhoneNumberMetaResponse[]> {
     try {
       const res = await retryableFetch.fetchWithRetry(
-        `${GRAPH_BASE}/${wabaId}/phone_numbers`,
+        `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=code_verification_status`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
