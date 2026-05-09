@@ -353,7 +353,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       expect(result.registrationPin).toBeNull();
     });
 
-    it('falls back to VERIFIED when Meta does not return code_verification_status', async () => {
+    it('falls back to UNVERIFIED when Meta does not return code_verification_status', async () => {
       const [result] = await WabaRepository.upsertPhoneNumbers({
         wabaDbId,
         phoneNumberDatas: [
@@ -366,7 +366,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         ],
       });
 
-      expect(result.codeVerificationStatus).toBe('VERIFIED');
+      expect(result.codeVerificationStatus).toBe('UNVERIFIED');
     });
   });
 });
