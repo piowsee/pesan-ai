@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/error';
 import prisma from '@/lib/prisma';
 import { PhoneNumberMetaResponse } from '@/types/waba';
 
@@ -108,21 +109,34 @@ export const WabaRepository = {
     systemUserToken: string;
     businessName?: string | null;
   }) {
-    return prisma.whatsappBusinessAccount.upsert({
-      where: { wabaId: data.wabaId },
-      create: {
-        wabaId: data.wabaId,
-        userId: data.userId,
-        systemUserToken: data.systemUserToken,
-        businessName: data.businessName ?? null,
-        status: 'active',
-      },
-      update: {
-        userId: data.userId,
-        systemUserToken: data.systemUserToken,
-        status: 'active',
-        businessName: data.businessName ?? undefined,
-      },
+    return prisma.$transaction(async (tx) => {
+      const existingWaba = await tx.whatsappBusinessAccount.findUnique({
+        where: { wabaId: data.wabaId },
+        select: { id: true, userId: true },
+      });
+
+      if (existingWaba && existingWaba.userId !== data.userId) {
+        throw new ApiError(
+          'This WhatsApp Business Account is already connected to another user',
+          409,
+        );
+      }
+
+      return tx.whatsappBusinessAccount.upsert({
+        where: { wabaId: data.wabaId },
+        create: {
+          wabaId: data.wabaId,
+          userId: data.userId,
+          systemUserToken: data.systemUserToken,
+          businessName: data.businessName ?? null,
+          status: 'active',
+        },
+        update: {
+          systemUserToken: data.systemUserToken,
+          status: 'active',
+          businessName: data.businessName ?? undefined,
+        },
+      });
     });
   },
 

@@ -371,6 +371,27 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
   });
 
   describe('completeEmbeddedSignup error paths', () => {
+    it('throws ApiError(409) when the WABA already belongs to another user', async () => {
+      vi.mocked(WabaRepository.upsertWaba).mockRejectedValue(
+        new ApiError(
+          'This WhatsApp Business Account is already connected to another user',
+          409,
+        ),
+      );
+
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'This WhatsApp Business Account is already connected to another user',
+      });
+    });
+
     it('throws ApiError(502) when Meta token exchange returns an error body', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();

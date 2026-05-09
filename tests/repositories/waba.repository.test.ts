@@ -22,6 +22,7 @@ vi.unmock('@/repositories/waba.repository');
 
 describe('WabaRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
+  let anotherUserId: string;
   let dbWabaId: string;
   let dbWebhookId: string;
 
@@ -35,6 +36,14 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       );
     }
     userId = user.id;
+
+    const anotherUser = await prisma.user.findFirst({
+      where: { id: { not: user.id } },
+    });
+    if (!anotherUser) {
+      throw new Error('A second user is required for this test suite.');
+    }
+    anotherUserId = anotherUser.id;
 
     const waba = await prisma.whatsappBusinessAccount.findUnique({
       where: { wabaId: SEED_DATA.WABA_META_ID },
@@ -183,6 +192,34 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         where: { wabaId: TEST_WABA_ID },
       });
       expect(result?.businessName).toBeNull();
+    });
+
+    it('throws when the WABA already belongs to a different user', async () => {
+      await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:owner-token',
+        businessName: 'Owner Waba',
+      });
+
+      await expect(
+        WabaRepository.upsertWaba({
+          wabaId: TEST_WABA_ID,
+          userId: anotherUserId,
+          systemUserToken: 'enc:intruder-token',
+          businessName: 'Intruder Waba',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'This WhatsApp Business Account is already connected to another user',
+      });
+
+      const result = await prisma.whatsappBusinessAccount.findUnique({
+        where: { wabaId: TEST_WABA_ID },
+      });
+      expect(result?.userId).toBe(userId);
+      expect(result?.systemUserToken).toBe('enc:owner-token');
     });
   });
 
