@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
-import { useWabaSignup } from '@/hooks/use-waba-signup';
+import { WabaSignupError, useWabaSignup } from '@/hooks/use-waba-signup';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import {
@@ -165,10 +165,18 @@ export function WabaEmbeddedSignupButton({
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
+        if (error instanceof WabaSignupError) {
+          toast.warning(
+            error.message ||
+              'This WhatsApp Business Account is already connected to another user',
+          );
+          return;
+        }
+
         toast.error(
           error instanceof Error
             ? error.message
-            : 'Failed to send signup data to the backend',
+            : 'Failed to complete WhatsApp signup. Please try again.',
         );
       }
     };

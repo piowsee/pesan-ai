@@ -1,8 +1,25 @@
 'use client';
 
+import { extractJSendErrorMessage } from '@/lib/error';
+import type { JSendResponse } from '@/lib/jsend';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { wabaKeys } from './use-wabas';
+
+const WABA_ALREADY_CONNECTED_MESSAGE =
+  'This WhatsApp Business Account is already connected to another user';
+const GENERIC_SIGNUP_ERROR_MESSAGE =
+  'Failed to complete WhatsApp signup. Please try again.';
+
+export class WabaSignupError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'WabaSignupError';
+    this.status = status;
+  }
+}
 
 export interface WabaSignupPayload {
   code: string;
@@ -26,10 +43,19 @@ export function useWabaSignup() {
         body: JSON.stringify(payload),
       });
 
-      const json = await response.json().catch(() => null);
+      const json = (await response
+        .json()
+        .catch(() => null)) as JSendResponse | null;
 
       if (!response.ok || json?.status !== 'success') {
-        throw new Error(json?.message ?? 'Failed to hand off signup data');
+        const backendMessage = extractJSendErrorMessage(json);
+        const message =
+          response.status === 409 &&
+          backendMessage === WABA_ALREADY_CONNECTED_MESSAGE
+            ? backendMessage
+            : GENERIC_SIGNUP_ERROR_MESSAGE;
+
+        throw new WabaSignupError(message, response.status);
       }
 
       return json;

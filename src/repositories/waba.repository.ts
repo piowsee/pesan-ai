@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/error';
 import prisma from '@/lib/prisma';
 import { PhoneNumberMetaResponse } from '@/types/waba';
 
@@ -98,6 +99,35 @@ export const WabaRepository = {
     });
   },
 
+  async findByMetaWabaId(wabaId: string) {
+    return prisma.whatsappBusinessAccount.findUnique({
+      where: { wabaId },
+      select: {
+        id: true,
+        wabaId: true,
+        userId: true,
+      },
+    });
+  },
+
+  async findPhoneNumbersByMetaIds(phoneNumberIds: string[]) {
+    if (phoneNumberIds.length === 0) {
+      return [];
+    }
+
+    return prisma.phoneNumber.findMany({
+      where: {
+        phoneNumberId: {
+          in: phoneNumberIds,
+        },
+      },
+      select: {
+        phoneNumberId: true,
+        registrationPin: true,
+      },
+    });
+  },
+
   /**
    * Creates or updates a WhatsappBusinessAccount by its Meta wabaId.
    * Safe to call multiple times (idempotent via upsert).
@@ -108,21 +138,34 @@ export const WabaRepository = {
     systemUserToken: string;
     businessName?: string | null;
   }) {
-    return prisma.whatsappBusinessAccount.upsert({
-      where: { wabaId: data.wabaId },
-      create: {
-        wabaId: data.wabaId,
-        userId: data.userId,
-        systemUserToken: data.systemUserToken,
-        businessName: data.businessName ?? null,
-        status: 'active',
-      },
-      update: {
-        userId: data.userId,
-        systemUserToken: data.systemUserToken,
-        status: 'active',
-        businessName: data.businessName ?? undefined,
-      },
+    return prisma.$transaction(async (tx) => {
+      const existingWaba = await tx.whatsappBusinessAccount.findUnique({
+        where: { wabaId: data.wabaId },
+        select: { id: true, userId: true },
+      });
+
+      if (existingWaba && existingWaba.userId !== data.userId) {
+        throw new ApiError(
+          'This WhatsApp Business Account is already connected to another user',
+          409,
+        );
+      }
+
+      return tx.whatsappBusinessAccount.upsert({
+        where: { wabaId: data.wabaId },
+        create: {
+          wabaId: data.wabaId,
+          userId: data.userId,
+          systemUserToken: data.systemUserToken,
+          businessName: data.businessName ?? null,
+          status: 'active',
+        },
+        update: {
+          systemUserToken: data.systemUserToken,
+          status: 'active',
+          businessName: data.businessName ?? undefined,
+        },
+      });
     });
   },
 
@@ -147,7 +190,8 @@ export const WabaRepository = {
             verifiedName: phoneNumber.verified_name ?? null,
             registrationPin: phoneNumber.registrationPin ?? null,
             qualityRating: phoneNumber.quality_rating ?? null,
-            codeVerificationStatus: 'VERIFIED',
+            codeVerificationStatus:
+              phoneNumber.code_verification_status ?? 'VERIFIED',
             botEnabled: true,
           },
           update: {
@@ -155,6 +199,8 @@ export const WabaRepository = {
             displayPhoneNumber: phoneNumber.display_phone_number,
             verifiedName: phoneNumber.verified_name ?? null,
             registrationPin: phoneNumber.registrationPin ?? undefined,
+            codeVerificationStatus:
+              phoneNumber.code_verification_status ?? undefined,
             qualityRating: phoneNumber.quality_rating ?? null,
           },
         }),

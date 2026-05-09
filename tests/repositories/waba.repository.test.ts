@@ -22,6 +22,7 @@ vi.unmock('@/repositories/waba.repository');
 
 describe('WabaRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
+  let anotherUserId: string;
   let dbWabaId: string;
   let dbWebhookId: string;
 
@@ -35,6 +36,14 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       );
     }
     userId = user.id;
+
+    const anotherUser = await prisma.user.findFirst({
+      where: { id: { not: user.id } },
+    });
+    if (!anotherUser) {
+      throw new Error('A second user is required for this test suite.');
+    }
+    anotherUserId = anotherUser.id;
 
     const waba = await prisma.whatsappBusinessAccount.findUnique({
       where: { wabaId: SEED_DATA.WABA_META_ID },
@@ -133,6 +142,51 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('findByMetaWabaId', () => {
+    it('finds the seeded WABA by its Meta WABA id', async () => {
+      const result = await WabaRepository.findByMetaWabaId(
+        SEED_DATA.WABA_META_ID,
+      );
+
+      expect(result).toMatchObject({
+        id: dbWabaId,
+        wabaId: SEED_DATA.WABA_META_ID,
+        userId,
+      });
+    });
+
+    it('returns null when the Meta WABA id does not exist', async () => {
+      const result = await WabaRepository.findByMetaWabaId(
+        'missing-meta-waba-id',
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findPhoneNumbersByMetaIds', () => {
+    it('returns stored pins for matching Meta phone number ids', async () => {
+      const result = await WabaRepository.findPhoneNumbersByMetaIds([
+        SEED_DATA.PHONE_META_ID,
+        'missing-phone-id',
+      ]);
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            phoneNumberId: SEED_DATA.PHONE_META_ID,
+          }),
+        ]),
+      );
+    });
+
+    it('returns an empty array when no ids are requested', async () => {
+      await expect(
+        WabaRepository.findPhoneNumbersByMetaIds([]),
+      ).resolves.toEqual([]);
+    });
+  });
+
   // --- Upsert Operations (Embedded Signup) ---
 
   const TEST_WABA_ID = 'test-upsert-waba-999';
@@ -184,6 +238,34 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       });
       expect(result?.businessName).toBeNull();
     });
+
+    it('throws when the WABA already belongs to a different user', async () => {
+      await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:owner-token',
+        businessName: 'Owner Waba',
+      });
+
+      await expect(
+        WabaRepository.upsertWaba({
+          wabaId: TEST_WABA_ID,
+          userId: anotherUserId,
+          systemUserToken: 'enc:intruder-token',
+          businessName: 'Intruder Waba',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'This WhatsApp Business Account is already connected to another user',
+      });
+
+      const result = await prisma.whatsappBusinessAccount.findUnique({
+        where: { wabaId: TEST_WABA_ID },
+      });
+      expect(result?.userId).toBe(userId);
+      expect(result?.systemUserToken).toBe('enc:owner-token');
+    });
   });
 
   describe('upsertPhoneNumbers', () => {
@@ -207,6 +289,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
             id: TEST_PHONE_ID,
             display_phone_number: '+6281234567890',
             verified_name: 'Test Salon Bot',
+            code_verification_status: 'NOT_VERIFIED',
             registrationPin: 'enc:230601',
           },
         ],
@@ -216,10 +299,10 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       expect(result.wabaId).toBe(wabaDbId);
       expect(result.displayPhoneNumber).toBe('+6281234567890');
       expect(result.registrationPin).toBe('enc:230601');
-      expect(result.codeVerificationStatus).toBe('VERIFIED');
+      expect(result.codeVerificationStatus).toBe('NOT_VERIFIED');
     });
 
-    it('updates display number and verified name on subsequent calls (idempotent)', async () => {
+    it('updates display number, verified name, and verification status on subsequent calls (idempotent)', async () => {
       await WabaRepository.upsertPhoneNumbers({
         wabaDbId,
         phoneNumberDatas: [
@@ -227,6 +310,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
             id: TEST_PHONE_ID,
             display_phone_number: '+6281234567890',
             verified_name: 'Old Name',
+            code_verification_status: 'NOT_VERIFIED',
             registrationPin: 'enc:111111',
           },
         ],
@@ -239,6 +323,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
             id: TEST_PHONE_ID,
             display_phone_number: '+6289999999999',
             verified_name: 'New Name',
+            code_verification_status: 'VERIFIED',
             registrationPin: 'enc:222222',
           },
         ],
@@ -247,6 +332,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       expect(updated.displayPhoneNumber).toBe('+6289999999999');
       expect(updated.verifiedName).toBe('New Name');
       expect(updated.registrationPin).toBe('enc:222222');
+      expect(updated.codeVerificationStatus).toBe('VERIFIED');
     });
 
     it('handles null verifiedName gracefully', async () => {
@@ -257,6 +343,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
             id: TEST_PHONE_ID,
             display_phone_number: '+628000000000',
             verified_name: null,
+            code_verification_status: null,
             registrationPin: null,
           },
         ],
@@ -264,6 +351,22 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
       expect(result.verifiedName).toBeNull();
       expect(result.registrationPin).toBeNull();
+    });
+
+    it('falls back to VERIFIED when Meta does not return code_verification_status', async () => {
+      const [result] = await WabaRepository.upsertPhoneNumbers({
+        wabaDbId,
+        phoneNumberDatas: [
+          {
+            id: TEST_PHONE_ID,
+            display_phone_number: '+6281234567890',
+            verified_name: 'Fallback Bot',
+            registrationPin: 'enc:333333',
+          },
+        ],
+      });
+
+      expect(result.codeVerificationStatus).toBe('VERIFIED');
     });
   });
 });
