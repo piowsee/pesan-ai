@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/error';
 import * as retryableFetch from '@/lib/fetch-with-retry';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
+import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/embedded-signup.service');
@@ -87,7 +88,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         } as Response;
       }
 
-      if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+      if (url.includes(`/${WABA_ID}/phone_numbers`)) {
         return {
           ok: true,
           json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -266,14 +267,14 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       ] as never);
 
       const registerSpy = vi
-        .spyOn(EmbeddedSignUpService, '_registerPhoneNumber')
+        .spyOn(MetaFetchService, 'registerPhoneNumber')
         .mockImplementation(async (phoneNumberId, _token, pin) => {
           if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
             throw new ApiError('Stored pin no longer works', 502);
           }
         });
       const deregisterSpy = vi
-        .spyOn(EmbeddedSignUpService, '_deregisterPhoneNumber')
+        .spyOn(MetaFetchService, 'deregisterPhoneNumber')
         .mockResolvedValue(undefined);
 
       await EmbeddedSignUpService.completeEmbeddedSignup(
@@ -422,7 +423,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -471,61 +472,17 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('_exchangeCodeForToken', () => {
-    it('returns the system user access token on success', async () => {
-      await expect(
-        EmbeddedSignUpService._exchangeCodeForToken(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
-      ).resolves.toBe('sys-user-token-xyz');
-    });
-
-    it('throws the retryable Meta status to the API layer', async () => {
-      vi.mocked(global.fetch).mockImplementation(async (input) => {
-        const url = typeof input === 'string' ? input : input.toString();
-
-        if (url.includes('oauth/access_token')) {
-          return {
-            ok: false,
-            status: 503,
-            statusText: 'Service Unavailable',
-            json: async () => ({
-              error: {
-                message: 'Meta token exchange is temporarily unavailable',
-              },
-            }),
-          } as Response;
-        }
-
-        return { ok: true, json: async () => ({}) } as Response;
-      });
-
-      await expect(
-        EmbeddedSignUpService._exchangeCodeForToken(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
-      ).rejects.toMatchObject({
-        status: 503,
-        message: 'Meta token exchange is temporarily unavailable',
-      });
-    });
-  });
-
   describe('_registerPhoneNumberWithRecovery', () => {
     it('deregisters and retries with a fresh pin when stored-pin re-registration fails', async () => {
       const registerSpy = vi
-        .spyOn(EmbeddedSignUpService, '_registerPhoneNumber')
+        .spyOn(MetaFetchService, 'registerPhoneNumber')
         .mockImplementation(async (phoneNumberId, _token, pin) => {
           if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
             throw new ApiError('Stored pin no longer works', 502);
           }
         });
       const deregisterSpy = vi
-        .spyOn(EmbeddedSignUpService, '_deregisterPhoneNumber')
+        .spyOn(MetaFetchService, 'deregisterPhoneNumber')
         .mockResolvedValue(undefined);
 
       const result =
@@ -691,7 +648,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -763,7 +720,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -844,7 +801,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -903,7 +860,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -960,7 +917,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -1004,7 +961,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
