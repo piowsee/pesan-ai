@@ -118,6 +118,9 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       MOCK_PHONE_DBS as never,
     );
     vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue(null as never);
+    vi.mocked(WabaRepository.findPhoneNumbersByMetaIds).mockResolvedValue(
+      [] as never,
+    );
   });
 
   afterEach(() => {
@@ -208,6 +211,104 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           ...phoneNumber,
           registrationPin: REGISTRATION_PINS[index],
         })),
+      });
+    });
+
+    it('reuses the stored pin from our db before generating a new one', async () => {
+      vi.mocked(WabaRepository.findPhoneNumbersByMetaIds).mockResolvedValue([
+        {
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
+          registrationPin: '991122',
+        },
+      ] as never);
+
+      await EmbeddedSignUpService.completeEmbeddedSignup(
+        VALID_CODE,
+        WABA_ID,
+        USER_ID,
+      );
+
+      const registerCalls = vi
+        .mocked(global.fetch)
+        .mock.calls.filter(([url]) => String(url).endsWith('/register'));
+
+      expect(registerCalls).toHaveLength(2);
+      expect(JSON.parse(registerCalls[0]?.[1]?.body as string)).toEqual({
+        messaging_product: 'whatsapp',
+        pin: '991122',
+      });
+      expect(JSON.parse(registerCalls[1]?.[1]?.body as string)).toEqual({
+        messaging_product: 'whatsapp',
+        pin: REGISTRATION_PINS[1],
+      });
+
+      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+        wabaDbId: 'db-waba-cuid',
+        phoneNumberDatas: [
+          {
+            ...META_PHONE_NUMBERS[0],
+            registrationPin: '991122',
+          },
+          {
+            ...META_PHONE_NUMBERS[1],
+            registrationPin: REGISTRATION_PINS[1],
+          },
+        ],
+      });
+    });
+
+    it('upserts the fresh pin after stored-pin recovery succeeds', async () => {
+      vi.mocked(WabaRepository.findPhoneNumbersByMetaIds).mockResolvedValue([
+        {
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
+          registrationPin: '991122',
+        },
+      ] as never);
+
+      const registerSpy = vi
+        .spyOn(EmbeddedSignUpService, '_registerPhoneNumber')
+        .mockImplementation(async (phoneNumberId, _token, pin) => {
+          if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
+            throw new ApiError('Stored pin no longer works', 502);
+          }
+        });
+      const deregisterSpy = vi
+        .spyOn(EmbeddedSignUpService, '_deregisterPhoneNumber')
+        .mockResolvedValue(undefined);
+
+      await EmbeddedSignUpService.completeEmbeddedSignup(
+        VALID_CODE,
+        WABA_ID,
+        USER_ID,
+      );
+
+      expect(registerSpy).toHaveBeenCalledWith(
+        META_PHONE_NUMBERS[0].id,
+        'sys-user-token-xyz',
+        '991122',
+      );
+      expect(deregisterSpy).toHaveBeenCalledWith(
+        META_PHONE_NUMBERS[0].id,
+        'sys-user-token-xyz',
+      );
+      expect(registerSpy).toHaveBeenCalledWith(
+        META_PHONE_NUMBERS[0].id,
+        'sys-user-token-xyz',
+        REGISTRATION_PINS[0],
+      );
+
+      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+        wabaDbId: 'db-waba-cuid',
+        phoneNumberDatas: [
+          {
+            ...META_PHONE_NUMBERS[0],
+            registrationPin: REGISTRATION_PINS[0],
+          },
+          {
+            ...META_PHONE_NUMBERS[1],
+            registrationPin: REGISTRATION_PINS[1],
+          },
+        ],
       });
     });
 
@@ -370,6 +471,52 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         status: 503,
         message: 'Meta token exchange is temporarily unavailable',
       });
+    });
+  });
+
+  describe('_registerPhoneNumberWithRecovery', () => {
+    it('deregisters and retries with a fresh pin when stored-pin re-registration fails', async () => {
+      const registerSpy = vi
+        .spyOn(EmbeddedSignUpService, '_registerPhoneNumber')
+        .mockImplementation(async (phoneNumberId, _token, pin) => {
+          if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
+            throw new ApiError('Stored pin no longer works', 502);
+          }
+        });
+      const deregisterSpy = vi
+        .spyOn(EmbeddedSignUpService, '_deregisterPhoneNumber')
+        .mockResolvedValue(undefined);
+
+      const result =
+        await EmbeddedSignUpService._registerPhoneNumberWithRecovery(
+          {
+            ...META_PHONE_NUMBERS[0],
+            registrationPin: '991122',
+            encryptedRegistrationPin: 'enc:991122',
+            fallbackRegistrationPin: REGISTRATION_PINS[0],
+            fallbackEncryptedRegistrationPin: `enc:${REGISTRATION_PINS[0]}`,
+          },
+          'sys-user-token-xyz',
+        );
+
+      expect(registerSpy).toHaveBeenCalledWith(
+        META_PHONE_NUMBERS[0].id,
+        'sys-user-token-xyz',
+        '991122',
+      );
+      expect(deregisterSpy).toHaveBeenCalledWith(
+        META_PHONE_NUMBERS[0].id,
+        'sys-user-token-xyz',
+      );
+      expect(registerSpy).toHaveBeenCalledWith(
+        META_PHONE_NUMBERS[0].id,
+        'sys-user-token-xyz',
+        REGISTRATION_PINS[0],
+      );
+      expect(result.registrationPin).toBe(REGISTRATION_PINS[0]);
+      expect(result.encryptedRegistrationPin).toBe(
+        `enc:${REGISTRATION_PINS[0]}`,
+      );
     });
   });
 
@@ -543,6 +690,89 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         status: 502,
         message: 'Phone registration failed',
       });
+    });
+
+    it('tries to deregister and recover when a new phone registration fails without a stored pin', async () => {
+      let registerAttempts = 0;
+
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.includes('oauth/access_token')) {
+          return {
+            ok: true,
+            json: async () => ({ access_token: 'sys-user-token-xyz' }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}`)) {
+          return {
+            ok: true,
+            json: async () => ({ name: 'Test Salon' }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+          return {
+            ok: true,
+            json: async () => ({ data: META_PHONE_NUMBERS }),
+          } as Response;
+        }
+
+        if (url.endsWith('/register')) {
+          registerAttempts += 1;
+
+          if (registerAttempts === 1) {
+            return {
+              ok: false,
+              status: 400,
+              statusText: 'Bad Request',
+              json: async () => ({
+                error: { message: 'Phone registration failed' },
+              }),
+            } as Response;
+          }
+
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        if (url.endsWith('/deregister')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        if (url.endsWith('/subscribed_apps')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).resolves.toMatchObject({
+        waba: expect.objectContaining({
+          id: 'db-waba-cuid',
+        }),
+      });
+
+      expect(
+        vi
+          .mocked(global.fetch)
+          .mock.calls.some(([url]) => String(url).endsWith('/deregister')),
+      ).toBe(true);
     });
 
     it('continues when Meta reports the phone is already registered', async () => {

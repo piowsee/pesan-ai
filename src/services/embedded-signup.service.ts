@@ -1,4 +1,4 @@
-import { encrypt } from '@/lib/encryption';
+import { decrypt, encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import * as retryableFetch from '@/lib/fetch-with-retry';
 import { logError, logger } from '@/lib/logger';
@@ -15,6 +15,8 @@ const GRAPH_API_VERSION = 'v25.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
 type PhoneRegistration = PhoneNumberMetaResponse & {
+  fallbackEncryptedRegistrationPin: string;
+  fallbackRegistrationPin: string;
   encryptedRegistrationPin: string;
   registrationPin: string;
 };
@@ -41,14 +43,35 @@ export const EmbeddedSignUpService = {
 
   _buildPhoneRegistrations(
     phoneNumberDatas: PhoneNumberMetaResponse[],
+    existingPhoneNumbers: Array<{
+      phoneNumberId: string;
+      registrationPin: string | null;
+    }> = [],
   ): PhoneRegistration[] {
+    const existingPhoneNumbersById = new Map(
+      existingPhoneNumbers.map((phoneNumber) => [
+        phoneNumber.phoneNumberId,
+        phoneNumber.registrationPin,
+      ]),
+    );
+
     return phoneNumberDatas.map((phoneNumber) => {
-      const registrationPin = this._generateRegistrationPin();
+      const fallbackRegistrationPin = this._generateRegistrationPin();
+      const fallbackEncryptedRegistrationPin = encrypt(fallbackRegistrationPin);
+      const storedRegistrationPin =
+        existingPhoneNumbersById.get(phoneNumber.id) ?? null;
+      const decryptedStoredRegistrationPin = storedRegistrationPin
+        ? decrypt(storedRegistrationPin)
+        : null;
 
       return {
         ...phoneNumber,
-        registrationPin,
-        encryptedRegistrationPin: encrypt(registrationPin),
+        registrationPin:
+          decryptedStoredRegistrationPin ?? fallbackRegistrationPin,
+        encryptedRegistrationPin:
+          storedRegistrationPin ?? fallbackEncryptedRegistrationPin,
+        fallbackRegistrationPin,
+        fallbackEncryptedRegistrationPin,
       };
     });
   },
@@ -209,6 +232,106 @@ export const EmbeddedSignUpService = {
     }
   },
 
+  async _deregisterPhoneNumber(
+    phoneNumberId: string,
+    token: string,
+  ): Promise<void> {
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}/deregister`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      },
+      {
+        action: '_deregisterPhoneNumber',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to deregister phone number ${phoneNumberId} from Meta`,
+      );
+
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to deregister phone number ${phoneNumberId} from Meta`,
+      );
+
+      throw new ApiError(message, 502);
+    }
+  },
+
+  async _recoverPhoneNumberRegistration(
+    phoneNumber: PhoneRegistration,
+    token: string,
+  ): Promise<PhoneRegistration> {
+    try {
+      await this._deregisterPhoneNumber(phoneNumber.id, token);
+      await this._registerPhoneNumber(
+        phoneNumber.id,
+        token,
+        phoneNumber.fallbackRegistrationPin,
+      );
+    } catch (err) {
+      logger.error(
+        'Failed to recover phone number registration with fallback pin',
+        {
+          phoneNumberId: phoneNumber.id,
+          usedStoredRegistrationPin:
+            phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
+          error: err instanceof Error ? err.message : String(err),
+        },
+      );
+      throw err;
+    }
+
+    return {
+      ...phoneNumber,
+      registrationPin: phoneNumber.fallbackRegistrationPin,
+      encryptedRegistrationPin: phoneNumber.fallbackEncryptedRegistrationPin,
+    };
+  },
+
+  async _registerPhoneNumberWithRecovery(
+    phoneNumber: PhoneRegistration,
+    token: string,
+  ): Promise<PhoneRegistration> {
+    try {
+      await this._registerPhoneNumber(
+        phoneNumber.id,
+        token,
+        phoneNumber.registrationPin,
+      );
+
+      return phoneNumber;
+    } catch (err) {
+      const isRetryableMetaFailure =
+        err instanceof ApiError &&
+        err.status !== 502 &&
+        isRetryableStatus(err.status);
+
+      if (isRetryableMetaFailure) {
+        throw err;
+      }
+
+      logger.warn(
+        'Phone registration failed, retrying after deregister with fallback pin',
+        {
+          phoneNumberId: phoneNumber.id,
+          usedStoredRegistrationPin:
+            phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
+        },
+      );
+
+      return this._recoverPhoneNumberRegistration(phoneNumber, token);
+    }
+  },
+
   async _subscribeWabaApps(wabaId: string, token: string): Promise<void> {
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${wabaId}/subscribed_apps`,
@@ -320,14 +443,18 @@ export const EmbeddedSignUpService = {
       this._fetchPhoneNumberDetails(wabaId, systemUserToken),
     ]);
 
-    const phoneRegistrations = this._buildPhoneRegistrations(phoneNumberDatas);
+    const existingPhoneNumbers = await WabaRepository.findPhoneNumbersByMetaIds(
+      phoneNumberDatas.map((phoneNumber) => phoneNumber.id),
+    );
+    const phoneRegistrations = this._buildPhoneRegistrations(
+      phoneNumberDatas,
+      existingPhoneNumbers,
+    );
 
-    await Promise.all([
-      ...phoneRegistrations.map((phoneNumber) =>
-        this._registerPhoneNumber(
-          phoneNumber.id,
-          systemUserToken,
-          phoneNumber.registrationPin,
+    const [registeredPhoneNumbers] = await Promise.all([
+      Promise.all(
+        phoneRegistrations.map((phoneNumber) =>
+          this._registerPhoneNumberWithRecovery(phoneNumber, systemUserToken),
         ),
       ),
       this._subscribeWabaApps(wabaId, systemUserToken),
@@ -353,12 +480,15 @@ export const EmbeddedSignUpService = {
 
     const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
       wabaDbId: waba.id,
-      phoneNumberDatas: phoneRegistrations.map(
-        ({ encryptedRegistrationPin, ...phoneNumber }) => ({
-          ...phoneNumber,
-          registrationPin: encryptedRegistrationPin,
-        }),
-      ),
+      phoneNumberDatas: registeredPhoneNumbers.map((phoneNumber) => ({
+        id: phoneNumber.id,
+        display_phone_number: phoneNumber.display_phone_number,
+        verified_name: phoneNumber.verified_name ?? null,
+        code_verification_status: phoneNumber.code_verification_status ?? null,
+        quality_rating: phoneNumber.quality_rating ?? null,
+        error: phoneNumber.error,
+        registrationPin: phoneNumber.encryptedRegistrationPin,
+      })),
     });
 
     logger.info('PhoneNumbers upserted successfully', {

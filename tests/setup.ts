@@ -69,6 +69,7 @@ vi.mock('@/repositories/waba.repository', () => ({
     getTotalUnreadListByUserId: vi.fn(),
     findById: vi.fn(),
     findByMetaWabaId: vi.fn(),
+    findPhoneNumbersByMetaIds: vi.fn(),
     updateWabaWebhook: vi.fn(),
     upsertWaba: vi.fn(),
     upsertPhoneNumbers: vi.fn(),
@@ -115,7 +116,9 @@ vi.mock('@/services/embedded-signup.service', () => ({
     _exchangeCodeForToken: vi.fn(),
     _fetchWabaDetails: vi.fn(),
     _fetchPhoneNumberDetails: vi.fn(),
+    _deregisterPhoneNumber: vi.fn(),
     _registerPhoneNumber: vi.fn(),
+    _registerPhoneNumberWithRecovery: vi.fn(),
     _subscribeWabaApps: vi.fn(),
   },
 }));

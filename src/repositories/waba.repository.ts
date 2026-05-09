@@ -110,6 +110,24 @@ export const WabaRepository = {
     });
   },
 
+  async findPhoneNumbersByMetaIds(phoneNumberIds: string[]) {
+    if (phoneNumberIds.length === 0) {
+      return [];
+    }
+
+    return prisma.phoneNumber.findMany({
+      where: {
+        phoneNumberId: {
+          in: phoneNumberIds,
+        },
+      },
+      select: {
+        phoneNumberId: true,
+        registrationPin: true,
+      },
+    });
+  },
+
   /**
    * Creates or updates a WhatsappBusinessAccount by its Meta wabaId.
    * Safe to call multiple times (idempotent via upsert).

@@ -164,6 +164,29 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('findPhoneNumbersByMetaIds', () => {
+    it('returns stored pins for matching Meta phone number ids', async () => {
+      const result = await WabaRepository.findPhoneNumbersByMetaIds([
+        SEED_DATA.PHONE_META_ID,
+        'missing-phone-id',
+      ]);
+
+      expect(result).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            phoneNumberId: SEED_DATA.PHONE_META_ID,
+          }),
+        ]),
+      );
+    });
+
+    it('returns an empty array when no ids are requested', async () => {
+      await expect(
+        WabaRepository.findPhoneNumbersByMetaIds([]),
+      ).resolves.toEqual([]);
+    });
+  });
+
   // --- Upsert Operations (Embedded Signup) ---
 
   const TEST_WABA_ID = 'test-upsert-waba-999';
