@@ -38,11 +38,18 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { AddPhoneNumberDialog } from './add-phone-number-dialog';
 import { FacebookSdkScript } from './facebook-sdk-script';
 import { WabaEmbeddedSignupButton } from './waba-embedded-signup-button';
 
 const PAGE_SIZE = 10;
-const TABLE_COLUMNS = ['Business', 'Phone Numbers', 'Status', 'Connected At'];
+const TABLE_COLUMNS = [
+  'Business',
+  'Phone Numbers',
+  'Status',
+  'Connected At',
+  'Actions',
+];
 
 function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
@@ -119,6 +126,12 @@ function WabaRow({ waba }: { waba: Waba }) {
         <StatusBadge status={waba.status} />
       </TableCell>
       <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
+      <TableCell>
+        <AddPhoneNumberDialog
+          businessName={waba.businessName ?? null}
+          wabaId={waba.wabaId}
+        />
+      </TableCell>
     </TableRow>
   );
 }
