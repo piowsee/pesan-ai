@@ -17,12 +17,14 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       id: 'meta-phone-001',
       display_phone_number: '+6281234567890',
       verified_name: 'Test Bot 1',
+      code_verification_status: 'VERIFIED',
       quality_rating: 'GREEN',
     },
     {
       id: 'meta-phone-002',
       display_phone_number: '+6289876543210',
       verified_name: 'Test Bot 2',
+      code_verification_status: 'NOT_VERIFIED',
       quality_rating: 'YELLOW',
     },
   ];
@@ -48,7 +50,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     displayPhoneNumber: phoneNumber.display_phone_number,
     verifiedName: phoneNumber.verified_name,
     registrationPin: REGISTRATION_PINS[index],
-    codeVerificationStatus: 'VERIFIED',
+    codeVerificationStatus: phoneNumber.code_verification_status,
     qualityRating: phoneNumber.quality_rating,
     botEnabled: true,
     unreadCount: 0,

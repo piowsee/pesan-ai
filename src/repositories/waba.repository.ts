@@ -172,7 +172,8 @@ export const WabaRepository = {
             verifiedName: phoneNumber.verified_name ?? null,
             registrationPin: phoneNumber.registrationPin ?? null,
             qualityRating: phoneNumber.quality_rating ?? null,
-            codeVerificationStatus: 'VERIFIED',
+            codeVerificationStatus:
+              phoneNumber.code_verification_status ?? 'VERIFIED',
             botEnabled: true,
           },
           update: {
@@ -180,6 +181,8 @@ export const WabaRepository = {
             displayPhoneNumber: phoneNumber.display_phone_number,
             verifiedName: phoneNumber.verified_name ?? null,
             registrationPin: phoneNumber.registrationPin ?? undefined,
+            codeVerificationStatus:
+              phoneNumber.code_verification_status ?? undefined,
             qualityRating: phoneNumber.quality_rating ?? null,
           },
         }),

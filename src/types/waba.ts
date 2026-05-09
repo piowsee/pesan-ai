@@ -2,6 +2,7 @@ export interface PhoneNumberMetaResponse {
   id: string;
   display_phone_number: string;
   verified_name?: string | null;
+  code_verification_status?: string | null;
   quality_rating?: string | null; // GREEN, YELLOW, RED
   error?: { message: string };
 }
