@@ -115,6 +115,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     vi.mocked(WabaRepository.upsertPhoneNumbers).mockResolvedValue(
       MOCK_PHONE_DBS as never,
     );
+    vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue(null as never);
   });
 
   afterEach(() => {
@@ -372,12 +373,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
 
   describe('completeEmbeddedSignup error paths', () => {
     it('throws ApiError(409) when the WABA already belongs to another user', async () => {
-      vi.mocked(WabaRepository.upsertWaba).mockRejectedValue(
-        new ApiError(
-          'This WhatsApp Business Account is already connected to another user',
-          409,
-        ),
-      );
+      vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue({
+        id: 'db-waba-other-user',
+        wabaId: WABA_ID,
+        userId: 'user-cuid-other',
+      } as never);
 
       await expect(
         EmbeddedSignUpService.completeEmbeddedSignup(
@@ -390,6 +390,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         message:
           'This WhatsApp Business Account is already connected to another user',
       });
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(WabaRepository.upsertWaba).not.toHaveBeenCalled();
+      expect(WabaRepository.upsertPhoneNumbers).not.toHaveBeenCalled();
     });
 
     it('throws ApiError(502) when Meta token exchange returns an error body', async () => {

@@ -142,6 +142,28 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('findByMetaWabaId', () => {
+    it('finds the seeded WABA by its Meta WABA id', async () => {
+      const result = await WabaRepository.findByMetaWabaId(
+        SEED_DATA.WABA_META_ID,
+      );
+
+      expect(result).toMatchObject({
+        id: dbWabaId,
+        wabaId: SEED_DATA.WABA_META_ID,
+        userId,
+      });
+    });
+
+    it('returns null when the Meta WABA id does not exist', async () => {
+      const result = await WabaRepository.findByMetaWabaId(
+        'missing-meta-waba-id',
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+
   // --- Upsert Operations (Embedded Signup) ---
 
   const TEST_WABA_ID = 'test-upsert-waba-999';

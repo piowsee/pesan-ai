@@ -99,6 +99,17 @@ export const WabaRepository = {
     });
   },
 
+  async findByMetaWabaId(wabaId: string) {
+    return prisma.whatsappBusinessAccount.findUnique({
+      where: { wabaId },
+      select: {
+        id: true,
+        wabaId: true,
+        userId: true,
+      },
+    });
+  },
+
   /**
    * Creates or updates a WhatsappBusinessAccount by its Meta wabaId.
    * Safe to call multiple times (idempotent via upsert).

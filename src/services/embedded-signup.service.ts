@@ -300,6 +300,15 @@ export const EmbeddedSignUpService = {
    * 5. Upsert PhoneNumbers linked to the WABA.
    */
   async completeEmbeddedSignup(code: string, wabaId: string, userId: string) {
+    const existingWaba = await WabaRepository.findByMetaWabaId(wabaId);
+
+    if (existingWaba && existingWaba.userId !== userId) {
+      throw new ApiError(
+        'This WhatsApp Business Account is already connected to another user',
+        409,
+      );
+    }
+
     const systemUserToken = await this._exchangeCodeForToken(
       code,
       wabaId,
