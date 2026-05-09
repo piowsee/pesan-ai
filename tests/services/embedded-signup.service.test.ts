@@ -312,6 +312,44 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
     });
 
+    it('continues registering other numbers when one phone number fails', async () => {
+      vi.mocked(WabaRepository.upsertPhoneNumbers).mockResolvedValueOnce([
+        MOCK_PHONE_DBS[1],
+      ] as never);
+
+      vi.spyOn(
+        EmbeddedSignUpService,
+        '_registerPhoneNumberWithRecovery',
+      ).mockImplementation(async (phoneNumber) => {
+        if (phoneNumber.id === META_PHONE_NUMBERS[0].id) {
+          throw new ApiError('Phone registration failed', 502);
+        }
+
+        return phoneNumber;
+      });
+
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
+        VALID_CODE,
+        WABA_ID,
+        USER_ID,
+      );
+
+      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+        wabaDbId: 'db-waba-cuid',
+        phoneNumberDatas: [
+          {
+            ...META_PHONE_NUMBERS[1],
+            registrationPin: REGISTRATION_PINS[1],
+          },
+        ],
+      });
+      expect(result.phoneNumbers).toEqual([MOCK_PHONE_DBS[1]]);
+      expect(result.message).toBe(
+        'WhatsApp Business Account connected, but some phone numbers could not be registered.',
+      );
+      expect(result.failedPhoneNumberIds).toEqual([META_PHONE_NUMBERS[0].id]);
+    });
+
     it('continues when metadata lookups fail and still persists the WABA', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
@@ -349,6 +387,9 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         wabaDbId: 'db-waba-cuid',
         phoneNumberDatas: [],
       });
+      expect(result.message).toBe(
+        'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.',
+      );
     });
 
     it('retries transient Meta failures and still completes the signup flow', async () => {
@@ -628,7 +669,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       ).rejects.toMatchObject({ status: 502 });
     });
 
-    it('throws ApiError(502) when Meta phone registration fails', async () => {
+    it('upserts the WABA and returns a message when all phone registrations fail', async () => {
+      vi.mocked(WabaRepository.upsertPhoneNumbers).mockResolvedValueOnce(
+        [] as never,
+      );
+
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -672,24 +717,30 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
-      ).rejects.toThrow(ApiError);
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
+        VALID_CODE,
+        WABA_ID,
+        USER_ID,
+      );
 
-      await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
-      ).rejects.toMatchObject({
-        status: 502,
-        message: 'Phone registration failed',
+      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
+        expect.objectContaining({
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
+      );
+      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+        wabaDbId: 'db-waba-cuid',
+        phoneNumberDatas: [],
       });
+      expect(result.phoneNumbers).toEqual([]);
+      expect(result.message).toBe(
+        'WhatsApp Business Account connected, but no phone numbers could be registered.',
+      );
+      expect(result.failedPhoneNumberIds).toEqual([
+        META_PHONE_NUMBERS[0].id,
+        META_PHONE_NUMBERS[1].id,
+      ]);
     });
 
     it('tries to deregister and recover when a new phone registration fails without a stored pin', async () => {

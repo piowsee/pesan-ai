@@ -27,6 +27,14 @@ export interface WabaSignupPayload {
   sessionPayload: unknown;
 }
 
+type WabaSignupSuccessData = {
+  failedPhoneNumberIds: string[];
+  message: string | null;
+  phoneNumbers: Array<{ id: string }>;
+  wabaDbId: string;
+  wabaId: string;
+};
+
 /**
  * Hook to submit WhatsApp Embedded Signup data to the backend.
  * This includes the authorization code from Facebook and metadata
@@ -45,7 +53,7 @@ export function useWabaSignup() {
 
       const json = (await response
         .json()
-        .catch(() => null)) as JSendResponse | null;
+        .catch(() => null)) as JSendResponse<WabaSignupSuccessData> | null;
 
       if (!response.ok || json?.status !== 'success') {
         const backendMessage = extractJSendErrorMessage(json);

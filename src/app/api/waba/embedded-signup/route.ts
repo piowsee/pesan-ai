@@ -7,7 +7,7 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 /**
  * @route POST /api/waba/embedded-signup
  * @body { code: string, wabaId: string, sessionPayload?: unknown }
- * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers } }
+ * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers, message, failedPhoneNumberIds } }
  * @access Authenticated users
  * @description Receives the Embedded Signup authorization code, exchanges it for a
  *              System User Access Token with Meta, then persists the WABA and
@@ -25,11 +25,13 @@ export const POST = withApiAuth(async ({ req, user }) => {
     hasSessionPayload: sessionPayload !== undefined,
   });
 
-  const { waba, phoneNumbers } =
+  const { failedPhoneNumberIds, message, phoneNumbers, waba } =
     await EmbeddedSignUpService.completeEmbeddedSignup(code, wabaId, user.id);
 
   return jsend.success(
     {
+      failedPhoneNumberIds,
+      message,
       wabaId: waba.wabaId,
       wabaDbId: waba.id,
       phoneNumbers,

@@ -21,6 +21,18 @@ type PhoneRegistration = PhoneNumberMetaResponse & {
   registrationPin: string;
 };
 
+type FailedPhoneRegistration = {
+  error: unknown;
+  phoneNumberId?: string;
+};
+
+type EmbeddedSignupResult = {
+  failedPhoneNumberIds: string[];
+  message: string | null;
+  phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>;
+  waba: Awaited<ReturnType<typeof WabaRepository.upsertWaba>>;
+};
+
 function getMetaAppCredentials() {
   return {
     appId: process.env.NEXT_PUBLIC_META_APP_ID,
@@ -414,6 +426,27 @@ export const EmbeddedSignUpService = {
     return systemUserToken;
   },
 
+  _buildPhoneRegistrationMessage(params: {
+    failedCount: number;
+    registeredCount: number;
+  }): string | null {
+    const { failedCount, registeredCount } = params;
+
+    if (failedCount === 0 && registeredCount > 0) {
+      return null;
+    }
+
+    if (failedCount > 0 && registeredCount > 0) {
+      return 'WhatsApp Business Account connected, but some phone numbers could not be registered.';
+    }
+
+    if (failedCount > 0) {
+      return 'WhatsApp Business Account connected, but no phone numbers could be registered.';
+    }
+
+    return 'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.';
+  },
+
   /**
    * Main flow:
    * 1. Exchange the short-lived `code` for a System User Access Token.
@@ -422,7 +455,11 @@ export const EmbeddedSignUpService = {
    * 4. Register phone numbers and subscribe the app in Meta.
    * 5. Upsert PhoneNumbers linked to the WABA.
    */
-  async completeEmbeddedSignup(code: string, wabaId: string, userId: string) {
+  async completeEmbeddedSignup(
+    code: string,
+    wabaId: string,
+    userId: string,
+  ): Promise<EmbeddedSignupResult> {
     const existingWaba = await WabaRepository.findByMetaWabaId(wabaId);
 
     if (existingWaba && existingWaba.userId !== userId) {
@@ -451,8 +488,8 @@ export const EmbeddedSignUpService = {
       existingPhoneNumbers,
     );
 
-    const [registeredPhoneNumbers] = await Promise.all([
-      Promise.all(
+    const [registrationResults] = await Promise.all([
+      Promise.allSettled(
         phoneRegistrations.map((phoneNumber) =>
           this._registerPhoneNumberWithRecovery(phoneNumber, systemUserToken),
         ),
@@ -460,8 +497,34 @@ export const EmbeddedSignUpService = {
       this._subscribeWabaApps(wabaId, systemUserToken),
     ]);
 
+    const registeredPhoneNumbers = registrationResults.flatMap((result) =>
+      result.status === 'fulfilled' ? [result.value] : [],
+    );
+    const failedPhoneRegistrations =
+      registrationResults.flatMap<FailedPhoneRegistration>((result, index) =>
+        result.status === 'rejected'
+          ? [
+              {
+                phoneNumberId: phoneRegistrations[index]?.id,
+                error: result.reason,
+              },
+            ]
+          : [],
+      );
+
+    if (failedPhoneRegistrations.length > 0) {
+      logger.error('Some Meta phone registrations failed during signup', {
+        failedPhoneNumberIds: failedPhoneRegistrations.map(
+          ({ phoneNumberId }) => phoneNumberId,
+        ),
+        failureCount: failedPhoneRegistrations.length,
+        wabaId,
+      });
+    }
+
     logger.info('Meta phone registration and app subscription completed', {
-      phoneNumberCount: phoneRegistrations.length,
+      phoneNumberCount: registeredPhoneNumbers.length,
+      failedPhoneNumberCount: failedPhoneRegistrations.length,
       wabaId,
     });
 
@@ -496,6 +559,16 @@ export const EmbeddedSignUpService = {
       wabaId,
     });
 
-    return { waba, phoneNumbers };
+    return {
+      waba,
+      phoneNumbers,
+      failedPhoneNumberIds: failedPhoneRegistrations.flatMap(
+        ({ phoneNumberId }) => (phoneNumberId ? [phoneNumberId] : []),
+      ),
+      message: this._buildPhoneRegistrationMessage({
+        failedCount: failedPhoneRegistrations.length,
+        registeredCount: registeredPhoneNumbers.length,
+      }),
+    };
   },
 };

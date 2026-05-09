@@ -155,13 +155,19 @@ export function WabaEmbeddedSignupButton({
 
     const submitData = async () => {
       try {
-        await signupMutation.mutateAsync({
+        const result = await signupMutation.mutateAsync({
           code: authorizationCode,
           wabaId: session.wabaId,
           sessionPayload: session.payload ?? null,
         });
         setAuthorizationCode(null);
-        toast.success('WABA connected successfully.');
+        const message = result.data?.message;
+
+        if (message) {
+          toast.warning(message);
+        } else {
+          toast.success('WABA connected successfully.');
+        }
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);

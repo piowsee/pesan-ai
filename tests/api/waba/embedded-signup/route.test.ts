@@ -19,6 +19,8 @@ describe('POST /api/waba/embedded-signup', { tags: ['backend'] }, () => {
       role: 'user',
     } as never);
     vi.mocked(EmbeddedSignUpService.completeEmbeddedSignup).mockResolvedValue({
+      failedPhoneNumberIds: [],
+      message: null,
       waba: {
         id: 'db-waba-1',
         wabaId: 'meta-waba-1',
@@ -39,6 +41,8 @@ describe('POST /api/waba/embedded-signup', { tags: ['backend'] }, () => {
     expect(response.status).toBe(201);
     expect(data.status).toBe('success');
     expect(data.data).toEqual({
+      failedPhoneNumberIds: [],
+      message: null,
       wabaId: 'meta-waba-1',
       wabaDbId: 'db-waba-1',
       phoneNumbers: [{ id: 'db-phone-1' }],
@@ -108,5 +112,41 @@ describe('POST /api/waba/embedded-signup', { tags: ['backend'] }, () => {
     );
 
     expect(response.status).toBe(500);
+  });
+
+  it('returns partial signup message and failed phone ids on success', async () => {
+    vi.mocked(AuthHelper.requireUser).mockResolvedValue({
+      id: 'user-1',
+      role: 'user',
+    } as never);
+    vi.mocked(EmbeddedSignUpService.completeEmbeddedSignup).mockResolvedValue({
+      failedPhoneNumberIds: ['meta-phone-2'],
+      message:
+        'WhatsApp Business Account connected, but some phone numbers could not be registered.',
+      waba: {
+        id: 'db-waba-1',
+        wabaId: 'meta-waba-1',
+      },
+      phoneNumbers: [{ id: 'db-phone-1' }],
+    } as never);
+
+    const response = await POST(
+      createRequest({
+        code: 'auth-code-123',
+        wabaId: 'meta-waba-1',
+      }),
+      { params: Promise.resolve({}) } as never,
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(data.data).toEqual({
+      failedPhoneNumberIds: ['meta-phone-2'],
+      message:
+        'WhatsApp Business Account connected, but some phone numbers could not be registered.',
+      wabaId: 'meta-waba-1',
+      wabaDbId: 'db-waba-1',
+      phoneNumbers: [{ id: 'db-phone-1' }],
+    });
   });
 });
