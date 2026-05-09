@@ -334,6 +334,7 @@ export const EmbeddedSignUpService = {
       logger.warn(
         'Phone registration failed, retrying after deregister with fallback pin',
         {
+          error: err instanceof Error ? err.message : String(err),
           phoneNumberId: phoneNumber.id,
           usedStoredRegistrationPin:
             phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
