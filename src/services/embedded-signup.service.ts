@@ -320,19 +320,6 @@ export const EmbeddedSignUpService = {
       this._fetchPhoneNumberDetails(wabaId, systemUserToken),
     ]);
 
-    const waba = await WabaRepository.upsertWaba({
-      wabaId,
-      userId,
-      systemUserToken: encrypt(systemUserToken),
-      businessName: wabaDetails.businessName,
-    });
-
-    logger.info('WABA upserted successfully', {
-      wabaDbId: waba.id,
-      wabaId,
-      userId,
-    });
-
     const phoneRegistrations = this._buildPhoneRegistrations(phoneNumberDatas);
 
     await Promise.all([
@@ -349,6 +336,19 @@ export const EmbeddedSignUpService = {
     logger.info('Meta phone registration and app subscription completed', {
       phoneNumberCount: phoneRegistrations.length,
       wabaId,
+    });
+
+    const waba = await WabaRepository.upsertWaba({
+      wabaId,
+      userId,
+      systemUserToken: encrypt(systemUserToken),
+      businessName: wabaDetails.businessName,
+    });
+
+    logger.info('WABA upserted successfully', {
+      wabaDbId: waba.id,
+      wabaId,
+      userId,
     });
 
     const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
