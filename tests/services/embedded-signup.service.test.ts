@@ -441,7 +441,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       expect(result.failedPhoneNumberIds).toEqual([META_PHONE_NUMBERS[0].id]);
     });
 
-    it('continues when metadata lookups fail and still persists the WABA', async () => {
+    it('throws when metadata lookups fail with a network error', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -462,28 +462,13 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return Promise.reject(new Error('Network error'));
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
-
-      expect(result.waba).toBeDefined();
-      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
-        expect.objectContaining({
-          businessName: null,
-        }),
-      );
-      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
-        wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: [],
-      });
-      expect(
-        BusinessProfileRepository.upsertBusinessProfiles,
-      ).toHaveBeenCalledWith([]);
-      expect(result.message).toBe(
-        'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.',
-      );
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).rejects.toThrow('Network error');
     });
 
     it('skips profile upserts when Meta returns no business profile for a phone number', async () => {
@@ -1119,7 +1104,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('does not throw non-retryable metadata failures to the API layer', async () => {
+    it('throws ApiError(502) on non-retryable metadata failures', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -1171,17 +1156,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           WABA_ID,
           USER_ID,
         ),
-      ).resolves.toMatchObject({
-        waba: expect.objectContaining({
-          id: 'db-waba-cuid',
-        }),
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Missing permission to read WABA details',
       });
-
-      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
-        expect.objectContaining({
-          businessName: null,
-        }),
-      );
     });
   });
 });

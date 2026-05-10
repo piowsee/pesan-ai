@@ -1,5 +1,5 @@
 import * as retryableFetch from '@/lib/fetch-with-retry';
-import { logError, logger } from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -147,7 +147,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('logs and returns null business name on non-retryable failure', async () => {
+    it('wraps non-retryable failures as ApiError(502)', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -167,16 +167,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
 
       await expect(
         MetaFetchService.fetchWabaDetails(WABA_ID, 'sys-user-token-xyz'),
-      ).resolves.toEqual({
-        businessName: null,
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Missing permission to read WABA details',
       });
-      expect(logError).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          action: 'MetaFetchService.fetchWabaDetails',
-          wabaId: WABA_ID,
-        }),
-      );
     });
   });
 
@@ -238,7 +232,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('logs and returns null on non-retryable failure', async () => {
+    it('wraps non-retryable failures as ApiError(502)', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -261,14 +255,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
           PHONE_NUMBER_ID,
           'sys-user-token-xyz',
         ),
-      ).resolves.toBeNull();
-      expect(logError).toHaveBeenCalledWith(
-        expect.any(Error),
-        expect.objectContaining({
-          action: 'MetaFetchService.fetchBusinessProfile',
-          phoneNumberId: PHONE_NUMBER_ID,
-        }),
-      );
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Missing permission to read business profile',
+      });
     });
   });
 
