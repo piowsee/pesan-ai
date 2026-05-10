@@ -79,6 +79,11 @@ export const MetaFetchService = {
         response,
         `Failed to fetch WABA details for ${wabaId}`,
       );
+      logger.error('Meta API error in fetchWabaDetails', {
+        metaStatus: response.status,
+        message,
+        wabaId,
+      });
 
       throw new ApiError(message, 502);
     }
@@ -108,6 +113,11 @@ export const MetaFetchService = {
         response,
         `Failed to fetch phone numbers for ${wabaId}`,
       );
+      logger.error('Meta API error in fetchPhoneNumberDetails', {
+        metaStatus: response.status,
+        message,
+        wabaId,
+      });
 
       throw new ApiError(message, 502);
     }
@@ -137,6 +147,11 @@ export const MetaFetchService = {
         response,
         `Failed to fetch business profile for ${phoneNumberId}`,
       );
+      logger.error('Meta API error in fetchBusinessProfile', {
+        metaStatus: response.status,
+        message,
+        phoneNumberId,
+      });
 
       throw new ApiError(message, 502);
     }
@@ -185,6 +200,11 @@ export const MetaFetchService = {
         });
         return;
       }
+      logger.error('Meta API error in registerPhoneNumber', {
+        metaStatus: response.status,
+        message,
+        phoneNumberId,
+      });
 
       throw new ApiError(message, 502);
     }
@@ -219,6 +239,11 @@ export const MetaFetchService = {
         response,
         `Failed to deregister phone number ${phoneNumberId} from Meta`,
       );
+      logger.error('Meta API error in deregisterPhoneNumber', {
+        metaStatus: response.status,
+        message,
+        phoneNumberId,
+      });
 
       throw new ApiError(message, 502);
     }
@@ -245,6 +270,11 @@ export const MetaFetchService = {
         response,
         `Failed to subscribe apps for WABA ${wabaId}`,
       );
+      logger.error('Meta API error in subscribeWabaApps', {
+        metaStatus: response.status,
+        message,
+        wabaId,
+      });
 
       throw new ApiError(message, 502);
     }
