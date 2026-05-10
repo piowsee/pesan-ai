@@ -1,6 +1,6 @@
 import { ApiError } from '@/lib/error';
 import * as retryableFetch from '@/lib/fetch-with-retry';
-import { logError, logger } from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import {
   PhoneNumberMetaResponse,
   TokenExchangeResponse,
@@ -18,10 +18,6 @@ function getMetaAppCredentials() {
     appId: process.env.NEXT_PUBLIC_META_APP_ID,
     appSecret: process.env.META_APP_SECRET,
   };
-}
-
-function isRetryableStatus(status: number): boolean {
-  return status === 429 || status >= 500;
 }
 
 export const MetaFetchService = {
@@ -66,111 +62,87 @@ export const MetaFetchService = {
   },
 
   async fetchWabaDetails(wabaId: string, token: string): Promise<WabaDetails> {
-    try {
-      const response = await retryableFetch.fetchWithRetry(
-        `${GRAPH_BASE}/${wabaId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-        { action: 'MetaFetchService.fetchWabaDetails' },
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${wabaId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+      { action: 'MetaFetchService.fetchWabaDetails' },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to fetch WABA details for ${wabaId}`,
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to fetch WABA details for ${wabaId}`,
       );
 
-      if (!response.ok) {
-        await this._throwIfRetryableResponse(
-          response,
-          `Failed to fetch WABA details for ${wabaId}`,
-        );
-        throw new Error(
-          `Meta API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const data: WabaMetaResponse = await response.json();
-      return { businessName: data.name ?? null };
-    } catch (err) {
-      if (err instanceof ApiError && isRetryableStatus(err.status)) {
-        throw err;
-      }
-
-      logError(err, { action: 'MetaFetchService.fetchWabaDetails', wabaId });
-      return { businessName: null };
+      throw new ApiError(message, 502);
     }
+
+    const data: WabaMetaResponse = await response.json();
+    return { businessName: data.name ?? null };
   },
 
   async fetchPhoneNumberDetails(
     wabaId: string,
     token: string,
   ): Promise<PhoneNumberMetaResponse[]> {
-    try {
-      const response = await retryableFetch.fetchWithRetry(
-        `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=code_verification_status`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-        { action: 'MetaFetchService.fetchPhoneNumberDetails' },
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=code_verification_status`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+      { action: 'MetaFetchService.fetchPhoneNumberDetails' },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to fetch phone numbers for ${wabaId}`,
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to fetch phone numbers for ${wabaId}`,
       );
 
-      if (!response.ok) {
-        await this._throwIfRetryableResponse(
-          response,
-          `Failed to fetch phone numbers for ${wabaId}`,
-        );
-        throw new Error(
-          `Meta API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const data = await response.json();
-      return Array.isArray(data) ? data : data.data || [];
-    } catch (err) {
-      if (err instanceof ApiError && isRetryableStatus(err.status)) {
-        throw err;
-      }
-
-      logError(err, {
-        action: 'MetaFetchService.fetchPhoneNumberDetails',
-        wabaId,
-      });
-      return [];
+      throw new ApiError(message, 502);
     }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : data.data || [];
   },
 
   async fetchBusinessProfile(
     phoneNumberId: string,
     token: string,
   ): Promise<WhatsappBusinessProfile | null> {
-    try {
-      const response = await retryableFetch.fetchWithRetry(
-        `${GRAPH_BASE}/${phoneNumberId}/whatsapp_business_profile`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-        { action: 'MetaFetchService.fetchBusinessProfile' },
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}/whatsapp_business_profile`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+      { action: 'MetaFetchService.fetchBusinessProfile' },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to fetch business profile for ${phoneNumberId}`,
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to fetch business profile for ${phoneNumberId}`,
       );
 
-      if (!response.ok) {
-        await this._throwIfRetryableResponse(
-          response,
-          `Failed to fetch business profile for ${phoneNumberId}`,
-        );
-        throw new Error(
-          `Meta API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const data: WhatsappBusinessProfileMetaResponse = await response.json();
-      return data.data?.[0]?.business_profile ?? null;
-    } catch (err) {
-      if (err instanceof ApiError && isRetryableStatus(err.status)) {
-        throw err;
-      }
-
-      logError(err, {
-        action: 'MetaFetchService.fetchBusinessProfile',
-        phoneNumberId,
-      });
-      return null;
+      throw new ApiError(message, 502);
     }
+
+    const data: WhatsappBusinessProfileMetaResponse = await response.json();
+    return data.data?.[0]?.business_profile ?? null;
   },
 
   async registerPhoneNumber(
