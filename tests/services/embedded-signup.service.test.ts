@@ -1,7 +1,9 @@
 import { ApiError } from '@/lib/error';
 import * as retryableFetch from '@/lib/fetch-with-retry';
+import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
+import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/embedded-signup.service');
@@ -28,6 +30,29 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       quality_rating: 'YELLOW',
     },
   ];
+
+  const META_BUSINESS_PROFILES = {
+    [META_PHONE_NUMBERS[0].id]: {
+      messaging_product: 'whatsapp' as const,
+      address: 'business-address-1',
+      description: 'business-description-1',
+      vertical: 'BEAUTY',
+      about: 'profile-about-text-1',
+      email: 'business1@example.com',
+      websites: ['https://website-1'],
+      profile_picture_url: 'https://cdn.example.com/profile-1.jpg',
+    },
+    [META_PHONE_NUMBERS[1].id]: {
+      messaging_product: 'whatsapp' as const,
+      address: 'business-address-2',
+      description: 'business-description-2',
+      vertical: 'SPA',
+      about: 'profile-about-text-2',
+      email: 'business2@example.com',
+      websites: ['https://website-2'],
+      profile_picture_url: 'https://cdn.example.com/profile-2.jpg',
+    },
+  };
 
   const MOCK_WABA_DB = {
     id: 'db-waba-cuid',
@@ -87,10 +112,27 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         } as Response;
       }
 
-      if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+      if (url.includes(`/${WABA_ID}/phone_numbers`)) {
         return {
           ok: true,
           json: async () => ({ data: META_PHONE_NUMBERS }),
+        } as Response;
+      }
+
+      const matchedPhoneNumber = META_PHONE_NUMBERS.find((phoneNumber) =>
+        url.endsWith(`/${phoneNumber.id}/whatsapp_business_profile`),
+      );
+
+      if (matchedPhoneNumber) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                business_profile: META_BUSINESS_PROFILES[matchedPhoneNumber.id],
+              },
+            ],
+          }),
         } as Response;
       }
 
@@ -117,6 +159,9 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     vi.mocked(WabaRepository.upsertPhoneNumbers).mockResolvedValue(
       MOCK_PHONE_DBS as never,
     );
+    vi.mocked(
+      BusinessProfileRepository.upsertBusinessProfiles,
+    ).mockResolvedValue(MOCK_PHONE_DBS as never);
     vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue(null as never);
     vi.mocked(WabaRepository.findPhoneNumbersByMetaIds).mockResolvedValue(
       [] as never,
@@ -212,6 +257,15 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           registrationPin: REGISTRATION_PINS[index],
         })),
       });
+
+      expect(
+        BusinessProfileRepository.upsertBusinessProfiles,
+      ).toHaveBeenCalledWith(
+        MOCK_PHONE_DBS.map((phoneNumberDb) => ({
+          phoneNumberDbId: phoneNumberDb.id,
+          businessProfile: META_BUSINESS_PROFILES[phoneNumberDb.phoneNumberId],
+        })),
+      );
     });
 
     it('reuses the stored pin from our db before generating a new one', async () => {
@@ -255,6 +309,20 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           },
         ],
       });
+      expect(
+        BusinessProfileRepository.upsertBusinessProfiles,
+      ).toHaveBeenCalledWith([
+        {
+          phoneNumberDbId: MOCK_PHONE_DBS[0].id,
+          businessProfile:
+            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId],
+        },
+        {
+          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
+          businessProfile:
+            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
+        },
+      ]);
     });
 
     it('upserts the fresh pin after stored-pin recovery succeeds', async () => {
@@ -266,14 +334,14 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       ] as never);
 
       const registerSpy = vi
-        .spyOn(EmbeddedSignUpService, '_registerPhoneNumber')
+        .spyOn(MetaFetchService, 'registerPhoneNumber')
         .mockImplementation(async (phoneNumberId, _token, pin) => {
           if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
             throw new ApiError('Stored pin no longer works', 502);
           }
         });
       const deregisterSpy = vi
-        .spyOn(EmbeddedSignUpService, '_deregisterPhoneNumber')
+        .spyOn(MetaFetchService, 'deregisterPhoneNumber')
         .mockResolvedValue(undefined);
 
       await EmbeddedSignUpService.completeEmbeddedSignup(
@@ -310,6 +378,20 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           },
         ],
       });
+      expect(
+        BusinessProfileRepository.upsertBusinessProfiles,
+      ).toHaveBeenCalledWith([
+        {
+          phoneNumberDbId: MOCK_PHONE_DBS[0].id,
+          businessProfile:
+            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId],
+        },
+        {
+          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
+          businessProfile:
+            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
+        },
+      ]);
     });
 
     it('continues registering other numbers when one phone number fails', async () => {
@@ -343,6 +425,15 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           },
         ],
       });
+      expect(
+        BusinessProfileRepository.upsertBusinessProfiles,
+      ).toHaveBeenCalledWith([
+        {
+          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
+          businessProfile:
+            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
+        },
+      ]);
       expect(result.phoneNumbers).toEqual([MOCK_PHONE_DBS[1]]);
       expect(result.message).toBe(
         'WhatsApp Business Account connected, but some phone numbers could not be registered.',
@@ -350,7 +441,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       expect(result.failedPhoneNumberIds).toEqual([META_PHONE_NUMBERS[0].id]);
     });
 
-    it('continues when metadata lookups fail and still persists the WABA', async () => {
+    it('throws when metadata lookups fail with a network error', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -371,25 +462,100 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return Promise.reject(new Error('Network error'));
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup(
+          VALID_CODE,
+          WABA_ID,
+          USER_ID,
+        ),
+      ).rejects.toThrow('Network error');
+    });
+
+    it('skips profile upserts when Meta returns no business profile for a phone number', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.includes('oauth/access_token')) {
+          return {
+            ok: true,
+            json: async () => ({
+              access_token: 'sys-user-token-xyz',
+              token_type: 'bearer',
+            }),
+          } as Response;
+        }
+
+        if (url.endsWith(`/${WABA_ID}`)) {
+          return {
+            ok: true,
+            json: async () => ({ name: 'Test Salon' }),
+          } as Response;
+        }
+
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
+          return {
+            ok: true,
+            json: async () => ({ data: META_PHONE_NUMBERS }),
+          } as Response;
+        }
+
+        if (
+          url.endsWith(`/${META_PHONE_NUMBERS[0].id}/whatsapp_business_profile`)
+        ) {
+          return {
+            ok: true,
+            json: async () => ({ data: [{ business_profile: null }] }),
+          } as Response;
+        }
+
+        if (
+          url.endsWith(`/${META_PHONE_NUMBERS[1].id}/whatsapp_business_profile`)
+        ) {
+          return {
+            ok: true,
+            json: async () => ({
+              data: [
+                {
+                  business_profile:
+                    META_BUSINESS_PROFILES[META_PHONE_NUMBERS[1].id],
+                },
+              ],
+            }),
+          } as Response;
+        }
+
+        if (url.endsWith('/register')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        if (url.endsWith('/subscribed_apps')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await EmbeddedSignUpService.completeEmbeddedSignup(
         VALID_CODE,
         WABA_ID,
         USER_ID,
       );
 
-      expect(result.waba).toBeDefined();
-      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
-        expect.objectContaining({
-          businessName: null,
-        }),
-      );
-      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
-        wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: [],
-      });
-      expect(result.message).toBe(
-        'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.',
-      );
+      expect(
+        BusinessProfileRepository.upsertBusinessProfiles,
+      ).toHaveBeenCalledWith([
+        {
+          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
+          businessProfile:
+            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
+        },
+      ]);
     });
 
     it('retries transient Meta failures and still completes the signup flow', async () => {
@@ -422,7 +588,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -471,61 +637,17 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('_exchangeCodeForToken', () => {
-    it('returns the system user access token on success', async () => {
-      await expect(
-        EmbeddedSignUpService._exchangeCodeForToken(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
-      ).resolves.toBe('sys-user-token-xyz');
-    });
-
-    it('throws the retryable Meta status to the API layer', async () => {
-      vi.mocked(global.fetch).mockImplementation(async (input) => {
-        const url = typeof input === 'string' ? input : input.toString();
-
-        if (url.includes('oauth/access_token')) {
-          return {
-            ok: false,
-            status: 503,
-            statusText: 'Service Unavailable',
-            json: async () => ({
-              error: {
-                message: 'Meta token exchange is temporarily unavailable',
-              },
-            }),
-          } as Response;
-        }
-
-        return { ok: true, json: async () => ({}) } as Response;
-      });
-
-      await expect(
-        EmbeddedSignUpService._exchangeCodeForToken(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
-      ).rejects.toMatchObject({
-        status: 503,
-        message: 'Meta token exchange is temporarily unavailable',
-      });
-    });
-  });
-
   describe('_registerPhoneNumberWithRecovery', () => {
     it('deregisters and retries with a fresh pin when stored-pin re-registration fails', async () => {
       const registerSpy = vi
-        .spyOn(EmbeddedSignUpService, '_registerPhoneNumber')
+        .spyOn(MetaFetchService, 'registerPhoneNumber')
         .mockImplementation(async (phoneNumberId, _token, pin) => {
           if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
             throw new ApiError('Stored pin no longer works', 502);
           }
         });
       const deregisterSpy = vi
-        .spyOn(EmbeddedSignUpService, '_deregisterPhoneNumber')
+        .spyOn(MetaFetchService, 'deregisterPhoneNumber')
         .mockResolvedValue(undefined);
 
       const result =
@@ -691,7 +813,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -763,7 +885,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -844,7 +966,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -903,7 +1025,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -960,7 +1082,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -982,7 +1104,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('does not throw non-retryable metadata failures to the API layer', async () => {
+    it('throws ApiError(502) on non-retryable metadata failures', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -1004,7 +1126,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
           return {
             ok: true,
             json: async () => ({ data: META_PHONE_NUMBERS }),
@@ -1034,17 +1156,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           WABA_ID,
           USER_ID,
         ),
-      ).resolves.toMatchObject({
-        waba: expect.objectContaining({
-          id: 'db-waba-cuid',
-        }),
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Missing permission to read WABA details',
       });
-
-      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
-        expect.objectContaining({
-          businessName: null,
-        }),
-      );
     });
   });
 });

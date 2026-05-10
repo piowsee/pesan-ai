@@ -191,7 +191,7 @@ export const WabaRepository = {
             registrationPin: phoneNumber.registrationPin ?? null,
             qualityRating: phoneNumber.quality_rating ?? null,
             codeVerificationStatus:
-              phoneNumber.code_verification_status ?? 'VERIFIED',
+              phoneNumber.code_verification_status ?? undefined,
             botEnabled: true,
           },
           update: {

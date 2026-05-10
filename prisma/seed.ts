@@ -126,17 +126,34 @@ async function main() {
 
     console.log('Phone Number created:', phoneNumber.displayPhoneNumber);
 
-    // 5. Create Business Profile
-    await tx.businessProfile.upsert({
-      where: { phoneNumberId: phoneNumber.id },
-      update: {},
-      create: {
-        phoneNumberId: phoneNumber.id,
-        address: 'Piowsee Street 123, Indonesia',
-        description: 'Your premium beauty salon.',
-        vertical: 'BEAUTY',
-        email: 'support@piowsee.com',
-        websites: ['https://piowsee.com'],
+    // 5. Create Business Profile through the phone number relation
+    await tx.phoneNumber.update({
+      where: { id: phoneNumber.id },
+      data: {
+        businessProfile: {
+          upsert: {
+            update: {
+              messagingProduct: 'whatsapp',
+              address: 'Piowsee Street 123, Indonesia',
+              description: 'Your premium beauty salon.',
+              vertical: 'BEAUTY',
+              about: 'Premium salon services for modern customers.',
+              email: 'support@piowsee.com',
+              websites: ['https://piowsee.com'],
+              profilePictureUrl: 'https://piowsee.com/profile-picture.jpg',
+            },
+            create: {
+              messagingProduct: 'whatsapp',
+              address: 'Piowsee Street 123, Indonesia',
+              description: 'Your premium beauty salon.',
+              vertical: 'BEAUTY',
+              about: 'Premium salon services for modern customers.',
+              email: 'support@piowsee.com',
+              websites: ['https://piowsee.com'],
+              profilePictureUrl: 'https://piowsee.com/profile-picture.jpg',
+            },
+          },
+        },
       },
     });
 

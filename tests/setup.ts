@@ -54,6 +54,12 @@ vi.mock('@/repositories/chat.repository', () => ({
   },
 }));
 
+vi.mock('@/repositories/business-profile.repository', () => ({
+  BusinessProfileRepository: {
+    upsertBusinessProfiles: vi.fn(),
+  },
+}));
+
 vi.mock('@/repositories/message.repository', () => ({
   MessageRepository: {
     findMessagesPaginated: vi.fn(),

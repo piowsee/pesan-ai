@@ -5,19 +5,23 @@ CREATE TABLE "phone_number" (
     "displayPhoneNumber" TEXT NOT NULL,
     "verifiedName" TEXT,
     "registrationPin" TEXT,
-    "codeVerificationStatus" TEXT NOT NULL DEFAULT 'VERIFIED',
+    "codeVerificationStatus" TEXT NOT NULL DEFAULT 'UNVERIFIED',
     "qualityRating" TEXT,
     "botEnabled" BOOLEAN NOT NULL DEFAULT true,
     "unreadCount" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "wabaId" TEXT NOT NULL,
+    "businessProfileId" TEXT,
 
     CONSTRAINT "phone_number_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "phone_number_phoneNumberId_key" ON "phone_number"("phoneNumberId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "phone_number_businessProfileId_key" ON "phone_number"("businessProfileId");
 
 -- CreateIndex
 CREATE INDEX "idx_phone_number_wabaId" ON "phone_number"("wabaId");
