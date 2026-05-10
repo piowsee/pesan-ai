@@ -1,9 +1,10 @@
 import { decrypt, encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import { logger } from '@/lib/logger';
+import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
-import { PhoneNumberMetaResponse } from '@/types/waba';
+import { PhoneNumberMetaResponse, WhatsappBusinessProfile } from '@/types/waba';
 import { randomInt } from 'node:crypto';
 
 type PhoneRegistration = PhoneNumberMetaResponse & {
@@ -16,6 +17,12 @@ type PhoneRegistration = PhoneNumberMetaResponse & {
 type FailedPhoneRegistration = {
   error: unknown;
   phoneNumberId?: string;
+};
+
+type BusinessProfileLookup = {
+  businessProfile: WhatsappBusinessProfile;
+  phoneNumberDbId: string;
+  phoneNumberId: string;
 };
 
 type EmbeddedSignupResult = {
@@ -161,6 +168,54 @@ export const EmbeddedSignUpService = {
     return 'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.';
   },
 
+  async _fetchBusinessProfiles(
+    phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>,
+    token: string,
+  ): Promise<BusinessProfileLookup[]> {
+    const businessProfileResults = await Promise.allSettled(
+      phoneNumbers.map(async (phoneNumber) => {
+        const businessProfile = await MetaFetchService.fetchBusinessProfile(
+          phoneNumber.phoneNumberId,
+          token,
+        );
+
+        if (!businessProfile) {
+          return null;
+        }
+
+        return {
+          phoneNumberDbId: phoneNumber.id,
+          phoneNumberId: phoneNumber.phoneNumberId,
+          businessProfile,
+        };
+      }),
+    );
+
+    const failedLookups = businessProfileResults.flatMap((result, index) =>
+      result.status === 'rejected'
+        ? [
+            {
+              phoneNumberId: phoneNumbers[index]?.phoneNumberId,
+              error: result.reason,
+            },
+          ]
+        : [],
+    );
+
+    if (failedLookups.length > 0) {
+      logger.error('Some Meta business profile lookups failed during signup', {
+        failedPhoneNumberIds: failedLookups.map(
+          ({ phoneNumberId }) => phoneNumberId,
+        ),
+        failureCount: failedLookups.length,
+      });
+    }
+
+    return businessProfileResults.flatMap((result) =>
+      result.status === 'fulfilled' && result.value ? [result.value] : [],
+    );
+  },
+
   /**
    * Main flow:
    * 1. Exchange the short-lived `code` for a System User Access Token.
@@ -270,6 +325,23 @@ export const EmbeddedSignUpService = {
 
     logger.info('PhoneNumbers upserted successfully', {
       count: phoneNumbers.length,
+      wabaId,
+    });
+
+    const businessProfiles = await this._fetchBusinessProfiles(
+      phoneNumbers,
+      systemUserToken,
+    );
+
+    await BusinessProfileRepository.upsertBusinessProfiles(
+      businessProfiles.map(({ phoneNumberDbId, businessProfile }) => ({
+        phoneNumberDbId,
+        businessProfile,
+      })),
+    );
+
+    logger.info('Business profiles upserted successfully', {
+      count: businessProfiles.length,
       wabaId,
     });
 
