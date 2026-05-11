@@ -106,6 +106,7 @@ export const WabaRepository = {
         id: true,
         wabaId: true,
         userId: true,
+        systemUserToken: true,
       },
     });
   },

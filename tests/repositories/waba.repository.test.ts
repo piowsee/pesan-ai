@@ -152,6 +152,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         id: dbWabaId,
         wabaId: SEED_DATA.WABA_META_ID,
         userId,
+        systemUserToken: SEED_DATA.SYSTEM_USER_TOKEN,
       });
     });
 
