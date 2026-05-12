@@ -23,13 +23,13 @@ export const MessageService = {
     });
 
     const offset = (page - 1) * limit;
-    const result = await MessageRepository.findMessagesPaginated(
+    const result = await MessageRepository.findMessagesPaginated({
       convId,
       wabaId,
       userId,
       limit,
       offset,
-    );
+    });
 
     if (!result) {
       throw new ApiError('Conversation not found or access denied', 404);
@@ -38,11 +38,19 @@ export const MessageService = {
     return result;
   },
 
-  async sendAdminMessage(chatId: string, userId: string, content: string) {
+  async sendAdminMessage(params: {
+    chatId: string;
+    userId: string;
+    content: string;
+  }) {
+    const { chatId, userId, content } = params;
     logger.info('Admin sending message', { chatId, userId });
 
     // 1. Fetch metadata and validate ownership
-    const chatMeta = await ChatRepository.getChatMetaForSending(chatId, userId);
+    const chatMeta = await ChatRepository.getChatMetaForSending({
+      convId: chatId,
+      userId,
+    });
     if (!chatMeta) {
       logger.warn('Chat meta fetch failed: Not found or access denied', {
         chatId,
@@ -70,12 +78,12 @@ export const MessageService = {
     }
 
     // 2. Send via WhatsApp API
-    const waResult = await MetaFetchService.sendTextMessage(
+    const waResult = await MetaFetchService.sendTextMessage({
       phoneNumberId,
-      tokenToUse,
-      customerPhone,
-      content,
-    );
+      token: tokenToUse,
+      to: customerPhone,
+      text: content,
+    });
 
     // 3. Save to database via MessageRepository
     const savedMessage = await MessageRepository.saveMessage({

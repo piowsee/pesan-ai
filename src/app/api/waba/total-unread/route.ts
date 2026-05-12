@@ -10,6 +10,8 @@ import { WabaService } from '@/services/waba.service';
  * @description Get the total unread message count for each WhatsApp Business Account (WABA).
  */
 export const GET = withApiAuth(async ({ user }) => {
-  const unreadCounts = await WabaService.getTotalUnreadListByUserId(user.id);
+  const unreadCounts = await WabaService.getTotalUnreadListByUserId({
+    userId: user.id,
+  });
   return jsend.success({ unreadCounts });
 });

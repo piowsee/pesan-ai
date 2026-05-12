@@ -2,7 +2,8 @@ import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 
 export const ChatRepository = {
-  async findAllByWabaId(wabaId: string, userId: string) {
+  async findAllByWabaId(params: { wabaId: string; userId: string }) {
+    const { wabaId, userId } = params;
     const where: Prisma.ConversationWhereInput = {
       phoneNumber: {
         waba: {
@@ -36,7 +37,8 @@ export const ChatRepository = {
    * signed JWT 'chat token' when the user opens a specific conversation (GET Detail).
    * This allows the 'Send' (POST) action to use that token to stay stateless.
    */
-  async getChatMetaForSending(convId: string, userId: string) {
+  async getChatMetaForSending(params: { convId: string; userId: string }) {
+    const { convId, userId } = params;
     return prisma.conversation.findFirst({
       where: {
         id: convId,
@@ -56,7 +58,8 @@ export const ChatRepository = {
     });
   },
 
-  async markConversationAsRead(convId: string, userId: string) {
+  async markConversationAsRead(params: { convId: string; userId: string }) {
+    const { convId, userId } = params;
     return prisma.$transaction(async (tx) => {
       const conversation = await tx.conversation.findFirst({
         where: {

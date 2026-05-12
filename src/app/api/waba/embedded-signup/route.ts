@@ -26,7 +26,11 @@ export const POST = withApiAuth(async ({ req, user }) => {
   });
 
   const { failedPhoneNumberIds, message, phoneNumbers, waba } =
-    await EmbeddedSignUpService.completeEmbeddedSignup(code, wabaId, user.id);
+    await EmbeddedSignUpService.completeEmbeddedSignup({
+      code,
+      wabaId,
+      userId: user.id,
+    });
 
   return jsend.success(
     {

@@ -24,9 +24,12 @@ export const POST = withApiAdmin(async ({ req, user }) => {
   const { webhookUrl, passphrase } = data;
 
   // Validate the webhook URL by sending GET request
-  await WebhookService.validateWebhookUrl(webhookUrl, passphrase);
+  await WebhookService.validateWebhookUrl({ url: webhookUrl, passphrase });
 
-  const webhook = await WebhookService.createWebhook(user.id, data);
+  const webhook = await WebhookService.createWebhook({
+    userId: user.id,
+    data,
+  });
 
   return jsend.success({
     webhook,
@@ -45,10 +48,10 @@ export const GET = withApiAdmin(async ({ req }) => {
   const { searchParams } = new URL(req.url);
   const { page, limit } = getPaginationParams(searchParams);
 
-  const { webhooks, total } = await WebhookService.getWebhooksPaginated(
+  const { webhooks, total } = await WebhookService.getWebhooksPaginated({
     page,
     limit,
-  );
+  });
 
   return jsend.success({
     webhooks,

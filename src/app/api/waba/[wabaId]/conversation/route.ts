@@ -11,7 +11,10 @@ import { ChatService } from '@/services/chat.service';
  */
 export const GET = withApiAuth<{ wabaId: string }>(
   async ({ user, params: { wabaId } }) => {
-    const { chats, total } = await ChatService.getAllChats(wabaId, user.id);
+    const { chats, total } = await ChatService.getAllChats({
+      wabaId,
+      userId: user.id,
+    });
 
     return jsend.success({
       chats,

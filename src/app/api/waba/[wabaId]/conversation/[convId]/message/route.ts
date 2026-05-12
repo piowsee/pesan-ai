@@ -25,11 +25,11 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
 
     const { message } = validated.data;
 
-    const result = await MessageService.sendAdminMessage(
-      convId,
-      user.id,
-      message,
-    );
+    const result = await MessageService.sendAdminMessage({
+      chatId: convId,
+      userId: user.id,
+      content: message,
+    });
 
     return jsend.success(result);
   },
