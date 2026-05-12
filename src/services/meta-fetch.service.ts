@@ -97,7 +97,7 @@ export const MetaFetchService = {
     token: string,
   ): Promise<PhoneNumberMetaResponse[]> {
     const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=code_verification_status`,
+      `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },
