@@ -98,7 +98,10 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
   describe('findPaginated', () => {
     it('returns paginated results including the seeded WABA', async () => {
-      const result = await WabaRepository.findPaginated(10, 0);
+      const result = await WabaRepository.findPaginated({
+        limit: 10,
+        offset: 0,
+      });
       expect(result.total).toBeGreaterThanOrEqual(1);
       expect(result.wabas.some((w) => w.id === dbWabaId)).toBe(true);
     });
@@ -106,7 +109,11 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
   describe('findPaginatedByUserId', () => {
     it('returns paginated results for the seeded user', async () => {
-      const result = await WabaRepository.findPaginatedByUserId(10, 0, userId);
+      const result = await WabaRepository.findPaginatedByUserId({
+        limit: 10,
+        offset: 0,
+        userId,
+      });
       expect(result.total).toBeGreaterThanOrEqual(1);
       expect(result.wabas.every((w) => w.userId === userId)).toBe(true);
     });
@@ -123,10 +130,10 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
   describe('updateWabaWebhook', () => {
     it('updates phone numbers associated with the seeded WABA', async () => {
-      const result = await WabaRepository.updateWabaWebhook(
-        dbWabaId,
-        dbWebhookId,
-      );
+      const result = await WabaRepository.updateWabaWebhook({
+        wabaId: dbWabaId,
+        botWebhookId: dbWebhookId,
+      });
       expect(result.count).toBeGreaterThanOrEqual(1);
       const check = await prisma.phoneNumber.findFirst({
         where: { wabaId: dbWabaId },
@@ -144,9 +151,9 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
   describe('findByMetaWabaId', () => {
     it('finds the seeded WABA by its Meta WABA id', async () => {
-      const result = await WabaRepository.findByMetaWabaId(
-        SEED_DATA.WABA_META_ID,
-      );
+      const result = await WabaRepository.findByMetaWabaId({
+        wabaId: SEED_DATA.WABA_META_ID,
+      });
 
       expect(result).toMatchObject({
         id: dbWabaId,
@@ -157,9 +164,9 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('returns null when the Meta WABA id does not exist', async () => {
-      const result = await WabaRepository.findByMetaWabaId(
-        'missing-meta-waba-id',
-      );
+      const result = await WabaRepository.findByMetaWabaId({
+        wabaId: 'missing-meta-waba-id',
+      });
 
       expect(result).toBeNull();
     });
@@ -167,10 +174,9 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
   describe('findPhoneNumbersByMetaIds', () => {
     it('returns stored pins for matching Meta phone number ids', async () => {
-      const result = await WabaRepository.findPhoneNumbersByMetaIds([
-        SEED_DATA.PHONE_META_ID,
-        'missing-phone-id',
-      ]);
+      const result = await WabaRepository.findPhoneNumbersByMetaIds({
+        phoneNumberIds: [SEED_DATA.PHONE_META_ID, 'missing-phone-id'],
+      });
 
       expect(result).toEqual(
         expect.arrayContaining([
@@ -183,7 +189,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
     it('returns an empty array when no ids are requested', async () => {
       await expect(
-        WabaRepository.findPhoneNumbersByMetaIds([]),
+        WabaRepository.findPhoneNumbersByMetaIds({ phoneNumberIds: [] }),
       ).resolves.toEqual([]);
     });
   });

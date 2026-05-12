@@ -32,9 +32,9 @@ describe('GET /api/waba/total-unread', { tags: ['backend'] }, () => {
     expect(data.data.unreadCounts).toEqual([
       { id: 'waba-1', wabaId: 'meta-123', totalUnread: 5 },
     ]);
-    expect(WabaService.getTotalUnreadListByUserId).toHaveBeenCalledWith(
-      'user-1',
-    );
+    expect(WabaService.getTotalUnreadListByUserId).toHaveBeenCalledWith({
+      userId: 'user-1',
+    });
   });
 
   it('returns 500 when unauthorized or failing', async () => {

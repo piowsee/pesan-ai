@@ -43,10 +43,10 @@ describe('PATCH /api/waba/[wabaId]/webhook', { tags: ['backend'] }, () => {
     expect(response.status).toBe(200);
     expect(data.status).toBe('success');
     expect(data.data).toEqual({ success: true });
-    expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith(
+    expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith({
       wabaId,
-      'webhook-456',
-    );
+      webhookId: 'webhook-456',
+    });
   });
 
   it('unassigns webhook successfully with null', async () => {
@@ -68,7 +68,10 @@ describe('PATCH /api/waba/[wabaId]/webhook', { tags: ['backend'] }, () => {
     );
 
     expect(response.status).toBe(200);
-    expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith(wabaId, null);
+    expect(WabaService.assignWebhookToWaba).toHaveBeenCalledWith({
+      wabaId,
+      webhookId: null,
+    });
   });
 
   it('returns 400 for invalid payload', async () => {

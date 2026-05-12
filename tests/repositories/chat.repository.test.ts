@@ -86,7 +86,10 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
   describe('findAllByWabaId', () => {
     it('returns all conversations for the seeded WABA', async () => {
-      const { chats } = await ChatRepository.findAllByWabaId(dbWabaId, userId);
+      const { chats } = await ChatRepository.findAllByWabaId({
+        wabaId: dbWabaId,
+        userId,
+      });
 
       expect(chats?.length).toBeGreaterThanOrEqual(1);
       const seeded = chats?.find((c) => c.id === dbConvId);
@@ -100,10 +103,10 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
   describe('getChatMetaForSending', () => {
     it('fetches metadata for the seeded conversation', async () => {
-      const result = await ChatRepository.getChatMetaForSending(
-        dbConvId,
+      const result = await ChatRepository.getChatMetaForSending({
+        convId: dbConvId,
         userId,
-      );
+      });
 
       expect(result?.phoneNumber.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
       expect(result?.phoneNumber.waba?.userId).toBe(userId);

@@ -47,11 +47,11 @@ describe('POST /api/waba/embedded-signup', { tags: ['backend'] }, () => {
       wabaDbId: 'db-waba-1',
       phoneNumbers: [{ id: 'db-phone-1' }],
     });
-    expect(EmbeddedSignUpService.completeEmbeddedSignup).toHaveBeenCalledWith(
-      'auth-code-123',
-      'meta-waba-1',
-      'user-1',
-    );
+    expect(EmbeddedSignUpService.completeEmbeddedSignup).toHaveBeenCalledWith({
+      code: 'auth-code-123',
+      wabaId: 'meta-waba-1',
+      userId: 'user-1',
+    });
   });
 
   it('returns 400 on validation failure', async () => {

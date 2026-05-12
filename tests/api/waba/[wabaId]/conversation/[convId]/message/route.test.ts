@@ -33,11 +33,11 @@ describe(
       expect(response.status).toBe(200);
       expect(data.data.message).toEqual({ id: 'msg-1', content: 'hello' });
       expect(data.data.conversation).toBeDefined();
-      expect(MessageService.sendAdminMessage).toHaveBeenCalledWith(
-        convId,
-        'user-1',
-        'hello',
-      );
+      expect(MessageService.sendAdminMessage).toHaveBeenCalledWith({
+        chatId: convId,
+        userId: 'user-1',
+        content: 'hello',
+      });
     });
 
     it('returns 400 on validation failure', async () => {

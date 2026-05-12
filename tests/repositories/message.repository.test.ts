@@ -82,13 +82,13 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
 
   describe('findMessagesPaginated', () => {
     it('returns paginated messages for the seeded conversation', async () => {
-      const result = await MessageRepository.findMessagesPaginated(
-        dbConvId,
-        dbWabaId,
+      const result = await MessageRepository.findMessagesPaginated({
+        convId: dbConvId,
+        wabaId: dbWabaId,
         userId,
-        5,
-        0,
-      );
+        limit: 5,
+        offset: 0,
+      });
 
       expect(result).not.toBeNull();
       if (result) {
@@ -98,13 +98,13 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('returns null for unowned conversation', async () => {
-      const result = await MessageRepository.findMessagesPaginated(
-        dbConvId,
-        dbWabaId,
-        'wrong-user-id',
-        5,
-        0,
-      );
+      const result = await MessageRepository.findMessagesPaginated({
+        convId: dbConvId,
+        wabaId: dbWabaId,
+        userId: 'wrong-user-id',
+        limit: 5,
+        offset: 0,
+      });
       expect(result).toBeNull();
     });
   });

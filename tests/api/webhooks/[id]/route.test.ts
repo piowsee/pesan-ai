@@ -23,7 +23,7 @@ describe('DELETE /api/webhooks/:id', { tags: ['backend'] }, () => {
 
     expect(response.status).toBe(200);
     expect(data.data.message).toBe('Webhook deleted successfully');
-    expect(WebhookService.deleteWebhook).toHaveBeenCalledWith(id);
+    expect(WebhookService.deleteWebhook).toHaveBeenCalledWith({ id });
   });
 
   it('returns 500 when unauthorized', async () => {

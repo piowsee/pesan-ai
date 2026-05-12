@@ -25,13 +25,13 @@ describe('MessageService', { tags: ['backend'] }, () => {
 
       expect(result.messages).toEqual([{ id: 'msg-1' }]);
       expect(result.total).toBe(1);
-      expect(MessageRepository.findMessagesPaginated).toHaveBeenCalledWith(
-        'conv-1',
-        'waba-1',
-        'user-1',
-        10,
-        0,
-      );
+      expect(MessageRepository.findMessagesPaginated).toHaveBeenCalledWith({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+        limit: 10,
+        offset: 0,
+      });
     });
 
     it('throws ApiError if conversation is not found', async () => {
@@ -68,26 +68,30 @@ describe('MessageService', { tags: ['backend'] }, () => {
         id: 'msg-1',
       } as never);
 
-      const result = await MessageService.sendAdminMessage(
-        'chat-1',
-        'user-1',
-        'Hello Admin',
-      );
+      const result = await MessageService.sendAdminMessage({
+        chatId: 'chat-1',
+        userId: 'user-1',
+        content: 'Hello Admin',
+      });
 
       expect(result.message.id).toBe('msg-1');
-      expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith(
-        'pn-1',
-        'token',
-        '+123456',
-        'Hello Admin',
-      );
+      expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith({
+        phoneNumberId: 'pn-1',
+        token: 'token',
+        to: '+123456',
+        text: 'Hello Admin',
+      });
       expect(MessageRepository.saveMessage).toHaveBeenCalled();
     });
 
     it('throws ApiError if chat meta is null', async () => {
       vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue(null);
       await expect(
-        MessageService.sendAdminMessage('chat-1', 'user-1', 'Hello'),
+        MessageService.sendAdminMessage({
+          chatId: 'chat-1',
+          userId: 'user-1',
+          content: 'Hello',
+        }),
       ).rejects.toThrow(ApiError);
     });
   });

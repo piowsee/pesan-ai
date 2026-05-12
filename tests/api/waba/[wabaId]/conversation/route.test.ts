@@ -31,7 +31,10 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
 
     expect(response.status).toBe(200);
     expect(data.data.total).toBeGreaterThanOrEqual(1);
-    expect(ChatService.getAllChats).toHaveBeenCalledWith(wabaId, 'user-1');
+    expect(ChatService.getAllChats).toHaveBeenCalledWith({
+      wabaId,
+      userId: 'user-1',
+    });
   });
 
   it('returns 404 when access is denied or WABA not found', async () => {
