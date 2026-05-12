@@ -142,8 +142,19 @@ vi.mock('@/services/webhook.service', () => ({
   },
 }));
 
-vi.mock('@/services/whatsapp.service', () => ({
-  WhatsappService: {
+vi.mock('@/services/meta-fetch.service', () => ({
+  MetaFetchService: {
+    exchangeCodeForToken: vi.fn(),
+    fetchWabaDetails: vi.fn(),
+    fetchPhoneNumberDetails: vi.fn(),
+    fetchBusinessProfile: vi.fn(),
+    registerPhoneNumber: vi.fn(),
+    deregisterPhoneNumber: vi.fn(),
+    setPhoneNumberPin: vi.fn(),
+    subscribeWabaApps: vi.fn(),
+    createPhoneNumber: vi.fn(),
+    requestVerificationCode: vi.fn(),
+    verifyCode: vi.fn(),
     sendTextMessage: vi.fn(),
   },
 }));

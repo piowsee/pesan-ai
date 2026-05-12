@@ -491,4 +491,62 @@ export const MetaFetchService = {
 
     return tokenData.access_token;
   },
+
+  async sendTextMessage(
+    phoneNumberId: string,
+    token: string,
+    to: string,
+    text: string,
+  ): Promise<{ messageId: string; status: string }> {
+    const payload = {
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'text',
+      text: {
+        preview_url: false,
+        body: text,
+      },
+    };
+
+    logger.info('Sending WhatsApp message', { phoneNumberId, to });
+
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+      {
+        action: 'MetaFetchService.sendTextMessage',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        'Failed to send WhatsApp message',
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        'Failed to send WhatsApp message',
+      );
+      throw new ApiError(message, 502);
+    }
+
+    const data = await response.json();
+    logger.info('WhatsApp message sent successfully', {
+      messageId: data.messages?.[0]?.id,
+    });
+
+    return {
+      messageId: data.messages?.[0]?.id,
+      status: 'sent',
+    };
+  },
 };

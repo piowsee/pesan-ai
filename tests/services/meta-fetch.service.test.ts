@@ -606,4 +606,75 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       expect(verifyCall?.[1]?.method).toBe('POST');
     });
   });
+
+  describe('sendTextMessage', () => {
+    it('sends message successfully and returns message info', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/messages')) {
+          return {
+            ok: true,
+            json: async () => ({
+              messages: [{ id: 'wamid.123' }],
+            }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      const result = await MetaFetchService.sendTextMessage(
+        PHONE_NUMBER_ID,
+        'sys-user-token-xyz',
+        '+6281234567890',
+        'Hello from test',
+      );
+
+      expect(result.status).toBe('sent');
+      expect(result.messageId).toBe('wamid.123');
+
+      const sendCall = vi
+        .mocked(global.fetch)
+        .mock.calls.find(([url]) => String(url).includes('/messages'));
+      expect(sendCall?.[1]?.method).toBe('POST');
+      expect(JSON.parse(sendCall?.[1]?.body as string)).toEqual({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: '+6281234567890',
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: 'Hello from test',
+        },
+      });
+    });
+
+    it('wraps non-retryable failures as ApiError(502)', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/messages')) {
+          return {
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            json: async () => ({
+              error: { message: 'Recipient not found' },
+            }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.sendTextMessage(
+          PHONE_NUMBER_ID,
+          'token-1',
+          '+123',
+          'Hi',
+        ),
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Recipient not found',
+      });
+    });
+  });
 });

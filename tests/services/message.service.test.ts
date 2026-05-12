@@ -2,7 +2,7 @@ import { ApiError } from '@/lib/error';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { MessageService } from '@/services/message.service';
-import { WhatsappService } from '@/services/whatsapp.service';
+import { MetaFetchService } from '@/services/meta-fetch.service';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/message.service');
@@ -60,7 +60,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         },
         customerPhone: '+123456',
       } as never);
-      vi.mocked(WhatsappService.sendTextMessage).mockResolvedValue({
+      vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
         status: 'sent',
         messageId: 'wa-msg-1',
       });
@@ -75,7 +75,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       );
 
       expect(result.message.id).toBe('msg-1');
-      expect(WhatsappService.sendTextMessage).toHaveBeenCalledWith(
+      expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith(
         'pn-1',
         'token',
         '+123456',

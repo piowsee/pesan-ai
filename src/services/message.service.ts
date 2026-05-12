@@ -5,7 +5,7 @@ import { logError, logger } from '@/lib/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 
-import { WhatsappService } from './whatsapp.service';
+import { MetaFetchService } from './meta-fetch.service';
 
 export const MessageService = {
   async getMessagesPaginated(params: {
@@ -70,7 +70,7 @@ export const MessageService = {
     }
 
     // 2. Send via WhatsApp API
-    const waResult = await WhatsappService.sendTextMessage(
+    const waResult = await MetaFetchService.sendTextMessage(
       phoneNumberId,
       tokenToUse,
       customerPhone,
