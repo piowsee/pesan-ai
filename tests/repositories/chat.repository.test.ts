@@ -134,6 +134,8 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
       });
 
       expect(result.conversation.customerPhone).toBe('999002');
+      expect(result.conversation.phoneNumber).toBeDefined();
+      expect(result.conversation.phoneNumber?.id).toBe(dbPhoneNumberId);
       expect(result.message.content).toBe('Hello Test');
 
       const savedPn = await prisma.phoneNumber.findUnique({

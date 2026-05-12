@@ -129,6 +129,9 @@ export const ChatRepository = {
           lastCustomerMessageAt: message.timestamp,
           unreadCount: 1,
         },
+        include: {
+          phoneNumber: true,
+        },
       });
 
       // 2. Create message
