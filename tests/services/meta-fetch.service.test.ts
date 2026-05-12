@@ -426,4 +426,130 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
     });
   });
+
+  describe('createPhoneNumber', () => {
+    it('posts to the phone numbers endpoint and returns the ID', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+          return {
+            ok: true,
+            json: async () => ({ id: 'new-phone-id' }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.createPhoneNumber(
+          '62',
+          '81234567890',
+          'sys-user-token-xyz',
+          WABA_ID,
+          'New Bot',
+        ),
+      ).resolves.toEqual({ phoneNumberId: 'new-phone-id' });
+
+      const createCall = vi
+        .mocked(global.fetch)
+        .mock.calls.find(([url]) =>
+          String(url).endsWith(`/${WABA_ID}/phone_numbers`),
+        );
+      expect(createCall?.[1]?.method).toBe('POST');
+      expect(JSON.parse(createCall?.[1]?.body as string)).toEqual({
+        cc: '62',
+        phone_number: '81234567890',
+        verified_name: 'New Bot',
+      });
+    });
+
+    it('wraps non-retryable failures as ApiError(502)', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.endsWith(`/${WABA_ID}/phone_numbers`)) {
+          return {
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            json: async () => ({
+              error: { message: 'Phone creation failed' },
+            }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.createPhoneNumber(
+          '62',
+          '81234567890',
+          'sys-user-token-xyz',
+          WABA_ID,
+          'New Bot',
+        ),
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Phone creation failed',
+      });
+    });
+  });
+
+  describe('requestVerificationCode', () => {
+    it('requests the verification code and returns success', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/request_code')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.requestVerificationCode(
+          PHONE_NUMBER_ID,
+          'sys-user-token-xyz',
+          'SMS',
+          'en_US',
+        ),
+      ).resolves.toEqual({ success: true });
+
+      const requestCall = vi
+        .mocked(global.fetch)
+        .mock.calls.find(([url]) => String(url).includes('/request_code'));
+      expect(requestCall?.[1]?.method).toBe('POST');
+    });
+  });
+
+  describe('verifyCode', () => {
+    it('verifies the code and returns success', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/verify_code')) {
+          return {
+            ok: true,
+            json: async () => ({ success: true }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.verifyCode(
+          PHONE_NUMBER_ID,
+          'sys-user-token-xyz',
+          '123456',
+        ),
+      ).resolves.toEqual({ success: true });
+
+      const verifyCall = vi
+        .mocked(global.fetch)
+        .mock.calls.find(([url]) => String(url).includes('/verify_code'));
+      expect(verifyCall?.[1]?.method).toBe('POST');
+    });
+  });
 });

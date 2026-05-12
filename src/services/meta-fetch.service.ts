@@ -280,6 +280,150 @@ export const MetaFetchService = {
     }
   },
 
+  async createPhoneNumber(
+    countryCode: string = '62',
+    phoneNumber: string,
+    token: string,
+    wabaId: string,
+    name: string,
+  ): Promise<{
+    phoneNumberId: string;
+  }> {
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${wabaId}/phone_numbers`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cc: countryCode,
+          phone_number: phoneNumber,
+          verified_name: name,
+        }),
+      },
+      {
+        action: 'MetaFetchService.createPhoneNumber',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to create phone number for ${wabaId}`,
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to create phone number for ${wabaId}`,
+      );
+      logger.error('Meta API error in createPhoneNumber', {
+        metaStatus: response.status,
+        message,
+        wabaId,
+      });
+
+      throw new ApiError(message, 502);
+    }
+
+    const idResponse: { id: string } = await response.json();
+
+    return {
+      phoneNumberId: idResponse.id,
+    };
+  },
+
+  async requestVerificationCode(
+    phoneNumberId: string,
+    token: string,
+    codeMethod: 'SMS' | 'VOICE' = 'SMS',
+    language = 'en_US',
+  ): Promise<{ success: boolean }> {
+    const params = new URLSearchParams({
+      code_method: codeMethod,
+      language,
+    });
+
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}/request_code?${params.toString()}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      {
+        action: 'MetaFetchService.requestVerificationCode',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to request verification code for ${phoneNumberId}`,
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to request verification code for ${phoneNumberId}`,
+      );
+      logger.error('Meta API error in requestVerificationCode', {
+        metaStatus: response.status,
+        message,
+        phoneNumberId,
+      });
+
+      throw new ApiError(message, 502);
+    }
+
+    const data = await response.json();
+    return { success: data.success ?? true };
+  },
+
+  async verifyCode(
+    phoneNumberId: string,
+    token: string,
+    code: string,
+  ): Promise<{ success: boolean }> {
+    const params = new URLSearchParams({ code });
+
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}/verify_code?${params.toString()}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      {
+        action: 'MetaFetchService.verifyCode',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to verify code for ${phoneNumberId}`,
+      );
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to verify code for ${phoneNumberId}`,
+      );
+      logger.error('Meta API error in verifyCode', {
+        metaStatus: response.status,
+        message,
+        phoneNumberId,
+      });
+
+      throw new ApiError(message, 502);
+    }
+
+    const data = await response.json();
+    return { success: data.success ?? true };
+  },
+
   async exchangeCodeForToken(
     code: string,
     wabaId: string,

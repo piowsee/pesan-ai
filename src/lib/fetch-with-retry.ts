@@ -1,7 +1,7 @@
 import { logError, logger } from '@/lib/logger';
 
 const DEFAULT_FETCH_RETRY_COUNT = 3;
-const DEFAULT_RETRY_DELAY_MS = 300;
+const DEFAULT_RETRY_DELAY_MS = 500;
 
 export type RetryableFetchOptions = {
   action: string;
@@ -61,6 +61,6 @@ export async function fetchWithRetry(
       });
     }
 
-    await sleep(retryDelayMs);
+    await sleep(retryDelayMs * attempt);
   }
 }
