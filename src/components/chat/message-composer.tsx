@@ -43,7 +43,7 @@ export function MessageComposer({
   };
 
   const trimmedDraft = draft.trim();
-  const canSendMessage = Boolean(trimmedDraft) && !isSending;
+  const canSendMessage = Boolean(trimmedDraft);
 
   function handleSend() {
     if (!conversation.canSendFreeform || !canSendMessage) {
@@ -88,7 +88,7 @@ export function MessageComposer({
               }
             }}
             maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
-            disabled={!conversation.canSendFreeform || isSending}
+            disabled={!conversation.canSendFreeform}
             placeholder={
               conversation.canSendFreeform
                 ? `Message...`
@@ -104,7 +104,7 @@ export function MessageComposer({
             variant="ghost"
             className={`mb-0.5 size-10 shrink-0 rounded-full transition-colors cursor-pointer ${canSendMessage ? 'text-primary hover:text-primary hover:bg-primary/10' : 'text-muted-foreground/40 hover:text-muted-foreground/40 hover:bg-transparent'}`}
           >
-            {isSending ? (
+            {isSending && !trimmedDraft ? (
               <Spinner className="size-5" />
             ) : (
               <SendHorizontalIcon className="size-5" />
