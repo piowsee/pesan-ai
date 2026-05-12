@@ -7,6 +7,7 @@ import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/embedded-signup.service');
+vi.unmock('@/services/meta-fetch.service');
 
 describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
   const VALID_CODE = 'auth-code-abc';

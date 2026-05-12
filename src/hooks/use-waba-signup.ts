@@ -6,8 +6,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { wabaKeys } from './use-wabas';
 
-const WABA_ALREADY_CONNECTED_MESSAGE =
-  'This WhatsApp Business Account is already connected to another user';
 const GENERIC_SIGNUP_ERROR_MESSAGE =
   'Failed to complete WhatsApp signup. Please try again.';
 
@@ -58,8 +56,7 @@ export function useWabaSignup() {
       if (!response.ok || json?.status !== 'success') {
         const backendMessage = extractJSendErrorMessage(json);
         const message =
-          response.status === 409 &&
-          backendMessage === WABA_ALREADY_CONNECTED_MESSAGE
+          (response.status === 502 || response.status === 409) && backendMessage
             ? backendMessage
             : GENERIC_SIGNUP_ERROR_MESSAGE;
 

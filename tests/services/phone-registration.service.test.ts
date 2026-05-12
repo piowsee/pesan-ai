@@ -4,6 +4,8 @@ import { MetaFetchService } from '@/services/meta-fetch.service';
 import { PhoneRegistrationService } from '@/services/phone-registration.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.unmock('@/services/meta-fetch.service');
+
 vi.mock('@/lib/encryption', () => ({
   encrypt: vi.fn().mockImplementation((val) => `enc:${val}`),
   decrypt: vi.fn().mockImplementation((val) => val.replace('enc:', '')),
