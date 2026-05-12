@@ -85,7 +85,11 @@ export const EmbeddedSignUpService = {
     token: string,
   ): Promise<PhoneRegistration> {
     try {
-      await MetaFetchService.deregisterPhoneNumber(phoneNumber.id, token);
+      await MetaFetchService.setPhoneNumberPin(
+        phoneNumber.id,
+        token,
+        phoneNumber.fallbackRegistrationPin,
+      );
       await MetaFetchService.registerPhoneNumber(
         phoneNumber.id,
         token,
@@ -133,15 +137,12 @@ export const EmbeddedSignUpService = {
         throw err;
       }
 
-      logger.warn(
-        'Phone registration failed, retrying after deregister with fallback pin',
-        {
-          error: err instanceof Error ? err.message : String(err),
-          phoneNumberId: phoneNumber.id,
-          usedStoredRegistrationPin:
-            phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
-        },
-      );
+      logger.warn('Phone registration failed, retrying after set a new pin', {
+        error: err instanceof Error ? err.message : String(err),
+        phoneNumberId: phoneNumber.id,
+        usedStoredRegistrationPin:
+          phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
+      });
 
       return this._recoverPhoneNumberRegistration(phoneNumber, token);
     }

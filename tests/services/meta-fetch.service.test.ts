@@ -341,6 +341,60 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
     });
   });
 
+  describe('setPhoneNumberPin', () => {
+    it('posts to the phone number endpoint to set the pin', async () => {
+      await expect(
+        MetaFetchService.setPhoneNumberPin(
+          PHONE_NUMBER_ID,
+          'sys-user-token-xyz',
+          '998877',
+        ),
+      ).resolves.toBeUndefined();
+
+      const registerCall = vi
+        .mocked(global.fetch)
+        .mock.calls.find(
+          ([url, options]) =>
+            String(url).endsWith(`/${PHONE_NUMBER_ID}`) &&
+            options?.method === 'POST',
+        );
+      expect(registerCall).toBeDefined();
+      expect(JSON.parse(registerCall?.[1]?.body as string)).toEqual({
+        pin: '998877',
+      });
+    });
+
+    it('wraps non-retryable failures as ApiError(502)', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input, options) => {
+        const url = typeof input === 'string' ? input : input.toString();
+
+        if (url.endsWith(`/${PHONE_NUMBER_ID}`) && options?.method === 'POST') {
+          return {
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            json: async () => ({
+              error: { message: 'Set pin failed' },
+            }),
+          } as Response;
+        }
+
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await expect(
+        MetaFetchService.setPhoneNumberPin(
+          PHONE_NUMBER_ID,
+          'sys-user-token-xyz',
+          '998877',
+        ),
+      ).rejects.toMatchObject({
+        status: 502,
+        message: 'Set pin failed',
+      });
+    });
+  });
+
   describe('deregisterPhoneNumber', () => {
     it('posts to the deregister endpoint', async () => {
       await expect(

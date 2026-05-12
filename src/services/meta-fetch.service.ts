@@ -249,6 +249,47 @@ export const MetaFetchService = {
     }
   },
 
+  async setPhoneNumberPin(
+    phoneNumberId: string,
+    token: string,
+    pin: string,
+  ): Promise<void> {
+    const response = await retryableFetch.fetchWithRetry(
+      `${GRAPH_BASE}/${phoneNumberId}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pin }),
+      },
+      {
+        action: 'MetaFetchService.setPhoneNumberPin',
+        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+      },
+    );
+
+    if (!response.ok) {
+      await this._throwIfRetryableResponse(
+        response,
+        `Failed to set new pin for phone number ${phoneNumberId}`,
+      );
+
+      const message = await this._extractMetaErrorMessage(
+        response,
+        `Failed to set new pin for phone number ${phoneNumberId}`,
+      );
+      logger.error('Meta API error in setPhoneNumberPin', {
+        metaStatus: response.status,
+        message,
+        phoneNumberId,
+      });
+
+      throw new ApiError(message, 502);
+    }
+  },
+
   async subscribeWabaApps(wabaId: string, token: string): Promise<void> {
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${wabaId}/subscribed_apps`,
