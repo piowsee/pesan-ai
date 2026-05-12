@@ -7,11 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from '@/components/ui/input-otp';
+import { InputOTP, InputOTPSlot } from '@/components/ui/input-otp';
 import { useCountdown } from '@/hooks/use-countdown';
 import {
   useRequestVerificationCode,
@@ -100,21 +96,23 @@ export function PhoneNumberOtpStep({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="flex flex-col items-center gap-6 py-4">
+      <div className="flex flex-col items-center gap-8 py-6">
         <InputOTP
           maxLength={6}
           value={otpValue}
           onChange={setOtpValue}
           disabled={isVerifying}
+          containerClassName="w-full"
         >
-          <InputOTPGroup>
-            <InputOTPSlot index={0} />
-            <InputOTPSlot index={1} />
-            <InputOTPSlot index={2} />
-            <InputOTPSlot index={3} />
-            <InputOTPSlot index={4} />
-            <InputOTPSlot index={5} />
-          </InputOTPGroup>
+          <div className="flex w-full items-center justify-center gap-2 sm:gap-4">
+            {[0, 1, 2, 3, 4, 5].map((index) => (
+              <InputOTPSlot
+                key={index}
+                index={index}
+                className="size-12 rounded-xl border border-input text-xl shadow-sm sm:size-14 sm:text-2xl"
+              />
+            ))}
+          </div>
         </InputOTP>
 
         <div className="flex w-full justify-between gap-4">
