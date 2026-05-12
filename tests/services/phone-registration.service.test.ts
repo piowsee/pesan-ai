@@ -70,12 +70,12 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
       });
 
       expect(result).toEqual({ success: true });
-      expect(MetaFetchService.requestVerificationCode).toHaveBeenCalledWith(
-        PHONE_NUMBER_ID,
-        'sys-user-token',
-        'SMS',
-        'en_US',
-      );
+      expect(MetaFetchService.requestVerificationCode).toHaveBeenCalledWith({
+        phoneNumberId: PHONE_NUMBER_ID,
+        token: 'sys-user-token',
+        codeMethod: 'SMS',
+        language: 'en_US',
+      });
     });
 
     it('throws 404 if WABA is not found', async () => {
@@ -124,16 +124,16 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
 
       expect(result).toEqual({ success: true });
 
-      expect(MetaFetchService.verifyCode).toHaveBeenCalledWith(
-        PHONE_NUMBER_ID,
-        'sys-user-token',
-        '654321',
-      );
-      expect(MetaFetchService.registerPhoneNumber).toHaveBeenCalledWith(
-        PHONE_NUMBER_ID,
-        'sys-user-token',
-        '123456',
-      );
+      expect(MetaFetchService.verifyCode).toHaveBeenCalledWith({
+        phoneNumberId: PHONE_NUMBER_ID,
+        token: 'sys-user-token',
+        code: '654321',
+      });
+      expect(MetaFetchService.registerPhoneNumber).toHaveBeenCalledWith({
+        phoneNumberId: PHONE_NUMBER_ID,
+        token: 'sys-user-token',
+        pin: '123456',
+      });
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-123',
         phoneNumberDatas: [
@@ -161,13 +161,13 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
       });
 
       expect(result).toEqual({ phoneNumberId: 'new-phone-id' });
-      expect(MetaFetchService.createPhoneNumber).toHaveBeenCalledWith(
-        '62',
-        '81234567890',
-        'sys-user-token',
-        WABA_ID,
-        'New Bot',
-      );
+      expect(MetaFetchService.createPhoneNumber).toHaveBeenCalledWith({
+        countryCode: '62',
+        phoneNumber: '81234567890',
+        token: 'sys-user-token',
+        wabaId: WABA_ID,
+        name: 'New Bot',
+      });
     });
   });
 });

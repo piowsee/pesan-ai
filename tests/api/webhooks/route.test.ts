@@ -37,14 +37,17 @@ describe('Webhook API Routes (/api/webhooks)', { tags: ['backend'] }, () => {
 
       expect(response.status).toBe(200);
       expect(data.data.webhook).toEqual({ id: 'wh-1' });
-      expect(WebhookService.validateWebhookUrl).toHaveBeenCalledWith(
-        'http://test.com',
-        'pass',
-      );
-      expect(WebhookService.createWebhook).toHaveBeenCalledWith('admin-1', {
-        name: 'Test',
-        webhookUrl: 'http://test.com',
+      expect(WebhookService.validateWebhookUrl).toHaveBeenCalledWith({
+        url: 'http://test.com',
         passphrase: 'pass',
+      });
+      expect(WebhookService.createWebhook).toHaveBeenCalledWith({
+        userId: 'admin-1',
+        data: {
+          name: 'Test',
+          webhookUrl: 'http://test.com',
+          passphrase: 'pass',
+        },
       });
     });
 
@@ -105,7 +108,10 @@ describe('Webhook API Routes (/api/webhooks)', { tags: ['backend'] }, () => {
       expect(data.data.webhooks).toEqual([{ id: 'wh-1' }]);
       expect(data.data.page).toBe(1);
       expect(data.data.limit).toBe(10);
-      expect(WebhookService.getWebhooksPaginated).toHaveBeenCalledWith(1, 10);
+      expect(WebhookService.getWebhooksPaginated).toHaveBeenCalledWith({
+        page: 1,
+        limit: 10,
+      });
     });
 
     it('returns paginated webhooks when query params are provided', async () => {
@@ -126,7 +132,10 @@ describe('Webhook API Routes (/api/webhooks)', { tags: ['backend'] }, () => {
       expect(data.data.total).toBe(1);
       expect(data.data.page).toBe(2);
       expect(data.data.limit).toBe(5);
-      expect(WebhookService.getWebhooksPaginated).toHaveBeenCalledWith(2, 5);
+      expect(WebhookService.getWebhooksPaginated).toHaveBeenCalledWith({
+        page: 2,
+        limit: 5,
+      });
     });
 
     it('returns 500 when unauthorized', async () => {

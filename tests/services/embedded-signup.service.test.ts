@@ -175,11 +175,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
 
   describe('completeEmbeddedSignup happy path', () => {
     it('exchanges the code, registers phone numbers, subscribes the app, and persists data', async () => {
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(result.waba.id).toBe('db-waba-cuid');
       expect(result.phoneNumbers).toHaveLength(2);
@@ -228,11 +228,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
 
     it('saves the encrypted access token on the WABA record', async () => {
-      await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -245,11 +245,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     });
 
     it('upserts all returned phone numbers against the internal WABA id with per-number pins', async () => {
-      await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
@@ -277,11 +277,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         },
       ] as never);
 
-      await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       const registerCalls = vi
         .mocked(global.fetch)
@@ -336,7 +336,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
 
       const registerSpy = vi
         .spyOn(MetaFetchService, 'registerPhoneNumber')
-        .mockImplementation(async (phoneNumberId, _token, pin) => {
+        .mockImplementation(async ({ phoneNumberId, pin }) => {
           if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
             throw new ApiError('Stored pin no longer works', 502);
           }
@@ -345,27 +345,27 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         .spyOn(MetaFetchService, 'setPhoneNumberPin')
         .mockResolvedValue(undefined);
 
-      await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
-      expect(registerSpy).toHaveBeenCalledWith(
-        META_PHONE_NUMBERS[0].id,
-        'sys-user-token-xyz',
-        '991122',
-      );
-      expect(setPhoneNumberPinSpy).toHaveBeenCalledWith(
-        META_PHONE_NUMBERS[0].id,
-        'sys-user-token-xyz',
-        REGISTRATION_PINS[0],
-      );
-      expect(registerSpy).toHaveBeenCalledWith(
-        META_PHONE_NUMBERS[0].id,
-        'sys-user-token-xyz',
-        REGISTRATION_PINS[0],
-      );
+      expect(registerSpy).toHaveBeenCalledWith({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        token: 'sys-user-token-xyz',
+        pin: '991122',
+      });
+      expect(setPhoneNumberPinSpy).toHaveBeenCalledWith({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        token: 'sys-user-token-xyz',
+        pin: REGISTRATION_PINS[0],
+      });
+      expect(registerSpy).toHaveBeenCalledWith({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        token: 'sys-user-token-xyz',
+        pin: REGISTRATION_PINS[0],
+      });
 
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
@@ -404,7 +404,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       vi.spyOn(
         EmbeddedSignUpService,
         '_registerPhoneNumberWithRecovery',
-      ).mockImplementation(async (phoneNumber) => {
+      ).mockImplementation(async ({ phoneNumber }) => {
         if (phoneNumber.id === META_PHONE_NUMBERS[0].id) {
           throw new ApiError('Phone registration failed', 502);
         }
@@ -412,11 +412,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return phoneNumber;
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
@@ -465,11 +465,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toThrow('Network error');
     });
 
@@ -543,11 +543,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(
         BusinessProfileRepository.upsertBusinessProfiles,
@@ -627,11 +627,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(result.waba.id).toBe('db-waba-cuid');
       expect(tokenAttempts).toBe(2);
@@ -643,7 +643,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     it('deregisters and retries with a fresh pin when stored-pin re-registration fails', async () => {
       const registerSpy = vi
         .spyOn(MetaFetchService, 'registerPhoneNumber')
-        .mockImplementation(async (phoneNumberId, _token, pin) => {
+        .mockImplementation(async ({ phoneNumberId, pin }) => {
           if (phoneNumberId === META_PHONE_NUMBERS[0].id && pin === '991122') {
             throw new ApiError('Stored pin no longer works', 502);
           }
@@ -653,32 +653,32 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         .mockResolvedValue(undefined);
 
       const result =
-        await EmbeddedSignUpService._registerPhoneNumberWithRecovery(
-          {
+        await EmbeddedSignUpService._registerPhoneNumberWithRecovery({
+          phoneNumber: {
             ...META_PHONE_NUMBERS[0],
             registrationPin: '991122',
             encryptedRegistrationPin: 'enc:991122',
             fallbackRegistrationPin: REGISTRATION_PINS[0],
             fallbackEncryptedRegistrationPin: `enc:${REGISTRATION_PINS[0]}`,
           },
-          'sys-user-token-xyz',
-        );
+          token: 'sys-user-token-xyz',
+        });
 
-      expect(registerSpy).toHaveBeenCalledWith(
-        META_PHONE_NUMBERS[0].id,
-        'sys-user-token-xyz',
-        '991122',
-      );
-      expect(setPhoneNumberPinSpy).toHaveBeenCalledWith(
-        META_PHONE_NUMBERS[0].id,
-        'sys-user-token-xyz',
-        REGISTRATION_PINS[0],
-      );
-      expect(registerSpy).toHaveBeenCalledWith(
-        META_PHONE_NUMBERS[0].id,
-        'sys-user-token-xyz',
-        REGISTRATION_PINS[0],
-      );
+      expect(registerSpy).toHaveBeenCalledWith({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        token: 'sys-user-token-xyz',
+        pin: '991122',
+      });
+      expect(setPhoneNumberPinSpy).toHaveBeenCalledWith({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        token: 'sys-user-token-xyz',
+        pin: REGISTRATION_PINS[0],
+      });
+      expect(registerSpy).toHaveBeenCalledWith({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        token: 'sys-user-token-xyz',
+        pin: REGISTRATION_PINS[0],
+      });
       expect(result.registrationPin).toBe(REGISTRATION_PINS[0]);
       expect(result.encryptedRegistrationPin).toBe(
         `enc:${REGISTRATION_PINS[0]}`,
@@ -695,11 +695,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({
         status: 409,
         message:
@@ -733,11 +733,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          'bad-code',
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: 'bad-code',
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({ status: 502 });
     });
 
@@ -746,11 +746,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       delete process.env.NEXT_PUBLIC_META_APP_ID;
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({ status: 500 });
 
       process.env.NEXT_PUBLIC_META_APP_ID = original;
@@ -761,11 +761,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       delete process.env.META_APP_SECRET;
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({ status: 500 });
 
       process.env.META_APP_SECRET = original;
@@ -786,11 +786,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({ status: 502 });
     });
 
@@ -842,11 +842,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup(
-        VALID_CODE,
-        WABA_ID,
-        USER_ID,
-      );
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
 
       expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -936,11 +936,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).resolves.toMatchObject({
         waba: expect.objectContaining({
           id: 'db-waba-cuid',
@@ -1005,11 +1005,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).resolves.toMatchObject({
         waba: expect.objectContaining({
           id: 'db-waba-cuid',
@@ -1062,11 +1062,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({ status: 502, message: 'Subscription failed' });
     });
 
@@ -1103,11 +1103,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({
         status: 503,
         message: 'WABA details temporarily unavailable',
@@ -1161,11 +1161,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        EmbeddedSignUpService.completeEmbeddedSignup(
-          VALID_CODE,
-          WABA_ID,
-          USER_ID,
-        ),
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Missing permission to read WABA details',

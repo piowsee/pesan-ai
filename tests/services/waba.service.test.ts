@@ -25,7 +25,7 @@ describe('WabaService', { tags: ['backend'] }, () => {
         } as never,
       ]);
 
-      const result = await WabaService.getWabasByUserId('user-1');
+      const result = await WabaService.getWabasByUserId({ userId: 'user-1' });
 
       expect(result).toHaveLength(1);
       expect(result[0].wabaId).toBe('meta-waba-1');
@@ -50,7 +50,10 @@ describe('WabaService', { tags: ['backend'] }, () => {
 
       expect(result.wabas).toHaveLength(1);
       expect(result.total).toBe(1);
-      expect(WabaRepository.findPaginated).toHaveBeenCalledWith(10, 20); // page 3, limit 10 -> offset 2*10
+      expect(WabaRepository.findPaginated).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 20,
+      }); // page 3, limit 10 -> offset 2*10
     });
 
     it('returns mapped and paginated content for specific user', async () => {
@@ -66,11 +69,11 @@ describe('WabaService', { tags: ['backend'] }, () => {
       });
 
       expect(result.wabas).toHaveLength(1);
-      expect(WabaRepository.findPaginatedByUserId).toHaveBeenCalledWith(
-        10,
-        30,
-        'user-1',
-      );
+      expect(WabaRepository.findPaginatedByUserId).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 30,
+        userId: 'user-1',
+      });
     });
   });
 
@@ -79,7 +82,10 @@ describe('WabaService', { tags: ['backend'] }, () => {
       vi.mocked(WabaRepository.findById).mockResolvedValue(null);
 
       await expect(
-        WabaService.assignWebhookToWaba('waba-404', 'webhook-1'),
+        WabaService.assignWebhookToWaba({
+          wabaId: 'waba-404',
+          webhookId: 'webhook-1',
+        }),
       ).rejects.toThrow(ApiError);
     });
 
@@ -91,16 +97,16 @@ describe('WabaService', { tags: ['backend'] }, () => {
         {} as never,
       );
 
-      const result = await WabaService.assignWebhookToWaba(
-        'waba-1',
-        'webhook-1',
-      );
+      const result = await WabaService.assignWebhookToWaba({
+        wabaId: 'waba-1',
+        webhookId: 'webhook-1',
+      });
 
       expect(result.success).toBe(true);
-      expect(WabaRepository.updateWabaWebhook).toHaveBeenCalledWith(
-        'waba-1',
-        'webhook-1',
-      );
+      expect(WabaRepository.updateWabaWebhook).toHaveBeenCalledWith({
+        wabaId: 'waba-1',
+        botWebhookId: 'webhook-1',
+      });
     });
   });
 });

@@ -10,7 +10,7 @@ import { WebhookService } from '@/services/webhook.service';
  */
 export const DELETE = withApiAdmin<{ id: string }>(
   async ({ params: { id } }) => {
-    await WebhookService.deleteWebhook(id);
+    await WebhookService.deleteWebhook({ id });
 
     return jsend.success({
       message: 'Webhook deleted successfully',

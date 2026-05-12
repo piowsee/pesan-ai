@@ -11,13 +11,14 @@ import {
 } from '@/schemas/webhook.schema';
 
 export const ChatService = {
-  async getAllChats(wabaId: string, userId: string) {
+  async getAllChats(params: { wabaId: string; userId: string }) {
+    const { wabaId, userId } = params;
     logger.info('Fetching all chats for WABA without pagination', {
       wabaId,
       userId,
     });
 
-    const { chats } = await ChatRepository.findAllByWabaId(wabaId, userId);
+    const { chats } = await ChatRepository.findAllByWabaId({ wabaId, userId });
     logger.info('All chat list fetched successfully', {
       wabaId,
       userId,
@@ -26,10 +27,14 @@ export const ChatService = {
     return { chats, total: chats.length };
   },
 
-  async markAsRead(convId: string, userId: string) {
+  async markAsRead(params: { convId: string; userId: string }) {
+    const { convId, userId } = params;
     logger.info('Marking conversation as read', { convId, userId });
 
-    const result = await ChatRepository.markConversationAsRead(convId, userId);
+    const result = await ChatRepository.markConversationAsRead({
+      convId,
+      userId,
+    });
     logger.info('Mark as read completed', { convId, userId, ...result });
     return result;
   },
@@ -102,11 +107,11 @@ export const ChatService = {
     }
 
     const contactsMap = this._mapContacts(value.contacts);
-    return this._processMessagesList(
-      value.messages,
-      internalPhoneResult.id,
+    return this._processMessagesList({
+      messages: value.messages,
+      internalPhoneId: internalPhoneResult.id,
       contactsMap,
-    );
+    });
   },
 
   _mapContacts(contacts: Contact[] = []): Record<string, string> {
@@ -119,20 +124,21 @@ export const ChatService = {
     return contactsMap;
   },
 
-  async _processMessagesList(
-    messages: WebhookMessage[] = [],
-    internalPhoneId: string,
-    contactsMap: Record<string, string>,
-  ): Promise<number> {
+  async _processMessagesList(params: {
+    messages?: WebhookMessage[];
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<number> {
+    const { messages = [], internalPhoneId, contactsMap } = params;
     let count = 0;
 
     for (const message of messages) {
       try {
-        const wasProcessed = await this._processSingleMessage(
+        const wasProcessed = await this._processSingleMessage({
           message,
           internalPhoneId,
           contactsMap,
-        );
+        });
         if (wasProcessed) count++;
       } catch (msgErr) {
         logError(msgErr, {
@@ -145,11 +151,12 @@ export const ChatService = {
     return count;
   },
 
-  async _processSingleMessage(
-    message: WebhookMessage,
-    internalPhoneId: string,
-    contactsMap: Record<string, string>,
-  ): Promise<boolean> {
+  async _processSingleMessage(params: {
+    message: WebhookMessage;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { message, internalPhoneId, contactsMap } = params;
     if (message.type !== 'text') {
       logger.info('Skipping non-text message', {
         type: message.type,

@@ -77,7 +77,10 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
         passphrase: 'test-passphrase',
       };
 
-      const result = await WebhookRepository.createWebhook(userId, payload);
+      const result = await WebhookRepository.createWebhook({
+        userId,
+        data: payload,
+      });
 
       expect(result.id).toBeDefined();
       expect(result.name).toBe(testName);
@@ -93,7 +96,10 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
 
   describe('findPaginated', () => {
     it('returns paginated webhooks including the seeded one', async () => {
-      const result = await WebhookRepository.findPaginated(10, 0);
+      const result = await WebhookRepository.findPaginated({
+        limit: 10,
+        offset: 0,
+      });
 
       expect(result.total).toBeGreaterThanOrEqual(1);
       expect(result.webhooks.some((w) => w.id === dbWebhookId)).toBe(true);
@@ -112,7 +118,7 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
         },
       });
 
-      const result = await WebhookRepository.deleteWebhook(temp.id);
+      const result = await WebhookRepository.deleteWebhook({ id: temp.id });
       expect(result.id).toBe(temp.id);
 
       // Verify removal

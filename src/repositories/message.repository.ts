@@ -1,13 +1,14 @@
 import prisma from '@/lib/prisma';
 
 export const MessageRepository = {
-  async findMessagesPaginated(
-    convId: string,
-    wabaId: string,
-    userId: string,
-    limit: number,
-    offset: number,
-  ) {
+  async findMessagesPaginated(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+    limit: number;
+    offset: number;
+  }) {
+    const { convId, wabaId, userId, limit, offset } = params;
     const result = await prisma.conversation.findFirst({
       where: {
         id: convId,

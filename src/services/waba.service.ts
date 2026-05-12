@@ -54,7 +54,8 @@ export const WabaService = {
     };
   },
 
-  async getWabasByUserId(userId: string) {
+  async getWabasByUserId(params: { userId: string }) {
+    const { userId } = params;
     logger.info('Fetching WABA list for user', { userId });
     const wabaList = await WabaRepository.findAllByUserId(userId);
     return wabaList.map(this._mapWaba);
@@ -71,8 +72,8 @@ export const WabaService = {
     logger.info('Fetching paginated WABA list', { page, limit, userId });
     const offset = (page - 1) * limit;
     const { wabas, total } = userId
-      ? await WabaRepository.findPaginatedByUserId(limit, offset, userId)
-      : await WabaRepository.findPaginated(limit, offset);
+      ? await WabaRepository.findPaginatedByUserId({ limit, offset, userId })
+      : await WabaRepository.findPaginated({ limit, offset });
 
     return {
       wabas: wabas.map(this._mapWaba),
@@ -80,7 +81,8 @@ export const WabaService = {
     };
   },
 
-  async getTotalUnreadListByUserId(userId: string) {
+  async getTotalUnreadListByUserId(params: { userId: string }) {
+    const { userId } = params;
     logger.info('Fetching total unread counts for all WABAs', { userId });
 
     const result = await WabaRepository.getTotalUnreadListByUserId(userId);
@@ -91,14 +93,21 @@ export const WabaService = {
     return result;
   },
 
-  async assignWebhookToWaba(wabaId: string, webhookId: string | null) {
+  async assignWebhookToWaba(params: {
+    wabaId: string;
+    webhookId: string | null;
+  }) {
+    const { wabaId, webhookId } = params;
     logger.info('Assigning webhook to WABA', { wabaId, webhookId });
     const waba = await WabaRepository.findById(wabaId);
     if (!waba) {
       throw new ApiError('WABA not found', 404);
     }
 
-    await WabaRepository.updateWabaWebhook(wabaId, webhookId);
+    await WabaRepository.updateWabaWebhook({
+      wabaId,
+      botWebhookId: webhookId,
+    });
     return { success: true };
   },
 };

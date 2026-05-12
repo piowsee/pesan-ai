@@ -105,7 +105,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('exchangeCodeForToken', () => {
     it('returns the system user access token on success', async () => {
       await expect(
-        MetaFetchService.exchangeCodeForToken(VALID_CODE, WABA_ID, USER_ID),
+        MetaFetchService.exchangeCodeForToken({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).resolves.toBe('sys-user-token-xyz');
     });
 
@@ -130,7 +134,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.exchangeCodeForToken(VALID_CODE, WABA_ID, USER_ID),
+        MetaFetchService.exchangeCodeForToken({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+        }),
       ).rejects.toMatchObject({
         status: 503,
         message: 'Meta token exchange is temporarily unavailable',
@@ -141,7 +149,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('fetchWabaDetails', () => {
     it('returns the business name on success', async () => {
       await expect(
-        MetaFetchService.fetchWabaDetails(WABA_ID, 'sys-user-token-xyz'),
+        MetaFetchService.fetchWabaDetails({
+          wabaId: WABA_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).resolves.toEqual({
         businessName: 'Test Salon',
       });
@@ -166,7 +177,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.fetchWabaDetails(WABA_ID, 'sys-user-token-xyz'),
+        MetaFetchService.fetchWabaDetails({
+          wabaId: WABA_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Missing permission to read WABA details',
@@ -177,7 +191,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('fetchPhoneNumberDetails', () => {
     it('returns phone number data on success', async () => {
       await expect(
-        MetaFetchService.fetchPhoneNumberDetails(WABA_ID, 'sys-user-token-xyz'),
+        MetaFetchService.fetchPhoneNumberDetails({
+          wabaId: WABA_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).resolves.toEqual([
         expect.objectContaining({
           id: PHONE_NUMBER_ID,
@@ -205,7 +222,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.fetchPhoneNumberDetails(WABA_ID, 'sys-user-token-xyz'),
+        MetaFetchService.fetchPhoneNumberDetails({
+          wabaId: WABA_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).rejects.toMatchObject({
         status: 503,
         message: 'Phone number lookup temporarily unavailable',
@@ -216,10 +236,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('fetchBusinessProfile', () => {
     it('returns the business profile object directly from data[0]', async () => {
       await expect(
-        MetaFetchService.fetchBusinessProfile(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-        ),
+        MetaFetchService.fetchBusinessProfile({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).resolves.toEqual({
         messaging_product: 'whatsapp',
         address: 'business-address',
@@ -251,10 +271,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.fetchBusinessProfile(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-        ),
+        MetaFetchService.fetchBusinessProfile({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Missing permission to read business profile',
@@ -265,11 +285,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('registerPhoneNumber', () => {
     it('posts the pin to the register endpoint', async () => {
       await expect(
-        MetaFetchService.registerPhoneNumber(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          '230601',
-        ),
+        MetaFetchService.registerPhoneNumber({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          pin: '230601',
+        }),
       ).resolves.toBeUndefined();
 
       const registerCall = vi
@@ -301,11 +321,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.registerPhoneNumber(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          '230601',
-        ),
+        MetaFetchService.registerPhoneNumber({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          pin: '230601',
+        }),
       ).resolves.toBeUndefined();
       expect(logger.warn).toHaveBeenCalled();
     });
@@ -329,11 +349,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.registerPhoneNumber(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          '230601',
-        ),
+        MetaFetchService.registerPhoneNumber({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          pin: '230601',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Phone registration failed',
@@ -344,11 +364,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('setPhoneNumberPin', () => {
     it('posts to the phone number endpoint to set the pin', async () => {
       await expect(
-        MetaFetchService.setPhoneNumberPin(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          '998877',
-        ),
+        MetaFetchService.setPhoneNumberPin({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          pin: '998877',
+        }),
       ).resolves.toBeUndefined();
 
       const registerCall = vi
@@ -383,11 +403,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.setPhoneNumberPin(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          '998877',
-        ),
+        MetaFetchService.setPhoneNumberPin({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          pin: '998877',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Set pin failed',
@@ -398,10 +418,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('deregisterPhoneNumber', () => {
     it('posts to the deregister endpoint', async () => {
       await expect(
-        MetaFetchService.deregisterPhoneNumber(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-        ),
+        MetaFetchService.deregisterPhoneNumber({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).resolves.toBeUndefined();
 
       expect(
@@ -430,10 +450,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.deregisterPhoneNumber(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-        ),
+        MetaFetchService.deregisterPhoneNumber({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Deregister failed',
@@ -444,7 +464,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   describe('subscribeWabaApps', () => {
     it('posts to the subscribed apps endpoint', async () => {
       await expect(
-        MetaFetchService.subscribeWabaApps(WABA_ID, 'sys-user-token-xyz'),
+        MetaFetchService.subscribeWabaApps({
+          wabaId: WABA_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).resolves.toBeUndefined();
 
       expect(
@@ -473,7 +496,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.subscribeWabaApps(WABA_ID, 'sys-user-token-xyz'),
+        MetaFetchService.subscribeWabaApps({
+          wabaId: WABA_ID,
+          token: 'sys-user-token-xyz',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Subscription failed',
@@ -495,13 +521,13 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.createPhoneNumber(
-          '62',
-          '81234567890',
-          'sys-user-token-xyz',
-          WABA_ID,
-          'New Bot',
-        ),
+        MetaFetchService.createPhoneNumber({
+          countryCode: '62',
+          phoneNumber: '81234567890',
+          token: 'sys-user-token-xyz',
+          wabaId: WABA_ID,
+          name: 'New Bot',
+        }),
       ).resolves.toEqual({ phoneNumberId: 'new-phone-id' });
 
       const createCall = vi
@@ -536,13 +562,13 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.createPhoneNumber(
-          '62',
-          '81234567890',
-          'sys-user-token-xyz',
-          WABA_ID,
-          'New Bot',
-        ),
+        MetaFetchService.createPhoneNumber({
+          countryCode: '62',
+          phoneNumber: '81234567890',
+          token: 'sys-user-token-xyz',
+          wabaId: WABA_ID,
+          name: 'New Bot',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Phone creation failed',
@@ -564,12 +590,12 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.requestVerificationCode(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          'SMS',
-          'en_US',
-        ),
+        MetaFetchService.requestVerificationCode({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          codeMethod: 'SMS',
+          language: 'en_US',
+        }),
       ).resolves.toEqual({ success: true });
 
       const requestCall = vi
@@ -593,11 +619,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.verifyCode(
-          PHONE_NUMBER_ID,
-          'sys-user-token-xyz',
-          '123456',
-        ),
+        MetaFetchService.verifyCode({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          code: '123456',
+        }),
       ).resolves.toEqual({ success: true });
 
       const verifyCall = vi
@@ -622,12 +648,12 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      const result = await MetaFetchService.sendTextMessage(
-        PHONE_NUMBER_ID,
-        'sys-user-token-xyz',
-        '+6281234567890',
-        'Hello from test',
-      );
+      const result = await MetaFetchService.sendTextMessage({
+        phoneNumberId: PHONE_NUMBER_ID,
+        token: 'sys-user-token-xyz',
+        to: '+6281234567890',
+        text: 'Hello from test',
+      });
 
       expect(result.status).toBe('sent');
       expect(result.messageId).toBe('wamid.123');
@@ -665,12 +691,12 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.sendTextMessage(
-          PHONE_NUMBER_ID,
-          'token-1',
-          '+123',
-          'Hi',
-        ),
+        MetaFetchService.sendTextMessage({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'token-1',
+          to: '+123',
+          text: 'Hi',
+        }),
       ).rejects.toMatchObject({
         status: 502,
         message: 'Recipient not found',

@@ -28,7 +28,8 @@ export const WabaRepository = {
     });
   },
 
-  async findPaginated(limit: number, offset: number) {
+  async findPaginated(params: { limit: number; offset: number }) {
+    const { limit, offset } = params;
     const [wabas, total] = await prisma.$transaction([
       prisma.whatsappBusinessAccount.findMany({
         orderBy: { createdAt: 'desc' },
@@ -42,7 +43,12 @@ export const WabaRepository = {
     return { wabas, total };
   },
 
-  async findPaginatedByUserId(limit: number, offset: number, userId: string) {
+  async findPaginatedByUserId(params: {
+    limit: number;
+    offset: number;
+    userId: string;
+  }) {
+    const { limit, offset, userId } = params;
     const where = { userId };
 
     const [wabas, total] = await prisma.$transaction([
@@ -86,7 +92,11 @@ export const WabaRepository = {
   },
 
   // we update all phone number that is associated with wabaId
-  async updateWabaWebhook(wabaId: string, botWebhookId: string | null) {
+  async updateWabaWebhook(params: {
+    wabaId: string;
+    botWebhookId: string | null;
+  }) {
+    const { wabaId, botWebhookId } = params;
     return prisma.phoneNumber.updateMany({
       where: { wabaId },
       data: { botWebhookId },
@@ -99,7 +109,8 @@ export const WabaRepository = {
     });
   },
 
-  async findByMetaWabaId(wabaId: string) {
+  async findByMetaWabaId(params: { wabaId: string }) {
+    const { wabaId } = params;
     return prisma.whatsappBusinessAccount.findUnique({
       where: { wabaId },
       select: {
@@ -111,7 +122,8 @@ export const WabaRepository = {
     });
   },
 
-  async findPhoneNumbersByMetaIds(phoneNumberIds: string[]) {
+  async findPhoneNumbersByMetaIds(params: { phoneNumberIds: string[] }) {
+    const { phoneNumberIds } = params;
     if (phoneNumberIds.length === 0) {
       return [];
     }

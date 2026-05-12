@@ -80,21 +80,22 @@ export const EmbeddedSignUpService = {
     });
   },
 
-  async _recoverPhoneNumberRegistration(
-    phoneNumber: PhoneRegistration,
-    token: string,
-  ): Promise<PhoneRegistration> {
+  async _recoverPhoneNumberRegistration(params: {
+    phoneNumber: PhoneRegistration;
+    token: string;
+  }): Promise<PhoneRegistration> {
+    const { phoneNumber, token } = params;
     try {
-      await MetaFetchService.setPhoneNumberPin(
-        phoneNumber.id,
+      await MetaFetchService.setPhoneNumberPin({
+        phoneNumberId: phoneNumber.id,
         token,
-        phoneNumber.fallbackRegistrationPin,
-      );
-      await MetaFetchService.registerPhoneNumber(
-        phoneNumber.id,
+        pin: phoneNumber.fallbackRegistrationPin,
+      });
+      await MetaFetchService.registerPhoneNumber({
+        phoneNumberId: phoneNumber.id,
         token,
-        phoneNumber.fallbackRegistrationPin,
-      );
+        pin: phoneNumber.fallbackRegistrationPin,
+      });
     } catch (err) {
       logError(err, {
         action: 'Failed to recover phone number registration with fallback pin',
@@ -112,16 +113,17 @@ export const EmbeddedSignUpService = {
     };
   },
 
-  async _registerPhoneNumberWithRecovery(
-    phoneNumber: PhoneRegistration,
-    token: string,
-  ): Promise<PhoneRegistration> {
+  async _registerPhoneNumberWithRecovery(params: {
+    phoneNumber: PhoneRegistration;
+    token: string;
+  }): Promise<PhoneRegistration> {
+    const { phoneNumber, token } = params;
     try {
-      await MetaFetchService.registerPhoneNumber(
-        phoneNumber.id,
+      await MetaFetchService.registerPhoneNumber({
+        phoneNumberId: phoneNumber.id,
         token,
-        phoneNumber.registrationPin,
-      );
+        pin: phoneNumber.registrationPin,
+      });
 
       return phoneNumber;
     } catch (err) {
@@ -141,7 +143,7 @@ export const EmbeddedSignUpService = {
           phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
       });
 
-      return this._recoverPhoneNumberRegistration(phoneNumber, token);
+      return this._recoverPhoneNumberRegistration({ phoneNumber, token });
     }
   },
 
@@ -166,16 +168,17 @@ export const EmbeddedSignUpService = {
     return 'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.';
   },
 
-  async _fetchBusinessProfiles(
-    phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>,
-    token: string,
-  ): Promise<BusinessProfileLookup[]> {
+  async _fetchBusinessProfiles(params: {
+    phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>;
+    token: string;
+  }): Promise<BusinessProfileLookup[]> {
+    const { phoneNumbers, token } = params;
     const businessProfileResults = await Promise.allSettled(
       phoneNumbers.map(async (phoneNumber) => {
-        const businessProfile = await MetaFetchService.fetchBusinessProfile(
-          phoneNumber.phoneNumberId,
+        const businessProfile = await MetaFetchService.fetchBusinessProfile({
+          phoneNumberId: phoneNumber.phoneNumberId,
           token,
-        );
+        });
 
         if (!businessProfile) {
           return null;
@@ -226,12 +229,13 @@ export const EmbeddedSignUpService = {
    * 4. Register phone numbers and subscribe the app in Meta.
    * 5. Upsert PhoneNumbers linked to the WABA.
    */
-  async completeEmbeddedSignup(
-    code: string,
-    wabaId: string,
-    userId: string,
-  ): Promise<EmbeddedSignupResult> {
-    const existingWaba = await WabaRepository.findByMetaWabaId(wabaId);
+  async completeEmbeddedSignup(params: {
+    code: string;
+    wabaId: string;
+    userId: string;
+  }): Promise<EmbeddedSignupResult> {
+    const { code, wabaId, userId } = params;
+    const existingWaba = await WabaRepository.findByMetaWabaId({ wabaId });
 
     if (existingWaba && existingWaba.userId !== userId) {
       throw new ApiError(
@@ -240,19 +244,24 @@ export const EmbeddedSignUpService = {
       );
     }
 
-    const systemUserToken = await MetaFetchService.exchangeCodeForToken(
+    const systemUserToken = await MetaFetchService.exchangeCodeForToken({
       code,
       wabaId,
       userId,
-    );
+    });
 
     const [wabaDetails, phoneNumberDatas] = await Promise.all([
-      MetaFetchService.fetchWabaDetails(wabaId, systemUserToken),
-      MetaFetchService.fetchPhoneNumberDetails(wabaId, systemUserToken),
+      MetaFetchService.fetchWabaDetails({ wabaId, token: systemUserToken }),
+      MetaFetchService.fetchPhoneNumberDetails({
+        wabaId,
+        token: systemUserToken,
+      }),
     ]);
 
     const existingPhoneNumbers = await WabaRepository.findPhoneNumbersByMetaIds(
-      phoneNumberDatas.map((phoneNumber) => phoneNumber.id),
+      {
+        phoneNumberIds: phoneNumberDatas.map((phoneNumber) => phoneNumber.id),
+      },
     );
     const phoneRegistrations = this._buildPhoneRegistrations(
       phoneNumberDatas,
@@ -262,10 +271,13 @@ export const EmbeddedSignUpService = {
     const [registrationResults] = await Promise.all([
       Promise.allSettled(
         phoneRegistrations.map((phoneNumber) =>
-          this._registerPhoneNumberWithRecovery(phoneNumber, systemUserToken),
+          this._registerPhoneNumberWithRecovery({
+            phoneNumber,
+            token: systemUserToken,
+          }),
         ),
       ),
-      MetaFetchService.subscribeWabaApps(wabaId, systemUserToken),
+      MetaFetchService.subscribeWabaApps({ wabaId, token: systemUserToken }),
     ]);
 
     const registeredPhoneNumbers = registrationResults.flatMap((result) =>
@@ -334,10 +346,10 @@ export const EmbeddedSignUpService = {
       wabaId,
     });
 
-    const businessProfiles = await this._fetchBusinessProfiles(
+    const businessProfiles = await this._fetchBusinessProfiles({
       phoneNumbers,
-      systemUserToken,
-    );
+      token: systemUserToken,
+    });
 
     await BusinessProfileRepository.upsertBusinessProfiles(
       businessProfiles.map(({ phoneNumberDbId, businessProfile }) => ({

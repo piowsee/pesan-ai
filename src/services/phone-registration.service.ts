@@ -31,7 +31,10 @@ export const PhoneRegistrationService = {
   }): Promise<{ success: boolean }> {
     const { phoneNumberId, wabaId, userId, codeMethod, language } = params;
 
-    const { systemUserToken } = await this._getSystemUserToken(wabaId, userId);
+    const { systemUserToken } = await this._getSystemUserToken({
+      wabaId,
+      userId,
+    });
 
     logger.info('Requesting verification code for phone number', {
       phoneNumberId,
@@ -39,12 +42,12 @@ export const PhoneRegistrationService = {
       codeMethod: codeMethod ?? 'SMS',
     });
 
-    const result = await MetaFetchService.requestVerificationCode(
+    const result = await MetaFetchService.requestVerificationCode({
       phoneNumberId,
-      systemUserToken,
+      token: systemUserToken,
       codeMethod,
       language,
-    );
+    });
 
     logger.info('Verification code requested successfully', {
       phoneNumberId,
@@ -69,21 +72,21 @@ export const PhoneRegistrationService = {
   }): Promise<{ success: boolean }> {
     const { phoneNumberId, wabaId, userId, code } = params;
 
-    const { wabaDbId, systemUserToken } = await this._getSystemUserToken(
+    const { wabaDbId, systemUserToken } = await this._getSystemUserToken({
       wabaId,
       userId,
-    );
+    });
 
     logger.info('Verifying code for phone number', {
       phoneNumberId,
       wabaId,
     });
 
-    const verifyResult = await MetaFetchService.verifyCode(
+    const verifyResult = await MetaFetchService.verifyCode({
       phoneNumberId,
-      systemUserToken,
+      token: systemUserToken,
       code,
-    );
+    });
 
     logger.info('Verification code accepted, registering phone number', {
       phoneNumberId,
@@ -93,21 +96,21 @@ export const PhoneRegistrationService = {
     const registrationPin = this._generateRegistrationPin();
     const encryptedPin = encrypt(registrationPin);
 
-    await MetaFetchService.registerPhoneNumber(
+    await MetaFetchService.registerPhoneNumber({
       phoneNumberId,
-      systemUserToken,
-      registrationPin,
-    );
+      token: systemUserToken,
+      pin: registrationPin,
+    });
 
     logger.info('Phone number registered with Meta, fetching details', {
       phoneNumberId,
       wabaId,
     });
 
-    const phoneNumberDatas = await MetaFetchService.fetchPhoneNumberDetails(
+    const phoneNumberDatas = await MetaFetchService.fetchPhoneNumberDetails({
       wabaId,
-      systemUserToken,
-    );
+      token: systemUserToken,
+    });
 
     const matchingPhone = phoneNumberDatas.find(
       (pn) => pn.id === phoneNumberId,
@@ -156,20 +159,23 @@ export const PhoneRegistrationService = {
   }): Promise<{ phoneNumberId: string }> {
     const { wabaId, userId, countryCode, phoneNumber, name } = params;
 
-    const { systemUserToken } = await this._getSystemUserToken(wabaId, userId);
+    const { systemUserToken } = await this._getSystemUserToken({
+      wabaId,
+      userId,
+    });
 
     logger.info('Creating phone number', {
       wabaId,
       phoneNumber,
     });
 
-    const result = await MetaFetchService.createPhoneNumber(
+    const result = await MetaFetchService.createPhoneNumber({
       countryCode,
       phoneNumber,
-      systemUserToken,
+      token: systemUserToken,
       wabaId,
       name,
-    );
+    });
 
     return result;
   },
@@ -180,11 +186,12 @@ export const PhoneRegistrationService = {
     return randomInt(0, 1_000_000).toString().padStart(6, '0');
   },
 
-  async _getSystemUserToken(
-    wabaId: string,
-    userId: string,
-  ): Promise<{ wabaDbId: string; systemUserToken: string }> {
-    const waba = await WabaRepository.findByMetaWabaId(wabaId);
+  async _getSystemUserToken(params: {
+    wabaId: string;
+    userId: string;
+  }): Promise<{ wabaDbId: string; systemUserToken: string }> {
+    const { wabaId, userId } = params;
+    const waba = await WabaRepository.findByMetaWabaId({ wabaId });
 
     if (!waba) {
       throw new ApiError('WhatsApp Business Account not found', 404);

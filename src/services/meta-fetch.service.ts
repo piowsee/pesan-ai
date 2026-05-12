@@ -87,7 +87,11 @@ export const MetaFetchService = {
     throw new ApiError(message, response.status);
   },
 
-  async fetchWabaDetails(wabaId: string, token: string): Promise<WabaDetails> {
+  async fetchWabaDetails(params: {
+    wabaId: string;
+    token: string;
+  }): Promise<WabaDetails> {
+    const { wabaId, token } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${wabaId}`,
       {
@@ -112,10 +116,11 @@ export const MetaFetchService = {
     return { businessName: data.name ?? null };
   },
 
-  async fetchPhoneNumberDetails(
-    wabaId: string,
-    token: string,
-  ): Promise<PhoneNumberMetaResponse[]> {
+  async fetchPhoneNumberDetails(params: {
+    wabaId: string;
+    token: string;
+  }): Promise<PhoneNumberMetaResponse[]> {
+    const { wabaId, token } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
       {
@@ -140,10 +145,11 @@ export const MetaFetchService = {
     return Array.isArray(data) ? data : data.data || [];
   },
 
-  async fetchBusinessProfile(
-    phoneNumberId: string,
-    token: string,
-  ): Promise<WhatsappBusinessProfile | null> {
+  async fetchBusinessProfile(params: {
+    phoneNumberId: string;
+    token: string;
+  }): Promise<WhatsappBusinessProfile | null> {
+    const { phoneNumberId, token } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${phoneNumberId}/whatsapp_business_profile`,
       {
@@ -168,11 +174,12 @@ export const MetaFetchService = {
     return data.data?.[0]?.business_profile ?? null;
   },
 
-  async registerPhoneNumber(
-    phoneNumberId: string,
-    token: string,
-    pin: string,
-  ): Promise<void> {
+  async registerPhoneNumber(params: {
+    phoneNumberId: string;
+    token: string;
+    pin: string;
+  }): Promise<void> {
+    const { phoneNumberId, token, pin } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${phoneNumberId}/register`,
       {
@@ -212,10 +219,11 @@ export const MetaFetchService = {
     }
   },
 
-  async deregisterPhoneNumber(
-    phoneNumberId: string,
-    token: string,
-  ): Promise<void> {
+  async deregisterPhoneNumber(params: {
+    phoneNumberId: string;
+    token: string;
+  }): Promise<void> {
+    const { phoneNumberId, token } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${phoneNumberId}/deregister`,
       {
@@ -245,11 +253,12 @@ export const MetaFetchService = {
     }
   },
 
-  async setPhoneNumberPin(
-    phoneNumberId: string,
-    token: string,
-    pin: string,
-  ): Promise<void> {
+  async setPhoneNumberPin(params: {
+    phoneNumberId: string;
+    token: string;
+    pin: string;
+  }): Promise<void> {
+    const { phoneNumberId, token, pin } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${phoneNumberId}`,
       {
@@ -280,7 +289,11 @@ export const MetaFetchService = {
     }
   },
 
-  async subscribeWabaApps(wabaId: string, token: string): Promise<void> {
+  async subscribeWabaApps(params: {
+    wabaId: string;
+    token: string;
+  }): Promise<void> {
+    const { wabaId, token } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${wabaId}/subscribed_apps`,
       {
@@ -305,15 +318,16 @@ export const MetaFetchService = {
     }
   },
 
-  async createPhoneNumber(
-    countryCode: string = '62',
-    phoneNumber: string,
-    token: string,
-    wabaId: string,
-    name: string,
-  ): Promise<{
+  async createPhoneNumber(params: {
+    countryCode?: string;
+    phoneNumber: string;
+    token: string;
+    wabaId: string;
+    name: string;
+  }): Promise<{
     phoneNumberId: string;
   }> {
+    const { countryCode = '62', phoneNumber, token, wabaId, name } = params;
     const response = await retryableFetch.fetchWithRetry(
       `${GRAPH_BASE}/${wabaId}/phone_numbers`,
       {
@@ -353,19 +367,25 @@ export const MetaFetchService = {
     };
   },
 
-  async requestVerificationCode(
-    phoneNumberId: string,
-    token: string,
-    codeMethod: 'SMS' | 'VOICE' = 'SMS',
-    language = 'en_US',
-  ): Promise<{ success: boolean }> {
-    const params = new URLSearchParams({
+  async requestVerificationCode(params: {
+    phoneNumberId: string;
+    token: string;
+    codeMethod?: 'SMS' | 'VOICE';
+    language?: string;
+  }): Promise<{ success: boolean }> {
+    const {
+      phoneNumberId,
+      token,
+      codeMethod = 'SMS',
+      language = 'en_US',
+    } = params;
+    const queryParams = new URLSearchParams({
       code_method: codeMethod,
       language,
     });
 
     const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/request_code?${params.toString()}`,
+      `${GRAPH_BASE}/${phoneNumberId}/request_code?${queryParams.toString()}`,
       {
         method: 'POST',
         headers: {
@@ -394,15 +414,16 @@ export const MetaFetchService = {
     return { success: data.success ?? true };
   },
 
-  async verifyCode(
-    phoneNumberId: string,
-    token: string,
-    code: string,
-  ): Promise<{ success: boolean }> {
-    const params = new URLSearchParams({ code });
+  async verifyCode(params: {
+    phoneNumberId: string;
+    token: string;
+    code: string;
+  }): Promise<{ success: boolean }> {
+    const { phoneNumberId, token, code } = params;
+    const queryParams = new URLSearchParams({ code });
 
     const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/verify_code?${params.toString()}`,
+      `${GRAPH_BASE}/${phoneNumberId}/verify_code?${queryParams.toString()}`,
       {
         method: 'POST',
         headers: {
@@ -431,11 +452,12 @@ export const MetaFetchService = {
     return { success: data.success ?? true };
   },
 
-  async exchangeCodeForToken(
-    code: string,
-    wabaId: string,
-    userId: string,
-  ): Promise<string> {
+  async exchangeCodeForToken(params: {
+    code: string;
+    wabaId: string;
+    userId: string;
+  }): Promise<string> {
+    const { code, wabaId, userId } = params;
     const { appId, appSecret } = getMetaAppCredentials();
 
     if (!appId || !appSecret) {
@@ -492,12 +514,13 @@ export const MetaFetchService = {
     return tokenData.access_token;
   },
 
-  async sendTextMessage(
-    phoneNumberId: string,
-    token: string,
-    to: string,
-    text: string,
-  ): Promise<{ messageId: string; status: string }> {
+  async sendTextMessage(params: {
+    phoneNumberId: string;
+    token: string;
+    to: string;
+    text: string;
+  }): Promise<{ messageId: string; status: string }> {
+    const { phoneNumberId, token, to, text } = params;
     const payload = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',

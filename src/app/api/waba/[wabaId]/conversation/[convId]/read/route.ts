@@ -12,7 +12,10 @@ import { ChatService } from '@/services/chat.service';
  */
 export const PATCH = withApiAuth<{ wabaId: string; convId: string }>(
   async ({ user, params: { convId } }) => {
-    const result = await ChatService.markAsRead(convId, user.id);
+    const result = await ChatService.markAsRead({
+      convId,
+      userId: user.id,
+    });
     return jsend.success(result);
   },
 );

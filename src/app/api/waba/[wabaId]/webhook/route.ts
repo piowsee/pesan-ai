@@ -20,7 +20,10 @@ export const PATCH = withApiAdmin<{ wabaId: string }>(
     }
 
     const { webhookId } = validated.data;
-    const result = await WabaService.assignWebhookToWaba(wabaId, webhookId);
+    const result = await WabaService.assignWebhookToWaba({
+      wabaId,
+      webhookId,
+    });
 
     return jsend.success(result);
   },

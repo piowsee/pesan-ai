@@ -21,11 +21,11 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         json: async () => ({ success: true }),
       });
 
-      const result = await WebhookService.callWebhook(
-        'https://example.com',
-        'pass',
-        'GET',
-      );
+      const result = await WebhookService.callWebhook({
+        url: 'https://example.com',
+        passphrase: 'pass',
+        method: 'GET',
+      });
       expect(result.ok).toBe(true);
       expect(fetch).toHaveBeenCalledWith(
         'https://example.com',
@@ -42,7 +42,12 @@ describe('WebhookService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        WebhookService.callWebhook('https://example.com', 'pass', 'POST', {}),
+        WebhookService.callWebhook({
+          url: 'https://example.com',
+          passphrase: 'pass',
+          method: 'POST',
+          payload: {},
+        }),
       ).rejects.toThrow(ApiError);
     });
   });
@@ -59,10 +64,13 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         userId: 'user-1',
       } as never);
 
-      const result = await WebhookService.createWebhook('user-1', {
-        name: 'WH',
-        webhookUrl: 'url',
-        passphrase: 'pass',
+      const result = await WebhookService.createWebhook({
+        userId: 'user-1',
+        data: {
+          name: 'WH',
+          webhookUrl: 'url',
+          passphrase: 'pass',
+        },
       });
 
       expect(result.id).toBe('wh-1');
