@@ -1,6 +1,6 @@
 import { encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
-import { logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/logger';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { CreateWebhookPayload } from '@/schemas/create-webhook.schema';
 import { SignJWT } from 'jose';
@@ -50,7 +50,7 @@ export const WebhookService = {
 
       if (!response.ok) {
         const status = response.status >= 500 ? 502 : 400;
-        logger.error(`Webhook ${method} request failed`, {
+        logError(new Error(`Webhook ${method} request failed`), {
           url,
           status: response.status,
         });

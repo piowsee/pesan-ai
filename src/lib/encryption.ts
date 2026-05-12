@@ -1,4 +1,4 @@
-import { logError, logger } from '@/lib/logger';
+import { logError } from '@/lib/logger';
 import CryptoJS from 'crypto-js';
 
 /**
@@ -8,11 +8,11 @@ import CryptoJS from 'crypto-js';
 function getEncryptionKey(): string {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    logger.error('ENCRYPTION_KEY is not set in environment variables');
+    logError(new Error('ENCRYPTION_KEY is not set in environment variables'));
     return '';
   }
   if (key.length !== 32) {
-    logger.error('ENCRYPTION_KEY must be exactly 32 characters long');
+    logError(new Error('ENCRYPTION_KEY must be exactly 32 characters long'));
     return '';
   }
   return key;

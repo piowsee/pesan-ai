@@ -1,6 +1,6 @@
 import { decrypt, encrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
-import { logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/logger';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
@@ -85,22 +85,23 @@ export const EmbeddedSignUpService = {
     token: string,
   ): Promise<PhoneRegistration> {
     try {
-      await MetaFetchService.deregisterPhoneNumber(phoneNumber.id, token);
+      await MetaFetchService.setPhoneNumberPin(
+        phoneNumber.id,
+        token,
+        phoneNumber.fallbackRegistrationPin,
+      );
       await MetaFetchService.registerPhoneNumber(
         phoneNumber.id,
         token,
         phoneNumber.fallbackRegistrationPin,
       );
     } catch (err) {
-      logger.error(
-        'Failed to recover phone number registration with fallback pin',
-        {
-          phoneNumberId: phoneNumber.id,
-          usedStoredRegistrationPin:
-            phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
-          error: err instanceof Error ? err.message : String(err),
-        },
-      );
+      logError(err, {
+        action: 'Failed to recover phone number registration with fallback pin',
+        phoneNumberId: phoneNumber.id,
+        usedStoredRegistrationPin:
+          phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
+      });
       throw err;
     }
 
@@ -133,15 +134,12 @@ export const EmbeddedSignUpService = {
         throw err;
       }
 
-      logger.warn(
-        'Phone registration failed, retrying after deregister with fallback pin',
-        {
-          error: err instanceof Error ? err.message : String(err),
-          phoneNumberId: phoneNumber.id,
-          usedStoredRegistrationPin:
-            phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
-        },
-      );
+      logger.warn('Phone registration failed, retrying after set a new pin', {
+        error: err instanceof Error ? err.message : String(err),
+        phoneNumberId: phoneNumber.id,
+        usedStoredRegistrationPin:
+          phoneNumber.registrationPin !== phoneNumber.fallbackRegistrationPin,
+      });
 
       return this._recoverPhoneNumberRegistration(phoneNumber, token);
     }
@@ -203,12 +201,16 @@ export const EmbeddedSignUpService = {
     );
 
     if (failedLookups.length > 0) {
-      logger.error('Some Meta business profile lookups failed during signup', {
-        failedPhoneNumberIds: failedLookups.map(
-          ({ phoneNumberId }) => phoneNumberId,
-        ),
-        failureCount: failedLookups.length,
-      });
+      logError(
+        new Error('Some Meta business profile lookups failed during signup'),
+        {
+          action: 'Some Meta business profile lookups failed during signup',
+          failedPhoneNumberIds: failedLookups.map(
+            ({ phoneNumberId }) => phoneNumberId,
+          ),
+          failureCount: failedLookups.length,
+        },
+      );
     }
 
     return businessProfileResults.flatMap((result) =>
@@ -282,13 +284,17 @@ export const EmbeddedSignUpService = {
       );
 
     if (failedPhoneRegistrations.length > 0) {
-      logger.error('Some Meta phone registrations failed during signup', {
-        failedPhoneNumberIds: failedPhoneRegistrations.map(
-          ({ phoneNumberId }) => phoneNumberId,
-        ),
-        failureCount: failedPhoneRegistrations.length,
-        wabaId,
-      });
+      logError(
+        new Error('Some Meta phone registrations failed during signup'),
+        {
+          action: 'Some Meta phone registrations failed during signup',
+          failedPhoneNumberIds: failedPhoneRegistrations.map(
+            ({ phoneNumberId }) => phoneNumberId,
+          ),
+          failureCount: failedPhoneRegistrations.length,
+          wabaId,
+        },
+      );
     }
 
     logger.info('Meta phone registration and app subscription completed', {

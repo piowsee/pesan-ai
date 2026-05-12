@@ -212,6 +212,7 @@ export const SEED_DATA = {
   PHONE_META_ID: '${phoneNumber.phoneNumberId}',
   CUSTOMER_PHONE: '${conversation.customerPhone}',
   WEBHOOK_NAME: '${webhook.name}',
+  SYSTEM_USER_TOKEN: '${waba.systemUserToken}',
 };
 `;
 

@@ -187,9 +187,13 @@ export const ChatService = {
     });
 
     if (!userId) {
-      logger.error('Could not determine userId for real-time notification', {
-        phoneNumberId: internalPhoneId,
-      });
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for real-time notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
       return true;
     }
 

@@ -340,8 +340,8 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
             throw new ApiError('Stored pin no longer works', 502);
           }
         });
-      const deregisterSpy = vi
-        .spyOn(MetaFetchService, 'deregisterPhoneNumber')
+      const setPhoneNumberPinSpy = vi
+        .spyOn(MetaFetchService, 'setPhoneNumberPin')
         .mockResolvedValue(undefined);
 
       await EmbeddedSignUpService.completeEmbeddedSignup(
@@ -355,9 +355,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         'sys-user-token-xyz',
         '991122',
       );
-      expect(deregisterSpy).toHaveBeenCalledWith(
+      expect(setPhoneNumberPinSpy).toHaveBeenCalledWith(
         META_PHONE_NUMBERS[0].id,
         'sys-user-token-xyz',
+        REGISTRATION_PINS[0],
       );
       expect(registerSpy).toHaveBeenCalledWith(
         META_PHONE_NUMBERS[0].id,
@@ -646,8 +647,8 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
             throw new ApiError('Stored pin no longer works', 502);
           }
         });
-      const deregisterSpy = vi
-        .spyOn(MetaFetchService, 'deregisterPhoneNumber')
+      const setPhoneNumberPinSpy = vi
+        .spyOn(MetaFetchService, 'setPhoneNumberPin')
         .mockResolvedValue(undefined);
 
       const result =
@@ -667,9 +668,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         'sys-user-token-xyz',
         '991122',
       );
-      expect(deregisterSpy).toHaveBeenCalledWith(
+      expect(setPhoneNumberPinSpy).toHaveBeenCalledWith(
         META_PHONE_NUMBERS[0].id,
         'sys-user-token-xyz',
+        REGISTRATION_PINS[0],
       );
       expect(registerSpy).toHaveBeenCalledWith(
         META_PHONE_NUMBERS[0].id,
@@ -912,7 +914,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           } as Response;
         }
 
-        if (url.endsWith('/deregister')) {
+        if (
+          url.endsWith(`/${META_PHONE_NUMBERS[0].id}`) ||
+          url.endsWith(`/${META_PHONE_NUMBERS[1].id}`)
+        ) {
           return {
             ok: true,
             json: async () => ({ success: true }),
@@ -944,7 +949,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       expect(
         vi
           .mocked(global.fetch)
-          .mock.calls.some(([url]) => String(url).endsWith('/deregister')),
+          .mock.calls.some(
+            ([url, options]) =>
+              String(url).endsWith(`/${META_PHONE_NUMBERS[0].id}`) &&
+              options?.method === 'POST',
+          ),
       ).toBe(true);
     });
 
