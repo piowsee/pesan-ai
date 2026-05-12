@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { AddPhoneNumberDialog } from './add-phone-number-dialog';
+import { AddPhoneNumberDialog } from './add-phone-number-dialog/add-phone-number-dialog';
 import { FacebookSdkScript } from './facebook-sdk-script';
 import { WabaEmbeddedSignupButton } from './waba-embedded-signup-button';
 

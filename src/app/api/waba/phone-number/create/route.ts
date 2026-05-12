@@ -20,6 +20,7 @@ export const POST = withApiAuth(async ({ req, user }) => {
     userId: user.id,
     wabaId,
     phoneNumber,
+    countryCode,
   });
 
   const data = await PhoneRegistrationService.createPhoneNumber({
