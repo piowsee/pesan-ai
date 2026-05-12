@@ -1,7 +1,7 @@
 import { decrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/logger';
 import { ChatRepository } from '@/repositories/chat.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 
@@ -57,8 +57,16 @@ export const MessageService = {
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
     if (!tokenToUse) {
-      logger.error('No WhatsApp token available for sending', { chatId });
-      throw new ApiError('WhatsApp token is missing or invalid', 403);
+      const apiError = new ApiError(
+        'WhatsApp token is missing or invalid',
+        403,
+      );
+      logError(apiError, {
+        action: 'No WhatsApp token available for sending',
+        chatId,
+      });
+
+      throw apiError;
     }
 
     // 2. Send via WhatsApp API

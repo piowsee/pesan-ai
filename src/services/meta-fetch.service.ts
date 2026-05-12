@@ -1,6 +1,6 @@
 import { ApiError } from '@/lib/error';
 import * as retryableFetch from '@/lib/fetch-with-retry';
-import { logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/logger';
 import {
   PhoneNumberMetaResponse,
   TokenExchangeResponse,
@@ -26,18 +26,40 @@ export const MetaFetchService = {
     fallbackMessage: string,
   ): Promise<string> {
     try {
-      const data = await response.json();
+      const data = await response.clone().json();
 
       if (
         typeof data === 'object' &&
         data !== null &&
         'error' in data &&
         typeof data.error === 'object' &&
-        data.error !== null &&
-        'message' in data.error &&
-        typeof data.error.message === 'string'
+        data.error !== null
       ) {
-        return data.error.message;
+        const err = data.error as Record<string, unknown>;
+        const parts: string[] = [];
+
+        if (typeof err.message === 'string') {
+          parts.push(err.message);
+        }
+        if (typeof err.error_user_title === 'string') {
+          parts.push(err.error_user_title);
+        }
+        if (typeof err.error_user_msg === 'string') {
+          parts.push(err.error_user_msg);
+        }
+        if (err.error_data) {
+          parts.push(`Data: ${JSON.stringify(err.error_data)}`);
+        }
+
+        if (parts.length > 0) {
+          const detailedMessage = parts.join(' | ');
+          logError(new Error('Meta API Detailed Extract'), {
+            detailedMessage,
+            url: response.url,
+          });
+
+          return err.error_user_msg || err.message || detailedMessage;
+        }
       }
     } catch {
       // Ignore JSON parsing errors and fall back to the provided message.
@@ -79,12 +101,6 @@ export const MetaFetchService = {
         response,
         `Failed to fetch WABA details for ${wabaId}`,
       );
-      logger.error('Meta API error in fetchWabaDetails', {
-        metaStatus: response.status,
-        message,
-        wabaId,
-      });
-
       throw new ApiError(message, 502);
     }
 
@@ -113,12 +129,6 @@ export const MetaFetchService = {
         response,
         `Failed to fetch phone numbers for ${wabaId}`,
       );
-      logger.error('Meta API error in fetchPhoneNumberDetails', {
-        metaStatus: response.status,
-        message,
-        wabaId,
-      });
-
       throw new ApiError(message, 502);
     }
 
@@ -147,12 +157,6 @@ export const MetaFetchService = {
         response,
         `Failed to fetch business profile for ${phoneNumberId}`,
       );
-      logger.error('Meta API error in fetchBusinessProfile', {
-        metaStatus: response.status,
-        message,
-        phoneNumberId,
-      });
-
       throw new ApiError(message, 502);
     }
 
@@ -200,12 +204,6 @@ export const MetaFetchService = {
         });
         return;
       }
-      logger.error('Meta API error in registerPhoneNumber', {
-        metaStatus: response.status,
-        message,
-        phoneNumberId,
-      });
-
       throw new ApiError(message, 502);
     }
   },
@@ -239,12 +237,6 @@ export const MetaFetchService = {
         response,
         `Failed to deregister phone number ${phoneNumberId} from Meta`,
       );
-      logger.error('Meta API error in deregisterPhoneNumber', {
-        metaStatus: response.status,
-        message,
-        phoneNumberId,
-      });
-
       throw new ApiError(message, 502);
     }
   },
@@ -280,12 +272,6 @@ export const MetaFetchService = {
         response,
         `Failed to set new pin for phone number ${phoneNumberId}`,
       );
-      logger.error('Meta API error in setPhoneNumberPin', {
-        metaStatus: response.status,
-        message,
-        phoneNumberId,
-      });
-
       throw new ApiError(message, 502);
     }
   },
@@ -311,12 +297,6 @@ export const MetaFetchService = {
         response,
         `Failed to subscribe apps for WABA ${wabaId}`,
       );
-      logger.error('Meta API error in subscribeWabaApps', {
-        metaStatus: response.status,
-        message,
-        wabaId,
-      });
-
       throw new ApiError(message, 502);
     }
   },
@@ -359,12 +339,6 @@ export const MetaFetchService = {
         response,
         `Failed to create phone number for ${wabaId}`,
       );
-      logger.error('Meta API error in createPhoneNumber', {
-        metaStatus: response.status,
-        message,
-        wabaId,
-      });
-
       throw new ApiError(message, 502);
     }
 
@@ -409,12 +383,6 @@ export const MetaFetchService = {
         response,
         `Failed to request verification code for ${phoneNumberId}`,
       );
-      logger.error('Meta API error in requestVerificationCode', {
-        metaStatus: response.status,
-        message,
-        phoneNumberId,
-      });
-
       throw new ApiError(message, 502);
     }
 
@@ -452,12 +420,6 @@ export const MetaFetchService = {
         response,
         `Failed to verify code for ${phoneNumberId}`,
       );
-      logger.error('Meta API error in verifyCode', {
-        metaStatus: response.status,
-        message,
-        phoneNumberId,
-      });
-
       throw new ApiError(message, 502);
     }
 
@@ -498,23 +460,26 @@ export const MetaFetchService = {
       },
       { action: 'MetaFetchService.exchangeCodeForToken' },
     );
+    if (!tokenResponse.ok) {
+      await this._throwIfRetryableResponse(
+        tokenResponse,
+        'Failed to exchange Meta authorization code',
+      );
+      const errorMessage = await this._extractMetaErrorMessage(
+        tokenResponse,
+        'Failed to exchange Meta authorization code',
+      );
+
+      throw new ApiError(errorMessage, 502);
+    }
+
     const tokenData: TokenExchangeResponse = await tokenResponse.json();
 
-    if (!tokenResponse.ok || tokenData.error || !tokenData.access_token) {
+    if (tokenData.error || !tokenData.access_token) {
       const errorMessage =
         tokenData.error?.message ??
         'Failed to exchange Meta authorization code';
 
-      if (!tokenResponse.ok) {
-        await this._throwIfRetryableResponse(tokenResponse, errorMessage);
-      }
-
-      logger.error('Meta token exchange failed', {
-        status: tokenResponse.status,
-        error: tokenData.error,
-        wabaId,
-        userId,
-      });
       throw new ApiError(errorMessage, 502);
     }
 

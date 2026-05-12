@@ -81,7 +81,9 @@ function isValidSignature(
   // NOT the verify token used in the GET request.
   const appSecret = process.env.META_APP_SECRET;
   if (!appSecret) {
-    logger.error('META_APP_SECRET is not defined in environment variables');
+    logError(
+      new Error('META_APP_SECRET is not defined in environment variables'),
+    );
     return false;
   }
 
