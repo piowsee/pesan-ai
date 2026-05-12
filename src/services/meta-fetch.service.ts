@@ -26,7 +26,10 @@ export const MetaFetchService = {
     fallbackMessage: string,
   ): Promise<string> {
     try {
-      const data = await response.clone().json();
+      // Support test mocks that might not implement response.clone()
+      const clonedResponse =
+        typeof response.clone === 'function' ? response.clone() : response;
+      const data = await clonedResponse.json();
 
       if (
         typeof data === 'object' &&
@@ -38,18 +41,19 @@ export const MetaFetchService = {
         const err = data.error as Record<string, unknown>;
         const parts: string[] = [];
 
-        if (typeof err.message === 'string') {
-          parts.push(err.message);
-        }
-        if (typeof err.error_user_title === 'string') {
-          parts.push(err.error_user_title);
-        }
-        if (typeof err.error_user_msg === 'string') {
-          parts.push(err.error_user_msg);
-        }
-        if (err.error_data) {
-          parts.push(`Data: ${JSON.stringify(err.error_data)}`);
-        }
+        const msg = typeof err.message === 'string' ? err.message : null;
+        const userTitle =
+          typeof err.error_user_title === 'string'
+            ? err.error_user_title
+            : null;
+        const userMsg =
+          typeof err.error_user_msg === 'string' ? err.error_user_msg : null;
+        const errorData = err.error_data;
+
+        if (msg) parts.push(msg);
+        if (userTitle) parts.push(userTitle);
+        if (userMsg) parts.push(userMsg);
+        if (errorData) parts.push(`Data: ${JSON.stringify(errorData)}`);
 
         if (parts.length > 0) {
           const detailedMessage = parts.join(' | ');
@@ -58,7 +62,7 @@ export const MetaFetchService = {
             url: response.url,
           });
 
-          return err.error_user_msg || err.message || detailedMessage;
+          return userMsg || msg || detailedMessage;
         }
       }
     } catch {
