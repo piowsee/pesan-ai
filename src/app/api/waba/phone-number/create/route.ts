@@ -13,20 +13,21 @@ import { PhoneRegistrationService } from '@/services/phone-registration.service'
  */
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
-  const params = CreatePhoneNumberSchema.parse(rawBody);
+  const { wabaId, countryCode, phoneNumber, name } =
+    CreatePhoneNumberSchema.parse(rawBody);
 
   logger.info('Creating new phone number for WABA', {
     userId: user.id,
-    wabaId: params.wabaId,
-    phoneNumber: params.phoneNumber,
+    wabaId,
+    phoneNumber,
   });
 
   const data = await PhoneRegistrationService.createPhoneNumber({
-    wabaId: params.wabaId,
+    wabaId,
     userId: user.id,
-    countryCode: params.countryCode,
-    phoneNumber: params.phoneNumber,
-    name: params.name,
+    countryCode,
+    phoneNumber,
+    name,
   });
 
   return jsend.success(data);
