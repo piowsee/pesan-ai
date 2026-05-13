@@ -25,10 +25,14 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }, request) => {
       const locale = getLocaleFromRequest(request);
       const resetUrl = new URL(url);
-      resetUrl.searchParams.set(
-        'callbackURL',
-        toLocalePath(locale, '/reset-password'),
-      );
+      const resetCallbackURL = resetUrl.searchParams.get('callbackURL');
+
+      if (!resetCallbackURL || resetCallbackURL === '/') {
+        resetUrl.searchParams.set(
+          'callbackURL',
+          toLocalePath(locale, '/reset-password'),
+        );
+      }
 
       void sendEmail({
         to: user.email,
@@ -62,10 +66,16 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }, request) => {
       const locale = getLocaleFromRequest(request);
       const verificationUrl = new URL(url);
-      verificationUrl.searchParams.set(
-        'callbackURL',
-        toLocalePath(locale, '/reset-password'),
-      );
+      const verificationCallbackURL =
+        verificationUrl.searchParams.get('callbackURL');
+
+      if (!verificationCallbackURL || verificationCallbackURL === '/') {
+        verificationUrl.searchParams.set(
+          'callbackURL',
+          toLocalePath(locale, '/reset-password'),
+        );
+      }
+
       void sendEmail({
         to: user.email,
         subject: 'Verify your email address',
