@@ -14,6 +14,9 @@ export function ConversationListItem({
   isActive: boolean;
   onSelect: () => void;
 }) {
+  const unreadCount = Number(conversation.unreadCount ?? 0);
+  const hasUnread = Number.isFinite(unreadCount) && unreadCount > 0;
+
   return (
     <button
       type="button"
@@ -39,7 +42,7 @@ export function ConversationListItem({
           <span
             className={cn(
               'shrink-0 text-xs',
-              conversation.unreadCount > 0
+              hasUnread
                 ? 'text-primary font-semibold'
                 : 'text-muted-foreground',
             )}
@@ -48,18 +51,18 @@ export function ConversationListItem({
           </span>
         </div>
 
-        <div className="mt-0.5 flex items-center justify-between gap-3">
-          <p className="line-clamp-1 flex-1 text-[13px] text-muted-foreground">
+        <div className="mt-0.5 flex min-w-0 items-center justify-between gap-3">
+          <p className="line-clamp-1 min-w-0 flex-1 text-[13px] text-muted-foreground">
             {getMessagePreview(conversation.lastMessage)}
           </p>
 
-          <div className="flex shrink-0 items-center justify-end gap-2 min-w-10">
-            {conversation.unreadCount > 0 && (
+          <div className="flex min-w-10 shrink-0 items-center justify-end gap-2">
+            {hasUnread && (
               <Badge
                 variant="default"
                 className="rounded-full px-1.5 h-5 min-w-5 flex items-center justify-center text-[10px] font-bold bg-brand text-brand-foreground"
               >
-                {conversation.unreadCount}
+                {unreadCount}
               </Badge>
             )}
           </div>

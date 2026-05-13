@@ -42,14 +42,99 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [isActivated, setIsActivated] = useState(false);
   const viewingConversationIdRef = useRef<string | undefined>(undefined);
-
-  const setViewingConversationId = (id: string | undefined) => {
-    viewingConversationIdRef.current = id;
-  };
+  const isPageVisibleRef = useRef(true);
+  const markAsReadInFlightRef = useRef<Set<string>>(new Set());
+  const pendingReadReceiptsRef = useRef<Map<string, string>>(new Map());
 
   const activate = useCallback(() => {
     setIsActivated(true);
   }, []);
+
+  const markConversationAsRead = useCallback(
+    async (wabaId: string, conversationId: string) => {
+      const requestKey = `${wabaId}:${conversationId}`;
+
+      if (markAsReadInFlightRef.current.has(requestKey)) {
+        return;
+      }
+
+      markAsReadInFlightRef.current.add(requestKey);
+
+      try {
+        const response = await fetch(
+          `/api/waba/${wabaId}/conversation/${conversationId}/read`,
+          { method: 'PATCH', keepalive: true },
+        );
+
+        if (!response.ok) {
+          console.error('Failed to mark active conversation as read', {
+            wabaId,
+            conversationId,
+            status: response.status,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to mark active conversation as read', error);
+      } finally {
+        markAsReadInFlightRef.current.delete(requestKey);
+      }
+    },
+    [],
+  );
+
+  const flushPendingReadReceipts = useCallback(() => {
+    const pendingEntries = Array.from(pendingReadReceiptsRef.current.entries());
+
+    pendingReadReceiptsRef.current.clear();
+
+    pendingEntries.forEach(([conversationId, wabaId]) => {
+      void markConversationAsRead(wabaId, conversationId);
+    });
+  }, [markConversationAsRead]);
+
+  const setViewingConversationId = useCallback(
+    (id: string | undefined) => {
+      const previousConversationId = viewingConversationIdRef.current;
+
+      if (previousConversationId && previousConversationId !== id) {
+        const previousWabaId = pendingReadReceiptsRef.current.get(
+          previousConversationId,
+        );
+
+        if (previousWabaId) {
+          pendingReadReceiptsRef.current.delete(previousConversationId);
+          void markConversationAsRead(previousWabaId, previousConversationId);
+        }
+      }
+
+      viewingConversationIdRef.current = id;
+    },
+    [markConversationAsRead],
+  );
+
+  const syncPageVisibility = useCallback(() => {
+    const isVisible = document.visibilityState === 'visible';
+    isPageVisibleRef.current = isVisible;
+
+    if (!isVisible) {
+      flushPendingReadReceipts();
+    }
+  }, [flushPendingReadReceipts]);
+
+  useEffect(() => {
+    syncPageVisibility();
+
+    const handleVisibilityChange = () => {
+      syncPageVisibility();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      flushPendingReadReceipts();
+    };
+  }, [flushPendingReadReceipts, syncPageVisibility]);
 
   useEffect(() => {
     if (!isActivated) return;
@@ -61,6 +146,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     const handleNewMessage = (payload: SSEMessagePayload) => {
       const { wabaId, conversationId, conversation, ...newMessage } = payload;
+      const isActive =
+        isPageVisibleRef.current &&
+        conversationId === viewingConversationIdRef.current;
 
       // 1. Update Messages Timeline Cache
       queryClient.setQueryData(
@@ -106,7 +194,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           if (!old) return old;
 
           // Read which conversation the user is currently viewing — no stale closure.
-          const isActive = conversationId === viewingConversationIdRef.current;
           let found = false;
 
           const updatedChats = old.chats.map((chat) => {
@@ -116,7 +203,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
                 ...chat,
                 lastMessage: newMessage,
                 lastMessageAt: newMessage.timestamp,
-                unreadCount: isActive ? chat.unreadCount : chat.unreadCount + 1,
+                unreadCount: isActive ? 0 : chat.unreadCount + 1,
                 updatedAt: new Date().toISOString(),
               };
             }
@@ -150,6 +237,10 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           return { ...old, chats: sortedChats };
         },
       );
+
+      if (isActive) {
+        pendingReadReceiptsRef.current.set(conversationId, wabaId);
+      }
     };
 
     eventSource.addEventListener('NEW_MESSAGE', (event: MessageEvent) => {
