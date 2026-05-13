@@ -1,4 +1,5 @@
 import { EmailType, sendEmail } from '@/lib/auth/email/email';
+import { getLocaleFromRequest, toLocalePath } from '@/lib/locale';
 import prisma from '@/lib/prisma';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
@@ -21,14 +22,21 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
+    sendResetPassword: async ({ user, url }, request) => {
+      const locale = getLocaleFromRequest(request);
+      const resetUrl = new URL(url);
+      resetUrl.searchParams.set(
+        'callbackURL',
+        toLocalePath(locale, '/reset-password'),
+      );
+
       void sendEmail({
         to: user.email,
         subject: 'Reset your password',
         type: EmailType.RESET_PASSWORD,
         params: {
           user_name: user.name || 'User',
-          reset_url: url,
+          reset_url: resetUrl.toString(),
         },
       });
     },
@@ -51,9 +59,13 @@ export const auth = betterAuth({
     }),
   },
   emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({ user, url }, request) => {
+      const locale = getLocaleFromRequest(request);
       const verificationUrl = new URL(url);
-      verificationUrl.searchParams.set('callbackURL', '/reset-password');
+      verificationUrl.searchParams.set(
+        'callbackURL',
+        toLocalePath(locale, '/reset-password'),
+      );
       void sendEmail({
         to: user.email,
         subject: 'Verify your email address',
