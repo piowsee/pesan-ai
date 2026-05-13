@@ -44,6 +44,7 @@ type Props = {
 export function LoginForm({ locale }: Props) {
   const copy = loginFormCopy[locale];
 
+  const forgotPasswordHref = toLocalePath(locale, '/forgot-password');
   const termsHref = toLocalePath(locale, '/terms');
   const privacyHref = toLocalePath(locale, '/privacy');
 
@@ -75,6 +76,11 @@ export function LoginForm({ locale }: Props) {
       });
 
       if (result?.error) {
+        if (result.error.status === 403) {
+          setFormError(copy.errors.emailNotVerified);
+          return;
+        }
+
         setFormError(result.error.message || copy.errors.invalidCredentials);
         return;
       }
@@ -156,6 +162,14 @@ export function LoginForm({ locale }: Props) {
             {form.formState.errors.password.message}
           </p>
         )}
+        <div className="flex justify-end">
+          <Link
+            href={forgotPasswordHref}
+            className="text-sm font-medium text-brand underline-offset-4 transition-colors hover:underline"
+          >
+            {copy.labels.forgotPassword}
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

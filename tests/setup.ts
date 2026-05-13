@@ -161,6 +161,20 @@ vi.mock('@/services/meta-fetch.service', () => ({
   },
 }));
 
+vi.mock('next/headers', () => ({
+  headers: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/auth', () => ({
+  auth: {
+    api: {
+      createUser: vi.fn(),
+      sendVerificationEmail: vi.fn(),
+    },
+  },
+  createResetPasswordCallbackUrl: vi.fn(),
+}));
+
 // --- Mocks for Libraries ---
 vi.mock('jose', () => ({
   SignJWT: class {

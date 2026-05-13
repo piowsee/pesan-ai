@@ -1,6 +1,6 @@
 'use client';
 
-import { loginBrandPanelCopy } from '@/components/auth/content';
+import { authBrandPanelCopy } from '@/components/auth/content';
 import { MetaTechPartner } from '@/components/auth/meta-tech-partner';
 import type { AppLocale } from '@/lib/locale';
 import { toLocalePath } from '@/lib/locale';
@@ -13,8 +13,8 @@ type Props = {
   locale: AppLocale;
 };
 
-export function LoginBrandPanel({ locale }: Props) {
-  const copy = loginBrandPanelCopy[locale];
+export function AuthBrandPanel({ locale }: Props) {
+  const copy = authBrandPanelCopy[locale];
   const homeHref = toLocalePath(locale, '/');
 
   return (

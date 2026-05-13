@@ -77,15 +77,19 @@ async function fetchUsers(
 }
 
 async function createUser(payload: CreateUserPayload): Promise<void> {
-  const response = await authClient.admin.createUser({
-    email: payload.email,
-    password: payload.password,
-    name: payload.name,
-    role: payload.role,
+  const response = await fetch('/api/admin/create-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
 
-  if (response.error) {
-    throw new Error(response.error.message ?? 'Failed to create user');
+  if (!response.ok) {
+    const error = (await response.json().catch(() => null)) as {
+      message?: string;
+    } | null;
+    throw new Error(error?.message ?? 'Failed to create user');
   }
 }
 

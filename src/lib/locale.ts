@@ -41,6 +41,21 @@ export function toLocalePath(locale: AppLocale, path = '/'): string {
   return `/${locale}${normalizedPath}`;
 }
 
+export function getLocaleFromRequest(request?: Request): AppLocale {
+  const referer = request?.headers.get('referer');
+
+  if (referer) {
+    const pathname = new URL(referer).pathname;
+    const localeSegment = pathname.split('/')[1];
+
+    if (localeSegment && isAppLocale(localeSegment)) {
+      return localeSegment;
+    }
+  }
+
+  return DEFAULT_LOCALE;
+}
+
 export function getDateLocale(locale: AppLocale): string {
   return locale === 'id' ? 'id-ID' : 'en-US';
 }
