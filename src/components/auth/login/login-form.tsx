@@ -76,6 +76,11 @@ export function LoginForm({ locale }: Props) {
       });
 
       if (result?.error) {
+        if (result.error.status === 403) {
+          setFormError(copy.errors.emailNotVerified);
+          return;
+        }
+
         setFormError(result.error.message || copy.errors.invalidCredentials);
         return;
       }

@@ -96,6 +96,8 @@ export const loginFormCopy = {
       passwordLength: 'Kata sandi minimal 8 karakter',
       termsRequired: 'Anda harus menyetujui Syarat dan Privasi untuk lanjut',
       invalidCredentials: 'Email atau kata sandi tidak valid.',
+      emailNotVerified:
+        'Email Anda belum diverifikasi. Silakan cek inbox email Anda.',
       unknownError: 'Terjadi kesalahan saat login. Silakan coba lagi.',
     },
   },
@@ -119,6 +121,8 @@ export const loginFormCopy = {
       passwordLength: 'Password must be at least 8 characters',
       termsRequired: 'You need to agree to the Terms and Privacy to continue',
       invalidCredentials: 'Invalid email or password.',
+      emailNotVerified:
+        'Your email is not verified. Please check your email inbox.',
       unknownError: 'An error occurred during login. Please try again.',
     },
   },
