@@ -35,6 +35,7 @@ describe(
       expect(data.data.conversation).toBeDefined();
       expect(MessageService.sendAdminMessage).toHaveBeenCalledWith({
         chatId: convId,
+        wabaId,
         userId: 'user-1',
         content: 'hello',
       });

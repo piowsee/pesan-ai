@@ -49,6 +49,7 @@ vi.mock('@/repositories/chat.repository', () => ({
     findAllByWabaId: vi.fn(),
     findById: vi.fn(),
     getChatMetaForSending: vi.fn(),
+    markConversationAsRead: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
     processIncomingMessage: vi.fn(),
   },
@@ -95,6 +96,7 @@ vi.mock('@/services/chat.service', () => ({
   ChatService: {
     getAllChats: vi.fn(),
     getChatDetail: vi.fn(),
+    markAsRead: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
   },
 }));

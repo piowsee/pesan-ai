@@ -15,7 +15,7 @@ import { MessageService } from '@/services/message.service';
  */
 
 export const POST = withApiAuth<{ wabaId: string; convId: string }>(
-  async ({ user, params: { convId }, req }) => {
+  async ({ user, params: { wabaId, convId }, req }) => {
     const body = await req.json();
     const validated = SendMessageSchema.safeParse(body);
 
@@ -27,6 +27,7 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
 
     const result = await MessageService.sendAdminMessage({
       chatId: convId,
+      wabaId,
       userId: user.id,
       content: message,
     });

@@ -27,15 +27,21 @@ export const ChatService = {
     return { chats, total: chats.length };
   },
 
-  async markAsRead(params: { convId: string; userId: string }) {
-    const { convId, userId } = params;
-    logger.info('Marking conversation as read', { convId, userId });
+  async markAsRead(params: { convId: string; wabaId: string; userId: string }) {
+    const { convId, wabaId, userId } = params;
+    logger.info('Marking conversation as read', { convId, wabaId, userId });
 
     const result = await ChatRepository.markConversationAsRead({
       convId,
+      wabaId,
       userId,
     });
-    logger.info('Mark as read completed', { convId, userId, ...result });
+    logger.info('Mark as read completed', {
+      convId,
+      wabaId,
+      userId,
+      ...result,
+    });
     return result;
   },
 

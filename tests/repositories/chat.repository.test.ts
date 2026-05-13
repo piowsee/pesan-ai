@@ -105,6 +105,7 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
     it('fetches metadata for the seeded conversation', async () => {
       const result = await ChatRepository.getChatMetaForSending({
         convId: dbConvId,
+        wabaId: dbWabaId,
         userId,
       });
 
