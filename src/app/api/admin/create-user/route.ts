@@ -1,7 +1,6 @@
 import { withApiAdmin } from '@/lib/api-handler';
-import { auth } from '@/lib/auth/auth';
+import { auth, createResetPasswordCallbackUrl } from '@/lib/auth/auth';
 import { jsend } from '@/lib/jsend';
-import { DEFAULT_LOCALE, toLocalePath } from '@/lib/locale';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 
@@ -21,6 +20,10 @@ export const POST = withApiAdmin(async ({ req }) => {
     headers: requestHeaders,
   });
 
+  const callbackURL = await createResetPasswordCallbackUrl(
+    createUserResponse.user.id,
+  );
+
   // Use auth.api on the server instead of authClient.
   // authClient.sendVerificationEmail() runs under the current browser session,
   // and Better Auth checks that the session email matches the requested email.
@@ -28,7 +31,7 @@ export const POST = withApiAdmin(async ({ req }) => {
   await auth.api.sendVerificationEmail({
     body: {
       email: body.email,
-      callbackURL: toLocalePath(DEFAULT_LOCALE, '/reset-password'),
+      callbackURL,
     },
   });
 

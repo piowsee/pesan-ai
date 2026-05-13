@@ -1,10 +1,38 @@
 import { EmailType, sendEmail } from '@/lib/auth/email/email';
-import { getLocaleFromRequest, toLocalePath } from '@/lib/locale';
+import {
+  type AppLocale,
+  DEFAULT_LOCALE,
+  getLocaleFromRequest,
+  toLocalePath,
+} from '@/lib/locale';
 import prisma from '@/lib/prisma';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { admin, openAPI } from 'better-auth/plugins';
+import { randomBytes, randomUUID } from 'node:crypto';
+
+const ADMIN_ONBOARDING_RESET_TOKEN_EXPIRES_IN = 3 * 24 * 60 * 60; // 3 days
+
+export async function createResetPasswordCallbackUrl(
+  userId: string,
+  locale: AppLocale = DEFAULT_LOCALE,
+) {
+  const token = randomBytes(24).toString('hex');
+
+  await prisma.verification.create({
+    data: {
+      id: randomUUID(),
+      identifier: `reset-password:${token}`,
+      value: userId,
+      expiresAt: new Date(
+        Date.now() + ADMIN_ONBOARDING_RESET_TOKEN_EXPIRES_IN * 1000,
+      ),
+    },
+  });
+
+  return toLocalePath(locale, `/reset-password?token=${token}`);
+}
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
