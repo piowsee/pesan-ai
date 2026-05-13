@@ -1,7 +1,7 @@
 'use client';
 
 import type { AppLocale } from '@/lib/locale';
-import type { ComponentType } from 'react';
+import { type ComponentType, Suspense } from 'react';
 
 type AuthFormProps = {
   locale: AppLocale;
@@ -25,7 +25,13 @@ export function AuthCard({ locale, title, subtitle, FormComponent }: Props) {
           {subtitle}
         </p>
       </div>
-      <FormComponent locale={locale} />
+      <Suspense
+        fallback={
+          <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
+        }
+      >
+        <FormComponent locale={locale} />
+      </Suspense>
     </div>
   );
 }
