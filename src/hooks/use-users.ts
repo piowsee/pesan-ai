@@ -1,6 +1,7 @@
 'use client';
 
 import { authClient } from '@/lib/auth/auth-client';
+import { DEFAULT_LOCALE, toLocalePath } from '@/lib/locale';
 import {
   keepPreviousData,
   queryOptions,
@@ -86,6 +87,18 @@ async function createUser(payload: CreateUserPayload): Promise<void> {
 
   if (response.error) {
     throw new Error(response.error.message ?? 'Failed to create user');
+  }
+
+  const verificationResponse = await authClient.sendVerificationEmail({
+    email: payload.email,
+    callbackURL: toLocalePath(DEFAULT_LOCALE, '/reset-password'),
+  });
+
+  if (verificationResponse.error) {
+    throw new Error(
+      verificationResponse.error.message ??
+        'User created, but failed to send verification email',
+    );
   }
 }
 
