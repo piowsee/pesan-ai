@@ -9,7 +9,7 @@ export const loginCardCopy = {
   },
 } as const;
 
-export const loginBrandPanelCopy = {
+export const authBrandPanelCopy = {
   id: {
     headline:
       'Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI.',
