@@ -8,7 +8,7 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   const pathName = request.nextUrl.pathname;
-  const localePrefix = pathName.match(localePrefixRegex)?.[0] ?? '/id';
+  const localePrefix = pathName.match(localePrefixRegex)?.[0] ?? '/en';
   const normalizedPath = pathName.replace(localePrefixRegex, '') || '/';
 
   const isLoginRoute = normalizedPath.startsWith('/login');
@@ -57,5 +57,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login', '/:locale/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/:locale/login'],
 };
