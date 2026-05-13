@@ -22,7 +22,7 @@ export const MessageRepository = {
       },
       select: {
         messages: {
-          orderBy: { timestamp: 'desc' },
+          orderBy: [{ timestamp: 'desc' }, { createdAt: 'desc' }],
           take: limit,
           skip: offset,
         },

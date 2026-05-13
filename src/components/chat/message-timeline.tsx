@@ -42,9 +42,13 @@ export function MessageTimeline({
   onLoadOlder: () => void;
 }) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastGroup = messages[messages.length - 1];
-  const latestMessageId =
-    lastGroup?.messages[lastGroup.messages.length - 1]?.id;
+  const previousConversationIdRef = useRef<string | undefined>(undefined);
+  const previousMessageCountRef = useRef(0);
+  const shouldStickToBottomRef = useRef(true);
+  const messageCount = messages.reduce(
+    (count, group) => count + group.messages.length,
+    0,
+  );
 
   useEffect(() => {
     const viewport = scrollAreaRef.current?.querySelector(
@@ -55,11 +59,48 @@ export function MessageTimeline({
       return;
     }
 
-    viewport.scrollTo({
-      top: viewport.scrollHeight,
-      behavior: 'smooth',
+    const updateStickiness = () => {
+      const distanceFromBottom =
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      shouldStickToBottomRef.current = distanceFromBottom <= 96;
+    };
+
+    updateStickiness();
+    viewport.addEventListener('scroll', updateStickiness, { passive: true });
+
+    return () => {
+      viewport.removeEventListener('scroll', updateStickiness);
+    };
+  }, [conversationId]);
+
+  useEffect(() => {
+    const viewport = scrollAreaRef.current?.querySelector(
+      '[data-slot="scroll-area-viewport"]',
+    ) as HTMLDivElement | null;
+
+    if (!viewport) {
+      return;
+    }
+
+    const hasSwitchedConversation =
+      previousConversationIdRef.current !== conversationId;
+    const hasNewMessages = messageCount > previousMessageCountRef.current;
+    const shouldScroll =
+      hasSwitchedConversation ||
+      (hasNewMessages && shouldStickToBottomRef.current);
+
+    previousConversationIdRef.current = conversationId;
+    previousMessageCountRef.current = messageCount;
+
+    if (!shouldScroll) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      viewport.scrollTop = viewport.scrollHeight;
+      shouldStickToBottomRef.current = true;
     });
-  }, [conversationId, latestMessageId]);
+  }, [conversationId, messageCount]);
 
   return (
     <div ref={scrollAreaRef} className="h-full w-full">
