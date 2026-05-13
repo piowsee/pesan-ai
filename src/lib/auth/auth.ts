@@ -1,3 +1,4 @@
+import { EmailType, sendEmail } from '@/lib/auth/email/email';
 import prisma from '@/lib/prisma';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
@@ -19,6 +20,19 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    sendResetPassword: async ({ user, url }) => {
+      void sendEmail({
+        to: user.email,
+        subject: 'Reset your password',
+        type: EmailType.RESET_PASSWORD,
+        params: {
+          user_name: user.name || 'User',
+          reset_url: url,
+        },
+      });
+    },
+    resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
   },
   // disable sign-up using pre-hook if in production
   hooks: {
@@ -35,6 +49,28 @@ export const auth = betterAuth({
         });
       }
     }),
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      const verificationUrl = new URL(url);
+      verificationUrl.searchParams.set('callbackURL', '/login');
+      void sendEmail({
+        to: user.email,
+        subject: 'Verify your email address',
+        type: EmailType.VERIFICATION,
+        params: {
+          user_name: user.name || 'User',
+          verification_url: verificationUrl.toString(),
+        },
+      });
+    },
+    sendOnSignUp: true,
+    /*
+     * NOTE: Sign-in resends email & returns 403 if unverified.
+     * @see https://better-auth.com/docs/concepts/email to use the built in onError
+     */
+    sendOnSignIn: true,
+    expiresIn: 3 * 24 * 60 * 60, // 3 days
   },
   plugins: [admin(), openAPI()],
 });
