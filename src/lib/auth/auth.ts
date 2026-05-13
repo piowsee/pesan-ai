@@ -53,7 +53,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       const verificationUrl = new URL(url);
-      verificationUrl.searchParams.set('callbackURL', '/login');
+      verificationUrl.searchParams.set('callbackURL', '/reset-password');
       void sendEmail({
         to: user.email,
         subject: 'Verify your email address',
