@@ -59,6 +59,7 @@ export function mapRawConversationToChatConversation(
   chat: RawConversation,
 ): ChatConversation {
   const lastCustomerMessageAt = chat.lastCustomerMessageAt?.toString() || null;
+  const unreadCount = Number(chat.unreadCount ?? 0);
 
   return {
     id: chat.id,
@@ -68,7 +69,7 @@ export function mapRawConversationToChatConversation(
     adminTakeover: chat.adminTakeover,
     lastMessageAt: chat.lastMessageAt?.toString() || null,
     lastCustomerMessageAt,
-    unreadCount: chat.unreadCount,
+    unreadCount: Number.isFinite(unreadCount) ? unreadCount : 0,
     status: chat.status,
     createdAt: chat.createdAt.toString(),
     updatedAt: chat.updatedAt.toString(),

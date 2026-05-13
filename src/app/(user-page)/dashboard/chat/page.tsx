@@ -1,5 +1,13 @@
-import { ChatWorkspace } from '@/components/chat/chat-workspace';
+import {
+  ChatWorkspace,
+  ChatWorkspaceSkeleton,
+} from '@/components/chat/chat-workspace';
+import { Suspense } from 'react';
 
 export default function ChatPage() {
-  return <ChatWorkspace />;
+  return (
+    <Suspense fallback={<ChatWorkspaceSkeleton />}>
+      <ChatWorkspace />
+    </Suspense>
+  );
 }

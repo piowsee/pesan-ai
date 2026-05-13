@@ -5,6 +5,7 @@ import { ChatEmptyState } from '@/components/chat/chat-empty-state';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import { useConversations, useMarkAsRead } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -12,35 +13,200 @@ import { useMessages, useSendMessage } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
-// ──────────────────────────────────────────────
-// Workspace Component
-// ──────────────────────────────────────────────
+const CHAT_STATE_STORAGE_KEY = 'dashboard-chat-state';
+const CHAT_STATE_PARAM_KEYS = [
+  'wabaId',
+  'conversationId',
+  'filter',
+  'phoneNumberId',
+  'q',
+  'panel',
+] as const;
+
+type ChatStateParamKey = (typeof CHAT_STATE_PARAM_KEYS)[number];
+
+function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
+  return value === 'all' || value === 'admin' || value === 'bot';
+}
+
+export function ChatWorkspaceSkeleton() {
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-brand/15 bg-background">
+        <div className="flex h-15 items-center px-4">
+          <Skeleton className="ml-4 h-8 w-40 rounded-md" />
+        </div>
+      </div>
+
+      <div
+        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
+        style={{ contain: 'strict' }}
+      >
+        <div className="hidden h-full w-95 shrink-0 border-r border-brand/10 bg-background lg:flex lg:flex-col">
+          <div className="flex flex-col gap-3 px-4 py-4">
+            <Skeleton className="h-9 w-full rounded-full" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-12 rounded-full" />
+              <Skeleton className="h-8 w-16 rounded-full" />
+              <Skeleton className="h-8 w-12 rounded-full" />
+              <Skeleton className="ml-auto h-8 w-28 rounded-full" />
+            </div>
+          </div>
+
+          <div className="flex flex-1 flex-col">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div key={index} className="flex gap-3 px-4 py-3">
+                <Skeleton className="size-11 shrink-0 rounded-full" />
+                <div className="flex flex-1 flex-col justify-center gap-2">
+                  <Skeleton className="h-4 w-32 rounded-md" />
+                  <Skeleton className="h-3 w-44 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col bg-brand/5">
+          <div className="border-b bg-background px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Skeleton className="size-11 shrink-0 rounded-full" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-40 rounded-md" />
+                <Skeleton className="h-3 w-32 rounded-md" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 px-4 py-4 lg:px-6">
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <div
+                  key={index}
+                  className={
+                    index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
+                  }
+                >
+                  <Skeleton className="h-20 w-[min(24rem,75%)] rounded-[20px]" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="shrink-0 px-4 py-4 lg:px-6">
+            <Skeleton className="h-16 w-full rounded-[18px]" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ChatWorkspace() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data } = useWabas(1, 100);
-  const wabas = data?.wabas ?? [];
+  const wabas = useMemo(() => data?.wabas ?? [], [data?.wabas]);
+  const searchParamsString = searchParams.toString();
+  const hasPersistedStateInUrl = CHAT_STATE_PARAM_KEYS.some((key) =>
+    searchParams.has(key),
+  );
 
-  // ── State ──
-  const [userSelectedWabaId, setUserSelectedWabaId] = useState<
-    string | undefined
-  >(undefined);
-  const activeWabaId = userSelectedWabaId ?? wabas[0]?.id;
-  const [selectedConversationId, setSelectedConversationId] = useState<
-    string | undefined
-  >(undefined);
-  const [filter, setFilter] = useState<ChatSidebarFilter>('all');
-  const [searchValue, setSearchValue] = useState('');
-  const debouncedSearchValue = useDebounce(searchValue, 400);
-  const [selectedPhoneNumberId, setSelectedPhoneNumberId] = useState<
-    string | undefined
-  >(undefined);
-  const [isContactInfoOpen, setIsContactInfoOpen] = useState(false);
+  const [initialStoredChatState] = useState(() => {
+    if (typeof window === 'undefined') {
+      return '';
+    }
+
+    return window.localStorage.getItem(CHAT_STATE_STORAGE_KEY) ?? '';
+  });
+  const [localSendScrollSignal, setLocalSendScrollSignal] = useState(0);
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
-  // ── Queries ──
+  const requestedWabaId = searchParams.get('wabaId') || undefined;
+  const selectedConversationId =
+    searchParams.get('conversationId') || undefined;
+  const selectedPhoneNumberId = searchParams.get('phoneNumberId') || undefined;
+  const filter = isChatSidebarFilter(searchParams.get('filter'))
+    ? (searchParams.get('filter') as ChatSidebarFilter)
+    : 'all';
+  const searchValue = searchParams.get('q') ?? '';
+  const debouncedSearchValue = useDebounce(searchValue, 400);
+  const isContactInfoOpen = searchParams.get('panel') === 'contact';
+  const shouldRestoreFromStorage =
+    !hasPersistedStateInUrl && Boolean(initialStoredChatState);
+  const activeWabaId = shouldRestoreFromStorage
+    ? undefined
+    : (requestedWabaId ?? wabas[0]?.id);
+
+  const replaceChatState = useCallback(
+    (updates: Partial<Record<ChatStateParamKey, string | undefined>>) => {
+      const nextParams = new URLSearchParams(searchParamsString);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) {
+          nextParams.set(key, value);
+        } else {
+          nextParams.delete(key);
+        }
+      });
+
+      const nextQuery = nextParams.toString();
+      const nextHref = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+
+      startTransition(() => {
+        router.replace(nextHref, { scroll: false });
+      });
+    },
+    [pathname, router, searchParamsString],
+  );
+
+  useEffect(() => {
+    if (hasPersistedStateInUrl) {
+      return;
+    }
+
+    if (!initialStoredChatState) {
+      return;
+    }
+
+    startTransition(() => {
+      router.replace(`${pathname}?${initialStoredChatState}`, {
+        scroll: false,
+      });
+    });
+  }, [hasPersistedStateInUrl, initialStoredChatState, pathname, router]);
+
+  useEffect(() => {
+    if (!hasPersistedStateInUrl) {
+      return;
+    }
+
+    const persistedParams = new URLSearchParams();
+    const currentSearchParams = new URLSearchParams(searchParamsString);
+
+    CHAT_STATE_PARAM_KEYS.forEach((key) => {
+      const value = currentSearchParams.get(key);
+      if (value) {
+        persistedParams.set(key, value);
+      }
+    });
+
+    window.localStorage.setItem(
+      CHAT_STATE_STORAGE_KEY,
+      persistedParams.toString(),
+    );
+  }, [hasPersistedStateInUrl, searchParamsString]);
+
   const {
     data: convData,
     isLoading: isConversationsLoading,
@@ -49,7 +215,6 @@ export function ChatWorkspace() {
     refetch,
   } = useConversations(activeWabaId);
 
-  // ── Message Query ──
   const {
     data: groupedMessages,
     isLoading: isMessagesLoading,
@@ -58,14 +223,18 @@ export function ChatWorkspace() {
     fetchNextPage,
   } = useMessages(activeWabaId, selectedConversationId);
 
-  // ── Real-time SSE ──
   useChatSSE({
     viewingConversationId: selectedConversationId,
   });
 
-  // ── Derived ──
-  const activeWaba = wabas.find((w) => w.id === activeWabaId);
-  const phoneNumbers = activeWaba?.phoneNumbers ?? [];
+  const activeWaba = useMemo(
+    () => wabas.find((waba) => waba.id === activeWabaId),
+    [activeWabaId, wabas],
+  );
+  const phoneNumbers = useMemo(
+    () => activeWaba?.phoneNumbers ?? [],
+    [activeWaba?.phoneNumbers],
+  );
 
   const allConversations = useMemo(
     () => convData?.chats ?? [],
@@ -75,19 +244,16 @@ export function ChatWorkspace() {
   const filteredConversations = useMemo(() => {
     let result = allConversations;
 
-    // Filter by phone number locally
     if (selectedPhoneNumberId) {
       result = result.filter((c) => c.phoneNumber.id === selectedPhoneNumberId);
     }
 
-    // Filter by Admin/Bot
     if (filter === 'admin') {
       result = result.filter((c) => c.adminTakeover === true);
     } else if (filter === 'bot') {
       result = result.filter((c) => c.adminTakeover === false);
     }
 
-    // Filter by Search
     const q = debouncedSearchValue.trim().toLowerCase();
     if (q) {
       result = result.filter(
@@ -105,11 +271,65 @@ export function ChatWorkspace() {
     return allConversations.find((c) => c.id === selectedConversationId);
   }, [allConversations, selectedConversationId]);
 
-  // Combine queried messages with locally sent "extra" messages
-  // This allows the user to see their message instantly before SSE/API refresh.
-  const messages = useMemo(() => {
-    return groupedMessages ?? [];
-  }, [groupedMessages]);
+  useEffect(() => {
+    if (shouldRestoreFromStorage || !activeWabaId) {
+      return;
+    }
+
+    const nextState: Partial<Record<ChatStateParamKey, string | undefined>> =
+      {};
+
+    if (
+      !requestedWabaId ||
+      !wabas.some((waba) => waba.id === requestedWabaId)
+    ) {
+      nextState.wabaId = activeWabaId;
+    }
+
+    if (
+      selectedPhoneNumberId &&
+      !phoneNumbers.some(
+        (phoneNumber) => phoneNumber.id === selectedPhoneNumberId,
+      )
+    ) {
+      nextState.phoneNumberId = undefined;
+    }
+
+    if (selectedConversationId && convData && !selectedConversation) {
+      nextState.conversationId = undefined;
+      nextState.panel = undefined;
+    }
+
+    if (!selectedConversationId && isContactInfoOpen) {
+      nextState.panel = undefined;
+    }
+
+    if (
+      searchParams.has('filter') &&
+      !isChatSidebarFilter(searchParams.get('filter'))
+    ) {
+      nextState.filter = undefined;
+    }
+
+    if (Object.keys(nextState).length > 0) {
+      replaceChatState(nextState);
+    }
+  }, [
+    activeWabaId,
+    convData,
+    isContactInfoOpen,
+    phoneNumbers,
+    replaceChatState,
+    requestedWabaId,
+    searchParams,
+    selectedConversation,
+    selectedConversationId,
+    selectedPhoneNumberId,
+    shouldRestoreFromStorage,
+    wabas,
+  ]);
+
+  const messages = useMemo(() => groupedMessages ?? [], [groupedMessages]);
 
   const selectedContactDraft = selectedConversation
     ? (contactDetailsByConversation[selectedConversation.id] ?? {
@@ -119,15 +339,16 @@ export function ChatWorkspace() {
     : { label: '', notes: '' };
 
   const showMobileDetail = Boolean(selectedConversationId);
-
   const { mutate: markAsRead } = useMarkAsRead();
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
-      setSelectedConversationId(conversationId);
-      setIsContactInfoOpen(false);
+      replaceChatState({
+        wabaId: activeWabaId,
+        conversationId,
+        panel: undefined,
+      });
 
-      // Mark as read in database + optimistic UI update
       if (activeWabaId) {
         const conversation = allConversations.find(
           (c) => c.id === conversationId,
@@ -137,7 +358,7 @@ export function ChatWorkspace() {
         }
       }
     },
-    [activeWabaId, allConversations, markAsRead],
+    [activeWabaId, allConversations, markAsRead, replaceChatState],
   );
 
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
@@ -146,6 +367,7 @@ export function ChatWorkspace() {
     (content: string) => {
       if (!selectedConversationId || !activeWabaId) return;
 
+      setLocalSendScrollSignal((value) => value + 1);
       sendMessage({
         wabaId: activeWabaId,
         convId: selectedConversationId,
@@ -155,7 +377,19 @@ export function ChatWorkspace() {
     [activeWabaId, selectedConversationId, sendMessage],
   );
 
-  // ── Render ──
+  const isRestoringPersistedState = shouldRestoreFromStorage;
+  const isWaitingForInitialWaba = wabas.length === 0;
+  const isWaitingForSelectedConversation =
+    Boolean(selectedConversationId) && isConversationsLoading && !convData;
+  const shouldShowWorkspaceSkeleton =
+    isRestoringPersistedState ||
+    isWaitingForInitialWaba ||
+    isWaitingForSelectedConversation;
+
+  if (shouldShowWorkspaceSkeleton) {
+    return <ChatWorkspaceSkeleton />;
+  }
+
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
       <div className="shrink-0 bg-background z-10 relative border-b border-brand/15">
@@ -164,9 +398,12 @@ export function ChatWorkspace() {
             wabas={wabas}
             activeWabaId={activeWaba?.id}
             onSelectWaba={(wabaId) => {
-              setUserSelectedWabaId(wabaId);
-              setSelectedConversationId(undefined);
-              setSelectedPhoneNumberId(undefined);
+              replaceChatState({
+                wabaId,
+                conversationId: undefined,
+                phoneNumberId: undefined,
+                panel: undefined,
+              });
             }}
           />
         </div>
@@ -176,18 +413,25 @@ export function ChatWorkspace() {
         className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
         style={{ contain: 'strict' }}
       >
-        {/* Sidebar */}
         <div
           className={`absolute inset-0 z-10 flex h-full w-full flex-col bg-background transition-transform duration-200 ease-out lg:static lg:w-95 lg:shrink-0 lg:border-r lg:border-brand/10 lg:translate-x-0 ${showMobileDetail ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
         >
           <ChatSidebar
             searchValue={searchValue}
-            onSearchChange={setSearchValue}
+            onSearchChange={(value) => {
+              replaceChatState({ q: value.trim() ? value : undefined });
+            }}
             filter={filter}
-            onFilterChange={setFilter}
+            onFilterChange={(value) => {
+              replaceChatState({
+                filter: value === 'all' ? undefined : value,
+              });
+            }}
             phoneNumbers={phoneNumbers}
             selectedPhoneNumberId={selectedPhoneNumberId}
-            onPhoneNumberChange={setSelectedPhoneNumberId}
+            onPhoneNumberChange={(value) => {
+              replaceChatState({ phoneNumberId: value });
+            }}
             conversations={filteredConversations}
             activeConversationId={selectedConversationId}
             isLoading={isConversationsLoading}
@@ -198,7 +442,6 @@ export function ChatWorkspace() {
           />
         </div>
 
-        {/* Chat Detail */}
         <div
           className={`absolute inset-0 z-20 flex min-w-0 flex-1 flex-col bg-background transition-transform duration-200 ease-out lg:static lg:z-0 lg:translate-x-0 ${!showMobileDetail ? 'translate-x-full pointer-events-none' : isContactInfoOpen ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
         >
@@ -210,14 +453,20 @@ export function ChatWorkspace() {
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               onLoadOlder={() => fetchNextPage()}
+              localSendScrollSignal={localSendScrollSignal}
               isSending={isSending}
               onSend={handleSendMessage}
               showBackButton={showMobileDetail}
               onBack={() => {
-                setSelectedConversationId(undefined);
+                replaceChatState({
+                  conversationId: undefined,
+                  panel: undefined,
+                });
               }}
               onContactAreaClick={() => {
-                setIsContactInfoOpen((prev) => !prev);
+                replaceChatState({
+                  panel: isContactInfoOpen ? undefined : 'contact',
+                });
               }}
             />
           ) : (
@@ -232,7 +481,6 @@ export function ChatWorkspace() {
           )}
         </div>
 
-        {/* Contact Info Panel */}
         {selectedConversation && isContactInfoOpen ? (
           <div className="absolute inset-0 z-30 flex flex-col bg-background lg:static lg:z-0 lg:w-95 lg:shrink-0 lg:overflow-hidden lg:border-l lg:border-brand/10">
             <ContactInfoPanel
@@ -258,7 +506,7 @@ export function ChatWorkspace() {
                 }));
               }}
               onClose={() => {
-                setIsContactInfoOpen(false);
+                replaceChatState({ panel: undefined });
               }}
               showMobileBackButton={showMobileDetail}
             />

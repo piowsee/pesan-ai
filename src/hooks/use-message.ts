@@ -67,9 +67,28 @@ export function groupMessagesByDate(messages: ChatMessage[]): MessageGroup[] {
 
   // Note: messages from API are DESC (newest first).
   // We should sort them ASC (oldest first) before grouping for a timeline.
-  const sorted = [...messages].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  );
+  // When timestamps tie, we fall back to createdAt and then reverse the
+  // original DESC index so the visual order remains chronological.
+  const sorted = messages
+    .map((message, index) => ({ message, index }))
+    .sort((a, b) => {
+      const timestampDiff =
+        new Date(a.message.timestamp).getTime() -
+        new Date(b.message.timestamp).getTime();
+      if (timestampDiff !== 0) {
+        return timestampDiff;
+      }
+
+      const createdAtDiff =
+        new Date(a.message.createdAt).getTime() -
+        new Date(b.message.createdAt).getTime();
+      if (createdAtDiff !== 0) {
+        return createdAtDiff;
+      }
+
+      return b.index - a.index;
+    })
+    .map(({ message }) => message);
 
   sorted.forEach((msg) => {
     const date = new Date(msg.timestamp).toISOString().split('T')[0];

@@ -14,12 +14,16 @@ export function ConversationListItem({
   isActive: boolean;
   onSelect: () => void;
 }) {
+  const unreadCount = Number(conversation.unreadCount ?? 0);
+  const hasUnread = Number.isFinite(unreadCount) && unreadCount > 0;
+  const messagePreview = getMessagePreview(conversation.lastMessage);
+
   return (
     <button
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-all',
+        'flex w-full min-w-0 overflow-hidden cursor-pointer items-start gap-3 px-4 py-3 text-left transition-all',
         isActive
           ? 'bg-brand/10 hover:bg-brand/10'
           : 'bg-transparent hover:bg-brand/5',
@@ -31,15 +35,15 @@ export function ConversationListItem({
         </AvatarFallback>
       </Avatar>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="truncate font-semibold text-[15px] tracking-tight text-foreground/90">
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <div className="min-w-0 flex-1 truncate font-semibold text-[15px] tracking-tight text-foreground/90">
             {conversation.displayName}
           </div>
           <span
             className={cn(
               'shrink-0 text-xs',
-              conversation.unreadCount > 0
+              hasUnread
                 ? 'text-primary font-semibold'
                 : 'text-muted-foreground',
             )}
@@ -48,18 +52,21 @@ export function ConversationListItem({
           </span>
         </div>
 
-        <div className="mt-0.5 flex items-center justify-between gap-3">
-          <p className="line-clamp-1 flex-1 text-[13px] text-muted-foreground">
-            {getMessagePreview(conversation.lastMessage)}
+        <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden">
+          <p
+            className="block min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-muted-foreground"
+            title={messagePreview}
+          >
+            {messagePreview}
           </p>
 
-          <div className="flex shrink-0 items-center justify-end gap-2 min-w-10">
-            {conversation.unreadCount > 0 && (
+          <div className="flex min-w-fit shrink-0 items-center justify-end">
+            {hasUnread && (
               <Badge
                 variant="default"
                 className="rounded-full px-1.5 h-5 min-w-5 flex items-center justify-center text-[10px] font-bold bg-brand text-brand-foreground"
               >
-                {conversation.unreadCount}
+                {unreadCount}
               </Badge>
             )}
           </div>

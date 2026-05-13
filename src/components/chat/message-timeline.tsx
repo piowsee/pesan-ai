@@ -1,13 +1,14 @@
 'use client';
 
 import { MessageBubble } from '@/components/chat/message-bubble';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import type { MessageGroup } from '@/hooks/use-message';
-import { ChevronUpIcon } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 function MessageTimelineSkeleton() {
   return (
@@ -33,6 +34,7 @@ export function MessageTimeline({
   hasNextPage,
   isFetchingNextPage,
   onLoadOlder,
+  localSendScrollSignal,
 }: {
   conversationId?: string;
   messages: MessageGroup[];
@@ -40,29 +42,123 @@ export function MessageTimeline({
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
+  localSendScrollSignal: number;
 }) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const lastGroup = messages[messages.length - 1];
-  const latestMessageId =
-    lastGroup?.messages[lastGroup.messages.length - 1]?.id;
+  const previousConversationIdRef = useRef<string | undefined>(undefined);
+  const previousMessageCountRef = useRef(0);
+  const previousLocalSendScrollSignalRef = useRef(localSendScrollSignal);
+  const shouldStickToBottomRef = useRef(true);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [lastSeenBottomMessageId, setLastSeenBottomMessageId] = useState<
+    string | undefined
+  >(undefined);
+  const flattenedMessages = messages.flatMap((group) => group.messages);
+  const messageCount = flattenedMessages.length;
+  const latestMessageId = flattenedMessages[messageCount - 1]?.id;
+  const lastSeenBottomIndex = lastSeenBottomMessageId
+    ? flattenedMessages.findIndex(
+        (message) => message.id === lastSeenBottomMessageId,
+      )
+    : -1;
+  const unseenMessageCount =
+    !isNearBottom &&
+    latestMessageId &&
+    lastSeenBottomMessageId !== latestMessageId
+      ? lastSeenBottomIndex === -1
+        ? messageCount
+        : Math.max(0, messageCount - lastSeenBottomIndex - 1)
+      : 0;
 
-  useEffect(() => {
-    const viewport = scrollAreaRef.current?.querySelector(
-      '[data-slot="scroll-area-viewport"]',
-    ) as HTMLDivElement | null;
+  const getViewport = useCallback(
+    () =>
+      scrollAreaRef.current?.querySelector(
+        '[data-slot="scroll-area-viewport"]',
+      ) as HTMLDivElement | null,
+    [],
+  );
+
+  const scrollToBottom = useCallback(() => {
+    const viewport = getViewport();
 
     if (!viewport) {
       return;
     }
 
-    viewport.scrollTo({
-      top: viewport.scrollHeight,
-      behavior: 'smooth',
+    requestAnimationFrame(() => {
+      viewport.scrollTop = viewport.scrollHeight;
+      shouldStickToBottomRef.current = true;
+      setIsNearBottom(true);
+      setLastSeenBottomMessageId(latestMessageId);
     });
-  }, [conversationId, latestMessageId]);
+  }, [getViewport, latestMessageId]);
+
+  useEffect(() => {
+    const viewport = getViewport();
+
+    if (!viewport) {
+      return;
+    }
+
+    const updateStickiness = () => {
+      const distanceFromBottom =
+        viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      const nextIsNearBottom = distanceFromBottom <= 96;
+      shouldStickToBottomRef.current = nextIsNearBottom;
+      setIsNearBottom((current) =>
+        current === nextIsNearBottom ? current : nextIsNearBottom,
+      );
+
+      if (nextIsNearBottom) {
+        setLastSeenBottomMessageId(latestMessageId);
+      }
+    };
+
+    updateStickiness();
+    viewport.addEventListener('scroll', updateStickiness, { passive: true });
+
+    return () => {
+      viewport.removeEventListener('scroll', updateStickiness);
+    };
+  }, [conversationId, getViewport, latestMessageId]);
+
+  useEffect(() => {
+    const viewport = getViewport();
+
+    if (!viewport) {
+      return;
+    }
+
+    const hasSwitchedConversation =
+      previousConversationIdRef.current !== conversationId;
+    const hasNewMessages = messageCount > previousMessageCountRef.current;
+    const hasLocalSendScrollRequest =
+      previousLocalSendScrollSignalRef.current !== localSendScrollSignal;
+    const shouldScroll =
+      hasLocalSendScrollRequest ||
+      hasSwitchedConversation ||
+      (hasNewMessages && shouldStickToBottomRef.current);
+
+    previousConversationIdRef.current = conversationId;
+    previousMessageCountRef.current = messageCount;
+    previousLocalSendScrollSignalRef.current = localSendScrollSignal;
+
+    if (!shouldScroll) {
+      return;
+    }
+
+    scrollToBottom();
+  }, [
+    conversationId,
+    latestMessageId,
+    localSendScrollSignal,
+    messageCount,
+    getViewport,
+    scrollToBottom,
+  ]);
 
   return (
-    <div ref={scrollAreaRef} className="h-full w-full">
+    <div ref={scrollAreaRef} className="relative h-full w-full">
       <ScrollArea className="h-full px-2 lg:px-4">
         <div className="flex min-h-full flex-col gap-4 px-2 pt-4 pb-40">
           {hasNextPage ? (
@@ -111,6 +207,23 @@ export function MessageTimeline({
             : null}
         </div>
       </ScrollArea>
+
+      {!isNearBottom && unseenMessageCount > 0 ? (
+        <div className="pointer-events-none absolute right-4 bottom-5 z-10 flex justify-end">
+          <Button
+            type="button"
+            size="icon"
+            onClick={scrollToBottom}
+            className="pointer-events-auto relative size-12 rounded-full border border-brand/15 bg-background/95 text-foreground shadow-lg backdrop-blur-sm hover:bg-background"
+            aria-label={`Jump to ${unseenMessageCount} new messages`}
+          >
+            <ChevronDownIcon className="size-5" />
+            <Badge className="absolute -top-1.5 -right-1.5 min-w-5 justify-center rounded-full px-1.5 py-0 text-[10px] leading-4 shadow-sm">
+              {unseenMessageCount > 99 ? '99+' : unseenMessageCount}
+            </Badge>
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
