@@ -1,7 +1,7 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 
-export const ChatRepository = {
+export const ConversationRepository = {
   async findAllByWabaId(params: { wabaId: string; userId: string }) {
     const { wabaId, userId } = params;
     const where: Prisma.ConversationWhereInput = {
@@ -14,7 +14,7 @@ export const ChatRepository = {
       },
     };
 
-    const chats = await prisma.conversation.findMany({
+    const conversations = await prisma.conversation.findMany({
       where,
       include: {
         phoneNumber: true,
@@ -28,16 +28,16 @@ export const ChatRepository = {
       },
     });
 
-    return { chats };
+    return { conversations };
   },
 
   /**
    * Fetches metadata and verifies ownership for sending a message.
    * PERFORMANCE: To avoid DB ownership checks on every message, consider generating a
-   * signed JWT 'chat token' when the user opens a specific conversation (GET Detail).
+   * signed JWT conversation token when the user opens a specific conversation (GET Detail).
    * This allows the 'Send' (POST) action to use that token to stay stateless.
    */
-  async getChatMetaForSending(params: {
+  async getConversationMetaForSending(params: {
     convId: string;
     wabaId: string;
     userId: string;

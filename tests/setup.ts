@@ -44,11 +44,11 @@ process.env.META_APP_SECRET = 'app-secret';
 process.env.NEXT_PUBLIC_META_APP_ID = 'test-app-id';
 
 // --- Mocks for Repositories ---
-vi.mock('@/repositories/chat.repository', () => ({
-  ChatRepository: {
+vi.mock('@/repositories/conversation.repository', () => ({
+  ConversationRepository: {
     findAllByWabaId: vi.fn(),
     findById: vi.fn(),
-    getChatMetaForSending: vi.fn(),
+    getConversationMetaForSending: vi.fn(),
     markConversationAsRead: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
     processIncomingMessage: vi.fn(),
@@ -92,9 +92,9 @@ vi.mock('@/repositories/webhook.repository', () => ({
 }));
 
 // --- Mocks for Services ---
-vi.mock('@/services/chat.service', () => ({
-  ChatService: {
-    getAllChats: vi.fn(),
+vi.mock('@/services/conversation.service', () => ({
+  ConversationService: {
+    getAllConversations: vi.fn(),
     getChatDetail: vi.fn(),
     markAsRead: vi.fn(),
     processMetaWebhookPayload: vi.fn(),

@@ -1,6 +1,6 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
 import { logError, logger } from '@/lib/logger';
-import { ChatRepository } from '@/repositories/chat.repository';
+import { ConversationRepository } from '@/repositories/conversation.repository';
 import {
   Contact,
   MetaWebhookPayload,
@@ -10,28 +10,31 @@ import {
   WebhookValue,
 } from '@/schemas/webhook.schema';
 
-export const ChatService = {
-  async getAllChats(params: { wabaId: string; userId: string }) {
+export const ConversationService = {
+  async getAllConversations(params: { wabaId: string; userId: string }) {
     const { wabaId, userId } = params;
-    logger.info('Fetching all chats for WABA without pagination', {
+    logger.info('Fetching all conversations for WABA without pagination', {
       wabaId,
       userId,
     });
 
-    const { chats } = await ChatRepository.findAllByWabaId({ wabaId, userId });
-    logger.info('All chat list fetched successfully', {
+    const { conversations } = await ConversationRepository.findAllByWabaId({
       wabaId,
       userId,
-      count: chats.length,
     });
-    return { chats, total: chats.length };
+    logger.info('Conversation list fetched successfully', {
+      wabaId,
+      userId,
+      count: conversations.length,
+    });
+    return { conversations, total: conversations.length };
   },
 
   async markAsRead(params: { convId: string; wabaId: string; userId: string }) {
     const { convId, wabaId, userId } = params;
     logger.info('Marking conversation as read', { convId, wabaId, userId });
 
-    const result = await ChatRepository.markConversationAsRead({
+    const result = await ConversationRepository.markConversationAsRead({
       convId,
       wabaId,
       userId,
@@ -46,7 +49,7 @@ export const ChatService = {
   },
 
   async processMetaWebhookPayload(payload: unknown) {
-    logger.info('Processing Meta Webhook payload in ChatService');
+    logger.info('Processing Meta Webhook payload in ConversationService');
 
     const parsedBody = this._validatePayload(payload);
     if (!parsedBody) {
@@ -103,7 +106,7 @@ export const ChatService = {
     if (!metaPhoneNumberId) return 0;
 
     const internalPhoneResult =
-      await ChatRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
+      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
 
     if (!internalPhoneResult) {
       logger.warn('Received message for unknown Meta Phone Number ID', {
@@ -181,7 +184,7 @@ export const ChatService = {
       conversation,
       userId,
       wabaId,
-    } = await ChatRepository.processIncomingMessage({
+    } = await ConversationRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
       customerPhone,
       customerName,

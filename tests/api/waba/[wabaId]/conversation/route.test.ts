@@ -1,13 +1,13 @@
 import { GET } from '@/app/api/waba/[wabaId]/conversation/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { ApiError } from '@/lib/error';
-import { ChatService } from '@/services/chat.service';
+import { ConversationService } from '@/services/conversation.service';
 import { describe, expect, it, vi } from 'vitest';
 
 /**
  * API Route: GET /api/waba/:wabaId/conversation
  * Reasoning: Validate endpoint format and unauthorized mapping (404 when returning null)
- * from the ChatService layer.
+ * from the ConversationService layer.
  */
 
 describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
@@ -18,8 +18,8 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',
     } as never);
-    vi.mocked(ChatService.getAllChats).mockResolvedValue({
-      chats: [{ id: 'chat-1' }],
+    vi.mocked(ConversationService.getAllConversations).mockResolvedValue({
+      conversations: [{ id: 'conv-1' }],
       total: 1,
     } as never);
 
@@ -31,7 +31,8 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
 
     expect(response.status).toBe(200);
     expect(data.data.total).toBeGreaterThanOrEqual(1);
-    expect(ChatService.getAllChats).toHaveBeenCalledWith({
+    expect(data.data.chats).toEqual([{ id: 'conv-1' }]);
+    expect(ConversationService.getAllConversations).toHaveBeenCalledWith({
       wabaId,
       userId: 'user-1',
     });
@@ -42,7 +43,7 @@ describe('GET /api/waba/:wabaId/conversation', { tags: ['backend'] }, () => {
       id: 'user-1',
     } as never);
 
-    vi.mocked(ChatService.getAllChats).mockRejectedValue(
+    vi.mocked(ConversationService.getAllConversations).mockRejectedValue(
       new ApiError('WABA not found or access denied', 404),
     );
 

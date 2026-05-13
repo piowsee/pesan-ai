@@ -1,6 +1,6 @@
 import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
-import { ChatService } from '@/services/chat.service';
+import { ConversationService } from '@/services/conversation.service';
 
 /**
  * @route PATCH /api/waba/:wabaId/conversation/:convId/read
@@ -12,7 +12,7 @@ import { ChatService } from '@/services/chat.service';
  */
 export const PATCH = withApiAuth<{ wabaId: string; convId: string }>(
   async ({ user, params: { wabaId, convId } }) => {
-    const result = await ChatService.markAsRead({
+    const result = await ConversationService.markAsRead({
       convId,
       wabaId,
       userId: user.id,

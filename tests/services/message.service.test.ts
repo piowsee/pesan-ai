@@ -1,5 +1,5 @@
 import { ApiError } from '@/lib/error';
-import { ChatRepository } from '@/repositories/chat.repository';
+import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { MessageService } from '@/services/message.service';
 import { MetaFetchService } from '@/services/meta-fetch.service';
@@ -53,7 +53,9 @@ describe('MessageService', { tags: ['backend'] }, () => {
 
   describe('sendAdminMessage', () => {
     it('sends message and saves to db', async () => {
-      vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue({
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
         phoneNumber: {
           phoneNumberId: 'pn-1',
           waba: { systemUserToken: 'token' },
@@ -69,15 +71,17 @@ describe('MessageService', { tags: ['backend'] }, () => {
       } as never);
 
       const result = await MessageService.sendAdminMessage({
-        chatId: 'chat-1',
+        convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
         content: 'Hello Admin',
       });
 
       expect(result.message.id).toBe('msg-1');
-      expect(ChatRepository.getChatMetaForSending).toHaveBeenCalledWith({
-        convId: 'chat-1',
+      expect(
+        ConversationRepository.getConversationMetaForSending,
+      ).toHaveBeenCalledWith({
+        convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
       });
@@ -91,10 +95,12 @@ describe('MessageService', { tags: ['backend'] }, () => {
     });
 
     it('throws ApiError if chat meta is null', async () => {
-      vi.mocked(ChatRepository.getChatMetaForSending).mockResolvedValue(null);
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue(null);
       await expect(
         MessageService.sendAdminMessage({
-          chatId: 'chat-1',
+          convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
           content: 'Hello',
