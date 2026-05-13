@@ -40,20 +40,23 @@ export const MessageService = {
 
   async sendAdminMessage(params: {
     chatId: string;
+    wabaId: string;
     userId: string;
     content: string;
   }) {
-    const { chatId, userId, content } = params;
-    logger.info('Admin sending message', { chatId, userId });
+    const { chatId, wabaId, userId, content } = params;
+    logger.info('Admin sending message', { chatId, wabaId, userId });
 
     // 1. Fetch metadata and validate ownership
     const chatMeta = await ChatRepository.getChatMetaForSending({
       convId: chatId,
+      wabaId,
       userId,
     });
     if (!chatMeta) {
       logger.warn('Chat meta fetch failed: Not found or access denied', {
         chatId,
+        wabaId,
         userId,
       });
       throw new ApiError('Chat not found or access denied', 404);

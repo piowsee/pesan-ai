@@ -37,13 +37,18 @@ export const ChatRepository = {
    * signed JWT 'chat token' when the user opens a specific conversation (GET Detail).
    * This allows the 'Send' (POST) action to use that token to stay stateless.
    */
-  async getChatMetaForSending(params: { convId: string; userId: string }) {
-    const { convId, userId } = params;
+  async getChatMetaForSending(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+  }) {
+    const { convId, wabaId, userId } = params;
     return prisma.conversation.findFirst({
       where: {
         id: convId,
         phoneNumber: {
           waba: {
+            id: wabaId,
             userId: userId,
           },
         },
@@ -58,13 +63,17 @@ export const ChatRepository = {
     });
   },
 
-  async markConversationAsRead(params: { convId: string; userId: string }) {
-    const { convId, userId } = params;
+  async markConversationAsRead(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+  }) {
+    const { convId, wabaId, userId } = params;
     return prisma.$transaction(async (tx) => {
       const conversation = await tx.conversation.findFirst({
         where: {
           id: convId,
-          phoneNumber: { waba: { userId } },
+          phoneNumber: { waba: { id: wabaId, userId } },
         },
         select: { id: true, unreadCount: true, phoneNumberId: true },
       });

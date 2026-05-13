@@ -70,11 +70,17 @@ describe('MessageService', { tags: ['backend'] }, () => {
 
       const result = await MessageService.sendAdminMessage({
         chatId: 'chat-1',
+        wabaId: 'waba-1',
         userId: 'user-1',
         content: 'Hello Admin',
       });
 
       expect(result.message.id).toBe('msg-1');
+      expect(ChatRepository.getChatMetaForSending).toHaveBeenCalledWith({
+        convId: 'chat-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+      });
       expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
@@ -89,6 +95,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       await expect(
         MessageService.sendAdminMessage({
           chatId: 'chat-1',
+          wabaId: 'waba-1',
           userId: 'user-1',
           content: 'Hello',
         }),

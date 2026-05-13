@@ -123,4 +123,25 @@ describe('ChatService', { tags: ['backend'] }, () => {
       eventBus.off(userEventName, mockSseListener);
     });
   });
+
+  describe('markAsRead', () => {
+    it('passes WABA ownership context to the repository', async () => {
+      vi.mocked(ChatRepository.markConversationAsRead).mockResolvedValue({
+        updated: true,
+      });
+
+      const result = await ChatService.markAsRead({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+      });
+
+      expect(result).toEqual({ updated: true });
+      expect(ChatRepository.markConversationAsRead).toHaveBeenCalledWith({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+      });
+    });
+  });
 });
