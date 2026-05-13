@@ -47,6 +47,7 @@ export function ChatDetail({
   hasNextPage,
   isFetchingNextPage,
   onLoadOlder,
+  localSendScrollSignal,
   isSending,
   onSend,
   showBackButton,
@@ -59,6 +60,7 @@ export function ChatDetail({
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
+  localSendScrollSignal: number;
   isSending: boolean;
   onSend: (content: string) => void;
   showBackButton: boolean;
@@ -103,6 +105,7 @@ export function ChatDetail({
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             onLoadOlder={onLoadOlder}
+            localSendScrollSignal={localSendScrollSignal}
           />
         </div>
       </div>

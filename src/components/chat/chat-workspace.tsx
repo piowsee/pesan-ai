@@ -37,6 +37,7 @@ export function ChatWorkspace() {
     string | undefined
   >(undefined);
   const [isContactInfoOpen, setIsContactInfoOpen] = useState(false);
+  const [localSendScrollSignal, setLocalSendScrollSignal] = useState(0);
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
@@ -146,6 +147,7 @@ export function ChatWorkspace() {
     (content: string) => {
       if (!selectedConversationId || !activeWabaId) return;
 
+      setLocalSendScrollSignal((value) => value + 1);
       sendMessage({
         wabaId: activeWabaId,
         convId: selectedConversationId,
@@ -210,6 +212,7 @@ export function ChatWorkspace() {
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               onLoadOlder={() => fetchNextPage()}
+              localSendScrollSignal={localSendScrollSignal}
               isSending={isSending}
               onSend={handleSendMessage}
               showBackButton={showMobileDetail}

@@ -33,6 +33,7 @@ export function MessageTimeline({
   hasNextPage,
   isFetchingNextPage,
   onLoadOlder,
+  localSendScrollSignal,
 }: {
   conversationId?: string;
   messages: MessageGroup[];
@@ -40,10 +41,12 @@ export function MessageTimeline({
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
+  localSendScrollSignal: number;
 }) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef<string | undefined>(undefined);
   const previousMessageCountRef = useRef(0);
+  const previousLocalSendScrollSignalRef = useRef(localSendScrollSignal);
   const shouldStickToBottomRef = useRef(true);
   const messageCount = messages.reduce(
     (count, group) => count + group.messages.length,
@@ -85,12 +88,16 @@ export function MessageTimeline({
     const hasSwitchedConversation =
       previousConversationIdRef.current !== conversationId;
     const hasNewMessages = messageCount > previousMessageCountRef.current;
+    const hasLocalSendScrollRequest =
+      previousLocalSendScrollSignalRef.current !== localSendScrollSignal;
     const shouldScroll =
+      hasLocalSendScrollRequest ||
       hasSwitchedConversation ||
       (hasNewMessages && shouldStickToBottomRef.current);
 
     previousConversationIdRef.current = conversationId;
     previousMessageCountRef.current = messageCount;
+    previousLocalSendScrollSignalRef.current = localSendScrollSignal;
 
     if (!shouldScroll) {
       return;
@@ -100,7 +107,7 @@ export function MessageTimeline({
       viewport.scrollTop = viewport.scrollHeight;
       shouldStickToBottomRef.current = true;
     });
-  }, [conversationId, messageCount]);
+  }, [conversationId, localSendScrollSignal, messageCount]);
 
   return (
     <div ref={scrollAreaRef} className="h-full w-full">
