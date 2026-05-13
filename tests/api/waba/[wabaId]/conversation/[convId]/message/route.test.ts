@@ -34,7 +34,7 @@ describe(
       expect(data.data.message).toEqual({ id: 'msg-1', content: 'hello' });
       expect(data.data.conversation).toBeDefined();
       expect(MessageService.sendAdminMessage).toHaveBeenCalledWith({
-        chatId: convId,
+        convId,
         wabaId,
         userId: 'user-1',
         content: 'hello',
@@ -59,12 +59,12 @@ describe(
       expect(data.data.message).toBeDefined(); // schema error for message
     });
 
-    it('returns 404 when ChatService throws ApiError', async () => {
+    it('returns 404 when the service throws ApiError', async () => {
       vi.mocked(AuthHelper.requireUser).mockResolvedValue({
         id: 'user-1',
       } as never);
       vi.mocked(MessageService.sendAdminMessage).mockRejectedValue(
-        new ApiError('Chat not found or access denied', 404),
+        new ApiError('Conversation not found or access denied', 404),
       );
 
       const req = new Request(url, {

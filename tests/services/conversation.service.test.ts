@@ -1,31 +1,31 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { ChatRepository } from '@/repositories/chat.repository';
-import { ChatService } from '@/services/chat.service';
+import { ConversationRepository } from '@/repositories/conversation.repository';
+import { ConversationService } from '@/services/conversation.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/services/chat.service');
+vi.unmock('@/services/conversation.service');
 
 /**
- * ChatService Tests
+ * ConversationService Tests
  * Reasoning: Tests business logic that validates tokens, formats webhook objects from Meta,
  * and handles missing data.
  */
 
-describe('ChatService', { tags: ['backend'] }, () => {
+describe('ConversationService', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('getAllChats', () => {
-    it('returns all chat list', async () => {
-      vi.mocked(ChatRepository.findAllByWabaId).mockResolvedValue({
-        chats: [{ id: 'chat-1' }],
+  describe('getAllConversations', () => {
+    it('returns all conversation list', async () => {
+      vi.mocked(ConversationRepository.findAllByWabaId).mockResolvedValue({
+        conversations: [{ id: 'conv-1' }],
       } as never);
-      const result = await ChatService.getAllChats({
+      const result = await ConversationService.getAllConversations({
         wabaId: 'waba-1',
         userId: 'user-1',
       });
-      expect(result.chats).toEqual([{ id: 'chat-1' }]);
+      expect(result.conversations).toEqual([{ id: 'conv-1' }]);
       expect(result.total).toBeGreaterThanOrEqual(1);
     });
   });
@@ -37,7 +37,8 @@ describe('ChatService', { tags: ['backend'] }, () => {
         entry: [],
       };
 
-      const result = await ChatService.processMetaWebhookPayload(payload);
+      const result =
+        await ConversationService.processMetaWebhookPayload(payload);
       expect(result.processed).toBe(true);
       expect(result.count).toBe(0);
     });
@@ -48,7 +49,7 @@ describe('ChatService', { tags: ['backend'] }, () => {
         entry: [],
       };
       await expect(
-        ChatService.processMetaWebhookPayload(payload),
+        ConversationService.processMetaWebhookPayload(payload),
       ).rejects.toThrow('Invalid Webhook Payload');
     });
 
@@ -61,11 +62,15 @@ describe('ChatService', { tags: ['backend'] }, () => {
       eventBus.on(userEventName, mockSseListener);
 
       // Mock repository calls
-      vi.mocked(ChatRepository.findPhoneNumberByMetaId).mockResolvedValue({
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
         id: 'phone-1',
       } as never);
 
-      vi.mocked(ChatRepository.processIncomingMessage).mockResolvedValue({
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
         message: { id: 'msg-1', content: 'hello' },
         conversation: { id: 'conv-1' },
         userId: testUserId,
@@ -101,7 +106,7 @@ describe('ChatService', { tags: ['backend'] }, () => {
         ],
       };
 
-      await ChatService.processMetaWebhookPayload(payload);
+      await ConversationService.processMetaWebhookPayload(payload);
 
       // Verify overall emission call
       expect(eventBus.emit).toHaveBeenCalledWith(
@@ -126,18 +131,22 @@ describe('ChatService', { tags: ['backend'] }, () => {
 
   describe('markAsRead', () => {
     it('passes WABA ownership context to the repository', async () => {
-      vi.mocked(ChatRepository.markConversationAsRead).mockResolvedValue({
+      vi.mocked(
+        ConversationRepository.markConversationAsRead,
+      ).mockResolvedValue({
         updated: true,
       });
 
-      const result = await ChatService.markAsRead({
+      const result = await ConversationService.markAsRead({
         convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
       });
 
       expect(result).toEqual({ updated: true });
-      expect(ChatRepository.markConversationAsRead).toHaveBeenCalledWith({
+      expect(
+        ConversationRepository.markConversationAsRead,
+      ).toHaveBeenCalledWith({
         convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',

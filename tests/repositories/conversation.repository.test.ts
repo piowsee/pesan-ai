@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { ChatRepository } from '@/repositories/chat.repository';
+import { ConversationRepository } from '@/repositories/conversation.repository';
 import {
   afterAll,
   afterEach,
@@ -12,9 +12,9 @@ import {
 
 import { SEED_DATA } from '../seed-data';
 
-vi.unmock('@/repositories/chat.repository.ts');
+vi.unmock('@/repositories/conversation.repository.ts');
 
-describe('ChatRepository Integration', { tags: ['db'] }, () => {
+describe('ConversationRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbWabaId: string;
   let dbPhoneNumberId: string;
@@ -86,13 +86,13 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
   describe('findAllByWabaId', () => {
     it('returns all conversations for the seeded WABA', async () => {
-      const { chats } = await ChatRepository.findAllByWabaId({
+      const { conversations } = await ConversationRepository.findAllByWabaId({
         wabaId: dbWabaId,
         userId,
       });
 
-      expect(chats?.length).toBeGreaterThanOrEqual(1);
-      const seeded = chats?.find((c) => c.id === dbConvId);
+      expect(conversations?.length).toBeGreaterThanOrEqual(1);
+      const seeded = conversations?.find((c) => c.id === dbConvId);
       expect(seeded).toBeDefined();
       expect(seeded?.customerPhone).toBe(SEED_DATA.CUSTOMER_PHONE);
       // Verify latest message is included
@@ -101,13 +101,15 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('getChatMetaForSending', () => {
+  describe('getConversationMetaForSending', () => {
     it('fetches metadata for the seeded conversation', async () => {
-      const result = await ChatRepository.getChatMetaForSending({
-        convId: dbConvId,
-        wabaId: dbWabaId,
-        userId,
-      });
+      const result = await ConversationRepository.getConversationMetaForSending(
+        {
+          convId: dbConvId,
+          wabaId: dbWabaId,
+          userId,
+        },
+      );
 
       expect(result?.phoneNumber.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
       expect(result?.phoneNumber.waba?.userId).toBe(userId);
@@ -116,7 +118,7 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
   describe('findPhoneNumberByMetaId', () => {
     it('locates the seeded internal phone number by its Meta ID', async () => {
-      const result = await ChatRepository.findPhoneNumberByMetaId(
+      const result = await ConversationRepository.findPhoneNumberByMetaId(
         SEED_DATA.PHONE_META_ID,
       );
       expect(result?.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
@@ -125,7 +127,7 @@ describe('ChatRepository Integration', { tags: ['db'] }, () => {
 
   describe('processIncomingMessage', () => {
     it('upserts a new conversation and message for a new customer', async () => {
-      const result = await ChatRepository.processIncomingMessage({
+      const result = await ConversationRepository.processIncomingMessage({
         phoneNumberId: dbPhoneNumberId,
         customerPhone: '999002',
         customerName: 'Test Customer',

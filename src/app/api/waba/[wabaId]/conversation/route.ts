@@ -1,6 +1,6 @@
 import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
-import { ChatService } from '@/services/chat.service';
+import { ConversationService } from '@/services/conversation.service';
 
 /**
  * @route GET /api/waba/:wabaId/conversation
@@ -11,13 +11,14 @@ import { ChatService } from '@/services/chat.service';
  */
 export const GET = withApiAuth<{ wabaId: string }>(
   async ({ user, params: { wabaId } }) => {
-    const { chats, total } = await ChatService.getAllChats({
-      wabaId,
-      userId: user.id,
-    });
+    const { conversations, total } =
+      await ConversationService.getAllConversations({
+        wabaId,
+        userId: user.id,
+      });
 
     return jsend.success({
-      chats,
+      chats: conversations,
       total,
     });
   },

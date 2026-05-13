@@ -2,7 +2,7 @@ import { decrypt } from '@/lib/encryption';
 import { ApiError } from '@/lib/error';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
 import { logError, logger } from '@/lib/logger';
-import { ChatRepository } from '@/repositories/chat.repository';
+import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 
 import { MetaFetchService } from './meta-fetch.service';
@@ -39,30 +39,34 @@ export const MessageService = {
   },
 
   async sendAdminMessage(params: {
-    chatId: string;
+    convId: string;
     wabaId: string;
     userId: string;
     content: string;
   }) {
-    const { chatId, wabaId, userId, content } = params;
-    logger.info('Admin sending message', { chatId, wabaId, userId });
+    const { convId, wabaId, userId, content } = params;
+    logger.info('Admin sending message', { convId, wabaId, userId });
 
     // 1. Fetch metadata and validate ownership
-    const chatMeta = await ChatRepository.getChatMetaForSending({
-      convId: chatId,
-      wabaId,
-      userId,
-    });
-    if (!chatMeta) {
-      logger.warn('Chat meta fetch failed: Not found or access denied', {
-        chatId,
+    const conversationMeta =
+      await ConversationRepository.getConversationMetaForSending({
+        convId,
         wabaId,
         userId,
       });
-      throw new ApiError('Chat not found or access denied', 404);
+    if (!conversationMeta) {
+      logger.warn(
+        'Conversation metadata fetch failed: not found or access denied',
+        {
+          convId,
+          wabaId,
+          userId,
+        },
+      );
+      throw new ApiError('Conversation not found or access denied', 404);
     }
 
-    const { phoneNumber, customerPhone } = chatMeta;
+    const { phoneNumber, customerPhone } = conversationMeta;
     const { phoneNumberId } = phoneNumber;
 
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
@@ -74,7 +78,7 @@ export const MessageService = {
       );
       logError(apiError, {
         action: 'No WhatsApp token available for sending',
-        chatId,
+        convId,
       });
 
       throw apiError;
@@ -90,7 +94,7 @@ export const MessageService = {
 
     // 3. Save to database via MessageRepository
     const savedMessage = await MessageRepository.saveMessage({
-      conversationId: chatId,
+      conversationId: convId,
       direction: 'outgoing',
       source: 'admin',
       type: 'text',
@@ -103,11 +107,11 @@ export const MessageService = {
     // Emit real-time event via SSE to the specific user channel
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...savedMessage,
-      conversation: chatMeta,
+      conversation: conversationMeta,
       userId,
-      wabaId: chatMeta.phoneNumber.wabaId,
+      wabaId: conversationMeta.phoneNumber.wabaId,
     });
 
-    return { message: savedMessage, conversation: chatMeta };
+    return { message: savedMessage, conversation: conversationMeta };
   },
 };
