@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '@/lib/locale';
 import { getSessionCookie } from 'better-auth/cookies';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -8,7 +9,8 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
 
   const pathName = request.nextUrl.pathname;
-  const localePrefix = pathName.match(localePrefixRegex)?.[0] ?? '/en';
+  const localePrefix =
+    pathName.match(localePrefixRegex)?.[0] ?? `/${DEFAULT_LOCALE}`;
   const normalizedPath = pathName.replace(localePrefixRegex, '') || '/';
 
   const isLoginRoute = normalizedPath.startsWith('/login');
@@ -57,5 +59,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/:locale/login'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/id/login', '/en/login'],
 };
