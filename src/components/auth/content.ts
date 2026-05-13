@@ -79,6 +79,7 @@ export const loginFormCopy = {
   id: {
     labels: {
       password: 'Kata Sandi',
+      forgotPassword: 'Lupa kata sandi?',
       agreePrefix: 'Saya menyetujui',
       terms: 'Syarat Layanan',
       and: 'dan',
@@ -101,6 +102,7 @@ export const loginFormCopy = {
   en: {
     labels: {
       password: 'Password',
+      forgotPassword: 'Forgot password?',
       agreePrefix: 'I agree to the',
       terms: 'Terms of Service',
       and: 'and',
