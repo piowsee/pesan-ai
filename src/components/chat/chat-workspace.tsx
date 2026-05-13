@@ -5,6 +5,7 @@ import { ChatEmptyState } from '@/components/chat/chat-empty-state';
 import { ChatSidebar } from '@/components/chat/chat-sidebar';
 import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import { useConversations, useMarkAsRead } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -35,6 +36,78 @@ type ChatStateParamKey = (typeof CHAT_STATE_PARAM_KEYS)[number];
 
 function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
   return value === 'all' || value === 'admin' || value === 'bot';
+}
+
+export function ChatWorkspaceSkeleton() {
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
+      <div className="shrink-0 border-b border-brand/15 bg-background">
+        <div className="flex h-15 items-center px-4">
+          <Skeleton className="ml-4 h-8 w-40 rounded-md" />
+        </div>
+      </div>
+
+      <div
+        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
+        style={{ contain: 'strict' }}
+      >
+        <div className="hidden h-full w-95 shrink-0 border-r border-brand/10 bg-background lg:flex lg:flex-col">
+          <div className="flex flex-col gap-3 px-4 py-4">
+            <Skeleton className="h-9 w-full rounded-full" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-12 rounded-full" />
+              <Skeleton className="h-8 w-16 rounded-full" />
+              <Skeleton className="h-8 w-12 rounded-full" />
+              <Skeleton className="ml-auto h-8 w-28 rounded-full" />
+            </div>
+          </div>
+
+          <div className="flex flex-1 flex-col">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div key={index} className="flex gap-3 px-4 py-3">
+                <Skeleton className="size-11 shrink-0 rounded-full" />
+                <div className="flex flex-1 flex-col justify-center gap-2">
+                  <Skeleton className="h-4 w-32 rounded-md" />
+                  <Skeleton className="h-3 w-44 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col bg-brand/5">
+          <div className="border-b bg-background px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Skeleton className="size-11 shrink-0 rounded-full" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-40 rounded-md" />
+                <Skeleton className="h-3 w-32 rounded-md" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 px-4 py-4 lg:px-6">
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 7 }).map((_, index) => (
+                <div
+                  key={index}
+                  className={
+                    index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
+                  }
+                >
+                  <Skeleton className="h-20 w-[min(24rem,75%)] rounded-[20px]" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="shrink-0 px-4 py-4 lg:px-6">
+            <Skeleton className="h-16 w-full rounded-[18px]" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function ChatWorkspace() {
@@ -303,6 +376,19 @@ export function ChatWorkspace() {
     },
     [activeWabaId, selectedConversationId, sendMessage],
   );
+
+  const isRestoringPersistedState = shouldRestoreFromStorage;
+  const isWaitingForInitialWaba = wabas.length === 0;
+  const isWaitingForSelectedConversation =
+    Boolean(selectedConversationId) && isConversationsLoading && !convData;
+  const shouldShowWorkspaceSkeleton =
+    isRestoringPersistedState ||
+    isWaitingForInitialWaba ||
+    isWaitingForSelectedConversation;
+
+  if (shouldShowWorkspaceSkeleton) {
+    return <ChatWorkspaceSkeleton />;
+  }
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
