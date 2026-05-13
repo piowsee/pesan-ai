@@ -35,14 +35,25 @@ async function main() {
 
     adminUser = result.user as unknown as typeof adminUser;
 
-    // Explicitly set the admin role (Better Auth signUp doesn't allow setting role directly for security)
+    // Explicitly set the admin role and mark the seeded account as verified.
     await prisma.user.update({
       where: { id: adminUser!.id },
-      data: { role: 'admin' },
+      data: {
+        role: 'admin',
+        emailVerified: true,
+      },
     });
 
     console.log('Admin user created and role assigned:', adminUser!.email);
   } else {
+    adminUser = await prisma.user.update({
+      where: { id: adminUser.id },
+      data: {
+        role: 'admin',
+        emailVerified: true,
+      },
+    });
+
     console.log('Admin user already exists:', adminUser.email);
   }
 
@@ -67,8 +78,18 @@ async function main() {
     }
 
     regularUser = result.user as unknown as typeof regularUser;
+    regularUser = await prisma.user.update({
+      where: { id: regularUser!.id },
+      data: { emailVerified: true },
+    });
+
     console.log('Regular user created:', regularEmail);
   } else {
+    regularUser = await prisma.user.update({
+      where: { id: regularUser.id },
+      data: { emailVerified: true },
+    });
+
     console.log('Regular user already exists:', regularEmail);
   }
 
