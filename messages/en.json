@@ -1,0 +1,313 @@
+{
+  "Common": {
+    "metaTechPartner": "Official Meta Tech Partner"
+  },
+  "Metadata": {
+    "home": {
+      "title": "pesan.ai | WhatsApp AI Agent for Business",
+      "description": "Pesan AI helps businesses automate WhatsApp replies and booking workflows with intelligent AI agents."
+    },
+    "login": {
+      "title": "Login | pesan.ai",
+      "description": "Sign in to your pesan.ai account and manage WhatsApp AI chat automation for your business."
+    },
+    "terms": {
+      "title": "Terms of Service | pesan.ai",
+      "description": "Read the Terms of Service for pesan.ai to understand platform usage and legal obligations."
+    },
+    "privacy": {
+      "title": "Privacy Policy | pesan.ai",
+      "description": "Learn how pesan.ai collects, uses, and protects your personal data across our services."
+    }
+  },
+  "Navbar": {
+    "login": "Login",
+    "consultation": "Book a Consultation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "languages": [
+      {
+        "label": "Indonesian",
+        "value": "id"
+      },
+      {
+        "label": "English",
+        "value": "en"
+      }
+    ]
+  },
+  "Footer": {
+    "metaPartner": "Official Meta Tech Partner",
+    "description": "AI-powered WhatsApp solution to reply to customers and automate booking workflows.",
+    "company": "Company",
+    "about": "About Us",
+    "login": "Login",
+    "consultation": "Book a Consultation",
+    "featuresTitle": "Features",
+    "featuresList": [
+      "One Integrated Number",
+      "WhatsApp AI Agent",
+      "Automated Booking"
+    ],
+    "legalTitle": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "rights": "(c) 2026 Pesan AI. All rights reserved."
+  },
+  "LandingPage": {
+    "hero": {
+      "badge": "Custom #1 WhatsApp AI Agent for Your Business Needs",
+      "titlePrefix": "AI Handles Your ",
+      "titleHighlight": "Replies",
+      "titleSuffix": ",",
+      "titleLineTwo": "Bookings Made Effortless",
+      "descriptionPrefix": "A WhatsApp AI agent that replies to customers and schedules bookings automatically ",
+      "descriptionHighlight": "24/7",
+      "descriptionSuffix": ".",
+      "consultation": "Book a Consultation",
+      "login": "Login",
+      "heroAlt": "Night atmosphere background for Pesan AI hero section",
+      "demoAlt": "Pesan AI product demo"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "heading": "Common questions",
+      "subtitle": "The most common questions about how Pesan AI helps your business reply to customer chats and handle booking flows automatically.",
+      "items": [
+        {
+          "question": "What is Pesan AI?",
+          "answer": "Pesan AI is a WhatsApp AI Agent platform that helps businesses reply to customer chats automatically, naturally, and in real time, while handling booking flows without manual intervention."
+        },
+        {
+          "question": "Can this AI really be customized?",
+          "answer": "Yes. Pesan AI can be customized almost 100% for your business needs. From conversation flow and communication style to booking rules and service personalization, everything can be configured. The chat platform remains WhatsApp, but the entire in-chat experience can be tailored."
+        },
+        {
+          "question": "Is Pesan AI suitable for all business types?",
+          "answer": "Yes. Pesan AI works well for many businesses that need fast responses and booking workflows, including clinics, salons, service businesses, SMEs, and other professional services."
+        },
+        {
+          "question": "Will customers know they are talking to AI?",
+          "answer": "Pesan AI is designed to respond naturally and politely like a human assistant. You can also tune the communication tone to match your brand voice."
+        },
+        {
+          "question": "How does the automated booking system work?",
+          "answer": "The AI asks for customer details, checks schedule availability, and informs whether a booking slot is available. If a slot is full, the AI can automatically recommend alternative available times."
+        },
+        {
+          "question": "Do I need technical skills to use Pesan AI?",
+          "answer": "No. You only need to use the provided web chat. For AI setup, conversation flow, and system configuration, you can discuss everything with our team and we will prepare it for you. You simply use it with a ready-to-use account."
+        }
+      ]
+    }
+  },
+  "Auth": {
+    "brandPanel": {
+      "headline": "Boost your business efficiency through WhatsApp chat automation with AI support."
+    },
+    "pages": {
+      "login": {
+        "title": "Login to Your Account",
+        "subtitle": "Enter your email and password."
+      },
+      "forgotPassword": {
+        "title": "Forgot Password",
+        "subtitle": "Enter your email to receive a password reset link."
+      },
+      "resetPassword": {
+        "title": "Reset Password",
+        "subtitle": "Enter a new password for your account."
+      }
+    },
+    "forms": {
+      "common": {
+        "emailLabel": "Email",
+        "emailPlaceholder": "name@company.com"
+      },
+      "login": {
+        "labels": {
+          "password": "Password",
+          "forgotPassword": "Forgot password?",
+          "agreePrefix": "I agree to the",
+          "terms": "Terms of Service",
+          "and": "and",
+          "privacy": "Privacy Policy",
+          "submit": "Login",
+          "submitting": "Processing...",
+          "passwordPlaceholder": "Enter your password",
+          "hidePassword": "Hide password",
+          "showPassword": "Show password"
+        },
+        "errors": {
+          "invalidEmail": "Invalid email format",
+          "passwordRequired": "Password is required",
+          "passwordLength": "Password must be at least 8 characters",
+          "termsRequired": "You need to agree to the Terms and Privacy to continue",
+          "invalidCredentials": "Invalid email or password.",
+          "emailNotVerified": "Your email is not verified. Please check your email inbox.",
+          "unknownError": "An error occurred during login. Please try again."
+        }
+      },
+      "forgotPassword": {
+        "labels": {
+          "submit": "Send Reset Link",
+          "submitting": "Sending...",
+          "backToLogin": "Back to login",
+          "successTitle": "Check your email",
+          "successMessage": "If the email exists, we have sent a link to reset your password."
+        },
+        "errors": {
+          "invalidEmail": "Invalid email format",
+          "unknownError": "An error occurred while requesting a password reset. Please try again."
+        }
+      },
+      "resetPassword": {
+        "labels": {
+          "password": "New Password",
+          "confirmPassword": "Confirm Password",
+          "submit": "Save New Password",
+          "submitting": "Saving...",
+          "passwordPlaceholder": "Enter your new password",
+          "confirmPasswordPlaceholder": "Re-enter your new password",
+          "hidePassword": "Hide password",
+          "showPassword": "Show password",
+          "backToLogin": "Back to login",
+          "successTitle": "Password updated successfully",
+          "successMessage": "You can now sign in with your new password.",
+          "invalidTokenTitle": "Invalid reset link",
+          "invalidTokenMessage": "This reset link is invalid or has expired. Please request a new one.",
+          "requestNewLink": "Request a new link"
+        },
+        "errors": {
+          "passwordRequired": "Password is required",
+          "passwordLength": "Password must be at least 8 characters",
+          "confirmPasswordRequired": "Password confirmation is required",
+          "passwordMismatch": "Password confirmation does not match",
+          "invalidToken": "This reset link is invalid or has expired. Please request a new one.",
+          "unknownError": "An error occurred while resetting your password. Please try again."
+        }
+      }
+    }
+  },
+  "PrivacyPage": {
+    "title": "Privacy Policy",
+    "heroAlt": "Privacy policy hero",
+    "updatedLabel": "Last Updated",
+    "updatedOn": "May 14, 2026",
+    "tocTitle": "Table of contents",
+    "sections": [
+      {
+        "id": "introduction",
+        "label": "Introduction"
+      },
+      {
+        "id": "data-collection",
+        "label": "The Data We Collect"
+      },
+      {
+        "id": "data-use",
+        "label": "How We Use Your Data"
+      },
+      {
+        "id": "security",
+        "label": "Data Security"
+      },
+      {
+        "id": "contact",
+        "label": "Contact Details"
+      }
+    ],
+    "introductionHeading": "1. Introduction",
+    "introductionText": "Welcome to Pesan AI (\"we,\" \"our,\" or \"us\"). We are an intelligent messaging and automation platform powered by the WhatsApp Business API. We respect your privacy and are committed to protecting your personal data. This privacy policy informs you how we look after your personal data and your customers' messaging data when you use our services.",
+    "collectionHeading": "2. The Data We Collect",
+    "collectionIntro": "We may collect, use, store, and transfer different kinds of data necessary to operate our platform:",
+    "collectionItems": [
+      {
+        "label": "Identity and Contact Data:",
+        "value": "Includes your name, email address, WhatsApp phone numbers, business profiles, and login credentials."
+      },
+      {
+        "label": "Messaging and Customer Data:",
+        "value": "Includes message content, conversation history, customer contacts, and interaction data processed through our platform."
+      },
+      {
+        "label": "Technical Data:",
+        "value": "Includes internet protocol (IP) address, login data, browser types, webhook payloads, API integrations, and operating systems."
+      },
+      {
+        "label": "Usage Data:",
+        "value": "Includes information about how you use our website, messaging metrics, and AI automation interactions."
+      }
+    ],
+    "usageHeading": "3. How We Use Your Data",
+    "usageIntro": "We use your personal and operational data primarily in the following circumstances:",
+    "usageItems": [
+      "To operate and provide WhatsApp Business messaging and automation services.",
+      "To process AI interactions in your customer conversations based on your configurations.",
+      "To manage your account and provide technical customer support.",
+      "To improve our AI algorithms, user interface, and overall platform reliability.",
+      "To comply with Meta/WhatsApp's operational guidelines and applicable local regulations."
+    ],
+    "securityHeading": "4. Data Security",
+    "securityText": "We implement robust industry-standard security measures to protect your business communication and personal data against unauthorized access. AI-processed conversations are handled securely, and access to your conversation history is restricted strictly to you and your authorized team members.",
+    "contactHeading": "5. Contact Details",
+    "contactText": "If you have any questions about this privacy policy or our data management practices, please contact our support team through the Pesan AI website."
+  },
+  "TermsPage": {
+    "title": "Terms of Service",
+    "heroAlt": "Terms of service hero",
+    "updatedLabel": "Last Updated",
+    "updatedOn": "May 14, 2026",
+    "tocTitle": "Table of contents",
+    "sections": [
+      {
+        "id": "acceptance",
+        "label": "Acceptance of Terms"
+      },
+      {
+        "id": "service",
+        "label": "Description of Service"
+      },
+      {
+        "id": "ip",
+        "label": "Intellectual Property"
+      },
+      {
+        "id": "obligations",
+        "label": "User Obligations"
+      },
+      {
+        "id": "liability",
+        "label": "Limitation of Liability"
+      },
+      {
+        "id": "law",
+        "label": "Governing Law"
+      }
+    ],
+    "acceptanceHeading": "1. Acceptance of Terms",
+    "acceptanceText": "By accessing or using the Pesan AI website and platform, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services.",
+    "serviceHeading": "2. Description of Service",
+    "serviceText": "Pesan AI is an intelligent conversation management and messaging automation platform integrated with the WhatsApp Business API. We provide AI chat agents, webhook integrations, and WABA conversation management features to help streamline your business communication.",
+    "ipHeading": "3. Intellectual Property",
+    "ipText": "The Pesan AI website, platform, original content, database structure, and AI models are and will remain the exclusive property of our platform. You are not granted any license to use our trademarks without prior written consent.",
+    "obligationsHeading": "4. User Obligations",
+    "obligationsIntro": "When registering and utilizing our platform, you agree not to:",
+    "obligationsItems": [
+      "Transmit any content that violates Meta's WhatsApp Commerce/Business Policies or any applicable laws.",
+      "Attempt to reverse engineer, decompile, or exploit our underlying code or server infrastructure.",
+      "Disrupt service performance or dispatch excessive malicious message queues resulting in DDoS or abuse.",
+      "Misuse webhook credentials or WABA numbers registered under your account."
+    ],
+    "liabilityHeading": "5. Limitation of Liability",
+    "liabilityText": "Pesan AI facilitates connection to Meta/WhatsApp API. We are not liable for WABA number suspensions enacted by Meta, direct or indirect financial loss, data loss, or downtime caused by third-party providers. Your use of our service is securely at your own risk.",
+    "lawHeading": "6. Governing Law",
+    "lawText": "These Terms shall be governed and construed in accordance with the laws of Indonesia. Any dispute arising from these services or these Terms shall be resolved exclusively within the jurisdiction of Indonesian courts."
+  },
+  "NotFoundPage": {
+    "badge": "404",
+    "title": "We couldn't find the page you were looking for.",
+    "description": "The link may have moved or never existed.",
+    "home": "Back to Home"
+  }
+}

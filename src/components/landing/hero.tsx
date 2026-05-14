@@ -2,42 +2,35 @@
 
 import { Container } from '@/components/Container';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { heroCopy } from '@/components/landing/content';
 import { Button } from '@/components/ui/button';
 import { Highlighter } from '@/components/ui/highlighter';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 import { Meteors } from '@/components/ui/meteors';
-import type { AppLocale } from '@/lib/locale';
-import { toLocalePath } from '@/lib/locale';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-type Props = {
-  locale: AppLocale;
-};
-
-export function Hero({ locale }: Props) {
-  const copy = heroCopy[locale];
+export function Hero() {
+  const t = useTranslations('LandingPage.hero');
   const consultationHref = 'https://wa.me/6285129646215';
-  const [descriptionStart, descriptionEnd = ''] =
-    copy.description.split('24/7');
-  const [showOtomatisHighlight, setShowOtomatisHighlight] = useState(false);
-  const [show247Highlight, setShow247Highlight] = useState(false);
+  const [showTitleHighlight, setShowTitleHighlight] = useState(false);
+  const [showDescriptionHighlight, setShowDescriptionHighlight] =
+    useState(false);
 
   useEffect(() => {
-    if (!showOtomatisHighlight) {
+    if (!showTitleHighlight) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      setShow247Highlight(true);
+      setShowDescriptionHighlight(true);
     }, 700);
 
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [showOtomatisHighlight]);
+  }, [showTitleHighlight]);
 
   return (
     <section className="bg-background font-sans">
@@ -45,7 +38,7 @@ export function Hero({ locale }: Props) {
         <div className="absolute inset-0">
           <Image
             src="/landing/hero.jpg"
-            alt={copy.heroAlt}
+            alt={t('heroAlt')}
             width={1440}
             height={2560}
             sizes="100vw"
@@ -73,7 +66,7 @@ export function Hero({ locale }: Props) {
               distance={22}
             >
               <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-2 text-[11px] font-medium leading-snug tracking-wide text-white/90 backdrop-blur-sm sm:px-4 sm:py-2 sm:text-sm">
-                {copy.badge}
+                {t('badge')}
               </span>
             </ScrollReveal>
 
@@ -82,53 +75,29 @@ export function Hero({ locale }: Props) {
               delay={80}
               distance={24}
               onRevealComplete={() => {
-                setShowOtomatisHighlight(true);
+                setShowTitleHighlight(true);
               }}
             >
               <h1>
                 <span className="block">
-                  {locale === 'id' ? (
-                    <>
-                      AI Balas Chat{' '}
-                      {showOtomatisHighlight ? (
-                        <Highlighter
-                          action="underline"
-                          color="#ffffff"
-                          strokeWidth={2.2}
-                          animationDuration={700}
-                          iterations={4}
-                        >
-                          Otomatis
-                        </Highlighter>
-                      ) : (
-                        'Otomatis'
-                      )}
-                      ,
-                    </>
-                  ) : locale === 'en' ? (
-                    <>
-                      AI Handles Your{' '}
-                      {showOtomatisHighlight ? (
-                        <Highlighter
-                          action="underline"
-                          color="#ffffff"
-                          strokeWidth={2.2}
-                          animationDuration={700}
-                          iterations={4}
-                        >
-                          Replies
-                        </Highlighter>
-                      ) : (
-                        'Replies'
-                      )}
-                      ,
-                    </>
+                  {t('titlePrefix')}
+                  {showTitleHighlight ? (
+                    <Highlighter
+                      action="underline"
+                      color="#ffffff"
+                      strokeWidth={2.2}
+                      animationDuration={700}
+                      iterations={4}
+                    >
+                      {t('titleHighlight')}
+                    </Highlighter>
                   ) : (
-                    copy.titleLineOne
+                    t('titleHighlight')
                   )}
+                  {t('titleSuffix')}
                 </span>
                 <span className="mt-2 block lg:whitespace-nowrap">
-                  {copy.titleLineTwo}
+                  {t('titleLineTwo')}
                 </span>
               </h1>
             </ScrollReveal>
@@ -139,8 +108,8 @@ export function Hero({ locale }: Props) {
               distance={24}
             >
               <p>
-                {descriptionStart}
-                {show247Highlight ? (
+                {t('descriptionPrefix')}
+                {showDescriptionHighlight ? (
                   <Highlighter
                     action="highlight"
                     color="#475569"
@@ -148,12 +117,12 @@ export function Hero({ locale }: Props) {
                     animationDuration={700}
                     iterations={1}
                   >
-                    24/7
+                    {t('descriptionHighlight')}
                   </Highlighter>
                 ) : (
-                  '24/7'
+                  t('descriptionHighlight')
                 )}
-                {descriptionEnd}
+                {t('descriptionSuffix')}
               </p>
             </ScrollReveal>
 
@@ -168,7 +137,7 @@ export function Hero({ locale }: Props) {
                 variant="outline"
                 className="h-11 w-full rounded-md border-white/70 bg-transparent px-8 text-sm text-white hover:bg-transparent hover:text-white/85 sm:h-12 sm:w-auto sm:rounded-full sm:px-10 sm:text-base"
               >
-                <Link href={toLocalePath(locale, '/login')}>{copy.login}</Link>
+                <Link href="/login">{t('login')}</Link>
               </Button>
               <InteractiveHoverButton
                 type="button"
@@ -181,7 +150,7 @@ export function Hero({ locale }: Props) {
                   );
                 }}
               >
-                {copy.consultation}
+                {t('consultation')}
               </InteractiveHoverButton>
             </ScrollReveal>
           </div>
@@ -193,7 +162,7 @@ export function Hero({ locale }: Props) {
           >
             <Image
               src="/landing/demo-hero.png"
-              alt={copy.demoAlt}
+              alt={t('demoAlt')}
               width={1919}
               height={1079}
               priority

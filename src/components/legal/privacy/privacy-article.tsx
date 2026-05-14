@@ -1,14 +1,28 @@
-import type { AppLocale } from '@/lib/locale';
-
-import { privacyContent } from './content';
-
-type Props = {
-  locale: AppLocale;
+type CollectionItem = {
+  label: string;
+  value: string;
 };
 
-export function PrivacyArticle({ locale }: Props) {
-  const copy = privacyContent[locale];
+export type PrivacyArticleCopy = {
+  introductionHeading: string;
+  introductionText: string;
+  collectionHeading: string;
+  collectionIntro: string;
+  collectionItems: CollectionItem[];
+  usageHeading: string;
+  usageIntro: string;
+  usageItems: string[];
+  securityHeading: string;
+  securityText: string;
+  contactHeading: string;
+  contactText: string;
+};
 
+type Props = {
+  copy: PrivacyArticleCopy;
+};
+
+export function PrivacyArticle({ copy }: Props) {
   return (
     <div className="prose prose-zinc max-w-none lg:prose-lg">
       <h2

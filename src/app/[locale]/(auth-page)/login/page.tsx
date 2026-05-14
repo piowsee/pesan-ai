@@ -1,9 +1,10 @@
 import { AuthCard } from '@/components/auth/auth-card';
-import { loginCardCopy } from '@/components/auth/content';
 import { LoginForm } from '@/components/auth/login/login-form';
-import { isAppLocale } from '@/lib/locale';
+import { routing } from '@/i18n/routing';
 import { buildLocalizedMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
+import { hasLocale } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
 
-  if (!isAppLocale(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     return {};
   }
 
@@ -22,18 +23,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function LocalizedLoginPage({ params }: Props) {
   const { locale } = await params;
-
-  if (!isAppLocale(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
-  const copy = loginCardCopy[locale];
+  setRequestLocale(locale);
+  const t = await getTranslations('Auth.pages.login');
 
   return (
     <AuthCard
-      locale={locale}
-      title={copy.title}
-      subtitle={copy.subtitle}
+      title={t('title')}
+      subtitle={t('subtitle')}
       FormComponent={LoginForm}
     />
   );

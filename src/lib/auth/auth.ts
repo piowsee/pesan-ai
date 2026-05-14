@@ -1,9 +1,9 @@
+import { getPathname } from '@/i18n/navigation';
 import { EmailType, sendEmail } from '@/lib/auth/email/email';
 import {
   type AppLocale,
   DEFAULT_LOCALE,
   getLocaleFromRequest,
-  toLocalePath,
 } from '@/lib/locale';
 import prisma from '@/lib/prisma';
 import { betterAuth } from 'better-auth';
@@ -31,7 +31,13 @@ export async function createResetPasswordCallbackUrl(
     },
   });
 
-  return toLocalePath(locale, `/reset-password?token=${token}`);
+  return getPathname({
+    locale,
+    href: {
+      pathname: '/reset-password',
+      query: { token },
+    },
+  });
 }
 
 export const auth = betterAuth({
@@ -58,7 +64,7 @@ export const auth = betterAuth({
       if (!resetCallbackURL || resetCallbackURL === '/') {
         resetUrl.searchParams.set(
           'callbackURL',
-          toLocalePath(locale, '/reset-password'),
+          getPathname({ href: '/reset-password', locale }),
         );
       }
 
@@ -100,7 +106,7 @@ export const auth = betterAuth({
       if (!verificationCallbackURL || verificationCallbackURL === '/') {
         verificationUrl.searchParams.set(
           'callbackURL',
-          toLocalePath(locale, '/reset-password'),
+          getPathname({ href: '/reset-password', locale }),
         );
       }
 

@@ -1,21 +1,12 @@
-'use client';
-
-import { authBrandPanelCopy } from '@/components/auth/content';
 import { MetaTechPartner } from '@/components/auth/meta-tech-partner';
-import type { AppLocale } from '@/lib/locale';
-import { toLocalePath } from '@/lib/locale';
+import { Link } from '@/i18n/navigation';
 import { Mail } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
 
-type Props = {
-  locale: AppLocale;
-};
-
-export function AuthBrandPanel({ locale }: Props) {
-  const copy = authBrandPanelCopy[locale];
-  const homeHref = toLocalePath(locale, '/');
+export function AuthBrandPanel() {
+  const t = useTranslations('Auth.brandPanel');
 
   return (
     <section className="relative hidden min-h-svh overflow-hidden lg:flex">
@@ -27,15 +18,9 @@ export function AuthBrandPanel({ locale }: Props) {
 
       <div className="relative z-10 flex h-full w-full flex-col px-10 py-9 xl:px-12">
         <Link
-          href={homeHref}
+          href="/"
           draggable={false}
           className="inline-flex w-fit select-none items-center gap-2"
-          onCopy={(event) => {
-            event.preventDefault();
-          }}
-          onContextMenu={(event) => {
-            event.preventDefault();
-          }}
         >
           <Image
             src="/pesan-ai-logo.png"
@@ -56,20 +41,20 @@ export function AuthBrandPanel({ locale }: Props) {
 
         <div className="my-auto max-w-2xl space-y-6">
           <p className="text-[38px] leading-[1.3] font-bold text-white">
-            {copy.headline}
+            {t('headline')}
           </p>
           <MetaTechPartner />
         </div>
 
         <div className="flex flex-col gap-3 text-sm text-white/80">
-          <Link
+          <a
             href="mailto:poc.helpteam@gmail.com"
             className="inline-flex w-fit items-center gap-2 transition-colors hover:text-white cursor-pointer"
           >
             <Mail className="size-5" />
             <span>poc.helpteam@gmail.com</span>
-          </Link>
-          <Link
+          </a>
+          <a
             href="https://wa.me/6285195563454"
             target="_blank"
             rel="noopener noreferrer"
@@ -77,7 +62,7 @@ export function AuthBrandPanel({ locale }: Props) {
           >
             <FaWhatsapp className="size-5" />
             <span className="text-xs">+62 851 9556 3454</span>
-          </Link>
+          </a>
         </div>
       </div>
     </section>

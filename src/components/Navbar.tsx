@@ -1,48 +1,32 @@
 'use client';
 
+import { Container } from '@/components/Container';
 import { Button } from '@/components/ui/button';
-import type { AppLocale } from '@/lib/locale';
-import { toLocalePath } from '@/lib/locale';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { routing } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Menu, X } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { Container } from './Container';
-
-const languageOptions = [
-  { label: 'Indonesia', value: 'id' },
-  { label: 'English', value: 'en' },
-] as const;
-
-type LanguageCode = (typeof languageOptions)[number]['value'];
-
-const navbarCopy = {
-  id: {
-    login: 'Masuk',
-    consultation: 'Konsultasi Sekarang',
-    openMenu: 'Buka menu',
-    closeMenu: 'Tutup menu',
-  },
-  en: {
-    login: 'Login',
-    consultation: 'Book a Consultation',
-    openMenu: 'Open menu',
-    closeMenu: 'Close menu',
-  },
-} as const;
+type LanguageCode = (typeof routing.locales)[number];
+type LanguageOption = {
+  label: string;
+  value: LanguageCode;
+};
 
 type LanguageDropdownProps = {
   scrolled: boolean;
   locale: LanguageCode;
+  options: LanguageOption[];
   onLanguageChange: (lang: LanguageCode) => void;
 };
 
 function LanguageDropdown({
   scrolled,
   locale,
+  options,
   onLanguageChange,
 }: LanguageDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,8 +59,8 @@ function LanguageDropdown({
   }, [clearCloseTimeout]);
 
   const activeLanguage =
-    languageOptions.find((option) => option.value === locale)?.label ??
-    'Indonesia';
+    options.find((option) => option.value === locale)?.label ??
+    options[0]?.label;
 
   return (
     <div className="relative" onMouseEnter={openMenu} onMouseLeave={closeMenu}>
@@ -111,7 +95,7 @@ function LanguageDropdown({
             : 'invisible -translate-y-1 opacity-0',
         )}
       >
-        {languageOptions.map((option) => (
+        {options.map((option) => (
           <button
             key={option.value}
             type="button"
@@ -137,18 +121,20 @@ function LanguageDropdown({
 
 type MobileLanguageSelectProps = {
   language: LanguageCode;
+  options: LanguageOption[];
   onLanguageChange: (lang: LanguageCode) => void;
 };
 
 function MobileLanguageSelect({
   language,
+  options,
   onLanguageChange,
 }: MobileLanguageSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const activeLanguage =
-    languageOptions.find((option) => option.value === language)?.label ??
-    'Indonesia';
+    options.find((option) => option.value === language)?.label ??
+    options[0]?.label;
 
   return (
     <div className="w-full rounded-sm border border-brand/20 bg-brand-foreground">
@@ -177,7 +163,7 @@ function MobileLanguageSelect({
         )}
       >
         <div className="overflow-hidden border-t border-brand/15">
-          {languageOptions.map((option) => (
+          {options.map((option) => (
             <button
               key={option.value}
               type="button"
@@ -201,14 +187,12 @@ function MobileLanguageSelect({
   );
 }
 
-type Props = {
-  locale: AppLocale;
-};
-
-export function Navbar({ locale }: Props) {
+export function Navbar() {
+  const locale = useLocale() as LanguageCode;
   const pathname = usePathname();
   const router = useRouter();
-  const copy = navbarCopy[locale];
+  const t = useTranslations('Navbar');
+  const languageOptions = t.raw('languages') as LanguageOption[];
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -218,16 +202,10 @@ export function Navbar({ locale }: Props) {
     setMobileLanguage(locale);
   }, [locale]);
 
-  const homeHref = toLocalePath(locale, '/');
-  const loginHref = toLocalePath(locale, '/login');
-
   const handleLanguageChange = useCallback(
     (nextLocale: LanguageCode) => {
-      const currentPath = pathname ?? '/';
-      const nextPath = toLocalePath(nextLocale, currentPath);
-
       setMobileLanguage(nextLocale);
-      router.push(nextPath);
+      router.replace(pathname || '/', { locale: nextLocale });
     },
     [pathname, router],
   );
@@ -257,13 +235,9 @@ export function Navbar({ locale }: Props) {
       >
         <Container className="flex h-18 items-center justify-between gap-4">
           <Link
-            href={homeHref}
+            href="/"
             className="inline-flex items-center gap-2"
             draggable={false}
-            onClick={(event) => {
-              event.preventDefault();
-              window.location.assign(homeHref);
-            }}
           >
             <Image
               src={
@@ -288,16 +262,16 @@ export function Navbar({ locale }: Props) {
             </span>
           </Link>
 
-          {/* Desktop nav */}
           <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
             <LanguageDropdown
               scrolled={scrolled}
               locale={locale}
+              options={languageOptions}
               onLanguageChange={handleLanguageChange}
             />
 
             <Link
-              href={loginHref}
+              href="/login"
               className={cn(
                 'inline-flex h-9 items-center px-2 text-sm font-semibold transition-colors',
                 scrolled
@@ -305,7 +279,7 @@ export function Navbar({ locale }: Props) {
                   : 'text-white/85 hover:text-white',
               )}
             >
-              {copy.login}
+              {t('login')}
             </Link>
 
             <Button
@@ -319,15 +293,14 @@ export function Navbar({ locale }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {copy.consultation}
+                {t('consultation')}
               </a>
             </Button>
           </div>
 
-          {/* Mobile hamburger */}
           <button
             type="button"
-            aria-label={mobileMenuOpen ? copy.closeMenu : copy.openMenu}
+            aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')}
             className={cn(
               'inline-flex size-10 items-center justify-center rounded-lg transition-colors md:hidden',
               scrolled || mobileMenuOpen
@@ -345,19 +318,19 @@ export function Navbar({ locale }: Props) {
         </Container>
       </header>
 
-      {/* Mobile menu overlay */}
       <div
         aria-hidden={!mobileMenuOpen}
         className={cn(
           'fixed inset-x-0 top-18 z-40 border-b border-border bg-background shadow-xl transition-all duration-300 ease-out md:hidden',
           mobileMenuOpen
             ? 'visible translate-y-0 opacity-100'
-            : 'invisible -translate-y-4 opacity-0 pointer-events-none',
+            : 'invisible pointer-events-none -translate-y-4 opacity-0',
         )}
       >
         <nav className="mx-auto flex w-full max-w-md flex-col gap-4 px-5 py-6">
           <MobileLanguageSelect
             language={mobileLanguage}
+            options={languageOptions}
             onLanguageChange={handleLanguageChange}
           />
 
@@ -367,8 +340,8 @@ export function Navbar({ locale }: Props) {
             variant="outline"
             className="h-12 w-full rounded-sm border-brand/25 bg-transparent text-base font-semibold text-brand hover:bg-brand/10"
           >
-            <Link href={loginHref} onClick={() => setMobileMenuOpen(false)}>
-              {copy.login}
+            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+              {t('login')}
             </Link>
           </Button>
 
@@ -384,7 +357,7 @@ export function Navbar({ locale }: Props) {
               rel="noopener noreferrer"
               onClick={() => setMobileMenuOpen(false)}
             >
-              {copy.consultation}
+              {t('consultation')}
             </a>
           </Button>
         </nav>

@@ -1,0 +1,313 @@
+{
+  "Common": {
+    "metaTechPartner": "Official Meta Tech Partner"
+  },
+  "Metadata": {
+    "home": {
+      "title": "pesan.ai | AI Agent WhatsApp untuk Bisnis",
+      "description": "Pesan AI membantu bisnis membalas chat pelanggan dan mengatur booking otomatis lewat WhatsApp dengan AI."
+    },
+    "login": {
+      "title": "Masuk | pesan.ai",
+      "description": "Masuk ke akun pesan.ai untuk mengelola otomatisasi chat WhatsApp bisnis Anda."
+    },
+    "terms": {
+      "title": "Syarat Layanan | pesan.ai",
+      "description": "Baca Syarat Layanan pesan.ai untuk memahami ketentuan penggunaan platform dan layanan kami."
+    },
+    "privacy": {
+      "title": "Kebijakan Privasi | pesan.ai",
+      "description": "Pelajari bagaimana pesan.ai mengumpulkan, menggunakan, dan melindungi data pribadi Anda."
+    }
+  },
+  "Navbar": {
+    "login": "Masuk",
+    "consultation": "Konsultasi Sekarang",
+    "openMenu": "Buka menu",
+    "closeMenu": "Tutup menu",
+    "languages": [
+      {
+        "label": "Indonesia",
+        "value": "id"
+      },
+      {
+        "label": "Inggris",
+        "value": "en"
+      }
+    ]
+  },
+  "Footer": {
+    "metaPartner": "Official Meta Tech Partner",
+    "description": "Solusi AI WhatsApp untuk membalas pelanggan dengan ramah dan mengatur booking otomatis.",
+    "company": "Perusahaan",
+    "about": "Tentang Kami",
+    "login": "Masuk",
+    "consultation": "Konsultasi Sekarang",
+    "featuresTitle": "Fitur",
+    "featuresList": [
+      "Satu Nomor Terintegrasi",
+      "WhatsApp AI Agent",
+      "Booking Otomatis"
+    ],
+    "legalTitle": "Legal",
+    "terms": "Syarat Layanan",
+    "privacy": "Kebijakan Privasi",
+    "rights": "(c) 2026 Pesan AI. Hak cipta dilindungi."
+  },
+  "LandingPage": {
+    "hero": {
+      "badge": "AI Agent WhatsApp Custom #1 Sesuai Kebutuhan Bisnismu",
+      "titlePrefix": "AI Balas Chat ",
+      "titleHighlight": "Otomatis",
+      "titleSuffix": ",",
+      "titleLineTwo": "Booking Tanpa Ribet",
+      "descriptionPrefix": "AI WhatsApp Agent yang menjawab pelanggan dan mengatur booking secara otomatis ",
+      "descriptionHighlight": "24/7",
+      "descriptionSuffix": ".",
+      "consultation": "Konsultasi Sekarang",
+      "login": "Masuk",
+      "heroAlt": "Latar suasana malam untuk hero section Pesan AI",
+      "demoAlt": "Demo produk Pesan AI"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "heading": "Pertanyaan umum",
+      "subtitle": "Pertanyaan yang paling sering ditanyakan tentang cara kerja Pesan AI untuk membantu bisnis Anda membalas chat dan mengelola booking secara otomatis.",
+      "items": [
+        {
+          "question": "Apa itu Pesan AI?",
+          "answer": "Pesan AI adalah platform AI Agent WhatsApp yang membantu bisnis membalas chat pelanggan secara otomatis, ramah, dan real-time, sekaligus menangani proses booking tanpa intervensi manual."
+        },
+        {
+          "question": "Apakah AI ini benar-benar bisa disesuaikan (custom)?",
+          "answer": "Ya, Pesan AI dapat dikustomisasi hampir 100% sesuai kebutuhan bisnis Anda. Mulai dari alur percakapan, gaya bahasa, hingga sistem booking dan personalisasi layanan dapat disesuaikan sepenuhnya. Platform chat (WhatsApp) tetap sama, namun seluruh pengalaman di dalamnya bisa diatur sesuai kebutuhan Anda."
+        },
+        {
+          "question": "Apakah Pesan AI cocok untuk semua jenis bisnis?",
+          "answer": "Bisa. Pesan AI cocok untuk berbagai bisnis yang membutuhkan respon cepat dan sistem booking, seperti klinik, salon, jasa, UMKM, hingga layanan profesional lainnya."
+        },
+        {
+          "question": "Apakah pelanggan akan tahu bahwa mereka berbicara dengan AI?",
+          "answer": "Pesan AI dirancang untuk memberikan respon yang natural dan ramah seperti manusia. Anda juga bisa menyesuaikan gaya komunikasi sesuai branding bisnis Anda."
+        },
+        {
+          "question": "Bagaimana sistem booking otomatis bekerja?",
+          "answer": "AI akan menanyakan data pelanggan, mengecek ketersediaan jadwal booking, lalu memberi informasi apakah slot tersedia atau tidak. Jika penuh, AI dapat menyarankan waktu alternatif yang masih kosong secara otomatis."
+        },
+        {
+          "question": "Apakah saya perlu skill teknis untuk menggunakan Pesan AI?",
+          "answer": "Tidak. Anda hanya perlu menggunakan web chat yang sudah disediakan. Untuk pengaturan AI, alur, dan sistem lainnya cukup didiskusikan dengan tim kami, semua akan kami siapkan. Anda tinggal menggunakan, dan kami akan memberikan akun yang siap pakai."
+        }
+      ]
+    }
+  },
+  "Auth": {
+    "brandPanel": {
+      "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI."
+    },
+    "pages": {
+      "login": {
+        "title": "Masuk ke Akun Anda",
+        "subtitle": "Masukkan email dan kata sandi Anda."
+      },
+      "forgotPassword": {
+        "title": "Lupa Kata Sandi",
+        "subtitle": "Masukkan email Anda untuk menerima tautan reset kata sandi."
+      },
+      "resetPassword": {
+        "title": "Atur Ulang Kata Sandi",
+        "subtitle": "Masukkan kata sandi baru untuk akun Anda."
+      }
+    },
+    "forms": {
+      "common": {
+        "emailLabel": "Email",
+        "emailPlaceholder": "name@company.com"
+      },
+      "login": {
+        "labels": {
+          "password": "Kata Sandi",
+          "forgotPassword": "Lupa kata sandi?",
+          "agreePrefix": "Saya menyetujui",
+          "terms": "Syarat Layanan",
+          "and": "dan",
+          "privacy": "Kebijakan Privasi",
+          "submit": "Masuk",
+          "submitting": "Memproses...",
+          "passwordPlaceholder": "Masukkan kata sandi Anda",
+          "hidePassword": "Sembunyikan kata sandi",
+          "showPassword": "Tampilkan kata sandi"
+        },
+        "errors": {
+          "invalidEmail": "Format email tidak valid",
+          "passwordRequired": "Kata sandi wajib diisi",
+          "passwordLength": "Kata sandi minimal 8 karakter",
+          "termsRequired": "Anda harus menyetujui Syarat dan Privasi untuk lanjut",
+          "invalidCredentials": "Email atau kata sandi tidak valid.",
+          "emailNotVerified": "Email Anda belum diverifikasi. Silakan cek inbox email Anda.",
+          "unknownError": "Terjadi kesalahan saat login. Silakan coba lagi."
+        }
+      },
+      "forgotPassword": {
+        "labels": {
+          "submit": "Kirim Tautan Reset",
+          "submitting": "Mengirim...",
+          "backToLogin": "Kembali ke login",
+          "successTitle": "Cek email Anda",
+          "successMessage": "Jika email terdaftar, kami telah mengirim tautan untuk mengatur ulang kata sandi Anda."
+        },
+        "errors": {
+          "invalidEmail": "Format email tidak valid",
+          "unknownError": "Terjadi kesalahan saat meminta reset kata sandi. Silakan coba lagi."
+        }
+      },
+      "resetPassword": {
+        "labels": {
+          "password": "Kata Sandi Baru",
+          "confirmPassword": "Konfirmasi Kata Sandi",
+          "submit": "Simpan Kata Sandi Baru",
+          "submitting": "Menyimpan...",
+          "passwordPlaceholder": "Masukkan kata sandi baru Anda",
+          "confirmPasswordPlaceholder": "Ulangi kata sandi baru Anda",
+          "hidePassword": "Sembunyikan kata sandi",
+          "showPassword": "Tampilkan kata sandi",
+          "backToLogin": "Kembali ke login",
+          "successTitle": "Kata sandi berhasil diperbarui",
+          "successMessage": "Anda sekarang dapat login dengan kata sandi baru Anda.",
+          "invalidTokenTitle": "Tautan reset tidak valid",
+          "invalidTokenMessage": "Tautan reset ini tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+          "requestNewLink": "Minta tautan baru"
+        },
+        "errors": {
+          "passwordRequired": "Kata sandi wajib diisi",
+          "passwordLength": "Kata sandi minimal 8 karakter",
+          "confirmPasswordRequired": "Konfirmasi kata sandi wajib diisi",
+          "passwordMismatch": "Konfirmasi kata sandi tidak cocok",
+          "invalidToken": "Tautan reset tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+          "unknownError": "Terjadi kesalahan saat mengatur ulang kata sandi. Silakan coba lagi."
+        }
+      }
+    }
+  },
+  "PrivacyPage": {
+    "title": "Kebijakan Privasi",
+    "heroAlt": "Hero kebijakan privasi",
+    "updatedLabel": "Pembaruan Terakhir",
+    "updatedOn": "14 Mei 2026",
+    "tocTitle": "Daftar isi",
+    "sections": [
+      {
+        "id": "introduction",
+        "label": "Pendahuluan"
+      },
+      {
+        "id": "data-collection",
+        "label": "Data yang Kami Kumpulkan"
+      },
+      {
+        "id": "data-use",
+        "label": "Cara Kami Menggunakan Data Anda"
+      },
+      {
+        "id": "security",
+        "label": "Keamanan Data"
+      },
+      {
+        "id": "contact",
+        "label": "Kontak"
+      }
+    ],
+    "introductionHeading": "1. Pendahuluan",
+    "introductionText": "Selamat datang di Pesan AI (\"kami\"). Kami adalah platform manajemen dan otomasi pesan cerdas melalui WhatsApp Business API. Kami menghormati privasi Anda dan berkomitmen melindungi data pribadi Anda. Kebijakan privasi ini menjelaskan bagaimana kami mengelola data pribadi Anda dan data pelanggan Anda saat Anda mengunjungi website kami atau menggunakan layanan kami.",
+    "collectionHeading": "2. Data yang Kami Kumpulkan",
+    "collectionIntro": "Kami dapat mengumpulkan, menggunakan, menyimpan, dan mentransfer berbagai jenis data untuk mengoperasikan layanan kami:",
+    "collectionItems": [
+      {
+        "label": "Data Identitas dan Kontak:",
+        "value": "Mencakup nama, alamat email, nomor telepon WhatsApp, profil bisnis, dan informasi login Anda."
+      },
+      {
+        "label": "Data Pesan dan Pelanggan:",
+        "value": "Mencakup isi pesan, riwayat percakapan, kontak pelanggan, dan data interaksi yang Anda proses menggunakan platform kami."
+      },
+      {
+        "label": "Data Teknis:",
+        "value": "Mencakup alamat internet protocol (IP), data login, jenis browser, webhook payload, integrasi API, dan sistem operasi."
+      },
+      {
+        "label": "Data Penggunaan:",
+        "value": "Mencakup informasi tentang cara Anda menggunakan website, metrik pengiriman pesan, dan otomasi AI di dalam platform kami."
+      }
+    ],
+    "usageHeading": "3. Cara Kami Menggunakan Data Anda",
+    "usageIntro": "Kami menggunakan data pribadi dan data operasional Anda dalam kondisi berikut:",
+    "usageItems": [
+      "Untuk mengoperasikan dan menyediakan layanan pengiriman dan otomasi pesan WhatsApp Business.",
+      "Untuk memproses interaksi AI pada percakapan Anda dengan pelanggan sesuai pengaturan yang Anda buat.",
+      "Untuk mengelola akun Anda dan memberikan dukungan layanan pelanggan teknis.",
+      "Untuk meningkatkan algoritma AI dan antarmuka platform demi kenyamanan pengguna.",
+      "Untuk memenuhi kewajiban operasional dari Meta/WhatsApp dan regulasi lokal yang berlaku."
+    ],
+    "securityHeading": "4. Keamanan Data",
+    "securityText": "Kami mengimplementasikan standar keamanan industri yang kuat untuk melindungi data komunikasi bisnis dan data pribadi Anda dari akses yang tidak sah. Konversi pesan dengan AI diproses secara aman, dan akses ke percakapan Anda dibatasi hanya kepada pemilik akun dan anggota tim yang Anda percayakan.",
+    "contactHeading": "5. Kontak",
+    "contactText": "Jika Anda memiliki pertanyaan tentang kebijakan privasi ini atau cara pengelolaan data pesan Anda, silakan hubungi tim dukungan kami di website Pesan AI."
+  },
+  "TermsPage": {
+    "title": "Syarat Layanan",
+    "heroAlt": "Hero syarat layanan",
+    "updatedLabel": "Pembaruan Terakhir",
+    "updatedOn": "14 Mei 2026",
+    "tocTitle": "Daftar isi",
+    "sections": [
+      {
+        "id": "acceptance",
+        "label": "Penerimaan Syarat"
+      },
+      {
+        "id": "service",
+        "label": "Deskripsi Layanan"
+      },
+      {
+        "id": "ip",
+        "label": "Hak Kekayaan Intelektual"
+      },
+      {
+        "id": "obligations",
+        "label": "Kewajiban Pengguna"
+      },
+      {
+        "id": "liability",
+        "label": "Batasan Tanggung Jawab"
+      },
+      {
+        "id": "law",
+        "label": "Hukum yang Berlaku"
+      }
+    ],
+    "acceptanceHeading": "1. Penerimaan Syarat",
+    "acceptanceText": "Dengan mengakses atau menggunakan website Pesan AI, Anda setuju untuk terikat dan mematuhi Syarat Layanan ini. Jika Anda tidak menyetujui bagian mana pun dari syarat ini, Anda tidak diperkenankan mengakses atau menggunakan layanan kami.",
+    "serviceHeading": "2. Deskripsi Layanan",
+    "serviceText": "Pesan AI adalah platform manajemen percakapan dan otomasi pesan cerdas yang terintegrasi dengan WhatsApp Business API. Kami menyediakan fitur agent AI, webhook eksternal, dan pengelolaan database percakapan (WABA) untuk mempermudah bisnis Anda melayani pelanggan.",
+    "ipHeading": "3. Hak Kekayaan Intelektual",
+    "ipText": "Website dan platform Pesan AI beserta konten asli, struktur database, model AI dan fungsionalitasnya adalah dan akan tetap menjadi milik eksklusif platform kami. Anda tidak diberikan lisensi untuk menggunakan merek dagang kami tanpa izin tertulis dari kami.",
+    "obligationsHeading": "4. Kewajiban Pengguna",
+    "obligationsIntro": "Saat mendaftar dan menggunakan platform kami, Anda setuju untuk tidak:",
+    "obligationsItems": [
+      "Mengirimkan konten atau materi pesanan yang melanggar kebijakan WhatsApp (Commerce/Business Policy) atau aturan hukum di Indonesia.",
+      "Mencoba melakukan reverse engineering, dekompilasi, atau mengeksploitasi celah keamanan sistem Pesan AI dan server kami.",
+      "Mengganggu kinerja sistem atau mengirim antrean pesan secara berlebihan yang mengarah ke tindakan serangan server (seperti DDoS).",
+      "Menyalahgunakan kredensial webhook dan nomor WABA yang diregistrasikan di luar batas kewajaran."
+    ],
+    "liabilityHeading": "5. Batasan Tanggung Jawab",
+    "liabilityText": "Pesan AI memfasilitasi koneksi ke Meta/WhatsApp API. Kami tidak bertanggung jawab atas pemblokiran nomor WABA Anda oleh pihak Meta, kerugian finansial atau kehilangan data pelanggan, serta downtime yang disebabkan oleh penyedia layanan pihak ketiga. Penggunaan layanan kami merupakan risiko Anda sendiri.",
+    "lawHeading": "6. Hukum yang Berlaku",
+    "lawText": "Syarat ini diatur dan ditafsirkan sesuai hukum yang berlaku di Indonesia. Setiap perselisihan yang timbul dari layanan ini atau Syarat Layanan ini akan diselesaikan secara eksklusif dalam yurisdiksi pengadilan di Indonesia."
+  },
+  "NotFoundPage": {
+    "badge": "404",
+    "title": "Ups, halaman yang kamu cari tidak tersedia.",
+    "description": "Link mungkin dipindahkan atau tidak pernah ada.",
+    "home": "Kembali ke Beranda"
+  }
+}

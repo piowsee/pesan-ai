@@ -1,7 +1,8 @@
 import { AuthCard } from '@/components/auth/auth-card';
-import { resetPasswordCardCopy } from '@/components/auth/content';
 import { ResetPasswordForm } from '@/components/auth/reset-password/reset-password-form';
-import { isAppLocale } from '@/lib/locale';
+import { routing } from '@/i18n/routing';
+import { hasLocale } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 type Props = {
@@ -10,18 +11,17 @@ type Props = {
 
 export default async function LocalizedResetPasswordPage({ params }: Props) {
   const { locale } = await params;
-
-  if (!isAppLocale(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
-  const copy = resetPasswordCardCopy[locale];
+  setRequestLocale(locale);
+  const t = await getTranslations('Auth.pages.resetPassword');
 
   return (
     <AuthCard
-      locale={locale}
-      title={copy.title}
-      subtitle={copy.subtitle}
+      title={t('title')}
+      subtitle={t('subtitle')}
       FormComponent={ResetPasswordForm}
     />
   );

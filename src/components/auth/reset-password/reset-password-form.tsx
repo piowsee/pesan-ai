@@ -1,36 +1,57 @@
 'use client';
 
-import {
-  type ResetPasswordFormCopy,
-  resetPasswordFormCopy,
-} from '@/components/auth/content';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Link } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
-import type { AppLocale } from '@/lib/locale';
-import { toLocalePath } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-function createResetPasswordSchema(copy: ResetPasswordFormCopy) {
+type ResetPasswordLabels = {
+  password: string;
+  confirmPassword: string;
+  submit: string;
+  submitting: string;
+  passwordPlaceholder: string;
+  confirmPasswordPlaceholder: string;
+  hidePassword: string;
+  showPassword: string;
+  backToLogin: string;
+  successTitle: string;
+  successMessage: string;
+  invalidTokenTitle: string;
+  invalidTokenMessage: string;
+  requestNewLink: string;
+};
+
+type ResetPasswordErrors = {
+  passwordRequired: string;
+  passwordLength: string;
+  confirmPasswordRequired: string;
+  passwordMismatch: string;
+  invalidToken: string;
+  unknownError: string;
+};
+
+function createResetPasswordSchema(errors: ResetPasswordErrors) {
   return z
     .object({
       password: z
         .string()
-        .min(1, copy.errors.passwordRequired)
-        .min(8, copy.errors.passwordLength),
-      confirmPassword: z.string().min(1, copy.errors.confirmPasswordRequired),
+        .min(1, errors.passwordRequired)
+        .min(8, errors.passwordLength),
+      confirmPassword: z.string().min(1, errors.confirmPasswordRequired),
     })
     .refine((values) => values.password === values.confirmPassword, {
       path: ['confirmPassword'],
-      message: copy.errors.passwordMismatch,
+      message: errors.passwordMismatch,
     });
 }
 
@@ -39,14 +60,10 @@ type ResetPasswordFormValues = {
   confirmPassword: string;
 };
 
-type Props = {
-  locale: AppLocale;
-};
-
-export function ResetPasswordForm({ locale }: Props) {
-  const copy = resetPasswordFormCopy[locale];
-  const loginHref = toLocalePath(locale, '/login');
-  const forgotPasswordHref = toLocalePath(locale, '/forgot-password');
+export function ResetPasswordForm() {
+  const t = useTranslations('Auth.forms.resetPassword');
+  const labels = t.raw('labels') as ResetPasswordLabels;
+  const errors = t.raw('errors') as ResetPasswordErrors;
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -56,7 +73,7 @@ export function ResetPasswordForm({ locale }: Props) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const schema = useMemo(() => createResetPasswordSchema(copy), [copy]);
+  const schema = useMemo(() => createResetPasswordSchema(errors), [errors]);
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(schema),
@@ -68,7 +85,7 @@ export function ResetPasswordForm({ locale }: Props) {
 
   async function onSubmit(values: ResetPasswordFormValues) {
     if (!token) {
-      setFormError(copy.errors.invalidToken);
+      setFormError(errors.invalidToken);
       return;
     }
 
@@ -82,13 +99,13 @@ export function ResetPasswordForm({ locale }: Props) {
       });
 
       if (result?.error) {
-        setFormError(result.error.message || copy.errors.invalidToken);
+        setFormError(result.error.message || errors.invalidToken);
         return;
       }
 
       setIsSubmitted(true);
     } catch {
-      setFormError(copy.errors.unknownError);
+      setFormError(errors.unknownError);
     } finally {
       setIsPending(false);
     }
@@ -99,14 +116,14 @@ export function ResetPasswordForm({ locale }: Props) {
       <div className="space-y-4 text-center">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">
-            {copy.labels.invalidTokenTitle}
+            {labels.invalidTokenTitle}
           </h2>
           <p className="text-sm leading-6 text-muted-foreground">
-            {copy.labels.invalidTokenMessage}
+            {labels.invalidTokenMessage}
           </p>
         </div>
         <Button asChild variant="brand" size="lg" className="h-10 w-full">
-          <Link href={forgotPasswordHref}>{copy.labels.requestNewLink}</Link>
+          <Link href="/forgot-password">{labels.requestNewLink}</Link>
         </Button>
       </div>
     );
@@ -117,14 +134,14 @@ export function ResetPasswordForm({ locale }: Props) {
       <div className="space-y-4 text-center">
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">
-            {copy.labels.successTitle}
+            {labels.successTitle}
           </h2>
           <p className="text-sm leading-6 text-muted-foreground">
-            {copy.labels.successMessage}
+            {labels.successMessage}
           </p>
         </div>
         <Button asChild variant="brand" size="lg" className="h-10 w-full">
-          <Link href={loginHref}>{copy.labels.backToLogin}</Link>
+          <Link href="/login">{labels.backToLogin}</Link>
         </Button>
       </div>
     );
@@ -136,7 +153,7 @@ export function ResetPasswordForm({ locale }: Props) {
       className="flex flex-col gap-4"
     >
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">{copy.labels.password}</Label>
+        <Label htmlFor="password">{labels.password}</Label>
         <div className="relative">
           <Input
             id="password"
@@ -150,7 +167,7 @@ export function ResetPasswordForm({ locale }: Props) {
               form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
-            placeholder={copy.labels.passwordPlaceholder}
+            placeholder={labels.passwordPlaceholder}
           />
           <Button
             type="button"
@@ -159,7 +176,7 @@ export function ResetPasswordForm({ locale }: Props) {
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute inset-y-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground"
             aria-label={
-              showPassword ? copy.labels.hidePassword : copy.labels.showPassword
+              showPassword ? labels.hidePassword : labels.showPassword
             }
           >
             {showPassword ? (
@@ -177,7 +194,7 @@ export function ResetPasswordForm({ locale }: Props) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="confirmPassword">{copy.labels.confirmPassword}</Label>
+        <Label htmlFor="confirmPassword">{labels.confirmPassword}</Label>
         <div className="relative">
           <Input
             id="confirmPassword"
@@ -190,7 +207,7 @@ export function ResetPasswordForm({ locale }: Props) {
               form.formState.errors.confirmPassword &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
-            placeholder={copy.labels.confirmPasswordPlaceholder}
+            placeholder={labels.confirmPasswordPlaceholder}
           />
           <Button
             type="button"
@@ -199,9 +216,7 @@ export function ResetPasswordForm({ locale }: Props) {
             onClick={() => setShowConfirmPassword((prev) => !prev)}
             className="absolute inset-y-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground"
             aria-label={
-              showConfirmPassword
-                ? copy.labels.hidePassword
-                : copy.labels.showPassword
+              showConfirmPassword ? labels.hidePassword : labels.showPassword
             }
           >
             {showConfirmPassword ? (
@@ -230,11 +245,11 @@ export function ResetPasswordForm({ locale }: Props) {
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
         ) : null}
-        {isPending ? copy.labels.submitting : copy.labels.submit}
+        {isPending ? labels.submitting : labels.submit}
       </Button>
 
       <Button asChild variant="ghost" size="lg" className="h-10 w-full">
-        <Link href={loginHref}>{copy.labels.backToLogin}</Link>
+        <Link href="/login">{labels.backToLogin}</Link>
       </Button>
     </form>
   );

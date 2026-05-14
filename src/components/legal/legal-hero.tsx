@@ -1,15 +1,13 @@
-import { getDateLocale } from '@/lib/locale';
-import type { AppLocale } from '@/lib/locale';
 import Image from 'next/image';
 
 type Props = {
-  locale: AppLocale;
   title: string;
   heroAlt: string;
   updatedLabel: string;
+  updatedOn: string;
 };
 
-export function LegalHero({ locale, title, heroAlt, updatedLabel }: Props) {
+export function LegalHero({ title, heroAlt, updatedLabel, updatedOn }: Props) {
   return (
     <section className="relative -mt-22 h-100 w-full overflow-hidden">
       <Image
@@ -29,12 +27,7 @@ export function LegalHero({ locale, title, heroAlt, updatedLabel }: Props) {
         </h1>
 
         <p className="mt-4 text-lg text-white/80">
-          {updatedLabel}:{' '}
-          {new Date().toLocaleDateString(getDateLocale(locale), {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })}
+          {updatedLabel}: {updatedOn}
         </p>
       </div>
     </section>

@@ -2,9 +2,11 @@ import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { FAQSection } from '@/components/landing/faq';
 import { Hero } from '@/components/landing/hero';
-import { isAppLocale } from '@/lib/locale';
+import { routing } from '@/i18n/routing';
 import { buildLocalizedMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
+import { hasLocale } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 type LocalePageProps = {
@@ -16,7 +18,7 @@ export async function generateMetadata({
 }: LocalePageProps): Promise<Metadata> {
   const { locale } = await params;
 
-  if (!isAppLocale(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     return {};
   }
 
@@ -25,19 +27,20 @@ export async function generateMetadata({
 
 export default async function LocalizedHomePage({ params }: LocalePageProps) {
   const { locale } = await params;
-
-  if (!isAppLocale(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
+  setRequestLocale(locale);
+
   return (
     <div className="min-h-screen bg-background font-sans">
-      <Navbar locale={locale} />
+      <Navbar />
       <main>
-        <Hero locale={locale} />
-        <FAQSection locale={locale} />
+        <Hero />
+        <FAQSection />
       </main>
-      <Footer locale={locale} />
+      <Footer />
     </div>
   );
 }
