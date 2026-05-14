@@ -2,18 +2,19 @@
 
 import { Container } from '@/components/Container';
 import { ScrollReveal } from '@/components/ScrollReveal';
-import { faqCopy } from '@/components/landing/content';
-import type { AppLocale } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-type Props = {
-  locale: AppLocale;
+type FaqItem = {
+  question: string;
+  answer: string;
 };
 
-export function FAQSection({ locale }: Props) {
-  const copy = faqCopy[locale];
+export function FAQSection() {
+  const t = useTranslations('LandingPage.faq');
+  const items = t.raw('items') as FaqItem[];
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
@@ -25,18 +26,18 @@ export function FAQSection({ locale }: Props) {
             distance={24}
           >
             <p className="text-sm font-semibold tracking-[0.18em] text-brand/70">
-              {copy.title}
+              {t('eyebrow')}
             </p>
             <h2 className="mt-3 text-3xl font-semibold leading-tight text-brand sm:text-4xl">
-              {locale === 'id' ? 'Pertanyaan umum' : 'Common questions'}
+              {t('heading')}
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-brand/75 sm:text-[0.95rem]">
-              {copy.subtitle}
+              {t('subtitle')}
             </p>
           </ScrollReveal>
 
           <ScrollReveal className="w-full lg:ml-auto lg:max-w-180" delay={120}>
-            {copy.items.map((item, index) => {
+            {items.map((item, index) => {
               const isOpen = openIndex === index;
 
               return (

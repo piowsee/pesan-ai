@@ -1,16 +1,24 @@
-import { SUPPORTED_LOCALES } from '@/lib/locale';
-import type { ReactNode } from 'react';
-
-export const dynamicParams = false;
+import { routing } from '@/i18n/routing';
+import { NextIntlClientProvider, hasLocale } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 
 export function generateStaticParams() {
-  return SUPPORTED_LOCALES.map((locale) => ({ locale }));
+  return routing.locales.map((locale) => ({ locale }));
 }
 
-type LocaleLayoutProps = {
-  children: ReactNode;
+type Props = {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 };
 
-export default function LocaleLayout({ children }: LocaleLayoutProps) {
-  return children;
+export default async function LocaleLayout({ children, params }: Props) {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+
+  return <NextIntlClientProvider>{children}</NextIntlClientProvider>;
 }

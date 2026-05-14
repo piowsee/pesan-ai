@@ -1,7 +1,21 @@
-import type { TermsContent } from './content';
+export type TermsArticleCopy = {
+  acceptanceHeading: string;
+  acceptanceText: string;
+  serviceHeading: string;
+  serviceText: string;
+  ipHeading: string;
+  ipText: string;
+  obligationsHeading: string;
+  obligationsIntro: string;
+  obligationsItems: string[];
+  liabilityHeading: string;
+  liabilityText: string;
+  lawHeading: string;
+  lawText: string;
+};
 
 type Props = {
-  copy: TermsContent;
+  copy: TermsArticleCopy;
 };
 
 export function TermsArticle({ copy }: Props) {

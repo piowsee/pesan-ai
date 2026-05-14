@@ -1,20 +1,14 @@
 'use client';
 
-import type { AppLocale } from '@/lib/locale';
 import { type ComponentType, Suspense } from 'react';
 
-type AuthFormProps = {
-  locale: AppLocale;
-};
-
 type Props = {
-  locale: AppLocale;
   title: string;
   subtitle: string;
-  FormComponent: ComponentType<AuthFormProps>;
+  FormComponent: ComponentType;
 };
 
-export function AuthCard({ locale, title, subtitle, FormComponent }: Props) {
+export function AuthCard({ title, subtitle, FormComponent }: Props) {
   return (
     <div className="relative z-10 w-full max-w-md xl:max-w-xl">
       <div className="mb-8 space-y-2.5">
@@ -30,7 +24,7 @@ export function AuthCard({ locale, title, subtitle, FormComponent }: Props) {
           <div className="h-10 w-full animate-pulse rounded-md bg-muted" />
         }
       >
-        <FormComponent locale={locale} />
+        <FormComponent />
       </Suspense>
     </div>
   );

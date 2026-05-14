@@ -1,32 +1,53 @@
 'use client';
 
-import { loginFormCopy } from '@/components/auth/content';
-import type { LoginFormCopy } from '@/components/auth/content';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Link } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
-import type { AppLocale } from '@/lib/locale';
-import { toLocalePath } from '@/lib/locale';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-function createLoginSchema(copy: LoginFormCopy) {
+type LoginFormLabels = {
+  password: string;
+  forgotPassword: string;
+  agreePrefix: string;
+  terms: string;
+  and: string;
+  privacy: string;
+  submit: string;
+  submitting: string;
+  passwordPlaceholder: string;
+  hidePassword: string;
+  showPassword: string;
+};
+
+type LoginFormErrors = {
+  invalidEmail: string;
+  passwordRequired: string;
+  passwordLength: string;
+  termsRequired: string;
+  invalidCredentials: string;
+  emailNotVerified: string;
+  unknownError: string;
+};
+
+function createLoginSchema(errors: LoginFormErrors) {
   return z.object({
-    email: z.email(copy.errors.invalidEmail),
+    email: z.email(errors.invalidEmail),
     password: z
       .string()
-      .min(1, copy.errors.passwordRequired)
-      .min(8, copy.errors.passwordLength),
+      .min(1, errors.passwordRequired)
+      .min(8, errors.passwordLength),
     terms: z.boolean().refine((val) => val === true, {
-      message: copy.errors.termsRequired,
+      message: errors.termsRequired,
     }),
   });
 }
@@ -37,23 +58,18 @@ type LoginFormValues = {
   terms: boolean;
 };
 
-type Props = {
-  locale: AppLocale;
-};
-
-export function LoginForm({ locale }: Props) {
-  const copy = loginFormCopy[locale];
-
-  const forgotPasswordHref = toLocalePath(locale, '/forgot-password');
-  const termsHref = toLocalePath(locale, '/terms');
-  const privacyHref = toLocalePath(locale, '/privacy');
+export function LoginForm() {
+  const commonT = useTranslations('Auth.forms.common');
+  const t = useTranslations('Auth.forms.login');
+  const labels = t.raw('labels') as LoginFormLabels;
+  const errors = t.raw('errors') as LoginFormErrors;
 
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const schema = useMemo(() => createLoginSchema(copy), [copy]);
+  const schema = useMemo(() => createLoginSchema(errors), [errors]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(schema),
@@ -77,11 +93,11 @@ export function LoginForm({ locale }: Props) {
 
       if (result?.error) {
         if (result.error.status === 403) {
-          setFormError(copy.errors.emailNotVerified);
+          setFormError(errors.emailNotVerified);
           return;
         }
 
-        setFormError(result.error.message || copy.errors.invalidCredentials);
+        setFormError(result.error.message || errors.invalidCredentials);
         return;
       }
 
@@ -90,7 +106,7 @@ export function LoginForm({ locale }: Props) {
       const redirectTo = isAdmin ? '/admin' : '/dashboard';
       router.push(redirectTo);
     } catch {
-      setFormError(copy.errors.unknownError);
+      setFormError(errors.unknownError);
     } finally {
       setIsPending(false);
     }
@@ -102,7 +118,7 @@ export function LoginForm({ locale }: Props) {
       className="flex flex-col gap-4"
     >
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{commonT('emailLabel')}</Label>
         <Input
           id="email"
           type="email"
@@ -115,7 +131,7 @@ export function LoginForm({ locale }: Props) {
             form.formState.errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
-          placeholder="name@company.com"
+          placeholder={commonT('emailPlaceholder')}
         />
         {form.formState.errors.email && (
           <p className="text-xs text-destructive">
@@ -125,7 +141,7 @@ export function LoginForm({ locale }: Props) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">{copy.labels.password}</Label>
+        <Label htmlFor="password">{labels.password}</Label>
         <div className="relative">
           <Input
             id="password"
@@ -138,7 +154,7 @@ export function LoginForm({ locale }: Props) {
               form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
-            placeholder={copy.labels.passwordPlaceholder}
+            placeholder={labels.passwordPlaceholder}
           />
           <Button
             type="button"
@@ -147,7 +163,7 @@ export function LoginForm({ locale }: Props) {
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute inset-y-0 right-0 flex h-10 w-10 items-center justify-center text-muted-foreground transition-colors hover:text-foreground hover:bg-transparent"
             aria-label={
-              showPassword ? copy.labels.hidePassword : copy.labels.showPassword
+              showPassword ? labels.hidePassword : labels.showPassword
             }
           >
             {showPassword ? (
@@ -164,10 +180,10 @@ export function LoginForm({ locale }: Props) {
         )}
         <div className="flex justify-end">
           <Link
-            href={forgotPasswordHref}
+            href="/forgot-password"
             className="text-sm font-medium text-brand underline-offset-4 transition-colors hover:underline"
           >
-            {copy.labels.forgotPassword}
+            {labels.forgotPassword}
           </Link>
         </div>
       </div>
@@ -190,23 +206,23 @@ export function LoginForm({ locale }: Props) {
             htmlFor="terms"
             className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground select-none"
           >
-            {copy.labels.agreePrefix}{' '}
+            {labels.agreePrefix}{' '}
             <Link
-              href={termsHref}
+              href="/terms"
               className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
               target="_blank"
               rel="noopener noreferrer"
             >
-              {copy.labels.terms}
+              {labels.terms}
             </Link>{' '}
-            {copy.labels.and}{' '}
+            {labels.and}{' '}
             <Link
-              href={privacyHref}
+              href="/privacy"
               className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
               target="_blank"
               rel="noopener noreferrer"
             >
-              {copy.labels.privacy}
+              {labels.privacy}
             </Link>
             .
           </Label>
@@ -219,7 +235,6 @@ export function LoginForm({ locale }: Props) {
         )}
       </div>
 
-      {/* Server Error */}
       {formError && <p className="text-xs text-destructive">{formError}</p>}
 
       <Button
@@ -232,7 +247,7 @@ export function LoginForm({ locale }: Props) {
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
         ) : null}
-        {isPending ? copy.labels.submitting : copy.labels.submit}
+        {isPending ? labels.submitting : labels.submit}
       </Button>
     </form>
   );

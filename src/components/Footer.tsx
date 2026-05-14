@@ -2,62 +2,16 @@
 
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { GravityStarsBackground } from '@/components/animate-ui/components/backgrounds/gravity-stars';
-import type { AppLocale } from '@/lib/locale';
-import { toLocalePath } from '@/lib/locale';
+import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa';
 
 import { Container } from './Container';
 
-const footerCopy = {
-  id: {
-    metaPartner: 'Official Meta Tech Partner',
-    description:
-      'Solusi AI WhatsApp untuk membalas pelanggan dengan ramah dan mengatur booking otomatis.',
-    company: 'Perusahaan',
-    about: 'Tentang Kami',
-    login: 'Masuk',
-    consultation: 'Konsultasi Sekarang',
-    features: 'Fitur',
-    featureOne: 'Satu Nomor Terintegrasi',
-    featureTwo: 'WhatsApp AI Agent',
-    featureThree: 'Booking Otomatis',
-    legal: 'Legal',
-    terms: 'Syarat Layanan',
-    privacy: 'Kebijakan Privasi',
-    rights: '© 2026 Pesan AI. Hak cipta dilindungi.',
-  },
-  en: {
-    metaPartner: 'Official Meta Tech Partner',
-    description:
-      'AI-powered WhatsApp solution to reply to customers and automate booking workflows.',
-    company: 'Company',
-    about: 'About Us',
-    login: 'Login',
-    consultation: 'Book a Consultation',
-    features: 'Features',
-    featureOne: 'One Integrated Number',
-    featureTwo: 'WhatsApp AI Agent',
-    featureThree: 'Automated Booking',
-    legal: 'Legal',
-    terms: 'Terms of Service',
-    privacy: 'Privacy Policy',
-    rights: '© 2026 Pesan AI. All rights reserved.',
-  },
-} as const;
-
-type Props = {
-  locale: AppLocale;
-};
-
-export function Footer({ locale }: Props) {
-  const copy = footerCopy[locale];
-
-  const homeHref = toLocalePath(locale, '/');
-  const loginHref = toLocalePath(locale, '/login');
-  const termsHref = toLocalePath(locale, '/terms');
-  const privacyHref = toLocalePath(locale, '/privacy');
+export function Footer() {
+  const t = useTranslations('Footer');
+  const features = t.raw('featuresList') as string[];
 
   return (
     <footer className="relative isolate overflow-hidden border-t border-brand/20 bg-background font-sans select-none">
@@ -81,7 +35,7 @@ export function Footer({ locale }: Props) {
               className="size-11 object-contain"
             />
             <span className="text-base font-semibold sm:text-xl">
-              {copy.metaPartner}
+              {t('metaPartner')}
             </span>
           </div>
         </ScrollReveal>
@@ -93,7 +47,7 @@ export function Footer({ locale }: Props) {
             distance={22}
           >
             <Link
-              href={homeHref}
+              href="/"
               className="-mt-2 inline-flex w-fit items-center gap-2 pointer-events-auto"
             >
               <Image
@@ -110,7 +64,7 @@ export function Footer({ locale }: Props) {
             </Link>
 
             <p className="max-w-md text-base leading-relaxed text-brand/75">
-              {copy.description}
+              {t('description')}
             </p>
 
             <a
@@ -124,25 +78,24 @@ export function Footer({ locale }: Props) {
             </a>
           </ScrollReveal>
 
-          {/* 3-column links: all left-aligned, evenly spaced */}
           <ScrollReveal
             className="grid grid-cols-2 gap-x-10 gap-y-8 text-base sm:grid-cols-3 sm:gap-x-14 lg:flex lg:gap-20"
             delay={160}
             distance={22}
           >
             <div className="flex flex-col gap-3 text-brand/75">
-              <p className="text-base font-medium text-brand">{copy.company}</p>
+              <p className="text-base font-medium text-brand">{t('company')}</p>
               <Link
-                href={homeHref}
+                href="/"
                 className="pointer-events-auto transition-colors hover:text-brand"
               >
-                {copy.about}
+                {t('about')}
               </Link>
               <Link
-                href={loginHref}
+                href="/login"
                 className="pointer-events-auto transition-colors hover:text-brand"
               >
-                {copy.login}
+                {t('login')}
               </Link>
               <a
                 href="https://wa.me/6285129646215"
@@ -150,39 +103,41 @@ export function Footer({ locale }: Props) {
                 rel="noopener noreferrer"
                 className="pointer-events-auto transition-colors hover:text-brand"
               >
-                {copy.consultation}
+                {t('consultation')}
               </a>
             </div>
 
             <div className="flex flex-col gap-3 text-brand/75">
               <p className="text-base font-medium text-brand">
-                {copy.features}
+                {t('featuresTitle')}
               </p>
-              <span>{copy.featureOne}</span>
-              <span>{copy.featureTwo}</span>
-              <span>{copy.featureThree}</span>
+              {features.map((feature) => (
+                <span key={feature}>{feature}</span>
+              ))}
             </div>
 
             <div className="col-span-2 flex flex-col gap-3 text-brand/75 sm:col-span-1">
-              <p className="text-base font-medium text-brand">{copy.legal}</p>
+              <p className="text-base font-medium text-brand">
+                {t('legalTitle')}
+              </p>
               <Link
-                href={termsHref}
+                href="/terms"
                 className="pointer-events-auto transition-colors hover:text-brand"
               >
-                {copy.terms}
+                {t('terms')}
               </Link>
               <Link
-                href={privacyHref}
+                href="/privacy"
                 className="pointer-events-auto transition-colors hover:text-brand"
               >
-                {copy.privacy}
+                {t('privacy')}
               </Link>
             </div>
           </ScrollReveal>
         </div>
 
         <ScrollReveal className="mt-10" delay={220} distance={18}>
-          <p className="text-center text-sm text-brand/75">{copy.rights}</p>
+          <p className="text-center text-sm text-brand/75">{t('rights')}</p>
         </ScrollReveal>
 
         <ScrollReveal className="mt-2 -mb-2" delay={280} distance={18}>

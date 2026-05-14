@@ -1,7 +1,8 @@
 import { AuthCard } from '@/components/auth/auth-card';
-import { forgotPasswordCardCopy } from '@/components/auth/content';
 import { ForgotPasswordForm } from '@/components/auth/forgot-password/forgot-password-form';
-import { isAppLocale } from '@/lib/locale';
+import { routing } from '@/i18n/routing';
+import { hasLocale } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 type Props = {
@@ -10,18 +11,17 @@ type Props = {
 
 export default async function LocalizedForgotPasswordPage({ params }: Props) {
   const { locale } = await params;
-
-  if (!isAppLocale(locale)) {
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
-  const copy = forgotPasswordCardCopy[locale];
+  setRequestLocale(locale);
+  const t = await getTranslations('Auth.pages.forgotPassword');
 
   return (
     <AuthCard
-      locale={locale}
-      title={copy.title}
-      subtitle={copy.subtitle}
+      title={t('title')}
+      subtitle={t('subtitle')}
       FormComponent={ForgotPasswordForm}
     />
   );
