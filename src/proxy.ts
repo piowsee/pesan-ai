@@ -1,7 +1,5 @@
-import { routing } from '@/i18n/routing';
 import { DEFAULT_LOCALE } from '@/lib/locale';
 import { getSessionCookie } from 'better-auth/cookies';
-import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -59,8 +57,6 @@ export async function proxy(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-export default createMiddleware(routing);
 
 export const config = {
   // matcher: ['/dashboard/:path*', '/admin/:path*', '/id/login', '/en/login'],

@@ -2,13 +2,14 @@
 
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
+import { defaultTimeZone } from '@/i18n/config';
 import { routing } from '@/i18n/routing';
 import { NextIntlClientProvider } from 'next-intl';
 import { usePathname } from 'next/navigation';
 
 import enMessages from '../../messages/en.json';
 import idMessages from '../../messages/id.json';
-import { NotFoundHero } from './not-found-hero';
+import { NotFoundHero } from '../components/not-found-hero';
 
 type AppLocale = (typeof routing.locales)[number];
 
@@ -27,7 +28,11 @@ export default function NotFound() {
   const t = messages.NotFoundPage;
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider
+      locale={locale}
+      messages={messages}
+      timeZone={defaultTimeZone}
+    >
       <div className="bg-background font-sans">
         <Navbar />
         <NotFoundHero
