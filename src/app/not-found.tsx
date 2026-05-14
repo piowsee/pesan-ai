@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 
 import enMessages from '../../messages/en.json';
 import idMessages from '../../messages/id.json';
-import { NotFoundHero } from './not-found-hero';
+import { NotFoundHero } from '../components/not-found-hero';
 
 type AppLocale = (typeof routing.locales)[number];
 
