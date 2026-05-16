@@ -32,7 +32,6 @@ import { z } from 'zod';
 const createUserSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
   role: z.enum(['user', 'admin'], {
     message: 'Select a role',
   }),
@@ -51,15 +50,16 @@ export function CreateUserDialog() {
     defaultValues: {
       name: '',
       email: '',
-      password: '',
       role: 'user',
     },
   });
 
   async function onSubmit(values: CreateUserFormValues) {
     createUser.mutate(values, {
-      onSuccess: () => {
-        toast.success('User created and verification email sent');
+      onSuccess: (result) => {
+        toast.success(
+          result.message ?? 'User created and verification email sent',
+        );
         form.reset();
         setIsOpen(false);
       },
@@ -129,23 +129,6 @@ export function CreateUserDialog() {
             {form.formState.errors.email && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.email.message}
-              </p>
-            )}
-          </div>
-
-          {/* Password Field */}
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Minimum 8 characters"
-              {...form.register('password')}
-              aria-invalid={!!form.formState.errors.password}
-            />
-            {form.formState.errors.password && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.password.message}
               </p>
             )}
           </div>

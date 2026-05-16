@@ -11,15 +11,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type User, useUsers } from '@/hooks/use-users';
+import {
+  type User,
+  useResendUserOnboarding,
+  useUsers,
+} from '@/hooks/use-users';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mail, Users } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 const PAGE_SIZE = 10;
 const TABLE_COLUMNS = ['Name', 'Email', 'Role', 'Created At', 'Actions'];
-
-// ─── Sub-components ──────────────────────────────────────────────────
 
 function RoleBadge({ role }: { role: string }) {
   const isAdmin = role === 'admin';
@@ -28,6 +31,52 @@ function RoleBadge({ role }: { role: string }) {
     <Badge variant={isAdmin ? 'default' : 'secondary'}>
       {isAdmin ? 'Admin' : 'User'}
     </Badge>
+  );
+}
+
+function ResendOnboardingButton({
+  email,
+  isDisabled,
+}: {
+  email: string;
+  isDisabled: boolean;
+}) {
+  const resendOnboarding = useResendUserOnboarding();
+
+  if (isDisabled) {
+    return null;
+  }
+
+  function handleResend() {
+    resendOnboarding.mutate(
+      { email, action: 'resend-onboarding' },
+      {
+        onSuccess: (result) => {
+          toast.success(
+            result.message ?? 'Onboarding email resent successfully',
+          );
+        },
+        onError: (error) => {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : 'Failed to resend onboarding email',
+          );
+        },
+      },
+    );
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleResend}
+      disabled={resendOnboarding.isPending}
+    >
+      <Mail data-icon="inline-start" />
+      {resendOnboarding.isPending ? 'Sending...' : 'Resend Invite'}
+    </Button>
   );
 }
 
@@ -46,7 +95,12 @@ function UserRow({ user }: { user: User }) {
         <RoleBadge role={user.role} />
       </TableCell>
       <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
-      <TableCell>—</TableCell>
+      <TableCell>
+        <ResendOnboardingButton
+          email={user.email}
+          isDisabled={user.emailVerified}
+        />
+      </TableCell>
     </TableRow>
   );
 }
@@ -56,8 +110,8 @@ function TableSkeleton() {
     <>
       {Array.from({ length: 5 }).map((_, index) => (
         <TableRow key={index}>
-          {TABLE_COLUMNS.map((col) => (
-            <TableCell key={col}>
+          {TABLE_COLUMNS.map((column) => (
+            <TableCell key={column}>
               <Skeleton className="h-4 w-24" />
             </TableCell>
           ))}
@@ -93,8 +147,6 @@ function ErrorState({ message }: { message: string }) {
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────
-
 export function UserTable() {
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, isPlaceholderData } = useUsers(
@@ -105,18 +157,23 @@ export function UserTable() {
   const users = data?.users ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
 
   function renderTableBody() {
-    if (isLoading) return <TableSkeleton />;
+    if (isLoading) {
+      return <TableSkeleton />;
+    }
+
     if (isError) {
       const message =
         error instanceof Error ? error.message : 'An error occurred';
       return <ErrorState message={message} />;
     }
-    if (users.length === 0) return <EmptyState />;
+
+    if (users.length === 0) {
+      return <EmptyState />;
+    }
 
     return users.map((user) => <UserRow key={user.id} user={user} />);
   }
@@ -141,7 +198,6 @@ export function UserTable() {
         </Table>
       </div>
 
-      {/* Pagination Controls */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {total > 0
@@ -154,7 +210,7 @@ export function UserTable() {
             variant="outline"
             size="sm"
             disabled={!canGoPrevious}
-            onClick={() => setPage((prev) => prev - 1)}
+            onClick={() => setPage((previousPage) => previousPage - 1)}
           >
             <ChevronLeft data-icon="inline-start" />
             Previous
@@ -168,7 +224,7 @@ export function UserTable() {
             variant="outline"
             size="sm"
             disabled={!canGoNext}
-            onClick={() => setPage((prev) => prev + 1)}
+            onClick={() => setPage((previousPage) => previousPage + 1)}
           >
             Next
             <ChevronRight data-icon="inline-end" />

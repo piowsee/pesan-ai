@@ -1,7 +1,6 @@
 import { POST } from '@/app/api/admin/create-user/route';
-import { auth, createResetPasswordCallbackUrl } from '@/lib/auth/auth';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
-import { headers } from 'next/headers';
+import { CreateUserService } from '@/services/create-user.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe(
@@ -12,32 +11,27 @@ describe(
 
     beforeEach(() => {
       vi.clearAllMocks();
-      vi.mocked(headers).mockResolvedValue(new Headers() as never);
     });
 
-    it('returns 200 and sends verification email with reset-password callback on success', async () => {
+    it('returns 200 on successful user creation', async () => {
       vi.mocked(AuthHelper.requireAdmin).mockResolvedValue({
         id: 'admin-1',
         role: 'admin',
       } as never);
-      vi.mocked(auth.api.createUser).mockResolvedValue({
+      vi.mocked(
+        CreateUserService.createUserOrResendOnboarding,
+      ).mockResolvedValue({
+        message: 'User created and onboarding email sent successfully',
         user: {
           id: 'user-1',
           email: 'newuser@example.com',
         },
-      } as never);
-      vi.mocked(createResetPasswordCallbackUrl).mockResolvedValue(
-        '/en/reset-password?token=reset-token-123' as never,
-      );
-      vi.mocked(auth.api.sendVerificationEmail).mockResolvedValue({
-        status: true,
       } as never);
 
       const req = new Request(url, {
         method: 'POST',
         body: JSON.stringify({
           email: 'newuser@example.com',
-          password: 'password123',
           name: 'New User',
           role: 'user',
         }),
@@ -50,25 +44,56 @@ describe(
 
       expect(response.status).toBe(200);
       expect(data.status).toBe('success');
+      expect(data.data.message).toBe(
+        'User created and onboarding email sent successfully',
+      );
       expect(data.data.user).toEqual({
         id: 'user-1',
         email: 'newuser@example.com',
       });
-      expect(auth.api.createUser).toHaveBeenCalledWith({
-        body: {
-          email: 'newuser@example.com',
-          password: 'password123',
-          name: 'New User',
-          role: 'user',
-        },
-        headers: expect.any(Headers),
+      expect(
+        CreateUserService.createUserOrResendOnboarding,
+      ).toHaveBeenCalledWith({
+        email: 'newuser@example.com',
+        name: 'New User',
+        role: 'user',
       });
-      expect(createResetPasswordCallbackUrl).toHaveBeenCalledWith('user-1');
-      expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
-        body: {
-          email: 'newuser@example.com',
-          callbackURL: '/en/reset-password?token=reset-token-123',
-        },
+    });
+
+    it('returns 200 on resend onboarding success', async () => {
+      vi.mocked(AuthHelper.requireAdmin).mockResolvedValue({
+        id: 'admin-1',
+        role: 'admin',
+      } as never);
+      vi.mocked(
+        CreateUserService.createUserOrResendOnboarding,
+      ).mockResolvedValue({
+        message: 'Onboarding email resent successfully',
+      } as never);
+
+      const req = new Request(url, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'pending@example.com',
+          action: 'resend-onboarding',
+        }),
+      });
+
+      const response = await POST(req, {
+        params: Promise.resolve({}),
+      } as never);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe('success');
+      expect(data.data).toEqual({
+        message: 'Onboarding email resent successfully',
+      });
+      expect(
+        CreateUserService.createUserOrResendOnboarding,
+      ).toHaveBeenCalledWith({
+        email: 'pending@example.com',
+        action: 'resend-onboarding',
       });
     });
 
@@ -93,27 +118,25 @@ describe(
 
       expect(response.status).toBe(400);
       expect(data.status).toBe('fail');
-      expect(data.data.email).toBeDefined();
-      expect(data.data.password).toBeDefined();
-      expect(data.data.role).toBeDefined();
-      expect(auth.api.createUser).not.toHaveBeenCalled();
-      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
+      expect(data.data).toBeTruthy();
+      expect(
+        CreateUserService.createUserOrResendOnboarding,
+      ).not.toHaveBeenCalled();
     });
 
-    it('returns 500 when user creation fails', async () => {
+    it('returns 500 when the service throws', async () => {
       vi.mocked(AuthHelper.requireAdmin).mockResolvedValue({
         id: 'admin-1',
         role: 'admin',
       } as never);
-      vi.mocked(auth.api.createUser).mockRejectedValue(
-        new Error('Create user failed'),
-      );
+      vi.mocked(
+        CreateUserService.createUserOrResendOnboarding,
+      ).mockRejectedValue(new Error('Create user failed'));
 
       const req = new Request(url, {
         method: 'POST',
         body: JSON.stringify({
           email: 'newuser@example.com',
-          password: 'password123',
           name: 'New User',
           role: 'user',
         }),
@@ -127,8 +150,6 @@ describe(
       expect(response.status).toBe(500);
       expect(data.status).toBe('error');
       expect(data.message).toBe('Create user failed');
-      expect(createResetPasswordCallbackUrl).not.toHaveBeenCalled();
-      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
     });
   },
 );
