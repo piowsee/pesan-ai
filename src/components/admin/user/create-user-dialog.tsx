@@ -58,8 +58,10 @@ export function CreateUserDialog() {
 
   async function onSubmit(values: CreateUserFormValues) {
     createUser.mutate(values, {
-      onSuccess: () => {
-        toast.success('User created and verification email sent');
+      onSuccess: (result) => {
+        toast.success(
+          result.message ?? 'User created and verification email sent',
+        );
         form.reset();
         setIsOpen(false);
       },

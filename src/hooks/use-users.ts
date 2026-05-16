@@ -16,6 +16,7 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  emailVerified: boolean;
   createdAt: Date;
 }
 
@@ -29,6 +30,15 @@ interface CreateUserPayload {
   password: string;
   name: string;
   role: 'user' | 'admin';
+}
+
+interface ResendUserOnboardingPayload {
+  email: string;
+  action: 'resend-onboarding';
+}
+
+interface UserMutationResponse {
+  message?: string;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -76,7 +86,26 @@ async function fetchUsers(
   };
 }
 
-async function createUser(payload: CreateUserPayload): Promise<void> {
+async function parseMutationResponse(
+  response: Response,
+): Promise<UserMutationResponse> {
+  const payload = (await response.json().catch(() => null)) as {
+    message?: string;
+    data?: UserMutationResponse & { message?: string };
+  } | null;
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.data?.message ?? payload?.message ?? 'Request failed',
+    );
+  }
+
+  return payload?.data ?? {};
+}
+
+async function createUser(
+  payload: CreateUserPayload,
+): Promise<UserMutationResponse> {
   const response = await fetch('/api/admin/create-user', {
     method: 'POST',
     headers: {
@@ -85,12 +114,21 @@ async function createUser(payload: CreateUserPayload): Promise<void> {
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    const error = (await response.json().catch(() => null)) as {
-      message?: string;
-    } | null;
-    throw new Error(error?.message ?? 'Failed to create user');
-  }
+  return parseMutationResponse(response);
+}
+
+async function resendUserOnboarding(
+  payload: ResendUserOnboardingPayload,
+): Promise<UserMutationResponse> {
+  const response = await fetch('/api/admin/create-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseMutationResponse(response);
 }
 
 // ─── Hooks ───────────────────────────────────────────────────────────
@@ -111,6 +149,19 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: userKeys.all,
+      });
+    },
+  });
+}
+
+export function useResendUserOnboarding() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: resendUserOnboarding,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: userKeys.all,
