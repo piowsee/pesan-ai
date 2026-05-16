@@ -1,9 +1,13 @@
+import { routing } from '@/i18n/routing';
 import { DEFAULT_LOCALE } from '@/lib/locale';
 import { getSessionCookie } from 'better-auth/cookies';
+import createIntlMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const isProd = process.env.NODE_ENV === 'production';
 const localePrefixRegex = /^\/(id|en)(?=\/|$)/;
+
+const intlMiddleware = createIntlMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
@@ -55,7 +59,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return NextResponse.next();
+  if (isProtectedRoute) {
+    return NextResponse.next();
+  }
+
+  return intlMiddleware(request);
 }
 
 export const config = {
