@@ -2,6 +2,7 @@ import { auth, createResetPasswordCallbackUrl } from '@/lib/auth/auth';
 import { ApiError } from '@/lib/error';
 import { CreateUserPayload } from '@/schemas/create-user.schema';
 import { headers } from 'next/headers';
+import { randomBytes } from 'node:crypto';
 
 type ExistingUser = {
   id: string;
@@ -10,6 +11,10 @@ type ExistingUser = {
 };
 
 export const CreateUserService = {
+  _generateRandomPassword() {
+    return randomBytes(24).toString('hex');
+  },
+
   async _sendOnboardingEmail(email: string, userId: string) {
     const callbackURL = await createResetPasswordCallbackUrl(userId);
 
@@ -85,8 +90,12 @@ export const CreateUserService = {
     }
 
     const requestHeaders = await headers();
+    const password = this._generateRandomPassword();
     const createUserResponse = await auth.api.createUser({
-      body,
+      body: {
+        ...body,
+        password,
+      },
       headers: requestHeaders,
     });
 

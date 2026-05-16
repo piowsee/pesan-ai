@@ -85,7 +85,6 @@ describe('CreateUserService', { tags: ['backend'] }, () => {
 
       const result = await CreateUserService.createUserOrResendOnboarding({
         email: 'new@example.com',
-        password: 'password123',
         name: 'New User',
         role: 'user',
       });
@@ -93,8 +92,8 @@ describe('CreateUserService', { tags: ['backend'] }, () => {
       expect(auth.api.createUser).toHaveBeenCalledWith({
         body: {
           email: 'new@example.com',
-          password: 'password123',
           name: 'New User',
+          password: expect.any(String),
           role: 'user',
         },
         headers: expect.any(Headers),
@@ -138,7 +137,6 @@ describe('CreateUserService', { tags: ['backend'] }, () => {
 
       const result = await CreateUserService.createUserOrResendOnboarding({
         email: 'pending@example.com',
-        password: 'password123',
         name: 'Pending User',
         role: 'user',
       });
@@ -185,6 +183,40 @@ describe('CreateUserService', { tags: ['backend'] }, () => {
       expect(result).toEqual({
         message: 'Onboarding email resent successfully',
       });
+    });
+
+    it('generates a private random password for new users', async () => {
+      vi.mocked(auth.api.listUsers).mockResolvedValue({
+        users: [],
+      } as never);
+      vi.mocked(auth.api.createUser).mockResolvedValue({
+        user: {
+          id: 'user-5',
+          email: 'secret@example.com',
+        },
+      } as never);
+      vi.mocked(createResetPasswordCallbackUrl).mockResolvedValue(
+        '/en/reset-password?token=reset-token-secret' as never,
+      );
+      vi.mocked(auth.api.sendVerificationEmail).mockResolvedValue({
+        status: true,
+      } as never);
+
+      await CreateUserService.createUserOrResendOnboarding({
+        email: 'secret@example.com',
+        name: 'Secret User',
+        role: 'admin',
+      });
+
+      const createUserCall = vi.mocked(auth.api.createUser).mock.calls[0]?.[0];
+
+      expect(createUserCall?.body).toMatchObject({
+        email: 'secret@example.com',
+        name: 'Secret User',
+        role: 'admin',
+      });
+      expect(createUserCall?.body.password).toEqual(expect.any(String));
+      expect(createUserCall?.body.password).toHaveLength(48);
     });
 
     it('throws when resend is requested for a verified user', async () => {

@@ -27,7 +27,6 @@ interface ListUsersResponse {
 
 interface CreateUserPayload {
   email: string;
-  password: string;
   name: string;
   role: 'user' | 'admin';
 }

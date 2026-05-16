@@ -32,7 +32,6 @@ describe(
         method: 'POST',
         body: JSON.stringify({
           email: 'newuser@example.com',
-          password: 'password123',
           name: 'New User',
           role: 'user',
         }),
@@ -56,7 +55,6 @@ describe(
         CreateUserService.createUserOrResendOnboarding,
       ).toHaveBeenCalledWith({
         email: 'newuser@example.com',
-        password: 'password123',
         name: 'New User',
         role: 'user',
       });
@@ -139,7 +137,6 @@ describe(
         method: 'POST',
         body: JSON.stringify({
           email: 'newuser@example.com',
-          password: 'password123',
           name: 'New User',
           role: 'user',
         }),
