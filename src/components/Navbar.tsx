@@ -4,10 +4,12 @@ import { Container } from '@/components/Container';
 import { Button } from '@/components/ui/button';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
+import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Menu, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
+import NextLink from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type LanguageCode = (typeof routing.locales)[number];
@@ -192,7 +194,11 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('Navbar');
+  const { data: session, isPending: isSessionPending } =
+    authClient.useSession();
   const languageOptions = t.raw('languages') as LanguageOption[];
+  const isLoggedIn = Boolean(session?.user);
+  const authLabel = isLoggedIn ? t('dashboard') : t('login');
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -222,6 +228,13 @@ export function Navbar() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
+
+  const desktopAuthLinkClassName = cn(
+    'inline-flex h-9 items-center px-2 text-sm font-semibold transition-colors',
+    scrolled
+      ? 'text-brand/80 hover:text-brand'
+      : 'text-white/85 hover:text-white',
+  );
 
   return (
     <>
@@ -262,41 +275,44 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
-            <LanguageDropdown
-              scrolled={scrolled}
-              locale={locale}
-              options={languageOptions}
-              onLanguageChange={handleLanguageChange}
-            />
+          {!isSessionPending && (
+            <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
+              <LanguageDropdown
+                scrolled={scrolled}
+                locale={locale}
+                options={languageOptions}
+                onLanguageChange={handleLanguageChange}
+              />
 
-            <Link
-              href="/login"
-              className={cn(
-                'inline-flex h-9 items-center px-2 text-sm font-semibold transition-colors',
-                scrolled
-                  ? 'text-brand/80 hover:text-brand'
-                  : 'text-white/85 hover:text-white',
+              {isLoggedIn ? (
+                <NextLink
+                  href="/dashboard"
+                  className={desktopAuthLinkClassName}
+                >
+                  {authLabel}
+                </NextLink>
+              ) : (
+                <Link href="/login" className={desktopAuthLinkClassName}>
+                  {authLabel}
+                </Link>
               )}
-            >
-              {t('login')}
-            </Link>
 
-            <Button
-              asChild
-              size="lg"
-              variant="brand"
-              className="h-10 rounded-full px-4 sm:px-5"
-            >
-              <a
-                href="https://wa.me/6285129646215"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Button
+                asChild
+                size="lg"
+                variant="brand"
+                className="h-10 rounded-full px-4 sm:px-5"
               >
-                {t('consultation')}
-              </a>
-            </Button>
-          </div>
+                <a
+                  href="https://wa.me/6285129646215"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t('consultation')}
+                </a>
+              </Button>
+            </div>
+          )}
 
           <button
             type="button"
@@ -328,38 +344,51 @@ export function Navbar() {
         )}
       >
         <nav className="mx-auto flex w-full max-w-md flex-col gap-4 px-5 py-6">
-          <MobileLanguageSelect
-            language={mobileLanguage}
-            options={languageOptions}
-            onLanguageChange={handleLanguageChange}
-          />
+          {!isSessionPending && (
+            <>
+              <MobileLanguageSelect
+                language={mobileLanguage}
+                options={languageOptions}
+                onLanguageChange={handleLanguageChange}
+              />
 
-          <Button
-            asChild
-            size="lg"
-            variant="outline"
-            className="h-12 w-full rounded-sm border-brand/25 bg-transparent text-base font-semibold text-brand hover:bg-brand/10"
-          >
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              {t('login')}
-            </Link>
-          </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 w-full rounded-sm border-brand/25 bg-transparent text-base font-semibold text-brand hover:bg-brand/10"
+              >
+                {isLoggedIn ? (
+                  <NextLink
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {authLabel}
+                  </NextLink>
+                ) : (
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                    {authLabel}
+                  </Link>
+                )}
+              </Button>
 
-          <Button
-            asChild
-            size="lg"
-            variant="brand"
-            className="h-12 w-full rounded-sm text-base font-semibold"
-          >
-            <a
-              href="https://wa.me/6285129646215"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {t('consultation')}
-            </a>
-          </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="brand"
+                className="h-12 w-full rounded-sm text-base font-semibold"
+              >
+                <a
+                  href="https://wa.me/6285129646215"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('consultation')}
+                </a>
+              </Button>
+            </>
+          )}
         </nav>
       </div>
     </>
