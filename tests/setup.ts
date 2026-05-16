@@ -161,6 +161,8 @@ vi.mock('@/services/meta-fetch.service', () => ({
   },
 }));
 
+vi.mock('@/services/create-user.service');
+
 vi.mock('next/headers', () => ({
   headers: vi.fn(),
 }));
@@ -169,6 +171,8 @@ vi.mock('@/lib/auth/auth', () => ({
   auth: {
     api: {
       createUser: vi.fn(),
+      getUser: vi.fn(),
+      listUsers: vi.fn(),
       sendVerificationEmail: vi.fn(),
     },
   },
