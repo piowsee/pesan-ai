@@ -127,6 +127,152 @@ type MobileLanguageSelectProps = {
   onLanguageChange: (lang: LanguageCode) => void;
 };
 
+type AuthActionLinkProps = {
+  isLoggedIn: boolean;
+  label: string;
+  className?: string;
+  onClick?: () => void;
+};
+
+type DesktopNavbarActionsProps = {
+  authLabel: string;
+  consultationLabel: string;
+  isLoggedIn: boolean;
+  languageOptions: LanguageOption[];
+  locale: LanguageCode;
+  onLanguageChange: (lang: LanguageCode) => void;
+  scrolled: boolean;
+};
+
+type MobileNavbarActionsProps = {
+  authLabel: string;
+  consultationLabel: string;
+  isLoggedIn: boolean;
+  language: LanguageCode;
+  languageOptions: LanguageOption[];
+  onCloseMenu: () => void;
+  onLanguageChange: (lang: LanguageCode) => void;
+};
+
+function AuthActionLink({
+  isLoggedIn,
+  label,
+  className,
+  onClick,
+}: AuthActionLinkProps) {
+  if (isLoggedIn) {
+    return (
+      <NextLink href="/dashboard" className={className} onClick={onClick}>
+        {label}
+      </NextLink>
+    );
+  }
+
+  return (
+    <Link href="/login" className={className} onClick={onClick}>
+      {label}
+    </Link>
+  );
+}
+
+function DesktopNavbarActions({
+  authLabel,
+  consultationLabel,
+  isLoggedIn,
+  languageOptions,
+  locale,
+  onLanguageChange,
+  scrolled,
+}: DesktopNavbarActionsProps) {
+  const authLinkClassName = cn(
+    'inline-flex h-9 items-center px-2 text-sm font-semibold transition-colors',
+    scrolled
+      ? 'text-brand/80 hover:text-brand'
+      : 'text-white/85 hover:text-white',
+  );
+
+  return (
+    <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
+      <LanguageDropdown
+        scrolled={scrolled}
+        locale={locale}
+        options={languageOptions}
+        onLanguageChange={onLanguageChange}
+      />
+
+      <AuthActionLink
+        isLoggedIn={isLoggedIn}
+        label={authLabel}
+        className={authLinkClassName}
+      />
+
+      <Button
+        asChild
+        size="lg"
+        variant="brand"
+        className="h-10 rounded-full px-4 sm:px-5"
+      >
+        <a
+          href="https://wa.me/6285129646215"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {consultationLabel}
+        </a>
+      </Button>
+    </div>
+  );
+}
+
+function MobileNavbarActions({
+  authLabel,
+  consultationLabel,
+  isLoggedIn,
+  language,
+  languageOptions,
+  onCloseMenu,
+  onLanguageChange,
+}: MobileNavbarActionsProps) {
+  return (
+    <>
+      <MobileLanguageSelect
+        language={language}
+        options={languageOptions}
+        onLanguageChange={onLanguageChange}
+      />
+
+      <Button
+        asChild
+        size="lg"
+        variant="outline"
+        className="h-12 w-full rounded-sm border-brand/25 bg-transparent text-base font-semibold text-brand hover:bg-brand/10"
+      >
+        <AuthActionLink
+          isLoggedIn={isLoggedIn}
+          label={authLabel}
+          onClick={onCloseMenu}
+        />
+      </Button>
+
+      <Button
+        asChild
+        size="lg"
+        variant="brand"
+        className="h-12 w-full rounded-sm text-base font-semibold"
+      >
+        <a
+          href="https://wa.me/6285129646215"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onCloseMenu}
+        >
+          {consultationLabel}
+        </a>
+      </Button>
+    </>
+  );
+}
+
 function MobileLanguageSelect({
   language,
   options,
@@ -199,6 +345,8 @@ export function Navbar() {
   const languageOptions = t.raw('languages') as LanguageOption[];
   const isLoggedIn = Boolean(session?.user);
   const authLabel = isLoggedIn ? t('dashboard') : t('login');
+  const consultationLabel = t('consultation');
+  const shouldShowSessionActions = !isSessionPending;
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -228,13 +376,6 @@ export function Navbar() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
-
-  const desktopAuthLinkClassName = cn(
-    'inline-flex h-9 items-center px-2 text-sm font-semibold transition-colors',
-    scrolled
-      ? 'text-brand/80 hover:text-brand'
-      : 'text-white/85 hover:text-white',
-  );
 
   return (
     <>
@@ -275,43 +416,16 @@ export function Navbar() {
             </span>
           </Link>
 
-          {!isSessionPending && (
-            <div className="hidden items-center gap-2 py-1 sm:gap-3 md:flex">
-              <LanguageDropdown
-                scrolled={scrolled}
-                locale={locale}
-                options={languageOptions}
-                onLanguageChange={handleLanguageChange}
-              />
-
-              {isLoggedIn ? (
-                <NextLink
-                  href="/dashboard"
-                  className={desktopAuthLinkClassName}
-                >
-                  {authLabel}
-                </NextLink>
-              ) : (
-                <Link href="/login" className={desktopAuthLinkClassName}>
-                  {authLabel}
-                </Link>
-              )}
-
-              <Button
-                asChild
-                size="lg"
-                variant="brand"
-                className="h-10 rounded-full px-4 sm:px-5"
-              >
-                <a
-                  href="https://wa.me/6285129646215"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('consultation')}
-                </a>
-              </Button>
-            </div>
+          {shouldShowSessionActions && (
+            <DesktopNavbarActions
+              authLabel={authLabel}
+              consultationLabel={consultationLabel}
+              isLoggedIn={isLoggedIn}
+              languageOptions={languageOptions}
+              locale={locale}
+              onLanguageChange={handleLanguageChange}
+              scrolled={scrolled}
+            />
           )}
 
           <button
@@ -344,50 +458,16 @@ export function Navbar() {
         )}
       >
         <nav className="mx-auto flex w-full max-w-md flex-col gap-4 px-5 py-6">
-          {!isSessionPending && (
-            <>
-              <MobileLanguageSelect
-                language={mobileLanguage}
-                options={languageOptions}
-                onLanguageChange={handleLanguageChange}
-              />
-
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 w-full rounded-sm border-brand/25 bg-transparent text-base font-semibold text-brand hover:bg-brand/10"
-              >
-                {isLoggedIn ? (
-                  <NextLink
-                    href="/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {authLabel}
-                  </NextLink>
-                ) : (
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                    {authLabel}
-                  </Link>
-                )}
-              </Button>
-
-              <Button
-                asChild
-                size="lg"
-                variant="brand"
-                className="h-12 w-full rounded-sm text-base font-semibold"
-              >
-                <a
-                  href="https://wa.me/6285129646215"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {t('consultation')}
-                </a>
-              </Button>
-            </>
+          {shouldShowSessionActions && (
+            <MobileNavbarActions
+              authLabel={authLabel}
+              consultationLabel={consultationLabel}
+              isLoggedIn={isLoggedIn}
+              language={mobileLanguage}
+              languageOptions={languageOptions}
+              onCloseMenu={() => setMobileMenuOpen(false)}
+              onLanguageChange={handleLanguageChange}
+            />
           )}
         </nav>
       </div>
