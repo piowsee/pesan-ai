@@ -63,6 +63,27 @@ export const ConversationRepository = {
     });
   },
 
+  async getBotReplyContext(params: { conversationId: string }) {
+    const { conversationId } = params;
+    return prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        phoneNumber: {
+          include: {
+            botWebhook: true,
+            waba: {
+              select: {
+                id: true,
+                userId: true,
+                systemUserToken: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  },
+
   async markConversationAsRead(params: {
     convId: string;
     wabaId: string;

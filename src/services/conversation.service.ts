@@ -9,6 +9,7 @@ import {
   WebhookMessage,
   WebhookValue,
 } from '@/schemas/webhook.schema';
+import { WebhookService } from '@/services/webhook.service';
 
 export const ConversationService = {
   async getAllConversations(params: { wabaId: string; userId: string }) {
@@ -219,6 +220,11 @@ export const ConversationService = {
       conversation,
       userId,
       wabaId,
+    });
+
+    WebhookService.queueIncomingMessageBotReply({
+      conversationId: conversation.id,
+      incomingMessage: content,
     });
 
     return true;

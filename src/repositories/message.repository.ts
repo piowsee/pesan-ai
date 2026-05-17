@@ -48,6 +48,7 @@ export const MessageRepository = {
     content?: string;
     status: string;
     messageId?: string;
+    metadata?: string;
     timestamp: Date;
   }) {
     return prisma.$transaction(async (tx) => {
