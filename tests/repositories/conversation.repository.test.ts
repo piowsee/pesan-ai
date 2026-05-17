@@ -116,6 +116,23 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('getBotReplyContext', () => {
+    it('returns the seeded conversation with phone number webhook and waba token', async () => {
+      const result = await ConversationRepository.getBotReplyContext({
+        conversationId: dbConvId,
+      });
+
+      expect(result?.id).toBe(dbConvId);
+      expect(result?.phoneNumber.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
+      expect(result?.phoneNumber.botWebhook?.name).toBe(SEED_DATA.WEBHOOK_NAME);
+      expect(result?.phoneNumber.botWebhook?.isActive).toBe(true);
+      expect(result?.phoneNumber.waba.userId).toBe(userId);
+      expect(result?.phoneNumber.waba.systemUserToken).toBe(
+        SEED_DATA.SYSTEM_USER_TOKEN,
+      );
+    });
+  });
+
   describe('findPhoneNumberByMetaId', () => {
     it('locates the seeded internal phone number by its Meta ID', async () => {
       const result = await ConversationRepository.findPhoneNumberByMetaId(

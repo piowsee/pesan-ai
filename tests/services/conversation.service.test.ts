@@ -1,6 +1,7 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { ConversationService } from '@/services/conversation.service';
+import { WebhookService } from '@/services/webhook.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/conversation.service');
@@ -123,6 +124,11 @@ describe('ConversationService', { tags: ['backend'] }, () => {
           userId: testUserId,
         }),
       );
+
+      expect(WebhookService.queueIncomingMessageBotReply).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        incomingMessage: 'hello',
+      });
 
       // Clean up the listener
       eventBus.off(userEventName, mockSseListener);

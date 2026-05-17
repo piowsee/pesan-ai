@@ -131,5 +131,39 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(result.content).toBe('Repo Test Message');
       expect(result.conversationId).toBe(testConv.id);
     });
+
+    it('persists metadata when provided', async () => {
+      const testConv = await prisma.conversation.create({
+        data: {
+          customerPhone: '998006',
+          phoneNumberId: dbPhoneNumberId,
+        },
+      });
+
+      const metadata = JSON.stringify({
+        webhookResponse: {
+          message: 'Bot reply',
+        },
+      });
+
+      const result = await MessageRepository.saveMessage({
+        conversationId: testConv.id,
+        direction: 'outgoing',
+        source: 'bot',
+        type: 'text',
+        content: 'Repo Bot Message',
+        status: 'sent',
+        metadata,
+        timestamp: new Date(),
+      });
+
+      expect(result.metadata).toBe(metadata);
+
+      const savedMessage = await prisma.message.findUnique({
+        where: { id: result.id },
+      });
+
+      expect(savedMessage?.metadata).toBe(metadata);
+    });
   });
 });
