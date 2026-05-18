@@ -32,6 +32,7 @@
     "clsx": "^2.1.1",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.3.1",
+    "graphile-worker": "^0.16.6",
     "input-otp": "^1.4.2",
     "jose": "^6.2.1",
     "lucide-react": "^0.577.0",
