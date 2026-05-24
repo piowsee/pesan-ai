@@ -7,7 +7,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
 import { LogOut, Settings, UserRound } from 'lucide-react';
@@ -15,30 +20,45 @@ import { useRouter } from 'next/navigation';
 
 export function SidebarProfileMenu({ user }: { user: User }) {
   const router = useRouter();
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
 
   const handleSignOut = async () => {
     await authClient.signOut();
     router.push('/id/login');
   };
 
+  const triggerButton = (
+    <SidebarMenuButton
+      size="lg"
+      className="h-10 w-full cursor-pointer gap-3 px-2 text-brand hover:bg-primary/5 hover:text-brand focus-visible:ring-0 data-open:bg-transparent data-open:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0"
+    >
+      <Avatar className="size-8 rounded-full">
+        <AvatarImage src={user.image ?? undefined} alt={user.name} />
+        <AvatarFallback className="rounded-full bg-brand text-brand-foreground">
+          {user.name?.charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+        {user.name}
+      </span>
+    </SidebarMenuButton>
+  );
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuButton
-          size="lg"
-          className="h-10 w-full cursor-pointer gap-3 px-2 text-brand hover:bg-primary/5 hover:text-brand focus-visible:ring-0 data-open:bg-transparent data-open:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0"
-        >
-          <Avatar className="size-8 rounded-full">
-            <AvatarImage src={user.image ?? undefined} alt={user.name} />
-            <AvatarFallback className="rounded-full bg-brand text-brand-foreground">
-              {user.name?.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-            {user.name}
-          </span>
-        </SidebarMenuButton>
-      </DropdownMenuTrigger>
+      {isCollapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="right" align="center">
+            Buka profil
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
+      )}
 
       <DropdownMenuContent
         side="top"
