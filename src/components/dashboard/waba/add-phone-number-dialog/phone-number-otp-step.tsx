@@ -15,6 +15,7 @@ import {
 } from '@/hooks/use-waba-phone-number';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { FaWhatsapp } from 'react-icons/fa6';
 import { toast } from 'sonner';
 
 interface PhoneNumberOtpStepProps {
@@ -53,12 +54,12 @@ export function PhoneNumberOtpStep({
         wabaId,
         codeMethod: 'SMS',
       });
-      toast.success('Verification code resent');
+      toast.success('Kode verifikasi dikirim ulang.');
       resetCountdown();
       startCountdown();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to resend code';
+        error instanceof Error ? error.message : 'Gagal mengirim ulang kode';
       toast.error(message);
     }
   }
@@ -75,11 +76,11 @@ export function PhoneNumberOtpStep({
       });
 
       // Step 4: Success
-      toast.success('Phone number verified and registered successfully');
+      toast.success('Nomor WhatsApp berhasil diverifikasi.');
       onSuccess();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Verification failed';
+        error instanceof Error ? error.message : 'Verifikasi gagal';
       toast.error(message);
     }
   }
@@ -89,14 +90,25 @@ export function PhoneNumberOtpStep({
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Enter Verification Code</DialogTitle>
-        <DialogDescription>
-          We have sent a 6-digit verification code to your phone number via SMS.
-        </DialogDescription>
+      <DialogHeader className="px-5 pt-5 pb-4 pr-12">
+        <div className="mb-3 flex items-center gap-3">
+          <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
+          <div className="min-w-0">
+            <DialogTitle className="text-base font-semibold text-brand">
+              Verifikasi Nomor
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+              Masukkan kode 6 digit yang dikirim melalui SMS.
+            </DialogDescription>
+          </div>
+        </div>
       </DialogHeader>
 
-      <div className="flex flex-col items-center gap-8 py-6">
+      <div className="px-5">
+        <div className="h-px bg-brand/20" />
+      </div>
+
+      <div className="flex flex-col items-center gap-7 px-5 py-6">
         <InputOTP
           maxLength={6}
           value={otpValue}
@@ -109,54 +121,56 @@ export function PhoneNumberOtpStep({
               <InputOTPSlot
                 key={index}
                 index={index}
-                className="size-12 rounded-xl border border-input text-xl shadow-sm sm:size-14 sm:text-2xl"
+                className="size-11 rounded-lg border border-brand/20 text-xl text-brand shadow-sm sm:size-12 sm:text-2xl"
               />
             ))}
           </div>
         </InputOTP>
 
-        <div className="flex w-full justify-between gap-4">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
             disabled={isVerifying}
-            className="text-xs"
+            className="text-brand hover:bg-primary/5 hover:text-brand"
           >
-            Change phone number
+            Ganti nomor
           </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={onResendCode}
             disabled={isVerifying || requestMutation.isPending || !canResend}
-            className="text-xs"
+            className="text-brand hover:bg-primary/5 hover:text-brand"
           >
-            {canResend ? 'Resend code' : `Resend code in ${count}s`}
+            {canResend ? 'Kirim ulang kode' : `Kirim ulang dalam ${count}s`}
           </Button>
         </div>
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="mx-5 mb-5 gap-2 border-t border-brand/20 bg-transparent p-0 pt-4">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
+          className="text-brand hover:bg-primary/5 hover:text-brand"
           onClick={onCancel}
           disabled={isVerifying}
         >
-          Cancel
+          Batal
         </Button>
         <Button
+          variant="brand"
           onClick={onOtpConfirm}
           disabled={otpValue.length !== 6 || isVerifying}
         >
           {isVerifying ? (
             <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Verifying...
+              <Loader2 className="animate-spin" data-icon="inline-start" />
+              Memverifikasi...
             </>
           ) : (
-            'Confirm'
+            'Konfirmasi'
           )}
         </Button>
       </DialogFooter>

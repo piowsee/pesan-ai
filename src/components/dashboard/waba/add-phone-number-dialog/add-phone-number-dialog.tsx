@@ -73,7 +73,7 @@ export function AddPhoneNumberDialog({
         </DialogTrigger>
       ) : null}
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
         {step === 'input' ? (
           <PhoneNumberInputStep
             wabaId={wabaId}
