@@ -6,8 +6,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -75,32 +73,55 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
             <span className="truncate">{triggerLabel}</span>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-72">
-          <DropdownMenuLabel>Nomor WhatsApp</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {phoneNumberCount === 0 ? (
-            <div className="px-1.5 py-3 text-sm leading-relaxed text-brand">
-              Belum ada nomor yang terhubung.
+        <DropdownMenuContent
+          align="start"
+          sideOffset={8}
+          className="w-72 rounded-lg border border-brand/20 p-0 shadow-lg"
+        >
+          <div className="flex items-center gap-3 px-4 py-4">
+            <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-brand">
+                Nomor WhatsApp
+              </p>
+              <p className="truncate text-xs text-brand">
+                {triggerLabel} terhubung
+              </p>
             </div>
-          ) : (
-            <div className="flex flex-col gap-1 px-1 py-1">
-              {waba.phoneNumbers.map((phoneNumber) => (
-                <div
-                  key={phoneNumber.id}
-                  className="flex items-center gap-2 rounded-md px-1.5 py-1 text-sm text-brand"
-                >
-                  <FaWhatsapp className="size-4 shrink-0" />
-                  <span className="truncate">
-                    {phoneNumber.displayPhoneNumber}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          <DropdownMenuSeparator />
+          </div>
+
+          <div className="px-4">
+            <div className="h-px bg-brand/20" />
+          </div>
+
+          <div className="max-h-56 overflow-y-auto p-2 [scrollbar-gutter:stable]">
+            {phoneNumberCount === 0 ? (
+              <div className="px-2.5 py-2.5 text-sm leading-relaxed text-brand">
+                Belum ada nomor yang terhubung.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {waba.phoneNumbers.map((phoneNumber) => (
+                  <div
+                    key={phoneNumber.id}
+                    className="rounded-md px-2.5 py-2.5 text-sm font-medium text-brand"
+                  >
+                    <span className="block truncate">
+                      {phoneNumber.displayPhoneNumber}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="px-4">
+            <div className="h-px bg-brand/20" />
+          </div>
+
           <DropdownMenuGroup>
             <DropdownMenuItem
-              className="cursor-pointer text-brand focus:bg-muted focus:text-brand focus:**:text-brand"
+              className="m-2 cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand focus:**:text-brand"
               onSelect={() => setIsAddPhoneOpen(true)}
             >
               <Plus />
