@@ -88,6 +88,10 @@ export function PhoneNumberOtpStep({
   const isVerifying = verifyMutation.isPending;
   const canResend = count === 0;
 
+  function handleOtpChange(value: string) {
+    setOtpValue(value.replace(/\D/g, '').slice(0, 6));
+  }
+
   return (
     <>
       <DialogHeader className="px-5 pt-5 pb-4 pr-12">
@@ -112,7 +116,7 @@ export function PhoneNumberOtpStep({
         <InputOTP
           maxLength={6}
           value={otpValue}
-          onChange={setOtpValue}
+          onChange={handleOtpChange}
           disabled={isVerifying}
           containerClassName="w-full"
         >
