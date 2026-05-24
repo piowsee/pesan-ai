@@ -102,7 +102,9 @@ export function WabaStatusCards() {
                     <CircleAlert className="size-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>{stat.helper}</TooltipContent>
+                <TooltipContent className="bg-white text-brand border border-border shadow-md [&_svg]:fill-white [&_svg]:!bg-white">
+                  {stat.helper}
+                </TooltipContent>
               </Tooltip>
             </div>
 
