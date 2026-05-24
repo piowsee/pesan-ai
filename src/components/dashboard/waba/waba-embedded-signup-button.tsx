@@ -5,7 +5,7 @@ import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { WabaSignupError, useWabaSignup } from '@/hooks/use-waba-signup';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import { Link2, Loader2 } from 'lucide-react';
 import {
   type ComponentProps,
   useCallback,
@@ -226,7 +226,9 @@ export function WabaEmbeddedSignupButton({
     >
       {isBusy ? (
         <Loader2 className="animate-spin" data-icon="inline-start" />
-      ) : null}
+      ) : (
+        <Link2 data-icon="inline-start" />
+      )}
       {isBusy ? pendingLabel : idleLabel}
     </Button>
   );
