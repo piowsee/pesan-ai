@@ -43,28 +43,30 @@ export function AppSidebar({ user }: { user: User | null }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex w-full items-center gap-2 px-1 py-1">
-              <div className="pointer-events-none flex aspect-square size-8 items-center justify-center rounded-lg select-none group-data-[collapsible=icon]:hidden">
-                <Image
-                  src="/pesan-ai-black-logo.png"
-                  alt="pesan-ai"
-                  width={32}
-                  height={32}
-                  className="h-auto w-full object-contain select-none dark:invert"
-                  draggable={false}
-                />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden text-brand">
-                <span className="truncate text-lg font-bold tracking-tight select-none">
-                  pesan-ai
-                </span>
+            <div className="relative h-10 w-full pr-12 pl-1 group-data-[collapsible=icon]:pr-0 group-data-[collapsible=icon]:pl-0">
+              <div className="flex h-full items-center gap-2 overflow-hidden transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
+                <div className="pointer-events-none flex aspect-square size-8 items-center justify-center rounded-lg select-none">
+                  <Image
+                    src="/pesan-ai-black-logo.png"
+                    alt="pesan-ai"
+                    width={32}
+                    height={32}
+                    className="h-auto w-full object-contain select-none dark:invert"
+                    draggable={false}
+                  />
+                </div>
+                <div className="grid min-w-0 flex-1 text-left text-sm leading-tight text-brand">
+                  <span className="truncate text-lg font-bold tracking-tight select-none">
+                    pesan-ai
+                  </span>
+                </div>
               </div>
               <SidebarTrigger
                 className={cn(
                   pathname === '/dashboard/chat'
                     ? 'bg-muted text-brand'
                     : 'text-brand',
-                  '[&_svg]:size-5',
+                  'absolute top-0 right-0 !size-10 shrink-0 transition-colors [&_svg]:!size-5',
                 )}
               />
             </div>
@@ -74,11 +76,11 @@ export function AppSidebar({ user }: { user: User | null }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-brand/70 font-semibold">
+          <SidebarGroupLabel className="truncate font-semibold whitespace-nowrap text-brand/70 transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -86,11 +88,13 @@ export function AppSidebar({ user }: { user: User | null }) {
                     isActive={pathname === item.url}
                     tooltip={item.title}
                     variant="activePrimary"
-                    className="text-brand hover:text-brand data-active:text-brand h-12 px-3 text-[15px] [&_svg]:size-5 group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+                    className="h-10 px-0 text-[15px] text-brand hover:text-brand data-active:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 [&_svg]:size-5"
                   >
                     <Link href={item.url}>
-                      <item.icon />
-                      <span className="group-data-[collapsible=icon]:hidden">
+                      <span className="flex size-10 shrink-0 items-center justify-center">
+                        <item.icon />
+                      </span>
+                      <span className="truncate whitespace-nowrap transition-[opacity,width] duration-200 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
                         {item.title}
                       </span>
                     </Link>
@@ -103,22 +107,28 @@ export function AppSidebar({ user }: { user: User | null }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
+        <SidebarMenu className="gap-2">
+          <SidebarMenuItem className="flex flex-col gap-2">
             {user && (
               <SidebarMenuButton
                 size="lg"
-                className="mb-2 h-12 w-full group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+                tooltip={user.name}
+                className="h-10 w-full px-0 group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0"
               >
-                <Avatar className="h-8 w-8 rounded-lg shrink-0">
-                  <AvatarImage src={user.image ?? undefined} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
-                    {user.name?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight text-brand group-data-[collapsible=icon]:hidden">
+                <span className="flex size-10 shrink-0 items-center justify-center">
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarImage
+                      src={user.image ?? undefined}
+                      alt={user.name}
+                    />
+                    <AvatarFallback className="rounded-lg">
+                      {user.name?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </span>
+                <div className="grid flex-1 truncate text-left text-sm leading-tight whitespace-nowrap text-brand transition-[opacity,width] duration-200 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
                   <span className="truncate font-bold">{user.name}</span>
-                  <span className="truncate text-xs text-brand/70 font-medium">
+                  <span className="truncate text-xs font-medium text-brand/70">
                     {user.email}
                   </span>
                 </div>
@@ -126,10 +136,13 @@ export function AppSidebar({ user }: { user: User | null }) {
             )}
             <SidebarMenuButton
               onClick={handleSignOut}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive w-full h-12 text-[15px] [&_svg]:size-5 group-data-[collapsible=icon]:!h-12 group-data-[collapsible=icon]:!w-full group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center"
+              tooltip="Sign Out"
+              className="h-10 w-full px-0 text-[15px] text-destructive hover:bg-destructive/10 hover:text-destructive group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 [&_svg]:size-5"
             >
-              <LogOut />
-              <span className="group-data-[collapsible=icon]:hidden">
+              <span className="flex size-10 shrink-0 items-center justify-center">
+                <LogOut />
+              </span>
+              <span className="truncate whitespace-nowrap transition-[opacity,width] duration-200 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
                 Sign Out
               </span>
             </SidebarMenuButton>

@@ -2,7 +2,7 @@ import { AppSidebar } from '@/components/dashboard/app-sidebar';
 import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { requireUser } from '@/lib/auth/auth-page-helper';
-import { ReactNode } from 'react';
+import { type CSSProperties, ReactNode } from 'react';
 
 // NOTE: Layout server data won't auto-update on client navigation.
 // Call `router.refresh()` or other event trigger for layout
@@ -15,7 +15,9 @@ export default async function DashboardLayout({
   const user = await requireUser();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      style={{ '--sidebar-width-icon': '3.5rem' } as CSSProperties}
+    >
       <AppSidebar user={user} />
       <SidebarInset>
         <main className="flex flex-1 flex-col h-dvh bg-background">
