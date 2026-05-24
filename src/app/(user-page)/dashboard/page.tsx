@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const user = await requireUser();
 
   return (
-    <div className="mx-auto h-full w-full max-w-5xl overflow-y-auto px-5 pt-10 pb-24 sm:px-8 sm:pt-12 md:pt-14 md:pb-10">
+    <div className="mx-auto h-full w-full max-w-6xl overflow-y-auto px-4 pt-9 pb-24 sm:px-6 sm:pt-11 md:pt-12 md:pb-10">
       <WelcomeHeader user={user} />
       <WabaStatusCards />
       <QuickActions />
