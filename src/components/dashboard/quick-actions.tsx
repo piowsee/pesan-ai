@@ -1,8 +1,9 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ArrowUpRight, Building2, MessageSquare } from 'lucide-react';
+import { ArrowUpRight, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { FaWhatsapp } from 'react-icons/fa6';
 
 const actions = [
   {
@@ -18,10 +19,10 @@ const actions = [
     eyebrow: 'WABA',
     title: 'Kelola akun WhatsApp Business',
     href: '/dashboard/waba',
-    icon: Building2,
+    icon: FaWhatsapp,
     helper:
       'Masuk ke pengaturan WABA untuk mengelola status nomor, verifikasi Meta, dan limitasi tiering pengiriman pesan.',
-    iconColor: 'text-[oklch(0.52_0.12_190)]',
+    iconColor: 'text-[#25D366]',
   },
 ];
 
