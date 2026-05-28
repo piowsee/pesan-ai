@@ -93,6 +93,13 @@ vi.mock('@/repositories/webhook.repository', () => ({
 }));
 
 // --- Mocks for Services ---
+vi.mock('@/lib/queue', () => ({
+  BOT_REPLY_BUNDLE_DELAY_MS: 15000,
+  SEND_MSG_TO_BOT_WEBHOOK_TASK: 'send-msg-to-bot-webhook',
+  queueIncomingMessageBotReply: vi.fn(),
+  releaseQueueForTests: vi.fn(),
+}));
+
 vi.mock('@/services/conversation.service', () => ({
   ConversationService: {
     getAllConversations: vi.fn(),
@@ -138,9 +145,7 @@ vi.mock('@/services/webhook.service', () => ({
     callWebhook: vi.fn(),
     validateWebhookUrl: vi.fn(),
     sendMessageToWebhook: vi.fn(),
-    queueIncomingMessageBotReply: vi.fn(),
     processIncomingMessageBotReply: vi.fn(),
-    _resetQueuedBotRepliesForTests: vi.fn(),
     createWebhook: vi.fn(),
     getAllWebhooks: vi.fn(),
     getWebhooksPaginated: vi.fn(),

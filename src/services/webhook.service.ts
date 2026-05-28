@@ -12,14 +12,6 @@ import { SignJWT } from 'jose';
 type BotReplyContext = NonNullable<
   Awaited<ReturnType<typeof ConversationRepository.getBotReplyContext>>
 >;
-type QueuedBotReply = {
-  messages: string[];
-  timeoutId: ReturnType<typeof setTimeout> | null;
-};
-
-const BOT_REPLY_BUNDLE_DELAY_MS = 15_000;
-// Process-local debounce queue that bundles rapid incoming messages per conversation.
-const queuedBotReplies = new Map<string, QueuedBotReply>();
 
 export const WebhookService = {
   /**
@@ -161,91 +153,6 @@ export const WebhookService = {
       'Webhook response must include a non-empty message string',
       400,
     );
-  },
-
-  _bundleIncomingMessages(messages: string[]) {
-    return messages.join('\n');
-  },
-
-  _scheduleQueuedBotReplyFlush(params: { conversationId: string }) {
-    const { conversationId } = params;
-    const queuedReply = queuedBotReplies.get(conversationId);
-
-    if (!queuedReply) {
-      return;
-    }
-
-    if (queuedReply.timeoutId) {
-      clearTimeout(queuedReply.timeoutId);
-    }
-
-    queuedReply.timeoutId = setTimeout(() => {
-      void this._flushQueuedBotReply({ conversationId });
-    }, BOT_REPLY_BUNDLE_DELAY_MS);
-  },
-
-  async _flushQueuedBotReply(params: { conversationId: string }) {
-    const { conversationId } = params;
-    const queuedReply = queuedBotReplies.get(conversationId);
-
-    if (!queuedReply) {
-      return { processed: false, reason: 'No queued messages' };
-    }
-
-    queuedBotReplies.delete(conversationId);
-
-    return this.processIncomingMessageBotReply({
-      conversationId,
-      incomingMessage: this._bundleIncomingMessages(queuedReply.messages),
-    });
-  },
-
-  queueIncomingMessageBotReply(params: {
-    conversationId: string;
-    incomingMessage: string | undefined;
-  }) {
-    const { conversationId, incomingMessage } = params;
-    const trimmedMessage = incomingMessage?.trim();
-
-    if (!trimmedMessage) {
-      return { queued: false, reason: 'Empty message content' };
-    }
-
-    const existingQueue = queuedBotReplies.get(conversationId);
-
-    if (existingQueue) {
-      existingQueue.messages.push(trimmedMessage);
-    } else {
-      queuedBotReplies.set(conversationId, {
-        messages: [trimmedMessage],
-        timeoutId: null,
-      });
-    }
-
-    this._scheduleQueuedBotReplyFlush({ conversationId });
-
-    logger.info('Queued incoming message for bundled bot delivery', {
-      conversationId,
-      queuedMessages:
-        queuedBotReplies.get(conversationId)?.messages.length ?? 0,
-      debounceMs: BOT_REPLY_BUNDLE_DELAY_MS,
-    });
-
-    return {
-      queued: true,
-      debounceMs: BOT_REPLY_BUNDLE_DELAY_MS,
-      queuedMessages:
-        queuedBotReplies.get(conversationId)?.messages.length ?? 0,
-    };
-  },
-
-  _resetQueuedBotRepliesForTests() {
-    queuedBotReplies.forEach((queuedReply) => {
-      if (queuedReply.timeoutId) {
-        clearTimeout(queuedReply.timeoutId);
-      }
-    });
-    queuedBotReplies.clear();
   },
 
   async processIncomingMessageBotReply(params: {

@@ -1,5 +1,6 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
 import { logError, logger } from '@/lib/logger';
+import { queueIncomingMessageBotReply } from '@/lib/queue';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import {
   Contact,
@@ -9,7 +10,6 @@ import {
   WebhookMessage,
   WebhookValue,
 } from '@/schemas/webhook.schema';
-import { WebhookService } from '@/services/webhook.service';
 
 export const ConversationService = {
   async getAllConversations(params: { wabaId: string; userId: string }) {
@@ -222,7 +222,7 @@ export const ConversationService = {
       wabaId,
     });
 
-    WebhookService.queueIncomingMessageBotReply({
+    await queueIncomingMessageBotReply({
       conversationId: conversation.id,
       incomingMessage: content,
     });

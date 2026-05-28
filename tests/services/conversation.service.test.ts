@@ -1,7 +1,7 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
+import { queueIncomingMessageBotReply } from '@/lib/queue';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { ConversationService } from '@/services/conversation.service';
-import { WebhookService } from '@/services/webhook.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/conversation.service');
@@ -125,7 +125,7 @@ describe('ConversationService', { tags: ['backend'] }, () => {
         }),
       );
 
-      expect(WebhookService.queueIncomingMessageBotReply).toHaveBeenCalledWith({
+      expect(queueIncomingMessageBotReply).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         incomingMessage: 'hello',
       });

@@ -6,7 +6,7 @@ import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { WebhookService } from '@/services/webhook.service';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/webhook.service');
 
@@ -19,12 +19,6 @@ vi.unmock('@/services/webhook.service');
 describe('WebhookService', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    WebhookService._resetQueuedBotRepliesForTests();
-  });
-
-  afterEach(() => {
-    WebhookService._resetQueuedBotRepliesForTests();
-    vi.useRealTimers();
   });
 
   describe('callWebhook', () => {
@@ -94,57 +88,6 @@ describe('WebhookService', { tags: ['backend'] }, () => {
   });
 
   describe('processIncomingMessageBotReply', () => {
-    it('bundles quick successive messages and flushes after the reset delay', async () => {
-      vi.useFakeTimers();
-
-      const processSpy = vi
-        .spyOn(WebhookService, 'processIncomingMessageBotReply')
-        .mockResolvedValue({
-          processed: true,
-          message: {
-            id: 'msg-bot-1',
-            content: 'Hello\nSecond message',
-          },
-        } as never);
-
-      expect(
-        WebhookService.queueIncomingMessageBotReply({
-          conversationId: 'conv-1',
-          incomingMessage: 'Hello',
-        }),
-      ).toEqual({
-        queued: true,
-        debounceMs: 15000,
-        queuedMessages: 1,
-      });
-
-      await vi.advanceTimersByTimeAsync(14000);
-
-      expect(
-        WebhookService.queueIncomingMessageBotReply({
-          conversationId: 'conv-1',
-          incomingMessage: 'Second message',
-        }),
-      ).toEqual({
-        queued: true,
-        debounceMs: 15000,
-        queuedMessages: 2,
-      });
-
-      await vi.advanceTimersByTimeAsync(14000);
-      expect(processSpy).not.toHaveBeenCalled();
-
-      await vi.advanceTimersByTimeAsync(1000);
-
-      expect(processSpy).toHaveBeenCalledTimes(1);
-      expect(processSpy).toHaveBeenCalledWith({
-        conversationId: 'conv-1',
-        incomingMessage: 'Hello\nSecond message',
-      });
-
-      processSpy.mockRestore();
-    });
-
     it('sends the bot reply, saves it, and emits SSE when eligible', async () => {
       const webhookResponse = { message: 'Bot says hello' };
 
