@@ -54,12 +54,12 @@ export function PhoneNumberOtpStep({
         wabaId,
         codeMethod: 'SMS',
       });
-      toast.success('Kode verifikasi dikirim ulang.');
+      toast.success('Verification code resent.');
       resetCountdown();
       startCountdown();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Gagal mengirim ulang kode';
+        error instanceof Error ? error.message : 'Failed to resend code';
       toast.error(message);
     }
   }
@@ -76,11 +76,11 @@ export function PhoneNumberOtpStep({
       });
 
       // Step 4: Success
-      toast.success('Nomor WhatsApp berhasil diverifikasi.');
+      toast.success('WhatsApp number verified successfully.');
       onSuccess();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Verifikasi gagal';
+        error instanceof Error ? error.message : 'Verification failed';
       toast.error(message);
     }
   }
@@ -99,10 +99,10 @@ export function PhoneNumberOtpStep({
           <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
           <div className="min-w-0">
             <DialogTitle className="text-base font-semibold text-brand">
-              Verifikasi Nomor
+              Verify Number
             </DialogTitle>
             <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
-              Masukkan kode 6 digit yang dikirim melalui SMS.
+              Enter the 6-digit code sent via SMS.
             </DialogDescription>
           </div>
         </div>
@@ -139,7 +139,7 @@ export function PhoneNumberOtpStep({
             disabled={isVerifying}
             className="text-brand hover:bg-primary/5 hover:text-brand"
           >
-            Ganti nomor
+            Change number
           </Button>
           <Button
             variant="ghost"
@@ -148,7 +148,7 @@ export function PhoneNumberOtpStep({
             disabled={isVerifying || requestMutation.isPending || !canResend}
             className="text-brand hover:bg-primary/5 hover:text-brand"
           >
-            {canResend ? 'Kirim ulang kode' : `Kirim ulang dalam ${count}s`}
+            {canResend ? 'Resend code' : `Resend in ${count}s`}
           </Button>
         </div>
       </div>
@@ -161,7 +161,7 @@ export function PhoneNumberOtpStep({
           onClick={onCancel}
           disabled={isVerifying}
         >
-          Batal
+          Cancel
         </Button>
         <Button
           variant="brand"
@@ -171,10 +171,10 @@ export function PhoneNumberOtpStep({
           {isVerifying ? (
             <>
               <Loader2 className="animate-spin" data-icon="inline-start" />
-              Memverifikasi...
+              Verifying...
             </>
           ) : (
-            'Konfirmasi'
+            'Confirm'
           )}
         </Button>
       </DialogFooter>

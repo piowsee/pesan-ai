@@ -26,8 +26,8 @@ const profileSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, 'Nama wajib diisi')
-    .max(80, 'Nama maksimal 80 karakter'),
+    .min(1, 'Name is required')
+    .max(80, 'Name must be at most 80 characters'),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -86,16 +86,16 @@ export function ProfileSettingsDialog({
       const result = await authClient.updateUser({ name });
 
       if (result?.error) {
-        toast.error(result.error.message || 'Gagal menyimpan nama');
+        toast.error(result.error.message || 'Failed to save name');
         return;
       }
 
-      toast.success('Nama berhasil diperbarui');
+      toast.success('Name updated successfully');
       setCurrentName(name);
       form.reset({ name });
       router.refresh();
     } catch {
-      toast.error('Gagal menyimpan nama');
+      toast.error('Failed to save name');
     } finally {
       setIsSavingName(false);
     }
@@ -105,9 +105,9 @@ export function ProfileSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-6 [&_[data-slot=dialog-close]]:top-[18px] [&_[data-slot=dialog-close]]:right-6 sm:w-[460px] sm:max-w-[460px] sm:p-7 sm:[&_[data-slot=dialog-close]]:top-[22px] sm:[&_[data-slot=dialog-close]]:right-7">
         <DialogHeader>
-          <DialogTitle>Edit profil</DialogTitle>
+          <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription>
-            Perbarui nama akun yang terlihat di dashboard.
+            Update the account name displayed on the dashboard.
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +133,7 @@ export function ProfileSettingsDialog({
             className="flex flex-col gap-5"
           >
             <div className="flex flex-col gap-2">
-              <Label htmlFor="profile-name">Nama</Label>
+              <Label htmlFor="profile-name">Name</Label>
               <Input
                 id="profile-name"
                 autoComplete="name"
@@ -174,7 +174,7 @@ export function ProfileSettingsDialog({
                 ) : (
                   <Save data-icon="inline-start" />
                 )}
-                Simpan nama
+                Save name
               </Button>
             </div>
           </form>

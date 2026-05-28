@@ -8,20 +8,20 @@ import { FaWhatsapp } from 'react-icons/fa6';
 const actions = [
   {
     eyebrow: 'Inbox',
-    title: 'Balas percakapan pelanggan',
+    title: 'Reply to customer conversations',
     href: '/dashboard/chat',
     icon: MessageSquare,
     helper:
-      'Buka panel Inbox untuk memantau antrean percakapan, menugaskan agen, dan merespons pesan secara real-time.',
+      'Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time.',
     iconColor: 'text-brand/50',
   },
   {
     eyebrow: 'WABA',
-    title: 'Kelola akun WhatsApp Business',
+    title: 'Manage WhatsApp Business accounts',
     href: '/dashboard/waba',
     icon: FaWhatsapp,
     helper:
-      'Masuk ke pengaturan WABA untuk mengelola status nomor, verifikasi Meta, dan limitasi tiering pengiriman pesan.',
+      'Go to WABA settings to manage number status, Meta verification, and messaging tier limits.',
     iconColor: 'text-[#25D366]',
   },
 ];
@@ -31,9 +31,7 @@ export function QuickActions() {
     <section className="mb-8">
       {/* Section label */}
       <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-brand/80">
-          Lanjutkan pekerjaan
-        </h2>
+        <h2 className="text-sm font-semibold text-brand/80">Quick Actions</h2>
       </div>
 
       {/* Action tiles */}

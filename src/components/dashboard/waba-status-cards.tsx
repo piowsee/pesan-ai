@@ -34,7 +34,7 @@ export function WabaStatusCards() {
     return (
       <section className="mb-8">
         <div className="rounded-lg border border-destructive/20 px-5 py-4 text-sm text-destructive">
-          Ringkasan akun WhatsApp belum bisa dimuat.
+          WhatsApp account summary could not be loaded.
         </div>
       </section>
     );
@@ -51,27 +51,27 @@ export function WabaStatusCards() {
 
   const stats = [
     {
-      label: 'Akun WhatsApp',
+      label: 'WhatsApp Accounts',
       value: totalWabas,
       icon: FaWhatsapp,
       helper:
-        'Total akun WhatsApp Business (WABA) yang telah terintegrasi di dalam workspace ini.',
+        'Total WhatsApp Business accounts (WABA) integrated in this workspace.',
       iconColor: 'text-[#25D366]',
     },
     {
-      label: 'Siap dipakai',
+      label: 'Active',
       value: activeWabas,
       icon: CheckCircle2,
       helper:
-        'Jumlah akun berstatus aktif yang dapat digunakan untuk memproses pesan masuk dan keluar secara normal.',
+        'Number of active accounts that can be used to process incoming and outgoing messages normally.',
       iconColor: 'text-[oklch(0.52_0.12_190)]',
     },
     {
-      label: 'Perlu perhatian',
+      label: 'Needs attention',
       value: suspendedWabas,
       icon: AlertTriangle,
       helper:
-        'Akun yang sedang mengalami kendala (terputus, terblokir, atau butuh verifikasi Meta). Segera periksa agar operasional tidak terganggu.',
+        'Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption.',
       iconColor: 'text-[oklch(0.55_0.12_30)]',
     },
   ];
@@ -80,7 +80,7 @@ export function WabaStatusCards() {
     <section className="mb-10">
       {/* Section label */}
       <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-brand/80">Kondisi akun</h2>
+        <h2 className="text-sm font-semibold text-brand/80">Account Status</h2>
       </div>
 
       {/* Stat tiles */}

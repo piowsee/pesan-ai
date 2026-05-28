@@ -7,10 +7,10 @@ export function WelcomeHeader({ user }: { user: User | null }) {
 
   /* Time-aware greeting */
   const hour = new Date().getHours();
-  let greeting = 'Selamat pagi';
-  if (hour >= 11 && hour < 15) greeting = 'Selamat siang';
-  else if (hour >= 15 && hour < 18) greeting = 'Selamat sore';
-  else if (hour >= 18 || hour < 4) greeting = 'Selamat malam';
+  let greeting = 'Good morning';
+  if (hour >= 11 && hour < 15) greeting = 'Good afternoon';
+  else if (hour >= 15 && hour < 18) greeting = 'Good evening';
+  else if (hour >= 18 || hour < 4) greeting = 'Good evening';
 
   return (
     <section className="mb-10">
@@ -18,11 +18,11 @@ export function WelcomeHeader({ user }: { user: User | null }) {
         {greeting}, {firstName}
       </p>
       <h1 className="text-2xl font-semibold leading-snug tracking-tight text-brand sm:text-3xl">
-        Ringkasan Aktivitas Akun Anda
+        Account Activity Summary
       </h1>
       <p className="mt-1 text-[0.9rem] leading-relaxed text-brand">
-        Tinjau status operasional WABA dan kendalikan lalu lintas pesan masuk
-        dari satu panel kendali.
+        Review WABA operational status and control incoming message traffic from
+        a single control panel.
       </p>
     </section>
   );

@@ -25,9 +25,9 @@ import { z } from 'zod';
 const addPhoneNumberSchema = z.object({
   fullPhoneNumber: z
     .string()
-    .min(1, 'Nomor WhatsApp wajib diisi')
-    .refine(isValidPhoneNumber, { message: 'Format nomor tidak valid' }),
-  name: z.string().min(1, 'Nama tampilan wajib diisi'),
+    .min(1, 'WhatsApp number is required')
+    .refine(isValidPhoneNumber, { message: 'Invalid number format' }),
+  name: z.string().min(1, 'Display name is required'),
 });
 
 type AddPhoneNumberFormValues = z.infer<typeof addPhoneNumberSchema>;
@@ -80,10 +80,10 @@ export function PhoneNumberInputStep({
 
       // Notify parent of success
       onSuccess(newPhoneNumberId);
-      toast.success('Kode verifikasi dikirim melalui SMS.');
+      toast.success('Verification code sent via SMS.');
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Gagal menambahkan nomor';
+        error instanceof Error ? error.message : 'Failed to add number';
       toast.error(message);
     }
   }
@@ -97,12 +97,12 @@ export function PhoneNumberInputStep({
           <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
           <div className="min-w-0">
             <DialogTitle className="text-base font-semibold text-brand">
-              Tambah Nomor WhatsApp
+              Add WhatsApp Number
             </DialogTitle>
             <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
-              Hubungkan nomor baru untuk{' '}
+              Connect a new number for{' '}
               <span className="font-semibold">
-                {businessName || 'akun WhatsApp Business ini'}
+                {businessName || 'this WhatsApp Business account'}
               </span>
               .
             </DialogDescription>
@@ -120,7 +120,7 @@ export function PhoneNumberInputStep({
       >
         <div className="flex flex-col gap-2">
           <Label htmlFor={`phone-input-${wabaId}`} className="text-brand">
-            Nomor WhatsApp
+            WhatsApp Number
           </Label>
           <Controller
             name="fullPhoneNumber"
@@ -128,7 +128,7 @@ export function PhoneNumberInputStep({
             render={({ field }) => (
               <PhoneInput
                 id={`phone-input-${wabaId}`}
-                placeholder="Masukkan nomor WhatsApp"
+                placeholder="Enter WhatsApp number"
                 defaultCountry="ID"
                 value={field.value}
                 onChange={field.onChange}
@@ -145,17 +145,17 @@ export function PhoneNumberInputStep({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor={`display-name-${wabaId}`} className="text-brand">
-            Nama tampilan
+            Display name
           </Label>
           <Input
             id={`display-name-${wabaId}`}
-            placeholder="Contoh: Customer Support"
+            placeholder="Example: Customer Support"
             {...form.register('name')}
             disabled={isSubmitting}
           />
           <p className="text-xs leading-relaxed text-brand">
-            Nama ini akan terlihat oleh pelanggan di WhatsApp sampai mereka
-            menyimpan kontak Anda.
+            This name will be visible to customers on WhatsApp until they save
+            your contact.
           </p>
           {form.formState.errors.name ? (
             <p className="text-xs font-medium text-destructive">
@@ -172,16 +172,16 @@ export function PhoneNumberInputStep({
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            Batal
+            Cancel
           </Button>
           <Button type="submit" variant="brand" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" data-icon="inline-start" />
-                Mengirim kode...
+                Sending code...
               </>
             ) : (
-              'Kirim kode'
+              'Send code'
             )}
           </Button>
         </DialogFooter>

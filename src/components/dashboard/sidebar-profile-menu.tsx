@@ -59,7 +59,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
               <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="right" align="center">
-              Buka profil
+              Open profile
             </TooltipContent>
           </Tooltip>
         ) : (
@@ -97,7 +97,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
               onSelect={() => setIsProfileOpen(true)}
             >
               <UserRound />
-              <span>Profil</span>
+              <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"

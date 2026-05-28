@@ -504,8 +504,8 @@ export function ChatWorkspace() {
           ) : (
             <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
               <ChatEmptyState
-                title="Belum ada chat dipilih"
-                description="Pilih percakapan dari sidebar untuk melihat riwayat pesan."
+                title="No chat selected"
+                description="Select a conversation from the sidebar to view message history."
                 icon={InboxIcon}
                 className="w-full"
               />

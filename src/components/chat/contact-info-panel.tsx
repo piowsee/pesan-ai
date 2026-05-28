@@ -28,7 +28,7 @@ import { useState } from 'react';
 const PREDEFINED_LABELS = [
   {
     value: 'new_customer',
-    label: 'Pelanggan Baru',
+    label: 'New Customer',
     Icon: UserIcon,
     color: 'text-blue-500',
   },
@@ -40,13 +40,13 @@ const PREDEFINED_LABELS = [
   },
   {
     value: 'follow_up',
-    label: 'Perlu Follow Up',
+    label: 'Needs Follow Up',
     Icon: BellIcon,
     color: 'text-orange-500',
   },
   {
     value: 'completed',
-    label: 'Selesai',
+    label: 'Completed',
     Icon: CheckCircleIcon,
     color: 'text-emerald-500',
   },
@@ -186,7 +186,7 @@ export function ContactInfoPanel({
           <section className="px-6 py-6 sm:px-7">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground">
               <TagIcon className="size-4 text-brand/75" />
-              Label pelanggan
+              Customer label
             </label>
 
             <div className="mt-3 space-y-2">
@@ -203,7 +203,7 @@ export function ContactInfoPanel({
                 }}
               >
                 <SelectTrigger className="h-10 w-full rounded-lg border-brand/15 bg-brand/5 focus:ring-brand/35 text-sm transition-colors hover:bg-brand/10">
-                  <SelectValue placeholder="Pilih label pelanggan..." />
+                  <SelectValue placeholder="Select customer label..." />
                 </SelectTrigger>
                 <SelectContent>
                   {PREDEFINED_LABELS.map((option) => (
@@ -231,7 +231,7 @@ export function ContactInfoPanel({
                     onLabelChange(event.target.value);
                   }}
                   autoFocus
-                  placeholder="Ketik nama label..."
+                  placeholder="Type label name..."
                   className="h-10 w-full rounded-lg border border-brand/15 bg-brand/5 px-3 text-sm text-foreground outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35"
                 />
               )}
@@ -242,7 +242,7 @@ export function ContactInfoPanel({
               className="mt-6 flex items-center gap-2 text-sm font-medium text-foreground"
             >
               <StickyNoteIcon className="size-4 text-brand/75" />
-              Notes internal
+              Internal notes
             </label>
             <textarea
               id={'contact-notes-' + conversation.id}
@@ -250,13 +250,14 @@ export function ContactInfoPanel({
               onChange={(event) => {
                 onNotesChange(event.target.value);
               }}
-              placeholder="Tambahkan catatan singkat untuk tim admin"
+              placeholder="Add a brief note for the admin team"
               rows={2}
               className="mt-3 w-full resize-none rounded-lg border border-brand/15 bg-brand/5 px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
             />
 
             <p className="mt-3 text-xs text-brand/70 leading-relaxed">
-              Data label dan notes saat ini disimpan sementara di tampilan chat.
+              Label and notes data are currently saved temporarily in the chat
+              view.
             </p>
           </section>
         </div>

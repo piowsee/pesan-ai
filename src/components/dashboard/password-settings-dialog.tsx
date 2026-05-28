@@ -23,16 +23,16 @@ import { z } from 'zod';
 
 const passwordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Password saat ini wajib diisi'),
+    currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z
       .string()
-      .min(1, 'Password baru wajib diisi')
-      .min(8, 'Password minimal 8 karakter'),
-    confirmPassword: z.string().min(1, 'Konfirmasi password wajib diisi'),
+      .min(1, 'New password is required')
+      .min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string().min(1, 'Confirm password is required'),
   })
   .refine((values) => values.newPassword === values.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'Konfirmasi password tidak sama',
+    message: 'Passwords do not match',
   });
 
 type PasswordFormValues = z.infer<typeof passwordSchema>;
@@ -101,14 +101,14 @@ export function PasswordSettingsDialog({
       });
 
       if (result?.error) {
-        toast.error(result.error.message || 'Gagal mengubah password');
+        toast.error(result.error.message || 'Failed to change password');
         return;
       }
 
-      toast.success('Password berhasil diubah');
+      toast.success('Password changed successfully');
       form.reset();
     } catch {
-      toast.error('Gagal mengubah password');
+      toast.error('Failed to change password');
     } finally {
       setIsChangingPassword(false);
     }
@@ -124,13 +124,13 @@ export function PasswordSettingsDialog({
       });
 
       if (result?.error) {
-        toast.error(result.error.message || 'Gagal mengirim link reset');
+        toast.error(result.error.message || 'Failed to send reset link');
         return;
       }
 
-      toast.success('Link reset password sudah dikirim ke email');
+      toast.success('Password reset link sent to email');
     } catch {
-      toast.error('Gagal mengirim link reset');
+      toast.error('Failed to send reset link');
     } finally {
       setIsRequestingReset(false);
     }
@@ -147,9 +147,10 @@ export function PasswordSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-6 [&_[data-slot=dialog-close]]:top-[18px] [&_[data-slot=dialog-close]]:right-6 sm:w-[500px] sm:max-w-[500px] sm:p-7 sm:[&_[data-slot=dialog-close]]:top-[22px] sm:[&_[data-slot=dialog-close]]:right-7">
         <DialogHeader>
-          <DialogTitle>Settings akun</DialogTitle>
+          <DialogTitle>Account settings</DialogTitle>
           <DialogDescription>
-            Ubah password login atau kirim link reset ke email akun.
+            Change your login password or send a reset link to your account
+            email.
           </DialogDescription>
         </DialogHeader>
 
@@ -158,11 +159,11 @@ export function PasswordSettingsDialog({
             <KeyRound className="size-10 shrink-0 text-brand" />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">
-                Keamanan password
+                Password security
               </p>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Gunakan password lama untuk mengganti password. Kalau lupa,
-                kirim link reset ke {user.email}.
+                Use your old password to change your password. If you forgot it,
+                send a reset link to {user.email}.
               </p>
             </div>
           </div>
@@ -173,7 +174,7 @@ export function PasswordSettingsDialog({
           >
             <PasswordInput
               id="current-password"
-              label="Password saat ini"
+              label="Current password"
               autoComplete="current-password"
               visible={visiblePasswords.currentPassword}
               error={form.formState.errors.currentPassword?.message}
@@ -193,14 +194,14 @@ export function PasswordSettingsDialog({
                       data-icon="inline-start"
                     />
                   ) : null}
-                  Lupa password?
+                  Forgot password?
                 </Button>
               }
             />
 
             <PasswordInput
               id="new-password"
-              label="Password baru"
+              label="New password"
               autoComplete="new-password"
               visible={visiblePasswords.newPassword}
               error={form.formState.errors.newPassword?.message}
@@ -210,7 +211,7 @@ export function PasswordSettingsDialog({
 
             <PasswordInput
               id="confirm-password"
-              label="Konfirmasi password baru"
+              label="Confirm new password"
               autoComplete="new-password"
               visible={visiblePasswords.confirmPassword}
               error={form.formState.errors.confirmPassword?.message}
@@ -230,7 +231,7 @@ export function PasswordSettingsDialog({
                 ) : (
                   <KeyRound data-icon="inline-start" />
                 )}
-                Ubah password
+                Change password
               </Button>
             </div>
           </form>
@@ -285,7 +286,7 @@ function PasswordInput({
           size="icon"
           onClick={onToggle}
           className="absolute inset-y-0 right-0 h-10 text-muted-foreground hover:bg-transparent hover:text-foreground"
-          aria-label={visible ? 'Sembunyikan password' : 'Tampilkan password'}
+          aria-label={visible ? 'Hide password' : 'Show password'}
         >
           {visible ? <EyeOff /> : <Eye />}
         </Button>

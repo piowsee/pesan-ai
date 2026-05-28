@@ -67,7 +67,7 @@ export function AddPhoneNumberDialog({
               className="w-full border-brand text-brand hover:bg-brand/90 hover:text-brand-foreground sm:w-auto"
             >
               <Plus data-icon="inline-start" />
-              Tambah nomor
+              Add number
             </Button>
           )}
         </DialogTrigger>

@@ -37,7 +37,7 @@ function StatusBadge({ status }: { status: string }) {
   if (normalized === 'active') {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[oklch(0.46_0.13_155)]">
-        Aktif
+        Active
         <CheckCircle2 className="size-4 shrink-0" />
       </span>
     );
@@ -46,7 +46,7 @@ function StatusBadge({ status }: { status: string }) {
   if (normalized === 'suspended') {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-destructive">
-        Ditangguhkan
+        Suspended
         <CircleAlert className="size-4 shrink-0" />
       </span>
     );
@@ -59,7 +59,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
   const [isAddPhoneOpen, setIsAddPhoneOpen] = useState(false);
   const phoneNumberCount = waba.phoneNumbers.length;
   const triggerLabel =
-    phoneNumberCount === 1 ? '1 nomor' : `${phoneNumberCount} nomor`;
+    phoneNumberCount === 1 ? '1 number' : `${phoneNumberCount} numbers`;
 
   return (
     <>
@@ -67,7 +67,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            aria-label="Kelola nomor WhatsApp"
+            aria-label="Manage WhatsApp numbers"
             className="inline-flex max-w-full cursor-pointer items-center rounded-md text-left text-sm font-semibold text-brand underline-offset-4 transition hover:text-brand/80 hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <span className="truncate">{triggerLabel}</span>
@@ -82,10 +82,10 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
             <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-brand">
-                Nomor WhatsApp
+                WhatsApp Number
               </p>
               <p className="truncate text-xs text-brand">
-                {triggerLabel} terhubung
+                {triggerLabel} connected
               </p>
             </div>
           </div>
@@ -97,7 +97,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
           <div className="max-h-56 overflow-y-auto p-2 [scrollbar-gutter:stable]">
             {phoneNumberCount === 0 ? (
               <div className="px-2.5 py-2.5 text-sm leading-relaxed text-brand">
-                Belum ada nomor yang terhubung.
+                No numbers connected yet.
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -125,7 +125,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
               onSelect={() => setIsAddPhoneOpen(true)}
             >
               <Plus />
-              Tambah nomor
+              Add number
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -143,7 +143,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
 
 function copyWabaId(wabaId: string) {
   void navigator.clipboard.writeText(wabaId);
-  toast.success('WABA ID disalin.');
+  toast.success('WABA ID copied.');
 }
 
 function WabaAccountRow({ waba }: { waba: Waba }) {
@@ -157,7 +157,7 @@ function WabaAccountRow({ waba }: { waba: Waba }) {
     <div className="grid gap-4 border-t border-border px-1 py-4 first:border-t-0 lg:grid-cols-4 lg:items-center lg:gap-0">
       <div className="min-w-0">
         <p className="truncate font-semibold text-brand">
-          {waba.businessName || 'Bisnis tanpa nama'}
+          {waba.businessName || 'Unnamed business'}
         </p>
         <button
           type="button"
@@ -178,14 +178,14 @@ function WabaAccountRow({ waba }: { waba: Waba }) {
 
       <div className="min-w-0">
         <span className="mb-2 block text-xs font-semibold text-brand lg:hidden">
-          Nomor WhatsApp
+          WhatsApp Number
         </span>
         <PhoneNumbersMenu waba={waba} />
       </div>
 
       <div className="min-w-0">
         <span className="mb-2 block text-xs font-semibold text-brand lg:hidden">
-          Terhubung pada
+          Connected on
         </span>
         <span className="text-sm font-semibold text-brand">
           {formattedDate}
@@ -222,18 +222,18 @@ function EmptyState() {
       <MessageSquare className="size-12 text-brand" />
       <div className="flex max-w-lg flex-col gap-2">
         <p className="text-xl font-semibold tracking-tight text-brand sm:text-2xl">
-          Belum ada akun WhatsApp
+          No WhatsApp accounts yet
         </p>
         <p className="text-sm leading-relaxed text-brand sm:text-base sm:leading-7">
-          Hubungkan akun WhatsApp Business pertama agar pesan-ai bisa mulai
-          menerima dan mengelola percakapan.
+          Connect your first WhatsApp Business account so pesan-ai can start
+          receiving and managing conversations.
         </p>
       </div>
       <WabaEmbeddedSignupButton
         variant="brand"
         size="lg"
-        idleLabel="Hubungkan akun WhatsApp"
-        pendingLabel="Menghubungkan akun..."
+        idleLabel="Connect WhatsApp account"
+        pendingLabel="Connecting account..."
       />
     </div>
   );
@@ -250,21 +250,21 @@ function StatusSummary({
 }) {
   const items = [
     {
-      label: 'akun',
+      label: 'accounts',
       value: total,
       icon: FaWhatsapp,
       iconColor: 'text-brand',
       tone: 'text-brand',
     },
     {
-      label: 'aktif',
+      label: 'active',
       value: active,
       icon: CheckCircle2,
       iconColor: 'text-[oklch(0.46_0.13_155)]',
       tone: 'text-[oklch(0.46_0.13_155)]',
     },
     {
-      label: 'perlu perhatian',
+      label: 'needs attention',
       value: suspended,
       icon: CircleAlert,
       iconColor: 'text-destructive',
@@ -307,7 +307,7 @@ function ErrorState({
         onClick={onRetry}
       >
         <RefreshCw data-icon="inline-start" />
-        Coba lagi
+        Try again
       </Button>
     </div>
   );
@@ -341,7 +341,7 @@ export function WabaDashboardManager() {
 
     if (isError) {
       const message =
-        error instanceof Error ? error.message : 'Gagal memuat daftar WABA';
+        error instanceof Error ? error.message : 'Failed to load WABA list';
       return <ErrorState message={message} onRetry={() => refetch()} />;
     }
 
@@ -360,10 +360,10 @@ export function WabaDashboardManager() {
         <section>
           <div className="max-w-2xl">
             <h1 className="text-2xl leading-snug font-semibold tracking-tight text-brand sm:text-3xl">
-              Akun WhatsApp Business
+              WhatsApp Business Accounts
             </h1>
             <p className="mt-1 text-[0.9rem] leading-relaxed text-brand">
-              Kelola akun dan nomor WhatsApp yang terhubung ke pesan-ai.
+              Manage WhatsApp accounts and numbers connected to pesan-ai.
             </p>
           </div>
         </section>
@@ -379,8 +379,8 @@ export function WabaDashboardManager() {
               variant="brand"
               size="lg"
               className="w-full sm:w-auto"
-              idleLabel="Hubungkan akun WhatsApp"
-              pendingLabel="Menghubungkan akun..."
+              idleLabel="Connect WhatsApp account"
+              pendingLabel="Connecting account..."
             />
           ) : null}
         </section>
@@ -398,13 +398,13 @@ export function WabaDashboardManager() {
           >
             <div className="min-h-0 flex-1 overflow-y-auto border-b border-border [scrollbar-gutter:stable]">
               <div className="sticky top-0 z-10 hidden border-b border-border bg-background px-1 py-3 text-xs font-semibold tracking-[0.12em] text-brand uppercase lg:grid lg:grid-cols-4">
-                <span>Bisnis</span>
+                <span>Business</span>
                 <span>Status</span>
                 <span className="inline-flex items-center gap-2">
-                  Nomor WhatsApp
+                  WhatsApp Number
                   <FaWhatsapp className="size-3.5" />
                 </span>
-                <span>Terhubung pada</span>
+                <span>Connected on</span>
               </div>
               <div>{renderList()}</div>
             </div>
@@ -416,8 +416,8 @@ export function WabaDashboardManager() {
         <div className="mt-4 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-brand">
             {total > 0
-              ? `Menampilkan ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} dari ${total} akun`
-              : 'Belum ada akun'}
+              ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${total} accounts`
+              : 'No accounts yet'}
           </p>
 
           <div className="flex items-center gap-2">
@@ -429,12 +429,12 @@ export function WabaDashboardManager() {
                 onClick={() => setPage((prev) => prev - 1)}
               >
                 <ChevronLeft data-icon="inline-start" />
-                Sebelumnya
+                Previous
               </Button>
             ) : null}
 
             <span className="px-2 text-sm font-medium text-brand">
-              Halaman {page} dari {totalPages}
+              Page {page} of {totalPages}
             </span>
 
             {canGoNext ? (
@@ -444,7 +444,7 @@ export function WabaDashboardManager() {
                 className="text-brand hover:bg-muted hover:text-brand"
                 onClick={() => setPage((prev) => prev + 1)}
               >
-                Berikutnya
+                Next
                 <ChevronRight data-icon="inline-end" />
               </Button>
             ) : null}
