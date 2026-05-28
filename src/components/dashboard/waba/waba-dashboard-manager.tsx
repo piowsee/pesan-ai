@@ -218,13 +218,13 @@ function ListSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex min-h-60 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-brand text-brand-foreground [&_svg]:size-6">
-        <MessageSquare />
-      </div>
-      <div className="flex max-w-md flex-col gap-1">
-        <p className="font-semibold text-brand">Belum ada akun WhatsApp</p>
-        <p className="text-sm leading-relaxed text-brand">
+    <div className="flex min-h-72 flex-col items-center justify-start gap-5 px-6 pt-8 pb-10 text-center">
+      <MessageSquare className="size-12 text-brand" />
+      <div className="flex max-w-lg flex-col gap-2">
+        <p className="text-xl font-semibold tracking-tight text-brand sm:text-2xl">
+          Belum ada akun WhatsApp
+        </p>
+        <p className="text-sm leading-relaxed text-brand sm:text-base sm:leading-7">
           Hubungkan akun WhatsApp Business pertama agar pesan-ai bisa mulai
           menerima dan mengelola percakapan.
         </p>
@@ -324,6 +324,7 @@ export function WabaDashboardManager() {
   const total = data?.total ?? 0;
   const overviewTotal = overviewData?.total ?? total;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const isEmpty = !isLoading && !isError && total === 0;
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
   const activeWabas = overviewWabas.filter(
@@ -373,73 +374,83 @@ export function WabaDashboardManager() {
             active={activeWabas}
             suspended={suspendedWabas}
           />
-          <WabaEmbeddedSignupButton
-            variant="brand"
-            size="lg"
-            className="w-full sm:w-auto"
-            idleLabel="Hubungkan akun WhatsApp"
-            pendingLabel="Menghubungkan akun..."
-          />
+          {!isEmpty ? (
+            <WabaEmbeddedSignupButton
+              variant="brand"
+              size="lg"
+              className="w-full sm:w-auto"
+              idleLabel="Hubungkan akun WhatsApp"
+              pendingLabel="Menghubungkan akun..."
+            />
+          ) : null}
         </section>
 
-        <section
-          className={cn(
-            'flex min-h-0 flex-1 flex-col transition-opacity duration-200',
-            isPlaceholderData && 'opacity-60',
-          )}
-        >
-          <div className="min-h-0 flex-1 overflow-y-auto border-b border-border [scrollbar-gutter:stable]">
-            <div className="sticky top-0 z-10 hidden border-b border-border bg-background px-1 py-3 text-xs font-semibold tracking-[0.12em] text-brand uppercase lg:grid lg:grid-cols-4">
-              <span>Bisnis</span>
-              <span>Status</span>
-              <span className="inline-flex items-center gap-2">
-                Nomor WhatsApp
-                <FaWhatsapp className="size-3.5" />
-              </span>
-              <span>Terhubung pada</span>
+        {isEmpty ? (
+          <section className="flex min-h-0 flex-1 items-start justify-center">
+            <EmptyState />
+          </section>
+        ) : (
+          <section
+            className={cn(
+              'flex min-h-0 flex-1 flex-col transition-opacity duration-200',
+              isPlaceholderData && 'opacity-60',
+            )}
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto border-b border-border [scrollbar-gutter:stable]">
+              <div className="sticky top-0 z-10 hidden border-b border-border bg-background px-1 py-3 text-xs font-semibold tracking-[0.12em] text-brand uppercase lg:grid lg:grid-cols-4">
+                <span>Bisnis</span>
+                <span>Status</span>
+                <span className="inline-flex items-center gap-2">
+                  Nomor WhatsApp
+                  <FaWhatsapp className="size-3.5" />
+                </span>
+                <span>Terhubung pada</span>
+              </div>
+              <div>{renderList()}</div>
             </div>
-            <div>{renderList()}</div>
+          </section>
+        )}
+      </div>
+
+      {!isEmpty ? (
+        <div className="mt-4 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-brand">
+            {total > 0
+              ? `Menampilkan ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} dari ${total} akun`
+              : 'Belum ada akun'}
+          </p>
+
+          <div className="flex items-center gap-2">
+            {canGoPrevious ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-brand hover:bg-muted hover:text-brand"
+                onClick={() => setPage((prev) => prev - 1)}
+              >
+                <ChevronLeft data-icon="inline-start" />
+                Sebelumnya
+              </Button>
+            ) : null}
+
+            <span className="px-2 text-sm font-medium text-brand">
+              Halaman {page} dari {totalPages}
+            </span>
+
+            {canGoNext ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-brand hover:bg-muted hover:text-brand"
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Berikutnya
+                <ChevronRight data-icon="inline-end" />
+              </Button>
+            ) : null}
           </div>
-        </section>
-      </div>
-
-      <div className="mt-4 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-medium text-brand">
-          {total > 0
-            ? `Menampilkan ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} dari ${total} akun`
-            : 'Belum ada akun'}
-        </p>
-
-        <div className="flex items-center gap-2">
-          {canGoPrevious ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-brand hover:bg-muted hover:text-brand"
-              onClick={() => setPage((prev) => prev - 1)}
-            >
-              <ChevronLeft data-icon="inline-start" />
-              Sebelumnya
-            </Button>
-          ) : null}
-
-          <span className="px-2 text-sm font-medium text-brand">
-            Halaman {page} dari {totalPages}
-          </span>
-
-          {canGoNext ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-brand hover:bg-muted hover:text-brand"
-              onClick={() => setPage((prev) => prev + 1)}
-            >
-              Berikutnya
-              <ChevronRight data-icon="inline-end" />
-            </Button>
-          ) : null}
         </div>
-      </div>
+      ) : null}
     </>
   );
 }
