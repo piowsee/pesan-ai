@@ -114,7 +114,11 @@ export function ChatWorkspace() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data } = useWabas(1, 100);
+  const {
+    data,
+    isLoading: isWabasLoading,
+    isError: isWabasError,
+  } = useWabas(1, 100);
   const wabas = useMemo(() => data?.wabas ?? [], [data?.wabas]);
   const searchParamsString = searchParams.toString();
   const hasPersistedStateInUrl = CHAT_STATE_PARAM_KEYS.some((key) =>
@@ -144,9 +148,13 @@ export function ChatWorkspace() {
   const isContactInfoOpen = searchParams.get('panel') === 'contact';
   const shouldRestoreFromStorage =
     !hasPersistedStateInUrl && Boolean(initialStoredChatState);
+  const hasNoWabas =
+    !isWabasLoading && !isWabasError && (data?.total ?? 0) === 0;
   const activeWabaId = shouldRestoreFromStorage
     ? undefined
-    : (requestedWabaId ?? wabas[0]?.id);
+    : hasNoWabas
+      ? undefined
+      : (requestedWabaId ?? wabas[0]?.id);
 
   const replaceChatState = useCallback(
     (updates: Partial<Record<ChatStateParamKey, string | undefined>>) => {
@@ -171,6 +179,10 @@ export function ChatWorkspace() {
   );
 
   useEffect(() => {
+    if (hasNoWabas) {
+      return;
+    }
+
     if (hasPersistedStateInUrl) {
       return;
     }
@@ -184,7 +196,27 @@ export function ChatWorkspace() {
         scroll: false,
       });
     });
-  }, [hasPersistedStateInUrl, initialStoredChatState, pathname, router]);
+  }, [
+    hasNoWabas,
+    hasPersistedStateInUrl,
+    initialStoredChatState,
+    pathname,
+    router,
+  ]);
+
+  useEffect(() => {
+    if (!hasNoWabas) {
+      return;
+    }
+
+    window.localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
+
+    if (hasPersistedStateInUrl) {
+      startTransition(() => {
+        router.replace(pathname, { scroll: false });
+      });
+    }
+  }, [hasNoWabas, hasPersistedStateInUrl, pathname, router]);
 
   useEffect(() => {
     if (!hasPersistedStateInUrl) {
@@ -377,8 +409,8 @@ export function ChatWorkspace() {
     [activeWabaId, selectedConversationId, sendMessage],
   );
 
-  const isRestoringPersistedState = shouldRestoreFromStorage;
-  const isWaitingForInitialWaba = wabas.length === 0;
+  const isRestoringPersistedState = shouldRestoreFromStorage && !hasNoWabas;
+  const isWaitingForInitialWaba = isWabasLoading && !data;
   const isWaitingForSelectedConversation =
     Boolean(selectedConversationId) && isConversationsLoading && !convData;
   const shouldShowWorkspaceSkeleton =
