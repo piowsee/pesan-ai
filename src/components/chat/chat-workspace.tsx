@@ -304,7 +304,10 @@ export function ChatWorkspace() {
   }, [allConversations, selectedConversationId]);
 
   useEffect(() => {
-    if (shouldRestoreFromStorage || !activeWabaId) {
+    // Don't normalize while WABAs are still loading — wabas[] is empty during
+    // the fetch, which causes the requestedWabaId validity check to wrongly
+    // fail and set nextState.wabaId to a value already present in the URL.
+    if (shouldRestoreFromStorage || !activeWabaId || isWabasLoading) {
       return;
     }
 
@@ -343,17 +346,34 @@ export function ChatWorkspace() {
       nextState.filter = undefined;
     }
 
-    if (Object.keys(nextState).length > 0) {
+    if (Object.keys(nextState).length === 0) {
+      return;
+    }
+
+    // Only call router.replace when the resulting URL actually differs from
+    // the current one — router.replace() with an identical href still triggers
+    // a fresh route request in the Next.js App Router.
+    const nextParams = new URLSearchParams(searchParamsString);
+    Object.entries(nextState).forEach(([key, value]) => {
+      if (value) {
+        nextParams.set(key, value);
+      } else {
+        nextParams.delete(key);
+      }
+    });
+    if (nextParams.toString() !== searchParamsString) {
       replaceChatState(nextState);
     }
   }, [
     activeWabaId,
     convData,
     isContactInfoOpen,
+    isWabasLoading,
     phoneNumbers,
     replaceChatState,
     requestedWabaId,
     searchParams,
+    searchParamsString,
     selectedConversation,
     selectedConversationId,
     selectedPhoneNumberId,
