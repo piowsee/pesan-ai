@@ -13,6 +13,7 @@ import { type Waba, useWabas } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
 import {
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
@@ -68,9 +69,11 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
           <button
             type="button"
             aria-label="Manage WhatsApp numbers"
-            className="inline-flex max-w-full cursor-pointer items-center rounded-md text-left text-sm font-semibold text-brand underline-offset-4 transition hover:text-brand/80 hover:underline focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-left text-sm font-medium text-brand transition hover:border-brand/30 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
+            <FaWhatsapp className="size-3.5 shrink-0 text-[#25D366]" />
             <span className="truncate">{triggerLabel}</span>
+            <ChevronDown className="size-3.5 shrink-0 text-brand/50" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
