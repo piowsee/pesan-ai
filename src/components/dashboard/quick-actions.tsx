@@ -53,7 +53,7 @@ export function QuickActions() {
                 <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-brand/60">
                   {action.eyebrow}
                 </p>
-                <h3 className="max-w-xs text-lg font-semibold leading-snug text-brand">
+                <h3 className="max-w-sm text-lg font-semibold leading-snug text-brand">
                   {action.title}
                 </h3>
               </div>
