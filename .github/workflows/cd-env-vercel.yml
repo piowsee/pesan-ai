@@ -1,0 +1,33 @@
+name: Setup Vercel env (Trigger manually)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Set Env Vars on Vercel
+        run: |
+          set_env() {
+            curl -s -X POST "https://api.vercel.com/v10/projects/${{ secrets.VERCEL_PROJECT_ID }}/env?upsert=true" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"key\":\"$1\",\"value\":\"$2\",\"type\":\"encrypted\",\"target\":[\"production\"]}"
+          }
+          set_env "DATABASE_URL"                   "${{ secrets.DATABASE_URL }}"
+          set_env "BETTER_AUTH_SECRET"             "${{ secrets.BETTER_AUTH_SECRET }}"
+          set_env "BETTER_AUTH_URL"                "${{ secrets.BETTER_AUTH_URL }}"
+          set_env "NEXT_PUBLIC_APP_TIME_ZONE"      "Asia/Jakarta"
+          set_env "ENCRYPTION_KEY"                 "${{ secrets.ENCRYPTION_KEY }}"
+          set_env "META_WEBHOOK_SECRET"            "${{ secrets.META_WEBHOOK_SECRET }}"
+          set_env "NEXT_PUBLIC_META_APP_ID"        "${{ secrets.NEXT_PUBLIC_META_APP_ID }}"
+          set_env "META_APP_SECRET"                "${{ secrets.META_APP_SECRET }}"
+          set_env "NEXT_PUBLIC_FACEBOOK_CONFIG_ID" "${{ secrets.NEXT_PUBLIC_FACEBOOK_CONFIG_ID }}"
+          set_env "SMTP_HOST"                      "${{ secrets.SMTP_HOST }}"
+          set_env "SMTP_PORT"                      "${{ secrets.SMTP_PORT }}"
+          set_env "SMTP_USER"                      "${{ secrets.SMTP_USER }}"
+          set_env "SMTP_PASS"                      "${{ secrets.SMTP_PASS }}"
+          set_env "LOG_LEVEL"                      "${{ secrets.LOG_LEVEL }}"
+
+      - name: Deploy Project Artifact
+        run: >-
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
