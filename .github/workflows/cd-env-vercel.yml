@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-env-var:
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -30,7 +30,3 @@ jobs:
           set_env "SMTP_USER"                      "${{ secrets.SMTP_USER }}"
           set_env "SMTP_PASS"                      "${{ secrets.SMTP_PASS }}"
           set_env "LOG_LEVEL"                      "${{ secrets.LOG_LEVEL }}"
-
-      - name: Deploy Project Artifact
-        run: >-
-          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
