@@ -57,9 +57,9 @@ export function AppSidebar({ user }: { user: User | null }) {
               <SidebarTrigger
                 className={cn(
                   pathname === '/dashboard/chat'
-                    ? 'bg-muted text-brand'
+                    ? 'bg-transparent text-brand'
                     : 'text-brand',
-                  'absolute top-0 right-0 !size-10 shrink-0 transition-colors [&_svg]:!size-5',
+                  'absolute top-0 right-0 !size-10 shrink-0 bg-transparent transition-colors hover:bg-transparent active:bg-transparent aria-expanded:bg-transparent [&_svg]:!size-5',
                 )}
               />
             </div>
