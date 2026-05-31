@@ -1,6 +1,6 @@
 import { POST } from '@/app/api/embedded-signup/route';
+import { ApiError } from '@/lib/api-helper/error';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
-import { ApiError } from '@/lib/error';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 import { describe, expect, it, vi } from 'vitest';
 

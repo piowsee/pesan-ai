@@ -1,10 +1,10 @@
-import { encrypt } from '@/lib/encryption';
+import { encrypt } from '@/lib/server/encryption';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
 import { auth } from '../src/lib/auth/auth';
-import prisma from '../src/lib/prisma';
+import prisma from '../src/lib/server/prisma';
 
 dotenv.config();
 

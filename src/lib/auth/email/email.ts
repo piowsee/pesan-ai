@@ -1,4 +1,4 @@
-import { logError, logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/server/logger';
 import fs from 'fs';
 import nodemailer, { type SentMessageInfo, type Transporter } from 'nodemailer';
 import path from 'path';

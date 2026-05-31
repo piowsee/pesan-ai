@@ -1,6 +1,6 @@
 'use client';
 
-import { isFreeformWindowOpen } from '@/lib/chat';
+import { isFreeformWindowOpen } from '@/lib/chat/chat';
 import type { ChatConversation } from '@/types/chat';
 import {
   keepPreviousData,

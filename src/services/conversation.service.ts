@@ -1,5 +1,5 @@
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { logError, logger } from '@/lib/logger';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import {
   Contact,

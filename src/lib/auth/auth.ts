@@ -4,8 +4,8 @@ import {
   type AppLocale,
   DEFAULT_LOCALE,
   getLocaleFromRequest,
-} from '@/lib/locale';
-import prisma from '@/lib/prisma';
+} from '@/lib/i18n-helper/locale';
+import prisma from '@/lib/server/prisma';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError, createAuthMiddleware } from 'better-auth/api';

@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 
-import { ApiError } from '../error';
+import { ApiError } from '../api-helper/error';
 import { auth } from './auth';
 
 /**

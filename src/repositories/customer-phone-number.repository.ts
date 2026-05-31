@@ -1,5 +1,5 @@
 import { Prisma } from '@/generated/prisma/client';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/server/prisma';
 
 export interface CustomerPhoneNumberRow {
   customerPhone: string;

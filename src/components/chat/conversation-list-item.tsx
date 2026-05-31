@@ -1,8 +1,8 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getMessagePreview } from '@/lib/chat';
-import { formatConversationTimestamp } from '@/lib/chat-format';
+import { getMessagePreview } from '@/lib/chat/chat';
+import { formatConversationTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 

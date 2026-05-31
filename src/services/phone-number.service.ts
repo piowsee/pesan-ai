@@ -1,6 +1,6 @@
-import { decrypt, encrypt } from '@/lib/encryption';
-import { ApiError } from '@/lib/error';
-import { logger } from '@/lib/logger';
+import { ApiError } from '@/lib/api-helper/error';
+import { decrypt, encrypt } from '@/lib/server/encryption';
+import { logger } from '@/lib/server/logger';
 import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';

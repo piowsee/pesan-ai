@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/error';
+import { ApiError } from '@/lib/api-helper/error';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { WabaService } from '@/services/waba.service';
 import { describe, expect, it, vi } from 'vitest';

@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/server/prisma';
 import { MessageRepository } from '@/repositories/message.repository';
 import {
   afterAll,

@@ -1,5 +1,5 @@
 import { routing } from '@/i18n/routing';
-import { DEFAULT_LOCALE } from '@/lib/locale';
+import { DEFAULT_LOCALE } from '@/lib/i18n-helper/locale';
 import { getSessionCookie } from 'better-auth/cookies';
 import createIntlMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';

@@ -1,4 +1,4 @@
-import { ApiError } from '@/lib/error';
+import { ApiError } from '@/lib/api-helper/error';
 import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.unmock('@/services/meta-fetch.service');
 vi.unmock('@/services/phone-number.service');
 
-vi.mock('@/lib/encryption', () => ({
+vi.mock('@/lib/server/encryption', () => ({
   encrypt: vi.fn().mockImplementation((val) => `enc:${val}`),
   decrypt: vi.fn().mockImplementation((val) => val.replace('enc:', '')),
 }));

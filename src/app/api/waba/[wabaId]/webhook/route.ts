@@ -1,5 +1,5 @@
-import { withApiAdmin } from '@/lib/api-handler';
-import { jsend } from '@/lib/jsend';
+import { withApiAdmin } from '@/lib/api-helper/api-handler';
+import { jsend } from '@/lib/api-helper/jsend';
 import { AssignWebhookSchema } from '@/schemas/assign-webhook.schema';
 import { WabaService } from '@/services/waba.service';
 

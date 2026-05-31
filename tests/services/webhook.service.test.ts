@@ -1,5 +1,5 @@
-import { encrypt } from '@/lib/encryption';
-import { ApiError } from '@/lib/error';
+import { ApiError } from '@/lib/api-helper/error';
+import { encrypt } from '@/lib/server/encryption';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { WebhookService } from '@/services/webhook.service';
 import { describe, expect, it, vi } from 'vitest';

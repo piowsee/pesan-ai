@@ -3,13 +3,13 @@ import { EventEmitter } from 'node:events';
 import { vi } from 'vitest';
 
 // Global mock for logger
-vi.mock('@/lib/logger', () => ({
+vi.mock('@/lib/server/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   logError: vi.fn(),
 }));
 
 // Global mock for encryption
-vi.mock('@/lib/encryption', () => ({
+vi.mock('@/lib/server/encryption', () => ({
   encrypt: vi.fn((val) => val),
   decrypt: vi.fn((val) => val),
 }));
@@ -22,8 +22,8 @@ vi.mock('@/lib/auth/auth-api-helper', () => ({
   },
 }));
 
-vi.mock('@/lib/event-bus', async () => {
-  const actual = await vi.importActual('@/lib/event-bus');
+vi.mock('@/lib/chat/event-bus', async () => {
+  const actual = await vi.importActual('@/lib/chat/event-bus');
   const mockBus = new EventEmitter();
 
   // Create spies while preserving EventEmitter functionality

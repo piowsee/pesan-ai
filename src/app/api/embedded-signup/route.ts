@@ -1,6 +1,6 @@
-import { withApiAuth } from '@/lib/api-handler';
-import { jsend } from '@/lib/jsend';
-import { logger } from '@/lib/logger';
+import { withApiAuth } from '@/lib/api-helper/api-handler';
+import { jsend } from '@/lib/api-helper/jsend';
+import { logger } from '@/lib/server/logger';
 import { EmbeddedSignupSchema } from '@/schemas/embedded-signup.schema';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 

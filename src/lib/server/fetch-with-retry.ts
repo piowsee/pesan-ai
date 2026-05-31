@@ -1,4 +1,4 @@
-import { logError, logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/server/logger';
 
 const DEFAULT_FETCH_RETRY_COUNT = 3;
 const DEFAULT_RETRY_DELAY_MS = 500;

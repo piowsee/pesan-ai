@@ -1,7 +1,7 @@
 import { AuthCard } from '@/components/auth/auth-card';
 import { LoginForm } from '@/components/auth/login/login-form';
 import { routing } from '@/i18n/routing';
-import { buildLocalizedMetadata } from '@/lib/seo';
+import { buildLocalizedMetadata } from '@/lib/i18n-helper/seo';
 import type { Metadata } from 'next';
 import { hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';

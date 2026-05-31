@@ -3,7 +3,7 @@ import { Navbar } from '@/components/Navbar';
 import { FAQSection } from '@/components/landing/faq';
 import { Hero } from '@/components/landing/hero';
 import { routing } from '@/i18n/routing';
-import { buildLocalizedMetadata } from '@/lib/seo';
+import { buildLocalizedMetadata } from '@/lib/i18n-helper/seo';
 import type { Metadata } from 'next';
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';

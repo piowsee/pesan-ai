@@ -1,5 +1,5 @@
+import { ApiError } from '@/lib/api-helper/error';
 import { auth, createResetPasswordCallbackUrl } from '@/lib/auth/auth';
-import { ApiError } from '@/lib/error';
 import { CreateUserPayload } from '@/schemas/create-user.schema';
 import { headers } from 'next/headers';
 import { randomBytes } from 'node:crypto';

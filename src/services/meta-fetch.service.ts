@@ -1,6 +1,6 @@
-import { ApiError } from '@/lib/error';
-import * as retryableFetch from '@/lib/fetch-with-retry';
-import { logError, logger } from '@/lib/logger';
+import { ApiError } from '@/lib/api-helper/error';
+import * as retryableFetch from '@/lib/server/fetch-with-retry';
+import { logError, logger } from '@/lib/server/logger';
 import {
   PhoneNumberMetaResponse,
   TokenExchangeResponse,

@@ -1,4 +1,4 @@
-import { logError, logger } from '@/lib/logger';
+import { logError, logger } from '@/lib/server/logger';
 import { ConversationService } from '@/services/conversation.service';
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';

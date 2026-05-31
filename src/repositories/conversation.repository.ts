@@ -1,5 +1,5 @@
 import { Prisma } from '@/generated/prisma/client';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/server/prisma';
 
 export const ConversationRepository = {
   async findAllByWabaId(params: { wabaId: string; userId: string }) {
