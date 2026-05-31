@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Home, Layers, MessageSquare } from 'lucide-react';
+import { Home, Layers, MessageSquare, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -9,6 +9,7 @@ const mobileNavItems = [
   { title: 'Home', url: '/dashboard', icon: Home },
   { title: 'WABA', url: '/dashboard/waba', icon: Layers },
   { title: 'Chat', url: '/dashboard/chat', icon: MessageSquare },
+  { title: 'Customers', url: '/dashboard/customers', icon: UsersRound },
 ];
 
 export function MobileBottomNav() {
@@ -19,7 +20,8 @@ export function MobileBottomNav() {
   const isFirstHierarchyPage =
     pathname === '/dashboard' ||
     pathname === '/dashboard/waba' ||
-    pathname === '/dashboard/chat';
+    pathname === '/dashboard/chat' ||
+    pathname === '/dashboard/customers';
   const shouldShowMenu =
     isFirstHierarchyPage &&
     !(pathname === '/dashboard/chat' && Boolean(conversationId));
@@ -32,7 +34,7 @@ export function MobileBottomNav() {
     <>
       <div className="h-16 md:hidden" />
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/85 md:hidden">
-        <div className="grid h-16 grid-cols-3 px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="grid h-16 grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
           {mobileNavItems.map((item) => {
             const isActive = pathname === item.url;
 
