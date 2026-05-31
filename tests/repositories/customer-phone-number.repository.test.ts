@@ -272,18 +272,10 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
 
       expect(result.total).toBe(2);
       expect(result.customerPhoneNumbers).toHaveLength(1);
-      expect([
-        {
-          customerPhone: sameWabaCustomerPhone,
-          customerName: 'Same WABA Customer',
-        },
-        {
-          customerPhone: primaryWabaCustomerPhone,
-          customerName: 'Primary WABA Customer',
-        },
-      ]).toContainEqual(
-        expect.objectContaining(result.customerPhoneNumbers[0]),
-      );
+      expect(result.customerPhoneNumbers[0]).toEqual({
+        customerPhone: primaryWabaCustomerPhone,
+        customerName: 'Primary WABA Customer',
+      });
     });
   });
 });
