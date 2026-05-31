@@ -1,5 +1,5 @@
 import { MessageStatus } from '@/components/chat/message-status';
-import { formatMessageTimestamp } from '@/lib/chat-format';
+import { formatMessageTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/chat';
 

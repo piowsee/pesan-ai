@@ -1,5 +1,5 @@
+import { ApiError } from '@/lib/api-helper/error';
 import { auth, createResetPasswordCallbackUrl } from '@/lib/auth/auth';
-import { ApiError } from '@/lib/error';
 import { CreateUserService } from '@/services/create-user.service';
 import { headers } from 'next/headers';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

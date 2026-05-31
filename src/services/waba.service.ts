@@ -1,5 +1,5 @@
-import { ApiError } from '@/lib/error';
-import { logger } from '@/lib/logger';
+import { ApiError } from '@/lib/api-helper/error';
+import { logger } from '@/lib/server/logger';
 import { WabaRepository } from '@/repositories/waba.repository';
 
 interface PhoneNumberWithWebhook {

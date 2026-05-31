@@ -1,6 +1,6 @@
-import { withApiAuth } from '@/lib/api-handler';
-import { jsend } from '@/lib/jsend';
-import { getPaginationParams } from '@/lib/pagination';
+import { withApiAuth } from '@/lib/api-helper/api-handler';
+import { jsend } from '@/lib/api-helper/jsend';
+import { getPaginationParams } from '@/lib/api-helper/pagination';
 import { WabaService } from '@/services/waba.service';
 
 /**

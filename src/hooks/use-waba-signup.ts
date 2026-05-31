@@ -1,7 +1,7 @@
 'use client';
 
-import { extractJSendErrorMessage } from '@/lib/error';
-import type { JSendResponse } from '@/lib/jsend';
+import { extractJSendErrorMessage } from '@/lib/api-helper/error';
+import type { JSendResponse } from '@/lib/api-helper/jsend';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { wabaKeys } from './use-wabas';

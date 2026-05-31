@@ -1,6 +1,6 @@
 import { GET } from '@/app/api/sse/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('SSE Route', () => {

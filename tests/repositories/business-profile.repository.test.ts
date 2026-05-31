@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/server/prisma';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import {
   afterAll,

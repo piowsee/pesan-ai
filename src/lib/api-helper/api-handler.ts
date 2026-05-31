@@ -1,9 +1,9 @@
 import { Prisma } from '@/generated/prisma/client';
-import { logError } from '@/lib/logger';
+import { logError } from '@/lib/server/logger';
 import { User } from '@/types/user';
 import { ZodError } from 'zod';
 
-import { AuthHelper } from './auth/auth-api-helper';
+import { AuthHelper } from '../auth/auth-api-helper';
 import { ApiError } from './error';
 import { jsend } from './jsend';
 

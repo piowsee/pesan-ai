@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/server/prisma';
 import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
 import { randomUUID } from 'node:crypto';
 import {

@@ -1,5 +1,5 @@
-import * as retryableFetch from '@/lib/fetch-with-retry';
-import { logger } from '@/lib/logger';
+import * as retryableFetch from '@/lib/server/fetch-with-retry';
+import { logger } from '@/lib/server/logger';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -1,5 +1,5 @@
-import { ApiError } from '@/lib/error';
-import * as retryableFetch from '@/lib/fetch-with-retry';
+import { ApiError } from '@/lib/api-helper/error';
+import * as retryableFetch from '@/lib/server/fetch-with-retry';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';

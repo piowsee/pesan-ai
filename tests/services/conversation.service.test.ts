@@ -1,4 +1,4 @@
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { ConversationService } from '@/services/conversation.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,7 +1,7 @@
-import { decrypt } from '@/lib/encryption';
-import { ApiError } from '@/lib/error';
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/event-bus';
-import { logError, logger } from '@/lib/logger';
+import { ApiError } from '@/lib/api-helper/error';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+import { decrypt } from '@/lib/server/encryption';
+import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 

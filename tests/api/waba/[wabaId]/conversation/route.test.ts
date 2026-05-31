@@ -1,6 +1,6 @@
 import { GET } from '@/app/api/waba/[wabaId]/conversation/route';
+import { ApiError } from '@/lib/api-helper/error';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
-import { ApiError } from '@/lib/error';
 import { ConversationService } from '@/services/conversation.service';
 import { describe, expect, it, vi } from 'vitest';
 

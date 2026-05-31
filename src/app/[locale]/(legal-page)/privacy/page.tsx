@@ -1,6 +1,6 @@
 import { PrivacyMain } from '@/components/legal/privacy/privacy-main';
 import { routing } from '@/i18n/routing';
-import { buildLocalizedMetadata } from '@/lib/seo';
+import { buildLocalizedMetadata } from '@/lib/i18n-helper/seo';
 import type { Metadata } from 'next';
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';

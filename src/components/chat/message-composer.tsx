@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { CHAT_MESSAGE_CHARACTER_LIMIT } from '@/lib/chat';
+import { CHAT_MESSAGE_CHARACTER_LIMIT } from '@/lib/chat/chat';
 import type { ChatConversation } from '@/types/chat';
 import { AlertTriangleIcon, SendHorizontalIcon } from 'lucide-react';
 import { useRef, useState } from 'react';

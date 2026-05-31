@@ -1,5 +1,5 @@
-import { ApiError } from '@/lib/error';
-import prisma from '@/lib/prisma';
+import { ApiError } from '@/lib/api-helper/error';
+import prisma from '@/lib/server/prisma';
 import { PhoneNumberMetaResponse } from '@/types/waba';
 
 type UpsertPhoneNumberInput = PhoneNumberMetaResponse & {
