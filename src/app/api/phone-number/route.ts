@@ -2,7 +2,7 @@ import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
 import { logger } from '@/lib/logger';
 import { CreatePhoneNumberSchema } from '@/schemas/phone-registration.schema';
-import { PhoneRegistrationService } from '@/services/phone-registration.service';
+import { PhoneNumberService } from '@/services/phone-number.service';
 
 /**
  * @route POST /api/phone-number
@@ -23,7 +23,7 @@ export const POST = withApiAuth(async ({ req, user }) => {
     countryCode,
   });
 
-  const data = await PhoneRegistrationService.createPhoneNumber({
+  const data = await PhoneNumberService.createPhoneNumber({
     wabaId,
     userId: user.id,
     countryCode,

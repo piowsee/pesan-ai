@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/error';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
-import { PhoneRegistrationService } from '@/services/phone-registration.service';
+import { PhoneNumberService } from '@/services/phone-number.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/meta-fetch.service');
@@ -11,7 +11,7 @@ vi.mock('@/lib/encryption', () => ({
   decrypt: vi.fn().mockImplementation((val) => val.replace('enc:', '')),
 }));
 
-describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
+describe('PhoneNumberService', { tags: ['backend'] }, () => {
   const WABA_ID = 'meta-waba-123';
   const USER_ID = 'user-123';
   const PHONE_NUMBER_ID = 'phone-123';
@@ -61,7 +61,7 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
 
   describe('requestVerificationCode', () => {
     it('requests the verification code via Meta API', async () => {
-      const result = await PhoneRegistrationService.requestVerificationCode({
+      const result = await PhoneNumberService.requestVerificationCode({
         phoneNumberId: PHONE_NUMBER_ID,
         wabaId: WABA_ID,
         userId: USER_ID,
@@ -82,7 +82,7 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
       vi.spyOn(WabaRepository, 'findByMetaWabaId').mockResolvedValue(null);
 
       await expect(
-        PhoneRegistrationService.requestVerificationCode({
+        PhoneNumberService.requestVerificationCode({
           phoneNumberId: PHONE_NUMBER_ID,
           wabaId: WABA_ID,
           userId: USER_ID,
@@ -99,7 +99,7 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        PhoneRegistrationService.requestVerificationCode({
+        PhoneNumberService.requestVerificationCode({
           phoneNumberId: PHONE_NUMBER_ID,
           wabaId: WABA_ID,
           userId: USER_ID,
@@ -110,12 +110,11 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
 
   describe('verifyAndRegister', () => {
     it('verifies the code, registers the number, and upserts to DB', async () => {
-      vi.spyOn(
-        PhoneRegistrationService,
-        '_generateRegistrationPin',
-      ).mockReturnValue('123456');
+      vi.spyOn(PhoneNumberService, '_generateRegistrationPin').mockReturnValue(
+        '123456',
+      );
 
-      const result = await PhoneRegistrationService.verifyAndRegister({
+      const result = await PhoneNumberService.verifyAndRegister({
         phoneNumberId: PHONE_NUMBER_ID,
         wabaId: WABA_ID,
         userId: USER_ID,
@@ -152,7 +151,7 @@ describe('PhoneRegistrationService', { tags: ['backend'] }, () => {
 
   describe('createPhoneNumber', () => {
     it('creates a new phone number via Meta API', async () => {
-      const result = await PhoneRegistrationService.createPhoneNumber({
+      const result = await PhoneNumberService.createPhoneNumber({
         wabaId: WABA_ID,
         userId: USER_ID,
         countryCode: '62',

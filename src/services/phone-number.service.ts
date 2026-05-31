@@ -15,7 +15,7 @@ import { randomInt } from 'node:crypto';
  *    for WhatsApp Cloud API usage (identical to the Embedded Signup
  *    register step).
  */
-export const PhoneRegistrationService = {
+export const PhoneNumberService = {
   /**
    * Step 1 – Request a verification code from Meta.
    *

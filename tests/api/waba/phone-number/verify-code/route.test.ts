@@ -1,10 +1,10 @@
 import { POST } from '@/app/api/phone-number/verify-code/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
-import { PhoneRegistrationService } from '@/services/phone-registration.service';
+import { PhoneNumberService } from '@/services/phone-number.service';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth/auth-api-helper');
-vi.mock('@/services/phone-registration.service');
+vi.mock('@/services/phone-number.service');
 
 describe('POST /api/phone-number/verify-code', { tags: ['backend'] }, () => {
   const url = 'http://localhost/api/phone-number/verify-code';
@@ -20,7 +20,7 @@ describe('POST /api/phone-number/verify-code', { tags: ['backend'] }, () => {
       id: 'user-1',
       role: 'user',
     } as never);
-    vi.mocked(PhoneRegistrationService.verifyAndRegister).mockResolvedValue({
+    vi.mocked(PhoneNumberService.verifyAndRegister).mockResolvedValue({
       success: true,
     });
 
@@ -37,7 +37,7 @@ describe('POST /api/phone-number/verify-code', { tags: ['backend'] }, () => {
     expect(response.status).toBe(200);
     expect(data.status).toBe('success');
     expect(data.data).toBeNull();
-    expect(PhoneRegistrationService.verifyAndRegister).toHaveBeenCalledWith({
+    expect(PhoneNumberService.verifyAndRegister).toHaveBeenCalledWith({
       phoneNumberId: 'phone-1',
       wabaId: 'waba-1',
       userId: 'user-1',
@@ -63,7 +63,7 @@ describe('POST /api/phone-number/verify-code', { tags: ['backend'] }, () => {
 
     expect(response.status).toBe(400);
     expect(data.status).toBe('fail');
-    expect(PhoneRegistrationService.verifyAndRegister).not.toHaveBeenCalled();
+    expect(PhoneNumberService.verifyAndRegister).not.toHaveBeenCalled();
   });
 
   it('returns 500 when unauthorized', async () => {
