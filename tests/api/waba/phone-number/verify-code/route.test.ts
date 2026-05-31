@@ -3,9 +3,6 @@ import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { PhoneNumberService } from '@/services/phone-number.service';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/auth/auth-api-helper');
-vi.mock('@/services/phone-number.service');
-
 describe('POST /api/phone-number/verify-code', { tags: ['backend'] }, () => {
   const url = 'http://localhost/api/phone-number/verify-code';
 

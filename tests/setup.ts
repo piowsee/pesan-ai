@@ -55,6 +55,12 @@ vi.mock('@/repositories/conversation.repository', () => ({
   },
 }));
 
+vi.mock('@/repositories/customer-phone-number.repository', () => ({
+  CustomerPhoneNumberRepository: {
+    findConversationContacts: vi.fn(),
+  },
+}));
+
 vi.mock('@/repositories/business-profile.repository', () => ({
   BusinessProfileRepository: {
     upsertBusinessProfiles: vi.fn(),
@@ -128,6 +134,16 @@ vi.mock('@/services/embedded-signup.service', () => ({
     _registerPhoneNumber: vi.fn(),
     _registerPhoneNumberWithRecovery: vi.fn(),
     _subscribeWabaApps: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/phone-number.service', () => ({
+  PhoneNumberService: {
+    getCustomerPhoneNumbers: vi.fn(),
+    requestVerificationCode: vi.fn(),
+    verifyAndRegister: vi.fn(),
+    createPhoneNumber: vi.fn(),
+    _generateRegistrationPin: vi.fn(),
   },
 }));
 
