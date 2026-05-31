@@ -8,6 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        unstyled: '',
         default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
         brand:
           'bg-brand text-brand-foreground shadow-sm hover:bg-brand/90 hover:shadow',
@@ -53,13 +54,21 @@ function Button({
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : 'button';
+  const isUnstyled = variant === 'unstyled';
 
   return (
     <Comp
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={
+        isUnstyled
+          ? cn(
+              'cursor-pointer disabled:pointer-events-none disabled:opacity-50',
+              className,
+            )
+          : cn(buttonVariants({ variant, size, className }))
+      }
       {...props}
     />
   );

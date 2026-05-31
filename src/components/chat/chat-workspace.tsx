@@ -114,7 +114,11 @@ export function ChatWorkspace() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data } = useWabas(1, 100);
+  const {
+    data,
+    isLoading: isWabasLoading,
+    isError: isWabasError,
+  } = useWabas(1, 100);
   const wabas = useMemo(() => data?.wabas ?? [], [data?.wabas]);
   const searchParamsString = searchParams.toString();
   const hasPersistedStateInUrl = CHAT_STATE_PARAM_KEYS.some((key) =>
@@ -144,9 +148,13 @@ export function ChatWorkspace() {
   const isContactInfoOpen = searchParams.get('panel') === 'contact';
   const shouldRestoreFromStorage =
     !hasPersistedStateInUrl && Boolean(initialStoredChatState);
+  const hasNoWabas =
+    !isWabasLoading && !isWabasError && (data?.total ?? 0) === 0;
   const activeWabaId = shouldRestoreFromStorage
     ? undefined
-    : (requestedWabaId ?? wabas[0]?.id);
+    : hasNoWabas
+      ? undefined
+      : (requestedWabaId ?? wabas[0]?.id);
 
   const replaceChatState = useCallback(
     (updates: Partial<Record<ChatStateParamKey, string | undefined>>) => {
@@ -171,6 +179,10 @@ export function ChatWorkspace() {
   );
 
   useEffect(() => {
+    if (hasNoWabas) {
+      return;
+    }
+
     if (hasPersistedStateInUrl) {
       return;
     }
@@ -184,7 +196,27 @@ export function ChatWorkspace() {
         scroll: false,
       });
     });
-  }, [hasPersistedStateInUrl, initialStoredChatState, pathname, router]);
+  }, [
+    hasNoWabas,
+    hasPersistedStateInUrl,
+    initialStoredChatState,
+    pathname,
+    router,
+  ]);
+
+  useEffect(() => {
+    if (!hasNoWabas) {
+      return;
+    }
+
+    window.localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
+
+    if (hasPersistedStateInUrl) {
+      startTransition(() => {
+        router.replace(pathname, { scroll: false });
+      });
+    }
+  }, [hasNoWabas, hasPersistedStateInUrl, pathname, router]);
 
   useEffect(() => {
     if (!hasPersistedStateInUrl) {
@@ -272,7 +304,10 @@ export function ChatWorkspace() {
   }, [allConversations, selectedConversationId]);
 
   useEffect(() => {
-    if (shouldRestoreFromStorage || !activeWabaId) {
+    // Don't normalize while WABAs are still loading — wabas[] is empty during
+    // the fetch, which causes the requestedWabaId validity check to wrongly
+    // fail and set nextState.wabaId to a value already present in the URL.
+    if (shouldRestoreFromStorage || !activeWabaId || isWabasLoading) {
       return;
     }
 
@@ -311,17 +346,34 @@ export function ChatWorkspace() {
       nextState.filter = undefined;
     }
 
-    if (Object.keys(nextState).length > 0) {
+    if (Object.keys(nextState).length === 0) {
+      return;
+    }
+
+    // Only call router.replace when the resulting URL actually differs from
+    // the current one — router.replace() with an identical href still triggers
+    // a fresh route request in the Next.js App Router.
+    const nextParams = new URLSearchParams(searchParamsString);
+    Object.entries(nextState).forEach(([key, value]) => {
+      if (value) {
+        nextParams.set(key, value);
+      } else {
+        nextParams.delete(key);
+      }
+    });
+    if (nextParams.toString() !== searchParamsString) {
       replaceChatState(nextState);
     }
   }, [
     activeWabaId,
     convData,
     isContactInfoOpen,
+    isWabasLoading,
     phoneNumbers,
     replaceChatState,
     requestedWabaId,
     searchParams,
+    searchParamsString,
     selectedConversation,
     selectedConversationId,
     selectedPhoneNumberId,
@@ -377,8 +429,8 @@ export function ChatWorkspace() {
     [activeWabaId, selectedConversationId, sendMessage],
   );
 
-  const isRestoringPersistedState = shouldRestoreFromStorage;
-  const isWaitingForInitialWaba = wabas.length === 0;
+  const isRestoringPersistedState = shouldRestoreFromStorage && !hasNoWabas;
+  const isWaitingForInitialWaba = isWabasLoading && !data;
   const isWaitingForSelectedConversation =
     Boolean(selectedConversationId) && isConversationsLoading && !convData;
   const shouldShowWorkspaceSkeleton =
@@ -472,8 +524,8 @@ export function ChatWorkspace() {
           ) : (
             <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
               <ChatEmptyState
-                title="Belum ada chat dipilih"
-                description="Pilih percakapan dari sidebar untuk melihat riwayat pesan."
+                title="No chat selected"
+                description="Select a conversation from the sidebar to view message history."
                 icon={InboxIcon}
                 className="w-full"
               />

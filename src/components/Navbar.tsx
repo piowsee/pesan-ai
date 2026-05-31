@@ -66,7 +66,8 @@ function LanguageDropdown({
 
   return (
     <div className="relative" onMouseEnter={openMenu} onMouseLeave={closeMenu}>
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         aria-haspopup="menu"
         aria-expanded={isOpen}
@@ -86,7 +87,7 @@ function LanguageDropdown({
             isOpen && 'rotate-180',
           )}
         />
-      </button>
+      </Button>
 
       <div
         role="menu"
@@ -98,7 +99,8 @@ function LanguageDropdown({
         )}
       >
         {options.map((option) => (
-          <button
+          <Button
+            variant="unstyled"
             key={option.value}
             type="button"
             role="menuitem"
@@ -114,7 +116,7 @@ function LanguageDropdown({
             }}
           >
             {option.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -286,7 +288,8 @@ function MobileLanguageSelect({
 
   return (
     <div className="w-full rounded-sm border border-brand/20 bg-brand-foreground">
-      <button
+      <Button
+        variant="unstyled"
         type="button"
         className="inline-flex w-full items-center justify-between px-4 py-3 text-left text-base font-semibold text-brand"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -302,7 +305,7 @@ function MobileLanguageSelect({
             isOpen && 'rotate-180',
           )}
         />
-      </button>
+      </Button>
 
       <div
         className={cn(
@@ -312,7 +315,8 @@ function MobileLanguageSelect({
       >
         <div className="overflow-hidden border-t border-brand/15">
           {options.map((option) => (
-            <button
+            <Button
+              variant="unstyled"
               key={option.value}
               type="button"
               className={cn(
@@ -327,7 +331,7 @@ function MobileLanguageSelect({
               }}
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -428,7 +432,8 @@ export function Navbar() {
             />
           )}
 
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             aria-label={mobileMenuOpen ? t('closeMenu') : t('openMenu')}
             className={cn(
@@ -444,7 +449,7 @@ export function Navbar() {
             ) : (
               <Menu className="size-6" />
             )}
-          </button>
+          </Button>
         </Container>
       </header>
 

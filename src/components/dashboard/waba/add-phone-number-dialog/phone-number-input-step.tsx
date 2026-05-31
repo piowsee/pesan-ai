@@ -17,6 +17,7 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
+import { FaWhatsapp } from 'react-icons/fa6';
 import { isValidPhoneNumber, parsePhoneNumber } from 'react-phone-number-input';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -24,8 +25,8 @@ import { z } from 'zod';
 const addPhoneNumberSchema = z.object({
   fullPhoneNumber: z
     .string()
-    .min(1, 'Phone number is required')
-    .refine(isValidPhoneNumber, { message: 'Invalid phone number format' }),
+    .min(1, 'WhatsApp number is required')
+    .refine(isValidPhoneNumber, { message: 'Invalid number format' }),
   name: z.string().min(1, 'Display name is required'),
 });
 
@@ -79,10 +80,10 @@ export function PhoneNumberInputStep({
 
       // Notify parent of success
       onSuccess(newPhoneNumberId);
-      toast.success('Verification code sent via SMS');
+      toast.success('Verification code sent via SMS.');
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Something went wrong';
+        error instanceof Error ? error.message : 'Failed to add number';
       toast.error(message);
     }
   }
@@ -91,30 +92,43 @@ export function PhoneNumberInputStep({
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>Add Phone Number</DialogTitle>
-        <DialogDescription>
-          Enter a new phone number for{' '}
-          <span className="font-medium text-foreground">
-            {businessName || 'this WhatsApp Business Account'}
-          </span>
-          .
-        </DialogDescription>
+      <DialogHeader className="px-5 pt-5 pb-4 pr-12">
+        <div className="mb-3 flex items-center gap-3">
+          <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
+          <div className="min-w-0">
+            <DialogTitle className="text-base font-semibold text-brand">
+              Add WhatsApp Number
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+              Connect a new number for{' '}
+              <span className="font-semibold">
+                {businessName || 'this WhatsApp Business account'}
+              </span>
+              .
+            </DialogDescription>
+          </div>
+        </div>
       </DialogHeader>
+
+      <div className="px-5">
+        <div className="h-px bg-brand/20" />
+      </div>
 
       <form
         onSubmit={form.handleSubmit(onPhoneSubmit)}
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-4 px-5 py-5"
       >
         <div className="flex flex-col gap-2">
-          <Label htmlFor={`phone-input-${wabaId}`}>Phone Number</Label>
+          <Label htmlFor={`phone-input-${wabaId}`} className="text-brand">
+            WhatsApp Number
+          </Label>
           <Controller
             name="fullPhoneNumber"
             control={form.control}
             render={({ field }) => (
               <PhoneInput
                 id={`phone-input-${wabaId}`}
-                placeholder="Enter phone number"
+                placeholder="Enter WhatsApp number"
                 defaultCountry="ID"
                 value={field.value}
                 onChange={field.onChange}
@@ -130,16 +144,18 @@ export function PhoneNumberInputStep({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor={`display-name-${wabaId}`}>Display Name</Label>
+          <Label htmlFor={`display-name-${wabaId}`} className="text-brand">
+            Display name
+          </Label>
           <Input
             id={`display-name-${wabaId}`}
-            placeholder="Marketing Department"
+            placeholder="Example: Customer Support"
             {...form.register('name')}
             disabled={isSubmitting}
           />
-          <p className="text-[10px] text-muted-foreground">
-            The name that users will see on WhatsApp until they add you to their
-            contacts.
+          <p className="text-xs leading-relaxed text-brand">
+            This name will be visible to customers on WhatsApp until they save
+            your contact.
           </p>
           {form.formState.errors.name ? (
             <p className="text-xs font-medium text-destructive">
@@ -148,23 +164,24 @@ export function PhoneNumberInputStep({
           ) : null}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="mx-0 mb-0 mt-2 gap-2 border-t border-brand/20 bg-transparent p-0 pt-4">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
+            className="text-brand hover:bg-primary/5 hover:text-brand"
             onClick={onCancel}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" variant="brand" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Requesting...
+                <Loader2 className="animate-spin" data-icon="inline-start" />
+                Sending code...
               </>
             ) : (
-              'Submit'
+              'Send code'
             )}
           </Button>
         </DialogFooter>

@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { PhoneNumberInputStep } from './phone-number-input-step';
 import { PhoneNumberOtpStep } from './phone-number-otp-step';
@@ -13,18 +13,31 @@ type Step = 'input' | 'otp';
 type AddPhoneNumberDialogProps = {
   businessName: string | null;
   wabaId: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: ReactNode;
 };
 
 export function AddPhoneNumberDialog({
   businessName,
   wabaId,
+  open,
+  onOpenChange,
+  trigger,
 }: AddPhoneNumberDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [step, setStep] = useState<Step>('input');
   const [phoneNumberId, setPhoneNumberId] = useState<string | null>(null);
 
+  const isOpen = open ?? internalOpen;
+  const isControlled = open !== undefined;
+
   function handleOpenChange(open: boolean) {
-    setIsOpen(open);
+    if (!isControlled) {
+      setInternalOpen(open);
+    }
+    onOpenChange?.(open);
+
     if (!open) {
       // Reset state when closing
       setTimeout(() => {
@@ -45,14 +58,22 @@ export function AddPhoneNumberDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus data-icon="inline-start" />
-          Add Phone Number
-        </Button>
-      </DialogTrigger>
+      {trigger !== null ? (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full border-brand text-brand hover:bg-brand/90 hover:text-brand-foreground sm:w-auto"
+            >
+              <Plus data-icon="inline-start" />
+              Add number
+            </Button>
+          )}
+        </DialogTrigger>
+      ) : null}
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
         {step === 'input' ? (
           <PhoneNumberInputStep
             wabaId={wabaId}

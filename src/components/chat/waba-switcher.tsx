@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import {
   Command,
   CommandEmpty,
@@ -52,7 +53,8 @@ export function WabaSwitcher({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           className="ml-4 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-left shadow-sm transition-colors hover:bg-muted/50"
         >
@@ -64,7 +66,7 @@ export function WabaSwitcher({
             </div>
           </div>
           <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-50" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"

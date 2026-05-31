@@ -1,36 +1,43 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useWabas } from '@/hooks/use-wabas';
-import { AlertTriangle, CheckCircle2, Layers } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { AlertTriangle, CheckCircle2, CircleAlert } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa6';
 
 export function WabaStatusCards() {
   const { data, isLoading, isError } = useWabas(1, 100);
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-3 mb-8">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <section className="mb-8">
+        <Skeleton className="mb-3 h-5 w-32" />
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-lg border border-border p-5">
+              <Skeleton className="mb-5 h-4 w-20" />
+              <Skeleton className="h-9 w-14" />
+            </div>
+          ))}
+        </div>
+      </section>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="mb-8 p-4 text-sm text-destructive bg-destructive/10 rounded-md">
-        Failed to load WABA overview statistics.
-      </div>
+      <section className="mb-8">
+        <div className="rounded-lg border border-destructive/20 px-5 py-4 text-sm text-destructive">
+          WhatsApp account summary could not be loaded.
+        </div>
+      </section>
     );
   }
 
@@ -39,48 +46,81 @@ export function WabaStatusCards() {
   const activeWabas = wabas.filter(
     (w) => w.status.toLowerCase() === 'active',
   ).length;
-  // Fallback to Suspended calculation if applicable. The status might be title case.
   const suspendedWabas = wabas.filter(
     (w) => w.status.toLowerCase() === 'suspended',
   ).length;
 
-  const cards = [
+  const stats = [
     {
-      title: 'Total WABAs',
+      label: 'WhatsApp Accounts',
       value: totalWabas,
-      icon: Layers,
-      description: 'Connected accounts',
+      icon: FaWhatsapp,
+      helper:
+        'Total WhatsApp Business accounts (WABA) integrated in this workspace.',
+      iconColor: 'text-[#25D366]',
     },
     {
-      title: 'Active WABAs',
+      label: 'Active',
       value: activeWabas,
       icon: CheckCircle2,
-      description: 'Healthy and running',
+      helper:
+        'Number of active accounts that can be used to process incoming and outgoing messages normally.',
+      iconColor: 'text-[oklch(0.52_0.12_190)]',
     },
     {
-      title: 'Suspended WABAs',
+      label: 'Needs attention',
       value: suspendedWabas,
       icon: AlertTriangle,
-      description: 'Require attention',
+      helper:
+        'Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption.',
+      iconColor: 'text-[oklch(0.55_0.12_30)]',
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 mb-8">
-      {cards.map((card) => (
-        <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            <card.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{card.value}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {card.description}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <section className="mb-10">
+      {/* Section label */}
+      <div className="mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-brand/80">Account Status</h2>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="grid gap-5 sm:grid-cols-3">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-sm border border-brand/5 bg-brand/5 p-5 shadow-sm"
+          >
+            <div className="mb-4 flex items-start justify-between">
+              <stat.icon className={cn('size-6', stat.iconColor)} />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="unstyled"
+                    type="button"
+                    className="text-brand transition hover:text-brand/80"
+                    aria-label={`Info ${stat.label}`}
+                  >
+                    <CircleAlert className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-white text-brand border border-border shadow-md [&_svg]:fill-white [&_svg]:!bg-white">
+                  {stat.helper}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
+            <div>
+              <p className="text-3xl font-semibold tracking-tight text-brand">
+                {stat.value}
+              </p>
+              <p className="mt-1 text-sm font-medium text-brand/60">
+                {stat.label}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

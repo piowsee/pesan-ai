@@ -24,9 +24,7 @@ export function ChatEmptyState({
         className,
       )}
     >
-      <div className="flex size-14 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
-        <Icon />
-      </div>
+      <Icon className="size-8 text-brand" />
       <div className="flex max-w-sm flex-col gap-1">
         <h3 className="text-base font-semibold tracking-tight">{title}</h3>
         <p className="text-sm text-muted-foreground">{description}</p>
