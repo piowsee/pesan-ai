@@ -13,7 +13,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import {
   useCreatePhoneNumber,
   useRequestVerificationCode,
-} from '@/hooks/use-waba-phone-number';
+} from '@/hooks/use-phone-number';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';

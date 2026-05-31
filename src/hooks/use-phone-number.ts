@@ -31,7 +31,7 @@ export interface VerifyCodeParams {
 async function createPhoneNumber(
   params: CreatePhoneNumberParams,
 ): Promise<{ phoneNumberId: string }> {
-  const response = await fetch('/api/waba/phone-number/create', {
+  const response = await fetch('/api/phone-number/create', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
@@ -51,7 +51,7 @@ async function createPhoneNumber(
 }
 
 async function requestCode(params: RequestCodeParams): Promise<void> {
-  const response = await fetch('/api/waba/phone-number/request-code', {
+  const response = await fetch('/api/phone-number/request-code', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
@@ -68,7 +68,7 @@ async function requestCode(params: RequestCodeParams): Promise<void> {
 }
 
 async function verifyCode(params: VerifyCodeParams): Promise<void> {
-  const response = await fetch('/api/waba/phone-number/verify-code', {
+  const response = await fetch('/api/phone-number/verify-code', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),

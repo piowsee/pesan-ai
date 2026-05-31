@@ -5,7 +5,7 @@ import { CreatePhoneNumberSchema } from '@/schemas/phone-registration.schema';
 import { PhoneRegistrationService } from '@/services/phone-registration.service';
 
 /**
- * @route POST /api/waba/phone-number/create
+ * @route POST /api/phone-number/create
  * @body { wabaId: string, countryCode?: string, phoneNumber: string, name: string }
  * @response { status: 'success', data: { phoneNumberId: string } }
  * @access Authenticated users (must own the WABA)

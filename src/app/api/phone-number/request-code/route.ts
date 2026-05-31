@@ -1,36 +1,35 @@
 import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
 import { logger } from '@/lib/logger';
-import { VerifyAndRegisterSchema } from '@/schemas/phone-registration.schema';
+import { RequestVerificationCodeSchema } from '@/schemas/phone-registration.schema';
 import { PhoneRegistrationService } from '@/services/phone-registration.service';
 
 /**
- * @route POST /api/waba/phone-number/verify-code
- * @body { phoneNumberId: string, wabaId: string, code: string (otp_code) }
+ * @route POST /api/phone-number/request-code
+ * @body { phoneNumberId: string, wabaId: string, codeMethod?: 'SMS' | 'VOICE', language?: string }
  * @response { status: 'success', data: null }
  * @access Authenticated users (must own the WABA)
- * @description Verify Phone Number via OTP (called after /request-code)
+ * @description Requests a verification code from Meta for a phone number.
+ *              The code will be sent via SMS or voice call to the phone number.
  */
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
-  const {
-    phoneNumberId,
-    wabaId,
-    code: otp_code,
-  } = VerifyAndRegisterSchema.parse(rawBody);
+  const { phoneNumberId, wabaId, codeMethod, language } =
+    RequestVerificationCodeSchema.parse(rawBody);
 
   logger.info('Phone verification code requested', {
     userId: user.id,
     phoneNumberId,
     wabaId,
-    otp_code,
+    codeMethod,
   });
 
-  await PhoneRegistrationService.verifyAndRegister({
+  await PhoneRegistrationService.requestVerificationCode({
     phoneNumberId,
     wabaId,
     userId: user.id,
-    code: otp_code,
+    codeMethod,
+    language,
   });
 
   return jsend.success(null);

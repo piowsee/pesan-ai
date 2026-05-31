@@ -1,4 +1,4 @@
-import { POST } from '@/app/api/waba/phone-number/create/route';
+import { POST } from '@/app/api/phone-number/create/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { PhoneRegistrationService } from '@/services/phone-registration.service';
 import { describe, expect, it, vi } from 'vitest';
@@ -6,8 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/auth/auth-api-helper');
 vi.mock('@/services/phone-registration.service');
 
-describe('POST /api/waba/phone-number/create', { tags: ['backend'] }, () => {
-  const url = 'http://localhost/api/waba/phone-number/create';
+describe('POST /api/phone-number/create', { tags: ['backend'] }, () => {
+  const url = 'http://localhost/api/phone-number/create';
 
   const createRequest = (body: unknown) =>
     new Request(url, {
