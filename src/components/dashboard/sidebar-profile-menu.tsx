@@ -30,7 +30,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
 
   const handleSignOut = async () => {
     await authClient.signOut();
-    router.push('/id/login');
+    router.push('/login');
   };
 
   const triggerButton = (
