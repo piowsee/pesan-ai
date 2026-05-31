@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ArrowUpRight, MessageSquare } from 'lucide-react';
+import { ArrowUpRight, MessageSquare, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa6';
 
@@ -24,6 +24,15 @@ const actions = [
       'Go to WABA settings to manage number status, Meta verification, and messaging tier limits.',
     iconColor: 'text-[#25D366]',
   },
+  {
+    eyebrow: 'Customers',
+    title: 'Review saved customer contacts',
+    href: '/dashboard/customers',
+    icon: UsersRound,
+    helper:
+      'Open the customer list to filter contacts by WABA or WhatsApp number and export them when needed.',
+    iconColor: 'text-brand/50',
+  },
 ];
 
 export function QuickActions() {
@@ -35,7 +44,7 @@ export function QuickActions() {
       </div>
 
       {/* Action tiles */}
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {actions.map((action) => (
           <Link
             key={action.title}
