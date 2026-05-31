@@ -4,7 +4,7 @@ Pesan AI is a simple CRM built for the WhatsApp Cloud API.
 
 ## Tech Stack
 
-- **Framework:** [Next.js 16.1](https://nextjs.org/) (App Router)
+- **Framework:** [Next.js 16.2](https://nextjs.org/) (App Router)
 - **UI Library:** [React 19](https://react.dev/)
 - **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
 - **Database & ORM:** PostgreSQL & [Prisma v7](https://www.prisma.io/) (@prisma/adapter-pg)
