@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/admin/header';
-import { requireAdmin } from '@/lib/auth/auth-page-helper';
+import { AuthPageHelper } from '@/lib/auth/auth-page-helper';
 import { ReactNode } from 'react';
 
 export default async function AdminLayout({
@@ -7,7 +7,7 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  await requireAdmin();
+  await AuthPageHelper.requireAdmin();
 
   return (
     <main className="relative min-h-svh overflow-hidden bg-muted/25 px-6 pt-20 font-sans">

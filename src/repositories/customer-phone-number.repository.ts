@@ -81,6 +81,7 @@ export const CustomerPhoneNumberRepository = {
         customerName: true,
       },
       distinct: ['customerPhone'],
+      orderBy: [{ lastMessageAt: 'desc' }, { customerPhone: 'asc' }],
       ...pagination,
     });
 
