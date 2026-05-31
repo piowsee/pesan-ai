@@ -31,7 +31,8 @@ export function ChatHeader({
           </Button>
         ) : null}
 
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           onClick={onContactAreaClick}
           className={cn(
@@ -68,7 +69,7 @@ export function ChatHeader({
               </span>
             </div>
           </div>
-        </button>
+        </Button>
       </div>
     </div>
   );

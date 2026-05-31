@@ -1,6 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -9,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { formatLastSeen } from '@/lib/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
@@ -184,10 +187,10 @@ export function ContactInfoPanel({
           <div className="mx-6 h-px bg-brand/15 sm:mx-7" />
 
           <section className="px-6 py-6 sm:px-7">
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Label className="flex items-center gap-2 text-sm font-medium leading-normal text-foreground">
               <TagIcon className="size-4 text-brand/75" />
               Customer label
-            </label>
+            </Label>
 
             <div className="mt-3 space-y-2">
               <Select
@@ -206,11 +209,16 @@ export function ContactInfoPanel({
                   <SelectValue placeholder="Select customer label..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {PREDEFINED_LABELS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                  {PREDEFINED_LABELS.map((labelOption) => (
+                    <SelectItem
+                      key={labelOption.value}
+                      value={labelOption.value}
+                    >
                       <div className="flex items-center gap-2">
-                        <option.Icon className={cn('size-4', option.color)} />
-                        <span>{option.label}</span>
+                        <labelOption.Icon
+                          className={cn('size-4', labelOption.color)}
+                        />
+                        <span>{labelOption.label}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -224,7 +232,7 @@ export function ContactInfoPanel({
               </Select>
 
               {mode === 'custom' && (
-                <input
+                <Input
                   type="text"
                   value={label}
                   onChange={(event) => {
@@ -232,19 +240,19 @@ export function ContactInfoPanel({
                   }}
                   autoFocus
                   placeholder="Type label name..."
-                  className="h-10 w-full rounded-lg border border-brand/15 bg-brand/5 px-3 text-sm text-foreground outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35"
+                  className="block h-10 w-full rounded-lg border border-brand/15 bg-brand/5 px-3 py-0 text-sm text-foreground shadow-none outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35"
                 />
               )}
             </div>
 
-            <label
+            <Label
               htmlFor={'contact-notes-' + conversation.id}
-              className="mt-6 flex items-center gap-2 text-sm font-medium text-foreground"
+              className="mt-6 flex items-center gap-2 text-sm font-medium leading-normal text-foreground"
             >
               <StickyNoteIcon className="size-4 text-brand/75" />
               Internal notes
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id={'contact-notes-' + conversation.id}
               value={notes}
               onChange={(event) => {
@@ -252,7 +260,7 @@ export function ContactInfoPanel({
               }}
               placeholder="Add a brief note for the admin team"
               rows={2}
-              className="mt-3 w-full resize-none rounded-lg border border-brand/15 bg-brand/5 px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
+              className="mt-3 block min-h-0 w-full resize-none rounded-lg border border-brand/15 bg-brand/5 px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
             />
 
             <p className="mt-3 text-xs text-brand/70 leading-relaxed">

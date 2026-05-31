@@ -2,6 +2,7 @@
 
 import { Container } from '@/components/Container';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -45,7 +46,8 @@ export function FAQSection() {
                   key={item.question}
                   className="border-b border-brand/20 last:border-b-0"
                 >
-                  <button
+                  <Button
+                    variant="unstyled"
                     type="button"
                     className="flex w-full cursor-pointer items-center justify-between gap-3 py-5 text-left sm:py-6"
                     onClick={() => {
@@ -68,7 +70,7 @@ export function FAQSection() {
                       )}
                       aria-hidden="true"
                     />
-                  </button>
+                  </Button>
 
                   <div
                     className={cn(

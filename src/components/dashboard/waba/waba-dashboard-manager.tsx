@@ -66,7 +66,8 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
+            variant="unstyled"
             type="button"
             aria-label="Manage WhatsApp numbers"
             className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-left text-sm font-medium text-brand transition hover:border-brand/30 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
@@ -74,7 +75,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
             <FaWhatsapp className="size-3.5 shrink-0 text-[#25D366]" />
             <span className="truncate">{triggerLabel}</span>
             <ChevronDown className="size-3.5 shrink-0 text-brand/50" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
@@ -162,14 +163,15 @@ function WabaAccountRow({ waba }: { waba: Waba }) {
         <p className="truncate font-semibold text-brand">
           {waba.businessName || 'Unnamed business'}
         </p>
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           className="mt-1 flex max-w-full cursor-pointer items-center gap-1.5 text-xs font-medium text-brand transition hover:text-brand/80"
           onClick={() => copyWabaId(waba.wabaId)}
         >
           <span className="truncate">WABA ID: {waba.wabaId}</span>
           <Copy className="size-3.5 shrink-0" />
-        </button>
+        </Button>
       </div>
 
       <div className="min-w-0">

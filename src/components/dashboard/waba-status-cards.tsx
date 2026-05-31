@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -94,13 +95,14 @@ export function WabaStatusCards() {
               <stat.icon className={cn('size-6', stat.iconColor)} />
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant="unstyled"
                     type="button"
                     className="text-brand transition hover:text-brand/80"
                     aria-label={`Info ${stat.label}`}
                   >
                     <CircleAlert className="size-4" />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-white text-brand border border-border shadow-md [&_svg]:fill-white [&_svg]:!bg-white">
                   {stat.helper}
