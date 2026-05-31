@@ -31,7 +31,7 @@ export interface VerifyCodeParams {
 async function createPhoneNumber(
   params: CreatePhoneNumberParams,
 ): Promise<{ phoneNumberId: string }> {
-  const response = await fetch('/api/phone-number/create', {
+  const response = await fetch('/api/phone-number', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
