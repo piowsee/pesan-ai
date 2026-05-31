@@ -1,7 +1,7 @@
 import { AppSidebar } from '@/components/dashboard/app-sidebar';
 import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { requireUser } from '@/lib/auth/auth-page-helper';
+import { AuthPageHelper } from '@/lib/auth/auth-page-helper';
 import { type CSSProperties, ReactNode } from 'react';
 
 // NOTE: Layout server data won't auto-update on client navigation.
@@ -12,7 +12,7 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  const user = await requireUser();
+  const user = await AuthPageHelper.requireUser();
 
   return (
     <SidebarProvider

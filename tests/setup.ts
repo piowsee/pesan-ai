@@ -187,6 +187,7 @@ vi.mock('@/lib/auth/auth', () => ({
   auth: {
     api: {
       createUser: vi.fn(),
+      getSession: vi.fn(),
       getUser: vi.fn(),
       listUsers: vi.fn(),
       sendVerificationEmail: vi.fn(),
