@@ -5,7 +5,7 @@ import { EmbeddedSignupSchema } from '@/schemas/embedded-signup.schema';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 
 /**
- * @route POST /api/waba/embedded-signup
+ * @route POST /api/embedded-signup
  * @body { code: string, wabaId: string, sessionPayload?: unknown }
  * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers, message, failedPhoneNumberIds } }
  * @access Authenticated users

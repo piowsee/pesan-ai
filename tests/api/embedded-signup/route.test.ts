@@ -1,11 +1,11 @@
-import { POST } from '@/app/api/waba/embedded-signup/route';
+import { POST } from '@/app/api/embedded-signup/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
 import { ApiError } from '@/lib/error';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 import { describe, expect, it, vi } from 'vitest';
 
-describe('POST /api/waba/embedded-signup', { tags: ['backend'] }, () => {
-  const url = 'http://localhost/api/waba/embedded-signup';
+describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
+  const url = 'http://localhost/api/embedded-signup';
 
   const createRequest = (body: unknown) =>
     new Request(url, {
