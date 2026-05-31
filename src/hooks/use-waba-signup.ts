@@ -43,7 +43,7 @@ export function useWabaSignup() {
 
   return useMutation({
     mutationFn: async (payload: WabaSignupPayload) => {
-      const response = await fetch('/api/waba/embedded-signup', {
+      const response = await fetch('/api/embedded-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

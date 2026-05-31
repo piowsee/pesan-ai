@@ -1,0 +1,76 @@
+import { withApiAuth } from '@/lib/api-handler';
+import { jsend } from '@/lib/jsend';
+import { logger } from '@/lib/logger';
+import { getPaginationParams } from '@/lib/pagination';
+import { CreatePhoneNumberSchema } from '@/schemas/phone-registration.schema';
+import { PhoneNumberService } from '@/services/phone-number.service';
+
+/**
+ * @route GET /api/phone-number
+ * @query wabaId {string} - Optional internal WABA id filter
+ * @query phoneNumber {string} - Optional business/admin phone number filter from the PhoneNumber table
+ * @query page {number} - Optional page number; enables pagination when present
+ * @query limit {number} - Optional items per page; enables pagination when present
+ * @response { status: 'success', data: { customerPhoneNumbers, total, page?, limit? } }
+ * @access Authenticated users
+ * @description Returns unique customer phone numbers that have ever chatted with the user's owned WhatsApp numbers.
+ */
+export const GET = withApiAuth(async ({ req, user }) => {
+  const { searchParams } = new URL(req.url);
+  const wabaId = searchParams.get('wabaId')?.trim() || undefined;
+  const phoneNumber = searchParams.get('phoneNumber')?.trim() || undefined;
+  const usePagination = searchParams.has('page') || searchParams.has('limit');
+  const pagination = usePagination
+    ? getPaginationParams(searchParams)
+    : undefined;
+
+  const { customerPhoneNumbers, total } =
+    await PhoneNumberService.getCustomerPhoneNumbers({
+      userId: user.id,
+      wabaId,
+      phoneNumber,
+      page: pagination?.page,
+      limit: pagination?.limit,
+    });
+
+  return jsend.success({
+    customerPhoneNumbers,
+    total,
+    ...(pagination
+      ? {
+          page: pagination.page,
+          limit: pagination.limit,
+        }
+      : {}),
+  });
+});
+
+/**
+ * @route POST /api/phone-number
+ * @body { wabaId: string, countryCode?: string, phoneNumber: string, name: string }
+ * @response { status: 'success', data: { phoneNumberId: string } }
+ * @access Authenticated users (must own the WABA)
+ * @description Creates a new phone number in Meta for the given WABA.
+ */
+export const POST = withApiAuth(async ({ req, user }) => {
+  const rawBody = await req.json();
+  const { wabaId, countryCode, phoneNumber, name } =
+    CreatePhoneNumberSchema.parse(rawBody);
+
+  logger.info('Creating new phone number for WABA', {
+    userId: user.id,
+    wabaId,
+    phoneNumber,
+    countryCode,
+  });
+
+  const data = await PhoneNumberService.createPhoneNumber({
+    wabaId,
+    userId: user.id,
+    countryCode,
+    phoneNumber,
+    name,
+  });
+
+  return jsend.success(data);
+});

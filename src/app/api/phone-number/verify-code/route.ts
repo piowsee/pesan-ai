@@ -2,10 +2,10 @@ import { withApiAuth } from '@/lib/api-handler';
 import { jsend } from '@/lib/jsend';
 import { logger } from '@/lib/logger';
 import { VerifyAndRegisterSchema } from '@/schemas/phone-registration.schema';
-import { PhoneRegistrationService } from '@/services/phone-registration.service';
+import { PhoneNumberService } from '@/services/phone-number.service';
 
 /**
- * @route POST /api/waba/phone-number/verify-code
+ * @route POST /api/phone-number/verify-code
  * @body { phoneNumberId: string, wabaId: string, code: string (otp_code) }
  * @response { status: 'success', data: null }
  * @access Authenticated users (must own the WABA)
@@ -26,7 +26,7 @@ export const POST = withApiAuth(async ({ req, user }) => {
     otp_code,
   });
 
-  await PhoneRegistrationService.verifyAndRegister({
+  await PhoneNumberService.verifyAndRegister({
     phoneNumberId,
     wabaId,
     userId: user.id,

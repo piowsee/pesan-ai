@@ -12,7 +12,7 @@ import { useCountdown } from '@/hooks/use-countdown';
 import {
   useRequestVerificationCode,
   useVerifyAndRegisterPhoneNumber,
-} from '@/hooks/use-waba-phone-number';
+} from '@/hooks/use-phone-number';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa6';
