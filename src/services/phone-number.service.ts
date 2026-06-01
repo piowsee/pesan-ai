@@ -1,60 +1,11 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logger } from '@/lib/server/logger';
-import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { randomInt } from 'node:crypto';
 
-export interface CustomerPhoneNumberContact {
-  customerPhone: string;
-  customerName: string | null;
-}
-
 export const PhoneNumberService = {
-  async getCustomerPhoneNumbers(params: {
-    userId: string;
-    wabaId?: string;
-    phoneNumber?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<{
-    customerPhoneNumbers: CustomerPhoneNumberContact[];
-    total: number;
-  }> {
-    const { userId, wabaId, phoneNumber, page, limit } = params;
-
-    logger.info('Fetching customer phone numbers', {
-      userId,
-      wabaId,
-      phoneNumber,
-      page,
-      limit,
-    });
-
-    const { customerPhoneNumbers, total } =
-      await CustomerPhoneNumberRepository.findConversationContacts({
-        userId,
-        wabaId,
-        phoneNumber,
-        page,
-        limit,
-      });
-
-    logger.info('Customer phone numbers fetched successfully', {
-      userId,
-      wabaId,
-      phoneNumber,
-      total,
-      returned: customerPhoneNumbers.length,
-    });
-
-    return {
-      customerPhoneNumbers,
-      total,
-    };
-  },
-
   /**
    * Below is logics that responsible for the manual phone number verification and
    * registration flow (as opposed to the Embedded Signup automatic flow).

@@ -1,5 +1,4 @@
 import { ApiError } from '@/lib/api-helper/error';
-import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { PhoneNumberService } from '@/services/phone-number.service';
@@ -17,7 +16,6 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
   const WABA_ID = 'meta-waba-123';
   const USER_ID = 'user-123';
   const PHONE_NUMBER_ID = 'phone-123';
-  const DISPLAY_PHONE_NUMBER = '+6281234567890';
 
   beforeEach(() => {
     vi.spyOn(WabaRepository, 'findByMetaWabaId').mockResolvedValue({
@@ -55,13 +53,6 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
 
     vi.spyOn(MetaFetchService, 'createPhoneNumber').mockResolvedValue({
       phoneNumberId: 'new-phone-id',
-    });
-
-    vi.mocked(
-      CustomerPhoneNumberRepository.findConversationContacts,
-    ).mockResolvedValue({
-      customerPhoneNumbers: [],
-      total: 0,
     });
   });
 
@@ -176,94 +167,6 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
         token: 'sys-user-token',
         wabaId: WABA_ID,
         name: 'New Bot',
-      });
-    });
-  });
-
-  describe('getCustomerPhoneNumbers', () => {
-    it('returns deduplicated customer phone numbers without pagination', async () => {
-      vi.mocked(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).mockResolvedValue({
-        customerPhoneNumbers: [
-          {
-            customerPhone: '628111',
-            customerName: 'Alice',
-          },
-          {
-            customerPhone: '628222',
-            customerName: null,
-          },
-        ],
-        total: 2,
-      });
-
-      const result = await PhoneNumberService.getCustomerPhoneNumbers({
-        userId: USER_ID,
-        wabaId: 'db-waba-123',
-        phoneNumber: DISPLAY_PHONE_NUMBER,
-      });
-
-      expect(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).toHaveBeenCalledWith({
-        userId: USER_ID,
-        wabaId: 'db-waba-123',
-        phoneNumber: DISPLAY_PHONE_NUMBER,
-        page: undefined,
-        limit: undefined,
-      });
-      expect(result).toEqual({
-        customerPhoneNumbers: [
-          {
-            customerPhone: '628111',
-            customerName: 'Alice',
-          },
-          {
-            customerPhone: '628222',
-            customerName: null,
-          },
-        ],
-        total: 2,
-      });
-    });
-
-    it('paginates after deduplicating customer phone numbers', async () => {
-      vi.mocked(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).mockResolvedValue({
-        customerPhoneNumbers: [
-          {
-            customerPhone: '628222',
-            customerName: 'Bob',
-          },
-        ],
-        total: 3,
-      });
-
-      const result = await PhoneNumberService.getCustomerPhoneNumbers({
-        userId: USER_ID,
-        page: 2,
-        limit: 1,
-      });
-
-      expect(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).toHaveBeenCalledWith({
-        userId: USER_ID,
-        wabaId: undefined,
-        phoneNumber: undefined,
-        page: 2,
-        limit: 1,
-      });
-      expect(result).toEqual({
-        customerPhoneNumbers: [
-          {
-            customerPhone: '628222',
-            customerName: 'Bob',
-          },
-        ],
-        total: 3,
       });
     });
   });
