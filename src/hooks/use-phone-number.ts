@@ -83,7 +83,9 @@ async function fetchCustomerPhoneNumbers(
 
   const queryString = params.toString();
   const response = await fetch(
-    queryString ? `/api/phone-number?${queryString}` : '/api/phone-number',
+    queryString
+      ? `/api/customer-phone-number?${queryString}`
+      : '/api/customer-phone-number',
   );
   const body = await response.json().catch(() => null);
 
