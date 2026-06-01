@@ -6,6 +6,11 @@ type UpsertPhoneNumberInput = PhoneNumberMetaResponse & {
   registrationPin?: string | null;
 };
 
+function normalizeDisplayPhoneNumber(displayPhoneNumber: string) {
+  const digitsOnly = displayPhoneNumber.replace(/\D/g, '');
+  return digitsOnly.length > 0 ? digitsOnly : displayPhoneNumber;
+}
+
 const PHONE_NUMBER_INCLUDE = {
   include: {
     botWebhook: true,
@@ -199,7 +204,9 @@ export const WabaRepository = {
           create: {
             phoneNumberId: phoneNumber.id,
             wabaId: wabaDbId,
-            displayPhoneNumber: phoneNumber.display_phone_number,
+            displayPhoneNumber: normalizeDisplayPhoneNumber(
+              phoneNumber.display_phone_number,
+            ),
             verifiedName: phoneNumber.verified_name ?? null,
             registrationPin: phoneNumber.registrationPin ?? null,
             qualityRating: phoneNumber.quality_rating ?? null,
@@ -209,7 +216,9 @@ export const WabaRepository = {
           },
           update: {
             wabaId: wabaDbId,
-            displayPhoneNumber: phoneNumber.display_phone_number,
+            displayPhoneNumber: normalizeDisplayPhoneNumber(
+              phoneNumber.display_phone_number,
+            ),
             verifiedName: phoneNumber.verified_name ?? null,
             registrationPin: phoneNumber.registrationPin ?? undefined,
             codeVerificationStatus:

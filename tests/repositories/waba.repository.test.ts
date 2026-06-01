@@ -294,7 +294,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         phoneNumberDatas: [
           {
             id: TEST_PHONE_ID,
-            display_phone_number: '+6281234567890',
+            display_phone_number: '+62 851-9556-3454',
             verified_name: 'Test Salon Bot',
             code_verification_status: 'NOT_VERIFIED',
             registrationPin: 'enc:230601',
@@ -304,7 +304,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
 
       expect(result.phoneNumberId).toBe(TEST_PHONE_ID);
       expect(result.wabaId).toBe(wabaDbId);
-      expect(result.displayPhoneNumber).toBe('+6281234567890');
+      expect(result.displayPhoneNumber).toBe('6285195563454');
       expect(result.registrationPin).toBe('enc:230601');
       expect(result.codeVerificationStatus).toBe('NOT_VERIFIED');
     });
@@ -328,7 +328,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         phoneNumberDatas: [
           {
             id: TEST_PHONE_ID,
-            display_phone_number: '+6289999999999',
+            display_phone_number: '+62 899-9999-9999',
             verified_name: 'New Name',
             code_verification_status: 'VERIFIED',
             registrationPin: 'enc:222222',
@@ -336,7 +336,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         ],
       });
 
-      expect(updated.displayPhoneNumber).toBe('+6289999999999');
+      expect(updated.displayPhoneNumber).toBe('6289999999999');
       expect(updated.verifiedName).toBe('New Name');
       expect(updated.registrationPin).toBe('enc:222222');
       expect(updated.codeVerificationStatus).toBe('VERIFIED');
