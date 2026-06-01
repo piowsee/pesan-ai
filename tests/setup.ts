@@ -139,11 +139,16 @@ vi.mock('@/services/embedded-signup.service', () => ({
 
 vi.mock('@/services/phone-number.service', () => ({
   PhoneNumberService: {
-    getCustomerPhoneNumbers: vi.fn(),
     requestVerificationCode: vi.fn(),
     verifyAndRegister: vi.fn(),
     createPhoneNumber: vi.fn(),
     _generateRegistrationPin: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/customer-phone-number.service', () => ({
+  CustomerPhoneNumberService: {
+    getCustomerPhoneNumbers: vi.fn(),
   },
 }));
 

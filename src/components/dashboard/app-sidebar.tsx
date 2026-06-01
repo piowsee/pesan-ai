@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
-import { Home, MessageSquare } from 'lucide-react';
+import { Home, MessageSquare, UsersRound } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -26,6 +26,7 @@ const navItems = [
   { title: 'Home', url: '/dashboard', icon: Home },
   { title: 'WABA Management', url: '/dashboard/waba', icon: FaWhatsapp },
   { title: 'Chat', url: '/dashboard/chat', icon: MessageSquare },
+  { title: 'Customers', url: '/dashboard/customers', icon: UsersRound },
 ];
 
 export function AppSidebar({ user }: { user: User | null }) {

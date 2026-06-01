@@ -26,8 +26,6 @@ export interface VerifyCodeParams {
   code: string;
 }
 
-// ─── API Functions ───────────────────────────────────────────────────
-
 async function createPhoneNumber(
   params: CreatePhoneNumberParams,
 ): Promise<{ phoneNumberId: string }> {
@@ -84,8 +82,6 @@ async function verifyCode(params: VerifyCodeParams): Promise<void> {
   }
 }
 
-// ─── Hooks ───────────────────────────────────────────────────────────
-
 export function useCreatePhoneNumber() {
   return useMutation({
     mutationFn: createPhoneNumber,
@@ -104,7 +100,7 @@ export function useVerifyAndRegisterPhoneNumber() {
   return useMutation({
     mutationFn: verifyCode,
     onSuccess: () => {
-      // Invalidate the phone number fetch query on the WABA management page so the list refreshes
+      // Invalidate the WABA list so the management page refreshes its phone numbers.
       queryClient.invalidateQueries({ queryKey: wabaKeys.all });
     },
   });

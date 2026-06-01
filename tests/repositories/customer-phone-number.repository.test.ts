@@ -19,19 +19,25 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let anotherUserId: string;
   let ownedWabaDbId: string;
+  let secondOwnedWabaDbId: string;
   let primaryPhoneDbId: string;
   let secondaryPhoneDbId: string;
+  let thirdPhoneDbId: string;
   let anotherUserWabaDbId: string;
   let anotherUserPhoneDbId: string;
   let ownedWabaMetaId: string;
+  let secondOwnedWabaMetaId: string;
   let anotherUserWabaMetaId: string;
   let primaryDisplayPhoneNumber: string;
   let secondaryDisplayPhoneNumber: string;
+  let thirdDisplayPhoneNumber: string;
   let primaryPhoneMetaId: string;
   let secondaryPhoneMetaId: string;
+  let thirdPhoneMetaId: string;
   let anotherUserPhoneMetaId: string;
   let sameWabaCustomerPhone: string;
   let primaryWabaCustomerPhone: string;
+  let secondWabaCustomerPhone: string;
   let otherUserCustomerPhone: string;
 
   beforeEach(async () => {
@@ -42,14 +48,18 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
       .slice(0, 12);
 
     ownedWabaMetaId = `test-customer-waba-owned-${testId}`;
+    secondOwnedWabaMetaId = `test-customer-waba-owned-2-${testId}`;
     anotherUserWabaMetaId = `test-customer-waba-other-${testId}`;
     primaryDisplayPhoneNumber = `+6280${numericSuffix}`;
     secondaryDisplayPhoneNumber = `+6281${numericSuffix}`;
+    thirdDisplayPhoneNumber = `+6282${numericSuffix}`;
     primaryPhoneMetaId = `test-customer-phone-primary-${testId}`;
     secondaryPhoneMetaId = `test-customer-phone-secondary-${testId}`;
+    thirdPhoneMetaId = `test-customer-phone-third-${testId}`;
     anotherUserPhoneMetaId = `test-customer-phone-other-${testId}`;
     sameWabaCustomerPhone = `91${numericSuffix}`;
     primaryWabaCustomerPhone = `92${numericSuffix}`;
+    secondWabaCustomerPhone = `94${numericSuffix}`;
     otherUserCustomerPhone = `93${numericSuffix}`;
 
     const user = await prisma.user.findUnique({
@@ -80,6 +90,16 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
     ownedWabaDbId = ownedWaba.id;
 
+    const secondOwnedWaba = await prisma.whatsappBusinessAccount.create({
+      data: {
+        wabaId: secondOwnedWabaMetaId,
+        businessName: 'Second Owned Test WABA',
+        systemUserToken: 'enc:test-owned-token-2',
+        userId,
+      },
+    });
+    secondOwnedWabaDbId = secondOwnedWaba.id;
+
     const primaryPhone = await prisma.phoneNumber.create({
       data: {
         phoneNumberId: primaryPhoneMetaId,
@@ -99,6 +119,16 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
       },
     });
     secondaryPhoneDbId = secondaryPhone.id;
+
+    const thirdPhone = await prisma.phoneNumber.create({
+      data: {
+        phoneNumberId: thirdPhoneMetaId,
+        displayPhoneNumber: thirdDisplayPhoneNumber,
+        verifiedName: 'Test Third Number',
+        wabaId: secondOwnedWabaDbId,
+      },
+    });
+    thirdPhoneDbId = thirdPhone.id;
 
     const anotherUserWaba = await prisma.whatsappBusinessAccount.create({
       data: {
@@ -140,6 +170,12 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
           phoneNumberId: anotherUserPhoneDbId,
           lastMessageAt: new Date('2026-05-31T07:00:00.000Z'),
         },
+        {
+          customerPhone: secondWabaCustomerPhone,
+          customerName: 'Second WABA Customer',
+          phoneNumberId: thirdPhoneDbId,
+          lastMessageAt: new Date('2026-05-31T10:00:00.000Z'),
+        },
       ],
     });
   });
@@ -148,6 +184,7 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
     const testCustomerPhones = [
       sameWabaCustomerPhone,
       primaryWabaCustomerPhone,
+      secondWabaCustomerPhone,
       otherUserCustomerPhone,
     ];
 
@@ -175,6 +212,7 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
           in: [
             primaryPhoneMetaId,
             secondaryPhoneMetaId,
+            thirdPhoneMetaId,
             anotherUserPhoneMetaId,
           ],
         },
@@ -184,7 +222,7 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
     await prisma.whatsappBusinessAccount.deleteMany({
       where: {
         wabaId: {
-          in: [ownedWabaMetaId, anotherUserWabaMetaId],
+          in: [ownedWabaMetaId, secondOwnedWabaMetaId, anotherUserWabaMetaId],
         },
       },
     });
@@ -195,11 +233,11 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
   });
 
   describe('findConversationContacts', () => {
-    it('filters by ownership, wabaId, and phone number correctly', async () => {
+    it('filters by ownership, wabaIds, and phoneNumbers correctly', async () => {
       const byWaba =
         await CustomerPhoneNumberRepository.findConversationContacts({
           userId,
-          wabaId: ownedWabaDbId,
+          wabaIds: [ownedWabaDbId],
         });
 
       expect(byWaba.customerPhoneNumbers).toEqual(
@@ -225,21 +263,28 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
       const byPhoneNumber =
         await CustomerPhoneNumberRepository.findConversationContacts({
           userId,
-          phoneNumber: secondaryDisplayPhoneNumber,
+          phoneNumbers: [secondaryDisplayPhoneNumber, thirdDisplayPhoneNumber],
         });
 
-      expect(byPhoneNumber.customerPhoneNumbers).toHaveLength(1);
-      expect(byPhoneNumber.total).toBe(1);
-      expect(byPhoneNumber.customerPhoneNumbers[0]).toMatchObject({
-        customerPhone: sameWabaCustomerPhone,
-        customerName: 'Same WABA Customer',
-      });
+      expect(byPhoneNumber.customerPhoneNumbers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            customerPhone: sameWabaCustomerPhone,
+            customerName: 'Same WABA Customer',
+          }),
+          expect.objectContaining({
+            customerPhone: secondWabaCustomerPhone,
+            customerName: 'Second WABA Customer',
+          }),
+        ]),
+      );
+      expect(byPhoneNumber.total).toBe(2);
 
       const byWabaAndPhoneNumber =
         await CustomerPhoneNumberRepository.findConversationContacts({
           userId,
-          wabaId: ownedWabaDbId,
-          phoneNumber: secondaryDisplayPhoneNumber,
+          wabaIds: [ownedWabaDbId],
+          phoneNumbers: [secondaryDisplayPhoneNumber, thirdDisplayPhoneNumber],
         });
 
       expect(byWabaAndPhoneNumber.customerPhoneNumbers).toHaveLength(1);
@@ -252,20 +297,41 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
       const otherUserResult =
         await CustomerPhoneNumberRepository.findConversationContacts({
           userId,
-          wabaId: anotherUserWabaDbId,
+          wabaIds: [anotherUserWabaDbId],
         });
 
       expect(otherUserResult).toEqual({
         customerPhoneNumbers: [],
         total: 0,
       });
+
+      const acrossOwnedWabas =
+        await CustomerPhoneNumberRepository.findConversationContacts({
+          userId,
+          wabaIds: [ownedWabaDbId, secondOwnedWabaDbId],
+        });
+
+      expect(acrossOwnedWabas.customerPhoneNumbers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            customerPhone: sameWabaCustomerPhone,
+          }),
+          expect.objectContaining({
+            customerPhone: primaryWabaCustomerPhone,
+          }),
+          expect.objectContaining({
+            customerPhone: secondWabaCustomerPhone,
+          }),
+        ]),
+      );
+      expect(acrossOwnedWabas.total).toBe(3);
     });
 
     it('paginates unique contacts in the repository query', async () => {
       const result =
         await CustomerPhoneNumberRepository.findConversationContacts({
           userId,
-          wabaId: ownedWabaDbId,
+          wabaIds: [ownedWabaDbId],
           page: 2,
           limit: 1,
         });
