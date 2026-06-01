@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 import {
   type CustomerPhoneNumberFilters,
-  useCustomerPhoneNumberLists,
-} from '@/hooks/use-phone-number';
+  useCustomerPhoneNumbers,
+} from '@/hooks/use-customer-phone-number';
 import { useWabas } from '@/hooks/use-wabas';
 import { Download } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -31,7 +31,10 @@ export function CustomersDashboard() {
   const { data: wabaData, isLoading: isWabaLoading } = useWabas(1, 100);
   const wabas = wabaData?.wabas ?? EMPTY_WABAS;
   const allWabaIds = useMemo(() => wabas.map((waba) => waba.id), [wabas]);
+  const totalWabas = wabaData?.total ?? allWabaIds.length;
   const activeWabaIds = selectedWabaIds ?? allWabaIds;
+  const selectedWabaCount =
+    selectedWabaIds === null ? totalWabas : activeWabaIds.length;
   const activeWabaIdSet = useMemo(
     () => new Set(activeWabaIds),
     [activeWabaIds],
@@ -57,45 +60,47 @@ export function CustomersDashboard() {
         : phoneOptions.filter((phone) => selectedPhoneIds.includes(phone.id)),
     [phoneOptions, selectedPhoneIds],
   );
-  const queryFilters = useMemo<CustomerPhoneNumberFilters[]>(() => {
+  const queryFilters = useMemo<CustomerPhoneNumberFilters | null>(() => {
     const isAllWabas =
-      selectedWabaIds === null || activeWabaIds.length === allWabaIds.length;
+      selectedWabaIds === null || activeWabaIds.length === totalWabas;
     const isAllPhones =
       selectedPhoneIds === null ||
       activePhoneOptions.length === phoneOptions.length;
 
     if (selectedWabaIds !== null && activeWabaIds.length === 0) {
-      return [];
+      return null;
     }
 
     if (selectedPhoneIds !== null && activePhoneOptions.length === 0) {
-      return [];
+      return null;
     }
 
-    if (isAllWabas && isAllPhones) {
-      return [{}];
+    const filters: CustomerPhoneNumberFilters = {};
+
+    if (!isAllWabas) {
+      filters.wabaIds = activeWabaIds;
     }
 
     if (!isAllPhones) {
-      return activePhoneOptions.map((phone) => ({
-        wabaId: phone.wabaId,
-        phoneNumber: phone.displayPhoneNumber,
-      }));
+      filters.phoneNumbers = activePhoneOptions.map(
+        (phone) => phone.displayPhoneNumber,
+      );
     }
 
-    return activeWabaIds.map((wabaId) => ({ wabaId }));
+    return filters;
   }, [
     activePhoneOptions,
     activeWabaIds,
-    allWabaIds.length,
     phoneOptions.length,
     selectedPhoneIds,
     selectedWabaIds,
+    totalWabas,
   ]);
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useCustomerPhoneNumberLists(queryFilters);
+    useCustomerPhoneNumbers(queryFilters);
   const customers = data?.customerPhoneNumbers ?? EMPTY_CUSTOMERS;
-  const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
+  const totalCustomers = data?.total ?? customers.length;
+  const totalPages = Math.max(1, Math.ceil(totalCustomers / PAGE_SIZE));
   const pagedCustomers = customers.slice(
     (page - 1) * PAGE_SIZE,
     page * PAGE_SIZE,
@@ -104,8 +109,8 @@ export function CustomersDashboard() {
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
   const wabaLabel = selectionLabel({
-    total: allWabaIds.length,
-    selectedCount: activeWabaIds.length,
+    total: totalWabas,
+    selectedCount: selectedWabaCount,
     allLabel: 'All WABAs',
     emptyLabel: 'No WABA',
     singularLabel: 'WABA',
@@ -139,9 +144,7 @@ export function CustomersDashboard() {
       : baseIds.filter((id) => id !== wabaId);
     const uniqueIds = Array.from(new Set(nextIds));
 
-    setSelectedWabaIds(
-      uniqueIds.length === allWabaIds.length ? null : uniqueIds,
-    );
+    setSelectedWabaIds(uniqueIds.length === totalWabas ? null : uniqueIds);
     setSelectedPhoneIds(null);
     setPage(1);
   }
@@ -236,7 +239,7 @@ export function CustomersDashboard() {
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-brand">
             Showing {(page - 1) * PAGE_SIZE + 1}-
-            {Math.min(page * PAGE_SIZE, customers.length)} of {customers.length}{' '}
+            {Math.min(page * PAGE_SIZE, totalCustomers)} of {totalCustomers}{' '}
             customers
           </p>
 

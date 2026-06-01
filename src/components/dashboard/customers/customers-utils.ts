@@ -1,4 +1,4 @@
-import { type CustomerPhoneNumber } from '@/hooks/use-phone-number';
+import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
 import { type Waba } from '@/hooks/use-wabas';
 
 export const PAGE_SIZE = 12;

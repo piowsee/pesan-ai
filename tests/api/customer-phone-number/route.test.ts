@@ -1,15 +1,17 @@
 import { GET } from '@/app/api/customer-phone-number/route';
 import { AuthHelper } from '@/lib/auth/auth-api-helper';
-import { PhoneNumberService } from '@/services/phone-number.service';
+import { CustomerPhoneNumberService } from '@/services/customer-phone-number.service';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('GET /api/customer-phone-number', { tags: ['backend'] }, () => {
-  it('returns unpaginated customer phone numbers with filters', async () => {
+  it('returns unpaginated customer phone numbers with multi-value filters', async () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',
       role: 'user',
     } as never);
-    vi.mocked(PhoneNumberService.getCustomerPhoneNumbers).mockResolvedValue({
+    vi.mocked(
+      CustomerPhoneNumberService.getCustomerPhoneNumbers,
+    ).mockResolvedValue({
       customerPhoneNumbers: [
         {
           customerPhone: '628111',
@@ -20,7 +22,7 @@ describe('GET /api/customer-phone-number', { tags: ['backend'] }, () => {
     });
 
     const req = new Request(
-      'http://localhost/api/customer-phone-number?wabaId=waba-1&phoneNumber=%2B6281234567890',
+      'http://localhost/api/customer-phone-number?wabaId=waba-1&wabaId=waba-2&phoneNumber=%2B6281234567890&phoneNumber=%2B6289876543210',
     );
     const response = await GET(req, { params: Promise.resolve({}) } as never);
     const data = await response.json();
@@ -31,10 +33,12 @@ describe('GET /api/customer-phone-number', { tags: ['backend'] }, () => {
     expect(data.data.total).toBe(1);
     expect(data.data.page).toBeUndefined();
     expect(data.data.limit).toBeUndefined();
-    expect(PhoneNumberService.getCustomerPhoneNumbers).toHaveBeenCalledWith({
+    expect(
+      CustomerPhoneNumberService.getCustomerPhoneNumbers,
+    ).toHaveBeenCalledWith({
       userId: 'user-1',
-      wabaId: 'waba-1',
-      phoneNumber: '+6281234567890',
+      wabaIds: ['waba-1', 'waba-2'],
+      phoneNumbers: ['+6281234567890', '+6289876543210'],
       page: undefined,
       limit: undefined,
     });
@@ -45,7 +49,9 @@ describe('GET /api/customer-phone-number', { tags: ['backend'] }, () => {
       id: 'user-1',
       role: 'user',
     } as never);
-    vi.mocked(PhoneNumberService.getCustomerPhoneNumbers).mockResolvedValue({
+    vi.mocked(
+      CustomerPhoneNumberService.getCustomerPhoneNumbers,
+    ).mockResolvedValue({
       customerPhoneNumbers: [
         {
           customerPhone: '628111',
@@ -65,10 +71,12 @@ describe('GET /api/customer-phone-number', { tags: ['backend'] }, () => {
     expect(data.data.total).toBe(3);
     expect(data.data.page).toBe(2);
     expect(data.data.limit).toBe(5);
-    expect(PhoneNumberService.getCustomerPhoneNumbers).toHaveBeenCalledWith({
+    expect(
+      CustomerPhoneNumberService.getCustomerPhoneNumbers,
+    ).toHaveBeenCalledWith({
       userId: 'user-1',
-      wabaId: 'waba-1',
-      phoneNumber: undefined,
+      wabaIds: ['waba-1'],
+      phoneNumbers: undefined,
       page: 2,
       limit: 5,
     });

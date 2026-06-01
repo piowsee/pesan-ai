@@ -1,4 +1,4 @@
-import { type CustomerPhoneNumber } from '@/hooks/use-phone-number';
+import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
 import * as XLSX from 'xlsx-js-style';
 
 import { getChatLink, getCustomerName } from './customers-utils';

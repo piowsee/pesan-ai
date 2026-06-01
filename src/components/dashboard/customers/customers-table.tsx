@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type CustomerPhoneNumber } from '@/hooks/use-phone-number';
+import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
 import { cn } from '@/lib/utils';
 import { RefreshCw, UserRound, UsersRound, X } from 'lucide-react';
 

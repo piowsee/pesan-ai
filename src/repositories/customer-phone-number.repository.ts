@@ -8,8 +8,8 @@ export interface CustomerPhoneNumberRow {
 
 interface FindConversationContactsParams {
   userId: string;
-  wabaId?: string;
-  phoneNumber?: string;
+  wabaIds?: string[];
+  phoneNumbers?: string[];
   page?: number;
   limit?: number;
 }
@@ -17,19 +17,21 @@ interface FindConversationContactsParams {
 export const CustomerPhoneNumberRepository = {
   _buildPhoneNumberFilter(params: {
     userId: string;
-    wabaId?: string;
-    phoneNumber?: string;
+    wabaIds?: string[];
+    phoneNumbers?: string[];
   }): Prisma.PhoneNumberWhereInput {
-    const { userId, wabaId, phoneNumber } = params;
+    const { userId, wabaIds, phoneNumbers } = params;
 
     return {
       waba: {
         userId,
-        ...(wabaId ? { id: wabaId } : {}),
+        ...(wabaIds?.length ? { id: { in: wabaIds } } : {}),
       },
-      ...(phoneNumber
+      ...(phoneNumbers?.length
         ? {
-            displayPhoneNumber: phoneNumber,
+            displayPhoneNumber: {
+              in: phoneNumbers,
+            },
           }
         : {}),
     };
@@ -65,11 +67,11 @@ export const CustomerPhoneNumberRepository = {
     customerPhoneNumbers: CustomerPhoneNumberRow[];
     total: number;
   }> {
-    const { userId, wabaId, phoneNumber, page, limit } = params;
+    const { userId, wabaIds, phoneNumbers, page, limit } = params;
     const phoneNumberFilter = this._buildPhoneNumberFilter({
       userId,
-      wabaId,
-      phoneNumber,
+      wabaIds,
+      phoneNumbers,
     });
     const conversationFilter = this._buildConversationFilter(phoneNumberFilter);
     const pagination = this._buildPagination({ page, limit });
