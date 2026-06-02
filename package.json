@@ -23,6 +23,7 @@
     ]
   },
   "dependencies": {
+    "@better-auth/i18n": "^1.6.13",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.5.0",
