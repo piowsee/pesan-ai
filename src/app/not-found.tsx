@@ -3,12 +3,12 @@
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { defaultTimeZone } from '@/i18n/config';
+import enMessages from '@/i18n/messages/en.json';
+import idMessages from '@/i18n/messages/id.json';
 import { routing } from '@/i18n/routing';
 import { NextIntlClientProvider } from 'next-intl';
 import { usePathname } from 'next/navigation';
 
-import enMessages from '../../messages/en.json';
-import idMessages from '../../messages/id.json';
 import { NotFoundHero } from '../components/not-found-hero';
 
 type AppLocale = (typeof routing.locales)[number];
