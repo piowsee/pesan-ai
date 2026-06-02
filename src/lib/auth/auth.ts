@@ -1,4 +1,5 @@
 import { getPathname } from '@/i18n/navigation';
+import { authI18n } from '@/lib/auth/auth-i18n';
 import { EmailType, sendEmail } from '@/lib/auth/email/email';
 import {
   type AppLocale,
@@ -128,5 +129,5 @@ export const auth = betterAuth({
     sendOnSignIn: true,
     expiresIn: 3 * 24 * 60 * 60, // 3 days
   },
-  plugins: [admin(), openAPI()],
+  plugins: [admin(), openAPI(), authI18n],
 });

@@ -144,8 +144,6 @@
           "passwordRequired": "Password is required",
           "passwordLength": "Password must be at least 8 characters",
           "termsRequired": "You need to agree to the Terms and Privacy to continue",
-          "invalidCredentials": "Invalid email or password.",
-          "emailNotVerified": "Your email is not verified. Please check your email inbox.",
           "unknownError": "An error occurred during login. Please try again."
         }
       },
