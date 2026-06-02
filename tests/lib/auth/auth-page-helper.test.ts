@@ -29,12 +29,31 @@ describe('AuthPageHelper', () => {
 
   it('redirects guests to the login page', async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
+    vi.mocked(headers).mockResolvedValue(
+      new Headers({
+        referer: 'http://localhost/id/forgot-password',
+        host: 'localhost',
+        'x-forwarded-proto': 'http',
+      }) as never,
+    );
     vi.mocked(redirect).mockImplementation((url: string) => {
       throw new Error(`REDIRECT:${url}`);
     });
 
     await expect(AuthPageHelper.requireUser()).rejects.toThrow(
-      'REDIRECT:/login?session_expired=true',
+      'REDIRECT:/id/login?session_expired=true',
+    );
+  });
+
+  it('falls back to the default locale when no locale can be detected', async () => {
+    vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
+    vi.mocked(headers).mockResolvedValue(new Headers() as never);
+    vi.mocked(redirect).mockImplementation((url: string) => {
+      throw new Error(`REDIRECT:${url}`);
+    });
+
+    await expect(AuthPageHelper.requireUser()).rejects.toThrow(
+      'REDIRECT:/en/login?session_expired=true',
     );
   });
 

@@ -1,17 +1,25 @@
+import { getLocaleFromHeaders } from '@/lib/i18n-helper/locale';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { auth } from './auth';
+
+function redirectToLogin(requestHeaders: Headers): never {
+  const locale = getLocaleFromHeaders(requestHeaders);
+
+  redirect(`/${locale}/login?session_expired=true`);
+}
 
 /**
  * Centralized authentication helpers for page routes.
  */
 export const AuthPageHelper = {
   async requireUser() {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({ headers: requestHeaders });
 
     if (!session?.user) {
-      return redirect('/login?session_expired=true');
+      redirectToLogin(requestHeaders);
     }
 
     return session.user;
@@ -21,7 +29,7 @@ export const AuthPageHelper = {
     const user = await this.requireUser();
 
     if (user.role !== 'admin') {
-      return redirect('/dashboard');
+      redirect('/dashboard');
     }
 
     return user;
