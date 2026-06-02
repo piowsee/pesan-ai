@@ -34,8 +34,6 @@ type LoginFormErrors = {
   passwordRequired: string;
   passwordLength: string;
   termsRequired: string;
-  invalidCredentials: string;
-  emailNotVerified: string;
   unknownError: string;
 };
 
@@ -92,12 +90,7 @@ export function LoginForm() {
       });
 
       if (result?.error) {
-        if (result.error.status === 403) {
-          setFormError(errors.emailNotVerified);
-          return;
-        }
-
-        setFormError(result.error.message || errors.invalidCredentials);
+        setFormError(result.error.message || errors.unknownError);
         return;
       }
 

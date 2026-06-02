@@ -144,8 +144,6 @@
           "passwordRequired": "Kata sandi wajib diisi",
           "passwordLength": "Kata sandi minimal 8 karakter",
           "termsRequired": "Anda harus menyetujui Syarat dan Privasi untuk lanjut",
-          "invalidCredentials": "Email atau kata sandi tidak valid.",
-          "emailNotVerified": "Email Anda belum diverifikasi. Silakan cek inbox email Anda.",
           "unknownError": "Terjadi kesalahan saat login. Silakan coba lagi."
         }
       },
