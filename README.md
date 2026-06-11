@@ -22,8 +22,8 @@ Pesan AI is a simple CRM built for the WhatsApp Cloud API.
 
 ### Prerequisites
 
-- Node.js (v24.14.0 recommended, v20+ compatible)
-- **pnpm** (v10+)
+- Node.js (v24.14.0 recommended, v22+ compatible)
+- **pnpm** (v11+)
 - PostgreSQL Database
 
 ### Installation
