@@ -3,6 +3,8 @@ name: Setup Vercel env (Trigger manually)
 on:
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   deploy-env-var:
     runs-on: ubuntu-latest
