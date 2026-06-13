@@ -50,7 +50,6 @@ export function encrypt(text: string): string {
 
 /**
  * Decrypts a string using AES-256-GCM.
- * Handles both "enc:" prefixed strings.
  */
 export function decrypt(text: string): string {
   if (!text || !text.startsWith(PREFIX)) {
