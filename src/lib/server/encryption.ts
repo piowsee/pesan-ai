@@ -1,75 +1,95 @@
+// this file need to be called on startup
 import { logError } from '@/lib/server/logger';
-import CryptoJS from 'crypto-js';
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+
+import { ApiError } from '../api-helper/error';
 
 /**
  * Gets the encryption key from environment variables.
- * Key must be 32 characters (256 bits).
+ * Key must be 32 Bytes (256 bits). We need to convert to utf-8 and check the size
  */
-function getEncryptionKey(): string {
+function getEncryptionKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
-    logError(new Error('ENCRYPTION_KEY is not set in environment variables'));
-    return '';
+    throw new Error('ENCRYPTION_KEY is not set in environment variables');
   }
-  if (key.length !== 32) {
-    logError(new Error('ENCRYPTION_KEY must be exactly 32 characters long'));
-    return '';
+
+  const keyBuffer = Buffer.from(key, 'utf8');
+
+  if (keyBuffer.length !== 32) {
+    throw new Error('ENCRYPTION_KEY must be exactly 32 Bytes');
   }
-  return key;
+
+  return keyBuffer;
 }
 
-const PREFIX = 'enc:';
+const key = getEncryptionKey();
+const PREFIX = 'enc';
+const ALGO = 'aes-256-gcm';
 
 /**
- * Encrypts a string using AES-256 via crypto-js.
+ * Encrypts a string using AES-256-GCM.
  * Encrypted tokens are prefixed with "enc:" to distinguish them.
  */
 export function encrypt(text: string): string {
-  if (!text) return text;
-
-  const key = getEncryptionKey();
-  if (!key) {
-    // If key is missing, we don't throw to avoid exposing env info,
-    // but we log it and return the original text as a fallback.
-    return text;
-  }
-
   try {
-    const encrypted = CryptoJS.AES.encrypt(text, key).toString();
-    return `${PREFIX}${encrypted}`;
+    const iv = randomBytes(12);
+    const cipher = createCipheriv(ALGO, key, iv);
+    const encryptedData = Buffer.concat([
+      cipher.update(text, 'utf8'),
+      cipher.final(),
+    ]);
+    const authTag = cipher.getAuthTag();
+
+    return `${PREFIX}:${iv.toString('base64')}:${authTag.toString('base64')}:${encryptedData.toString('base64')}`;
   } catch (err) {
-    logError(err, { action: 'encrypt' });
-    return text;
+    logError(err, { action: 'encrypt helper' });
+    throw new ApiError('Internal Server Error', 500);
   }
 }
 
 /**
- * Decrypts a string using AES-256 via crypto-js.
- * Handles both "enc:" prefixed strings and legacy plain text.
+ * Decrypts a string using AES-256-GCM.
+ * Handles both "enc:" prefixed strings.
  */
 export function decrypt(text: string): string {
   if (!text || !text.startsWith(PREFIX)) {
-    // If it's empty or doesn't have the prefix, assume it's legacy plain text
-    return text;
+    logError(new Error('Decrypt failed: data is null or missing prefix'), {
+      action: 'decrypt helper',
+      reason: 'malformed_payload',
+    });
+    throw new ApiError('Internal Server Error', 500);
   }
 
-  const key = getEncryptionKey();
-  if (!key) return text;
-
-  const encryptedData = text.slice(PREFIX.length);
-
   try {
-    const bytes = CryptoJS.AES.decrypt(encryptedData, key);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    const slicedText = text.split(':');
+    const ivB64 = slicedText[1];
+    const tagB64 = slicedText[2];
+    const encryptedB64 = slicedText[3];
 
-    if (!decrypted) {
-      throw new Error('Decryption resulted in empty string');
+    if (!ivB64 || !tagB64 || !encryptedB64) {
+      logError(new Error('Decrypt failed: invalid format'), {
+        action: 'decrypt helper',
+        reason: 'malformed_payload',
+      });
+      throw new ApiError('Internal Server Error', 500);
     }
+
+    const iv = Buffer.from(ivB64, 'base64');
+    const authTag = Buffer.from(tagB64, 'base64');
+    const encrypted = Buffer.from(encryptedB64, 'base64');
+
+    const decipher = createDecipheriv(ALGO, key, iv);
+    decipher.setAuthTag(authTag);
+
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]).toString('utf8');
 
     return decrypted;
   } catch (err) {
-    logError(err, { action: 'decrypt' });
-    // Fallback to returning original text if decryption fails (might be a false positive prefix)
-    return text;
+    logError(err, { action: 'decrypt helper' });
+    throw new ApiError('Internal Server Error', 500);
   }
 }
