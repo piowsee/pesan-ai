@@ -18,6 +18,7 @@ env:
   POSTGRES_DB: testdb
   DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
   DIRECT_URL: postgresql://testuser:testpassword@localhost:5432/testdb
+  ENCRYPTION_KEY: thisisarandom32characters1234567
 
 jobs:
   ci:
