@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-helper/error';
+import { encrypt } from '@/lib/server/encryption';
 import * as retryableFetch from '@/lib/server/fetch-with-retry';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
@@ -234,6 +235,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         userId: USER_ID,
       });
 
+      expect(encrypt).toHaveBeenCalledWith('sys-user-token-xyz');
       expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
         expect.objectContaining({
           wabaId: WABA_ID,
@@ -251,6 +253,8 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         userId: USER_ID,
       });
 
+      expect(encrypt).toHaveBeenCalledWith(REGISTRATION_PINS[0]);
+      expect(encrypt).toHaveBeenCalledWith(REGISTRATION_PINS[1]);
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
         phoneNumberDatas: META_PHONE_NUMBERS.map((phoneNumber, index) => ({
