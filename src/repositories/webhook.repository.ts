@@ -29,6 +29,34 @@ export const WebhookRepository = {
     return { webhooks, total };
   },
 
+  async findWebhookByConversationId(params: { conversationId: string }) {
+    const { conversationId } = params;
+    const conversation = await prisma.conversation.findUnique({
+      where: {
+        id: conversationId,
+      },
+      select: {
+        phoneNumber: {
+          select: {
+            botWebhook: {
+              select: {
+                webhookUrl: true,
+                passphrase: true,
+                isActive: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      url: conversation?.phoneNumber.botWebhook?.webhookUrl,
+      passphrase: conversation?.phoneNumber.botWebhook?.passphrase,
+      isActive: conversation?.phoneNumber.botWebhook?.isActive,
+    };
+  },
+
   async deleteWebhook(params: { id: string }) {
     const { id } = params;
     return prisma.botWebhook.delete({

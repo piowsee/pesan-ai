@@ -1,4 +1,5 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import {
@@ -220,6 +221,10 @@ export const ConversationService = {
       userId,
       wabaId,
     });
+
+    // queue message
+    // still call even if content message is null
+    handleDebounceIncomingMessage(conversation.id, savedMessage.content ?? '');
 
     return true;
   },
