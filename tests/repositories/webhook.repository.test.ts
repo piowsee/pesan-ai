@@ -1,5 +1,6 @@
 import prisma from '@/lib/server/prisma';
 import { WebhookRepository } from '@/repositories/webhook.repository';
+import { randomUUID } from 'node:crypto';
 import {
   afterAll,
   afterEach,
@@ -23,9 +24,20 @@ vi.unmock('@/repositories/webhook.repository.ts');
 describe('WebhookRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbWebhookId: string;
+  let dbWabaId: string;
 
   beforeEach(async () => {
     // Pre-test cleanup for robustness
+    await prisma.conversation.deleteMany({
+      where: {
+        customerPhone: { startsWith: '9998' },
+      },
+    });
+    await prisma.phoneNumber.deleteMany({
+      where: {
+        phoneNumberId: { startsWith: 'test-phone-' },
+      },
+    });
     await prisma.botWebhook.deleteMany({
       where: {
         name: { contains: 'Test-WH-' },
@@ -52,10 +64,30 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
       );
     }
     dbWebhookId = webhook.id;
+
+    const waba = await prisma.whatsappBusinessAccount.findUnique({
+      where: { wabaId: SEED_DATA.WABA_META_ID },
+    });
+    if (!waba) {
+      throw new Error(
+        `Seeded WABA ${SEED_DATA.WABA_META_ID} not found. Please run prisma db seed.`,
+      );
+    }
+    dbWabaId = waba.id;
   });
 
   afterEach(async () => {
     // Cleanup only test-specific data to keep seed intact
+    await prisma.conversation.deleteMany({
+      where: {
+        customerPhone: { startsWith: '9998' },
+      },
+    });
+    await prisma.phoneNumber.deleteMany({
+      where: {
+        phoneNumberId: { startsWith: 'test-phone-' },
+      },
+    });
     await prisma.botWebhook.deleteMany({
       where: {
         name: { contains: 'Test-WH-' },
@@ -103,6 +135,46 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
 
       expect(result.total).toBeGreaterThanOrEqual(1);
       expect(result.webhooks.some((w) => w.id === dbWebhookId)).toBe(true);
+    });
+  });
+
+  describe('findWebhookByConversationId', () => {
+    it('returns the webhook configured on the conversation phone number', async () => {
+      const unique = randomUUID();
+      const webhook = await prisma.botWebhook.create({
+        data: {
+          name: `Test-WH-Conversation-${unique}`,
+          webhookUrl: 'https://bot.example.com/message',
+          passphrase: 'encrypted-passphrase',
+          userId,
+        },
+      });
+      const phoneNumber = await prisma.phoneNumber.create({
+        data: {
+          phoneNumberId: `test-phone-${unique}`,
+          displayPhoneNumber: `9998${Date.now()}`,
+          verifiedName: 'Test Redirect Phone',
+          wabaId: dbWabaId,
+          botWebhookId: webhook.id,
+        },
+      });
+      const conversation = await prisma.conversation.create({
+        data: {
+          phoneNumberId: phoneNumber.id,
+          customerPhone: `9998${Date.now()}`,
+          customerName: 'Redirect Customer',
+        },
+      });
+
+      const result = await WebhookRepository.findWebhookByConversationId({
+        conversationId: conversation.id,
+      });
+
+      expect(result).toEqual({
+        url: 'https://bot.example.com/message',
+        passphrase: 'encrypted-passphrase',
+        isActive: true,
+      });
     });
   });
 

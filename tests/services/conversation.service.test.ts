@@ -1,4 +1,5 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { ConversationService } from '@/services/conversation.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -124,8 +125,60 @@ describe('ConversationService', { tags: ['backend'] }, () => {
         }),
       );
 
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith(
+        'conv-1',
+        'hello',
+      );
+
       // Clean up the listener
       eventBus.off(userEventName, mockSseListener);
+    });
+
+    it('queues an empty redirect message when saved text content is missing', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
+        id: 'phone-1',
+      } as never);
+
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'msg-1', content: null },
+        conversation: { id: 'conv-1' },
+        userId: 'user-123',
+      } as never);
+
+      await ConversationService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  messages: [
+                    {
+                      id: 'meta-msg-1',
+                      from: 'customer-1',
+                      type: 'text',
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1', '');
     });
   });
 

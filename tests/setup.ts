@@ -93,6 +93,7 @@ vi.mock('@/repositories/webhook.repository', () => ({
   WebhookRepository: {
     createWebhook: vi.fn(),
     findPaginated: vi.fn(),
+    findWebhookByConversationId: vi.fn(),
     deleteWebhook: vi.fn(),
   },
 }));
@@ -184,6 +185,10 @@ vi.mock('@/services/meta-fetch.service', () => ({
 
 vi.mock('@/services/create-user.service');
 
+vi.mock('@/services/redirect-message.service', () => ({
+  redirectMessageToExternalWebhook: vi.fn(),
+}));
+
 vi.mock('next/headers', () => ({
   headers: vi.fn(),
 }));
@@ -199,6 +204,10 @@ vi.mock('@/lib/auth/auth', () => ({
     },
   },
   createResetPasswordCallbackUrl: vi.fn(),
+}));
+
+vi.mock('@/lib/server/debounce-message-manager', () => ({
+  handleDebounceIncomingMessage: vi.fn(),
 }));
 
 // --- Mocks for Libraries ---

@@ -80,7 +80,7 @@ export async function redirectMessageToExternalWebhook(params: {
   }
 
   if (!data) {
-    logError(new Error(`Empty response from bot webhook: ${error.message}`));
+    logError(new Error('Empty response from bot webhook'));
     return;
   }
 
