@@ -1,5 +1,5 @@
 import { logError, logger } from '@/lib/server/logger';
-import { ConversationService } from '@/services/conversation.service';
+import { MessageService } from '@/services/message.service';
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const body = JSON.parse(rawBody);
     logger.info('Received and Verified Meta Webhook Event', { body });
 
-    const result = await ConversationService.processMetaWebhookPayload(body);
+    const result = await MessageService.processMetaWebhookPayload(body);
 
     if (!result.processed) {
       return handleUnprocessedWebhook(result);

@@ -1,13 +1,19 @@
 import { ApiError } from '@/lib/api-helper/error';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { MessageService } from '@/services/message.service';
 import { MetaFetchService } from '@/services/meta-fetch.service';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/message.service');
 
 describe('MessageService', { tags: ['backend'] }, () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   describe('getMessagesPaginated', () => {
     it('returns paginated messages', async () => {
       vi.mocked(MessageRepository.findMessagesPaginated).mockResolvedValue({
@@ -106,6 +112,155 @@ describe('MessageService', { tags: ['backend'] }, () => {
           content: 'Hello',
         }),
       ).rejects.toThrow(ApiError);
+    });
+  });
+  describe('processMetaWebhookPayload', () => {
+    it('processes payload correctly', async () => {
+      const payload = {
+        object: 'whatsapp_business_account',
+        entry: [],
+      };
+
+      const result = await MessageService.processMetaWebhookPayload(payload);
+      expect(result.processed).toBe(true);
+      expect(result.count).toBe(0);
+    });
+
+    it('throws error for invalid webhook payload', async () => {
+      const payload = {
+        object: 'page',
+        entry: [],
+      };
+      await expect(
+        MessageService.processMetaWebhookPayload(payload),
+      ).rejects.toThrow('Invalid Webhook Payload');
+    });
+
+    it('emits NEW_MESSAGE event to targeted user channel (simulated SSE connection)', async () => {
+      const testUserId = 'user-123';
+      const userEventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, testUserId);
+      const mockSseListener = vi.fn();
+
+      // Subscribe to the event (uses the global spied EventEmitter from setup.ts)
+      eventBus.on(userEventName, mockSseListener);
+
+      // Mock repository calls
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
+        id: 'phone-1',
+      } as never);
+
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'msg-1', content: 'hello' },
+        conversation: { id: 'conv-1' },
+        userId: testUserId,
+      } as never);
+
+      const payload = {
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  messages: [
+                    {
+                      id: 'meta-msg-1',
+                      from: 'customer-1',
+                      type: 'text',
+                      text: { body: 'hello' },
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      await MessageService.processMetaWebhookPayload(payload);
+
+      // Verify overall emission call
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        userEventName,
+        expect.objectContaining({ id: 'msg-1' }),
+      );
+
+      // Verify the simulated SSE "connection" (listener) received the data
+      expect(mockSseListener).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'msg-1',
+          content: 'hello',
+          conversation: { id: 'conv-1' },
+          userId: testUserId,
+        }),
+      );
+
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith(
+        'conv-1',
+        'hello',
+      );
+
+      // Clean up the listener
+      eventBus.off(userEventName, mockSseListener);
+    });
+
+    it('queues an empty redirect message when saved text content is missing', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
+        id: 'phone-1',
+      } as never);
+
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'msg-1', content: null },
+        conversation: { id: 'conv-1' },
+        userId: 'user-123',
+      } as never);
+
+      await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  messages: [
+                    {
+                      id: 'meta-msg-1',
+                      from: 'customer-1',
+                      type: 'text',
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1', '');
     });
   });
 });

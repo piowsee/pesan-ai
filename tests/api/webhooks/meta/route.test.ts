@@ -1,5 +1,5 @@
 import { GET, POST } from '@/app/api/webhooks/meta/route';
-import { ConversationService } from '@/services/conversation.service';
+import { MessageService } from '@/services/message.service';
 import crypto from 'crypto';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -50,9 +50,7 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
         .update(body)
         .digest('hex');
 
-      vi.mocked(
-        ConversationService.processMetaWebhookPayload,
-      ).mockResolvedValue({
+      vi.mocked(MessageService.processMetaWebhookPayload).mockResolvedValue({
         processed: true,
         count: 2,
       });
@@ -82,9 +80,7 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
         .update(body)
         .digest('hex');
 
-      vi.mocked(
-        ConversationService.processMetaWebhookPayload,
-      ).mockResolvedValue({
+      vi.mocked(MessageService.processMetaWebhookPayload).mockResolvedValue({
         processed: false,
         reason: 'Not a WABA event',
       });
