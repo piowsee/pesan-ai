@@ -49,6 +49,7 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findAllByWabaId: vi.fn(),
     findById: vi.fn(),
     getConversationMetaForSending: vi.fn(),
+    findConversationMetaForBotReply: vi.fn(),
     markConversationAsRead: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
     processIncomingMessage: vi.fn(),

@@ -63,6 +63,22 @@ export const ConversationRepository = {
     });
   },
 
+  async findConversationMetaForBotReply(params: { convId: string }) {
+    const { convId } = params;
+    return prisma.conversation.findUnique({
+      where: {
+        id: convId,
+      },
+      include: {
+        phoneNumber: {
+          include: {
+            waba: true,
+          },
+        },
+      },
+    });
+  },
+
   async markConversationAsRead(params: {
     convId: string;
     wabaId: string;

@@ -1,8 +1,13 @@
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
 import { logError } from '@/lib/server/logger';
+import { ConversationRepository } from '@/repositories/conversation.repository';
+import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { betterFetch } from '@better-fetch/fetch';
 import z from 'zod';
+
+import { MetaFetchService } from './meta-fetch.service';
 
 const outputSchema = z.object({
   // TODO: add schema for validation on response
@@ -84,5 +89,67 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
+  await _handlePostRedirectMessage({
+    conversationId,
+    content: data.botResponse,
+  });
+
   return data;
+}
+
+async function _handlePostRedirectMessage(params: {
+  conversationId: string;
+  content: string;
+}) {
+  const { conversationId, content } = params;
+  const conversation =
+    await ConversationRepository.findConversationMetaForBotReply({
+      convId: conversationId,
+    });
+
+  if (!conversation) {
+    logError(new Error(`Conversation ${conversationId} does not exist`));
+    return;
+  }
+
+  const tokenToUse = decrypt(conversation.phoneNumber.waba.systemUserToken);
+
+  if (!tokenToUse) {
+    logError(
+      new Error(
+        `WhatsApp token is missing or invalid for conversation ${conversationId}`,
+      ),
+    );
+    return;
+  }
+
+  const waResult = await MetaFetchService.sendTextMessage({
+    phoneNumberId: conversation.phoneNumber.phoneNumberId,
+    token: tokenToUse,
+    to: conversation.customerPhone,
+    text: content,
+  });
+
+  const savedMessage = await MessageRepository.saveMessage({
+    conversationId,
+    direction: 'outgoing',
+    source: 'bot',
+    type: 'text',
+    content,
+    status: waResult.status,
+    messageId: waResult.messageId,
+    timestamp: new Date(),
+  });
+
+  const userId = conversation.phoneNumber.waba.userId;
+  const eventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
+
+  if (eventBus.listenerCount(eventName) === 0) return;
+
+  eventBus.emit(eventName, {
+    ...savedMessage,
+    conversation,
+    userId,
+    wabaId: conversation.phoneNumber.wabaId,
+  });
 }
