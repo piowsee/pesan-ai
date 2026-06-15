@@ -1,9 +1,99 @@
-import * as retryableFetch from '@/lib/server/fetch-with-retry';
 import { logger } from '@/lib/server/logger';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+type BetterFetchMockConfig = {
+  baseURL?: string;
+  retry?: number;
+};
+
+const betterFetchMocks = vi.hoisted(() => {
+  const state = {
+    createFetchConfig: undefined as BetterFetchMockConfig | undefined,
+    metaFetchMock: vi.fn(),
+    createFetchMock: vi.fn(),
+  };
+
+  state.createFetchMock.mockImplementation((config) => {
+    state.createFetchConfig = config;
+    return state.metaFetchMock;
+  });
+
+  return state;
+});
+
+vi.mock('@better-fetch/fetch', () => ({
+  createFetch: betterFetchMocks.createFetchMock,
+}));
+
 vi.unmock('@/services/meta-fetch.service');
+
+const GRAPH_BASE = 'https://graph.facebook.com/v25.0';
+
+type FetchMockResponse = {
+  ok: boolean;
+  status?: number;
+  statusText?: string;
+  json: () => Promise<unknown>;
+};
+
+type BetterFetchMockOptions = {
+  auth?: { type: string; token?: string };
+  body?: unknown;
+  headers?: Record<string, string>;
+  method?: string;
+};
+
+function buildFetchInit(options: BetterFetchMockOptions = {}): RequestInit {
+  const headers = { ...options.headers };
+  let body = options.body as BodyInit | undefined;
+
+  if (options.auth?.type === 'Bearer' && options.auth.token) {
+    headers.Authorization = `Bearer ${options.auth.token}`;
+  }
+
+  if (
+    options.body !== undefined &&
+    typeof options.body === 'object' &&
+    !(options.body instanceof FormData)
+  ) {
+    headers['Content-Type'] ??= 'application/json';
+    body = JSON.stringify(options.body);
+  }
+
+  return {
+    method: options.method,
+    headers,
+    body,
+  };
+}
+
+async function fetchThroughBetterFetchMock(
+  path: string,
+  options: BetterFetchMockOptions = {},
+) {
+  const response = (await global.fetch(
+    `${GRAPH_BASE}${path}`,
+    buildFetchInit(options),
+  )) as FetchMockResponse;
+
+  if (response.ok) {
+    return { data: await response.json(), error: null };
+  }
+
+  const errorBody = await response.json();
+
+  return {
+    data: null,
+    error: {
+      ...(typeof errorBody === 'object' && errorBody !== null
+        ? errorBody
+        : { message: String(errorBody) }),
+      status: response.status,
+      statusText: response.statusText ?? '',
+    },
+  };
+}
 
 describe('MetaFetchService', { tags: ['backend'] }, () => {
   const VALID_CODE = 'auth-code-abc';
@@ -12,7 +102,10 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   const PHONE_NUMBER_ID = 'meta-phone-001';
 
   beforeEach(() => {
-    vi.spyOn(retryableFetch, 'sleep').mockResolvedValue(undefined);
+    betterFetchMocks.metaFetchMock.mockReset();
+    betterFetchMocks.metaFetchMock.mockImplementation(
+      fetchThroughBetterFetchMock,
+    );
 
     global.fetch = vi.fn().mockImplementation(async (input) => {
       const url = typeof input === 'string' ? input : input.toString();
@@ -102,6 +195,13 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
     vi.restoreAllMocks();
   });
 
+  it('configures Better Fetch for Meta Graph retries', () => {
+    expect(betterFetchMocks.createFetchConfig).toMatchObject({
+      baseURL: GRAPH_BASE,
+      retry: 3,
+    });
+  });
+
   describe('exchangeCodeForToken', () => {
     it('returns the system user access token on success', async () => {
       await expect(
@@ -111,9 +211,22 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
           userId: USER_ID,
         }),
       ).resolves.toBe('sys-user-token-xyz');
+
+      expect(betterFetchMocks.metaFetchMock).toHaveBeenCalledWith(
+        '/oauth/access_token',
+        expect.objectContaining({
+          method: 'POST',
+          body: {
+            client_id: 'test-app-id',
+            client_secret: 'app-secret',
+            grant_type: 'authorization_code',
+            code: VALID_CODE,
+          },
+        }),
+      );
     });
 
-    it('throws the retryable Meta status to the API layer', async () => {
+    it('wraps Meta token exchange failures as ApiError(502)', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -140,7 +253,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
           userId: USER_ID,
         }),
       ).rejects.toMatchObject({
-        status: 503,
+        status: 502,
         message: 'Meta token exchange is temporarily unavailable',
       });
     });
@@ -203,7 +316,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       ]);
     });
 
-    it('throws retryable failures', async () => {
+    it('wraps Meta failures as ApiError(502)', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -227,7 +340,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
           token: 'sys-user-token-xyz',
         }),
       ).rejects.toMatchObject({
-        status: 503,
+        status: 502,
         message: 'Phone number lookup temporarily unavailable',
       });
     });
@@ -300,6 +413,20 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
         messaging_product: 'whatsapp',
         pin: '230601',
       });
+
+      const betterFetchRegisterCall =
+        betterFetchMocks.metaFetchMock.mock.calls.find(([path]) =>
+          String(path).endsWith('/register'),
+        );
+      expect(betterFetchRegisterCall?.[1]).toMatchObject({
+        method: 'POST',
+        auth: { type: 'Bearer', token: 'sys-user-token-xyz' },
+        body: {
+          messaging_product: 'whatsapp',
+          pin: '230601',
+        },
+      });
+      expect(betterFetchRegisterCall?.[1]).not.toHaveProperty('options');
     });
 
     it('returns without throwing when Meta reports the number is already registered', async () => {
