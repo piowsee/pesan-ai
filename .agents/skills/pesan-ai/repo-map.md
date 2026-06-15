@@ -72,7 +72,7 @@ Do not edit generated Prisma files manually. Change the schema, then regenerate.
 - `src/lib/api-helper/jsend.ts`: standard success/fail/error response format
 - `src/lib/api-helper/error.ts`: `ApiError` and client-side error extraction
 - `src/lib/api-helper/pagination.ts`: shared `page` and `limit` parsing
-- `src/lib/server/fetch-with-retry.ts`: retry wrapper for Meta API calls
+- `src/services/meta-fetch.service.ts`: Better Fetch based Meta Graph API boundary
 - `src/lib/server/prisma.ts`: singleton Prisma client
 - `src/lib/server/logger.ts`: structured logging helpers
 - `src/lib/server/encryption.ts`: encryption and decryption helpers

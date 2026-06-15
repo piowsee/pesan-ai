@@ -80,7 +80,7 @@ This repo mixes internal database IDs and provider-facing IDs. Verify which one 
 ## Meta Integration Rules
 
 - `MetaFetchService` is the external Graph API boundary.
-- Use `fetchWithRetry` from `src/lib/server/fetch-with-retry.ts` for retryable Meta operations.
+- Use the Better Fetch instance in `MetaFetchService` for retryable Meta operations.
 - Retryable responses are `429` or `>= 500`.
 - Persist encrypted system user tokens and registration pins, not plaintext.
 - If Meta registration with the stored PIN fails in embedded signup, the service may recover by setting a fallback PIN and retrying.
