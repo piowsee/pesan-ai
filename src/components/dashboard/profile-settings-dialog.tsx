@@ -128,12 +128,13 @@ export function ProfileSettingsDialog({
           return;
         }
 
-        toast.success('Check your inboxes to confirm the email change', {
-          description:
-            'We sent a confirmation request to your current email and a verification link to your new email. Both must be confirmed to complete the change.',
-          icon: <Mail className="size-4" />,
-          duration: 8000,
-        });
+        toast.success(
+          `Check your inboxes, confirm the change from ${currentEmail}. Then verify with the link sent to ${email}.`,
+          {
+            icon: <Mail className="size-4" />,
+            duration: 8000,
+          },
+        );
       } else {
         toast.success('Profile updated successfully');
       }
