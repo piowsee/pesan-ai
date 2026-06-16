@@ -15,9 +15,9 @@ import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Mail, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -28,6 +28,12 @@ const profileSchema = z.object({
     .trim()
     .min(1, 'Name is required')
     .max(80, 'Name must be at most 80 characters'),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Enter a valid email address')
+    .max(255, 'Email must be at most 255 characters'),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -45,59 +51,100 @@ export function ProfileSettingsDialog({
 }: ProfileSettingsDialogProps) {
   const router = useRouter();
   const wasOpenRef = useRef(false);
-  const [isSavingName, setIsSavingName] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [currentName, setCurrentName] = useState(user.name);
+  const [currentEmail, setCurrentEmail] = useState(user.email);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user.name,
+      email: user.email,
     },
   });
 
   const watchedName = form.watch('name');
+  const watchedEmail = form.watch('email');
   const normalizedCurrentName = currentName.trim();
   const normalizedWatchedName = watchedName.trim();
+  const normalizedCurrentEmail = currentEmail.trim().toLowerCase();
+  const normalizedWatchedEmail = watchedEmail.trim().toLowerCase();
   const isNameUnchanged = normalizedWatchedName === normalizedCurrentName;
+  const isEmailUnchanged = normalizedWatchedEmail === normalizedCurrentEmail;
   const displayName = normalizedWatchedName || currentName;
+
+  const resetForm = useCallback(() => {
+    form.reset({ name: currentName, email: currentEmail });
+  }, [currentName, currentEmail, form]);
 
   useEffect(() => {
     setCurrentName(user.name);
-  }, [user.name]);
+    setCurrentEmail(user.email);
+  }, [user.name, user.email]);
 
   useEffect(() => {
     if (open && !wasOpenRef.current) {
-      form.reset({ name: currentName });
+      resetForm();
     }
 
     wasOpenRef.current = open;
-  }, [currentName, form, open]);
+  }, [open, resetForm]);
 
   async function handleSubmit(values: ProfileFormValues) {
     const name = values.name.trim();
+    const email = values.email.trim().toLowerCase();
 
-    if (name === normalizedCurrentName) {
+    const hasNameChanged = name !== normalizedCurrentName;
+    const hasEmailChanged = email !== normalizedCurrentEmail;
+
+    if (!hasNameChanged && !hasEmailChanged) {
       return;
     }
 
-    setIsSavingName(true);
+    setIsSaving(true);
 
     try {
-      const result = await authClient.updateUser({ name });
+      // Save name first if changed
+      if (hasNameChanged) {
+        const nameResult = await authClient.updateUser({ name });
 
-      if (result?.error) {
-        toast.error(result.error.message || 'Failed to save name');
-        return;
+        if (nameResult?.error) {
+          toast.error(nameResult.error.message || 'Failed to save name');
+          return;
+        }
+
+        setCurrentName(name);
       }
 
-      toast.success('Name updated successfully');
-      setCurrentName(name);
-      form.reset({ name });
+      // Change email if changed
+      if (hasEmailChanged) {
+        const emailResult = await authClient.changeEmail({
+          newEmail: email,
+          callbackURL: '/dashboard',
+        });
+
+        if (emailResult?.error) {
+          toast.error(emailResult.error.message || 'Failed to change email');
+          return;
+        }
+
+        toast.success(
+          `Check your inboxes, confirm the change from ${currentEmail}. Then verify with the link sent to ${email}.`,
+          {
+            icon: <Mail className="size-4" />,
+            duration: 8000,
+          },
+        );
+      } else {
+        toast.success('Profile updated successfully');
+      }
+
+      form.reset({ name, email });
       router.refresh();
     } catch {
-      toast.error('Failed to save name');
+      toast.error('Failed to save changes');
     } finally {
-      setIsSavingName(false);
+      setIsSaving(false);
     }
   }
 
@@ -107,7 +154,7 @@ export function ProfileSettingsDialog({
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription>
-            Update the account name displayed on the dashboard.
+            Update your account name and email address.
           </DialogDescription>
         </DialogHeader>
 
@@ -123,7 +170,7 @@ export function ProfileSettingsDialog({
                 {displayName}
               </p>
               <p className="truncate text-[15px] text-muted-foreground">
-                {user.email}
+                {watchedEmail || currentEmail}
               </p>
             </div>
           </div>
@@ -156,25 +203,38 @@ export function ProfileSettingsDialog({
               <Input
                 id="profile-email"
                 type="email"
-                value={user.email}
-                readOnly
-                className="bg-muted/45 text-muted-foreground"
+                autoComplete="email"
+                {...form.register('email')}
+                aria-invalid={!!form.formState.errors.email}
+                className={cn(
+                  form.formState.errors.email &&
+                    'border-destructive focus-visible:ring-destructive/20',
+                )}
               />
+              {form.formState.errors.email && (
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-xs text-muted-foreground">
+                Changing your email will send confirmation links to both your
+                current and new email addresses.
+              </p>
               <Button
                 type="submit"
                 size="lg"
                 variant="brand"
-                disabled={isSavingName || isNameUnchanged}
+                disabled={isSaving || (isNameUnchanged && isEmailUnchanged)}
               >
-                {isSavingName ? (
+                {isSaving ? (
                   <Loader2 className="animate-spin" data-icon="inline-start" />
                 ) : (
                   <Save data-icon="inline-start" />
                 )}
-                Save name
+                Save
               </Button>
             </div>
           </form>

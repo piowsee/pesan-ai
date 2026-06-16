@@ -106,6 +106,51 @@ describe('auth email helper', { tags: ['backend'] }, () => {
     );
   });
 
+  it('sends change-email-confirmation email with the rendered template and logs the approval URL in development', async () => {
+    vi.stubEnv('EMAIL_FROM', '"Pesan AI" <hello@example.com>');
+    vi.stubEnv('NODE_ENV', 'development');
+    const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
+
+    const info = await sendEmail({
+      to: 'old@example.com',
+      subject: 'Approve email change',
+      type: EmailType.CHANGE_EMAIL_CONFIRMATION,
+      params: {
+        user_name: 'Kai',
+        new_email: 'new@example.com',
+        approval_url:
+          'https://app.test/change-email/approve?token=change-token',
+      },
+    });
+
+    expect(mailMocks.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: '"Pesan AI" <hello@example.com>',
+        to: 'old@example.com',
+        subject: 'Approve email change',
+        text: 'Approve email change',
+      }),
+    );
+
+    const sentMessage = mailMocks.sendMail.mock.calls[0]?.[0];
+    expect(sentMessage.html).toContain('Hi Kai,');
+    expect(sentMessage.html).toContain('Pesan AI');
+    expect(sentMessage.html).toContain('new@example.com');
+    expect(sentMessage.html).toContain(
+      'https://app.test/change-email/approve?token=change-token',
+    );
+    expect(sentMessage.html).not.toContain('{{');
+    expect(logger.info).toHaveBeenCalledWith('Email sent: message-1', {
+      to: 'old@example.com',
+      subject: 'Approve email change',
+      type: EmailType.CHANGE_EMAIL_CONFIRMATION,
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      'Change email approval URL: https://app.test/change-email/approve?token=change-token',
+    );
+    expect(info).toEqual({ messageId: 'message-1' });
+  });
+
   it('logs mail transport failures without throwing', async () => {
     const error = new Error('SMTP unavailable');
     mailMocks.sendMail.mockRejectedValue(error);

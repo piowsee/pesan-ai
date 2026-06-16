@@ -6,6 +6,7 @@ import path from 'path';
 export enum EmailType {
   VERIFICATION = 'verification',
   RESET_PASSWORD = 'reset-password',
+  CHANGE_EMAIL_CONFIRMATION = 'change-email-confirmation',
 }
 
 interface BaseTemplateParams {
@@ -22,7 +23,16 @@ interface ResetPasswordParams extends BaseTemplateParams {
   reset_url: string;
 }
 
-type TemplateParams = VerificationParams | ResetPasswordParams;
+interface ChangeEmailConfirmationParams extends BaseTemplateParams {
+  user_name: string;
+  new_email: string;
+  approval_url: string;
+}
+
+type TemplateParams =
+  | VerificationParams
+  | ResetPasswordParams
+  | ChangeEmailConfirmationParams;
 
 const getTransporter = (): Transporter => {
   return nodemailer.createTransport({
@@ -76,6 +86,13 @@ type SendEmailOptions =
       type: EmailType.RESET_PASSWORD;
       params: ResetPasswordParams;
       text?: string;
+    }
+  | {
+      to: string;
+      subject: string;
+      type: EmailType.CHANGE_EMAIL_CONFIRMATION;
+      params: ChangeEmailConfirmationParams;
+      text?: string;
     };
 
 /**
@@ -105,6 +122,9 @@ export async function sendEmail(
       }
       if ('reset_url' in params) {
         logger.info(`Reset URL: ${params.reset_url}`);
+      }
+      if ('approval_url' in params) {
+        logger.info(`Change email approval URL: ${params.approval_url}`);
       }
     }
 
