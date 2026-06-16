@@ -1,3 +1,5 @@
 export async function register() {
-  await import('./lib/server/encryption');
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./lib/server/encryption');
+  }
 }
