@@ -73,7 +73,8 @@ This repo mixes internal database IDs and provider-facing IDs. Verify which one 
 - Log important start and success milestones with `logger`.
 - Use `logError` when recovering from or recording partial failures.
 - Decrypt stored credentials only in the service layer when needed for an upstream call.
-- Map upstream Meta failures to `ApiError` with explicit statuses, typically 502 for bad upstream responses.
+- Map upstream failures to `ApiError` with explicit statuses, typically 502 for bad upstream responses.
+- Use `@better-fetch/fetch` (`betterFetch` or `createFetch`) for all external HTTP API calls, not just Meta. Do not use raw `fetch`; Better Fetch provides automatic retry, typed responses, and consistent error handling.
 - Use `Promise.all` for independent required calls and `Promise.allSettled` when partial success is acceptable.
 - Emit realtime events only after the database write succeeds.
 
