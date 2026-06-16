@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "prepare": "husky",
-    "format:write": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss}\"",
+    "format:write": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss,mdx}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,yml,yaml,css,scss,mdx}\"",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
