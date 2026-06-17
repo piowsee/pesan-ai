@@ -1,4 +1,18 @@
 [book]
 title = "pesan-ai-guide-docs"
-authors = ["WilsonnnTan"]
+authors = [
+  "Wilson Angelie Tan <wilsonangelietann@gmail.com>",
+]
 language = "en"
+
+[preprocessor.gettext]
+after = ["links"]
+
+[output.html]
+additional-css = [
+  "./theme/css/mdbook-admonish.css",
+  "./theme/css/language-picker.css"
+]
+
+[build]
+extra-watch-dirs = ["po"]
