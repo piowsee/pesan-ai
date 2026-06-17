@@ -1,0 +1,25 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: pesan-ai-guide-docs\n"
+"POT-Creation-Date: 2026-06-17T18:22:35+07:00\n"
+"PO-Revision-Date: 2026-06-17 19:02+0700\n"
+"Last-Translator: wilsonangelietann@gmail.com\n"
+"Language-Team: Indonesian <translation-team-id@lists.sourceforge.net>\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.9\n"
+
+#: src/SUMMARY.md:1
+msgid "Summary"
+msgstr "Rangkuman"
+
+#: src/SUMMARY.md:3 src/chapter_1.md:1
+msgid "Chapter 1"
+msgstr "Bagian 1"
+
+#: src/chapter_1.md:2
+msgid "This is the guide book for pesan-ai product"
+msgstr "Buku manual untuk produk pesan-ai"

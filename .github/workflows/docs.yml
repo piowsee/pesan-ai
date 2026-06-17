@@ -25,23 +25,63 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+
     env:
-      MDBOOK_VERSION: 0.4.36
+      MDBOOK_VERSION: 0.5.3
+      # Update the language picker in head.hbs to link new languages.
+      LANGUAGES: id
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Install mdBook
         run: |
           curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf -y | sh
           rustup update
           cargo install --version ${MDBOOK_VERSION} mdbook
+
+      - name: Install mdbook-i18n-helpers
+        run: |
+          cargo install mdbook-i18n-helpers --locked --version 0.4.0
+
+      - name: Run tests
+        run: mdbook test
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-      - name: Build with mdBook
+
+      - name: Build HTML
         run: mdbook build
         working-directory: ./docs
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+
+      - name: Check for broken links
+        run: |
+          curl -sSLo linkcheck.sh \
+            https://raw.githubusercontent.com/rust-lang/rust/master/src/tools/linkchecker/linkcheck.sh
+          sh linkcheck.sh --all rust-by-example
+
+      - name: Build all translations
+        run: |
+          for po_lang in ${{ env.LANGUAGES }}; do
+            echo "::group::Building $po_lang translation"
+            # Set language and adjust site URL. Clear the redirects
+            # since they are in sync with the source files, not the
+            # translation.
+            MDBOOK_BOOK__LANGUAGE=$po_lang \
+            mdbook build -d book/$po_lang
+            echo "::endgroup::"
+          done
+
+      - name: Check all translations for broken links
+        run: |
+          for po_lang in ${{ env.LANGUAGES }}; do
+            MDBOOK_BOOK__LANGUAGE=$po_lang \
+            sh linkcheck.sh --all rust-by-example
+          done
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
           path: ./docs/book
 
