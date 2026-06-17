@@ -24,6 +24,9 @@ concurrency:
 jobs:
   # Build job
   build:
+    defaults:
+      run:
+        working-directory: ./docs
     runs-on: ubuntu-latest
 
     env:
@@ -53,13 +56,11 @@ jobs:
 
       - name: Build HTML
         run: mdbook build
-        working-directory: ./docs
 
       - name: Check for broken links
-        run: |
-          curl -sSLo linkcheck.sh \
-            https://raw.githubusercontent.com/rust-lang/rust/master/src/tools/linkchecker/linkcheck.sh
-          sh linkcheck.sh --all rust-by-example
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --root-dir "$(pwd)" --verbose --no-progress './docs/**/*.md' './docs/book/**/*.html'
 
       - name: Build all translations
         run: |
@@ -74,14 +75,12 @@ jobs:
           done
 
       - name: Check all translations for broken links
-        run: |
-          for po_lang in ${{ env.LANGUAGES }}; do
-            MDBOOK_BOOK__LANGUAGE=$po_lang \
-            sh linkcheck.sh --all rust-by-example
-          done
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --root-dir "$(pwd)" --verbose --no-progress './docs/book/${{ env.LANGUAGES }}/**/*.html'
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs/book
 
