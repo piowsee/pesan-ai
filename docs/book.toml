@@ -10,8 +10,7 @@ after = ["links"]
 
 [output.html]
 additional-css = [
-  "./theme/css/mdbook-admonish.css",
-  "./theme/css/language-picker.css"
+  "./theme/css/language-picker.css",
 ]
 
 [build]
