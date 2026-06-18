@@ -1,3 +1,7 @@
+{
+  "tab_size": 2
+}
+
 # pesan-ai Documentation
 
 This project uses [mdBook](https://rust-lang.github.io/mdBook/) to build documentation and [mdbook-i18n-helpers](https://github.com/google/mdbook-i18n-helpers) for translations.
@@ -38,7 +42,8 @@ All tools are ready.
 
 ## Running a Translated Book
 
-> **Note:** Serving a translated book **only works on Linux**. It is not supported on Windows or macOS.
+> [!NOTE]
+> Serving a translated book **only works on Linux**. It is not supported on Windows or macOS.
 
 Replace `xx` with the locale code (e.g. `id` for Indonesian).
 
@@ -127,6 +132,7 @@ Rebuild the docs to check that translations appear correctly:
 mdbook build
 ```
 
-> On Windows, you cannot serve a translated book.
+> [!NOTE]
+> On Windows, you cannot serve a translated book, but you **can** build it and open the static files from `book/`.
 
 ---
