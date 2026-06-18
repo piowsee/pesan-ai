@@ -1,7 +1,3 @@
-{
-  "tab_size": 2
-}
-
 # pesan-ai Documentation
 
 This project uses [mdBook](https://rust-lang.github.io/mdBook/) to build documentation and [mdbook-i18n-helpers](https://github.com/google/mdbook-i18n-helpers) for translations.
