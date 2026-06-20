@@ -18,7 +18,7 @@ export const CreateUserService = {
   async _sendOnboardingEmail(email: string, userId: string) {
     const callbackURL = await createResetPasswordCallbackUrl(userId);
 
-    await auth.api.sendVerificationEmail({
+    auth.api.sendVerificationEmail({
       body: {
         email,
         callbackURL,
@@ -78,15 +78,7 @@ export const CreateUserService = {
     }
 
     if (existingUser) {
-      if (existingUser.emailVerified) {
-        throw new ApiError('User already exists', 400);
-      }
-
-      await this._sendOnboardingEmail(existingUser.email, existingUser.id);
-
-      return {
-        message: 'User already exists and onboarding email has been resent',
-      };
+      throw new ApiError('User with that email already exists', 400);
     }
 
     const requestHeaders = await headers();
