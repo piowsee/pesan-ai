@@ -114,7 +114,7 @@ describe('CreateUserService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('resends onboarding when the user already exists but is unverified', async () => {
+    it('Throw 400 ApiError on creating user if user already exist', async () => {
       vi.mocked(auth.api.listUsers).mockResolvedValue({
         users: [
           {
@@ -135,22 +135,13 @@ describe('CreateUserService', { tags: ['backend'] }, () => {
         status: true,
       } as never);
 
-      const result = await CreateUserService.createUserOrResendOnboarding({
-        email: 'pending@example.com',
-        name: 'Pending User',
-        role: 'user',
-      });
-
-      expect(auth.api.createUser).not.toHaveBeenCalled();
-      expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
-        body: {
+      await expect(
+        CreateUserService.createUserOrResendOnboarding({
           email: 'pending@example.com',
-          callbackURL: '/en/reset-password?token=reset-token-456',
-        },
-      });
-      expect(result).toEqual({
-        message: 'User already exists and onboarding email has been resent',
-      });
+          name: 'Pending User',
+          role: 'user',
+        }),
+      ).rejects.toThrow(ApiError);
     });
 
     it('resends onboarding through the resend action', async () => {
