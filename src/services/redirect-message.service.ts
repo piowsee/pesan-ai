@@ -98,6 +98,11 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
+  logger.info('Bot webhook returned response', {
+    conversationId,
+    botResponseLength: data.botResponse.length,
+  });
+
   await _handlePostRedirectMessage({
     conversationId,
     content: data.botResponse,
