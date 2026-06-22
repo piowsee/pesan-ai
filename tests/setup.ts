@@ -52,6 +52,8 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findConversationMetaForBotReply: vi.fn(),
     markConversationAsRead: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
+    findConversationById: vi.fn(),
+    updateAdminTakeoverStatus: vi.fn(),
     processIncomingMessage: vi.fn(),
   },
 }));
@@ -105,6 +107,7 @@ vi.mock('@/services/conversation.service', () => ({
     getAllConversations: vi.fn(),
     getChatDetail: vi.fn(),
     markAsRead: vi.fn(),
+    updateAdminTakeoverStatus: vi.fn(),
   },
 }));
 

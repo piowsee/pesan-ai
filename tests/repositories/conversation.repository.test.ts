@@ -151,6 +151,46 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('admin takeover helpers', () => {
+    it('finds an owned conversation and updates admin takeover', async () => {
+      const conversation = await prisma.conversation.create({
+        data: {
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999003',
+          customerName: 'Takeover Test Customer',
+          lastMessageAt: new Date(),
+          lastCustomerMessageAt: new Date(),
+        },
+      });
+
+      const found = await ConversationRepository.findConversationById({
+        conversationId: conversation.id,
+      });
+
+      expect(found?.id).toBe(conversation.id);
+      expect(found?.adminTakeover).toBe(false);
+      expect(found?.phoneNumber.waba.userId).toBe(userId);
+
+      const updated = await ConversationRepository.updateAdminTakeoverStatus({
+        conversationId: conversation.id,
+        adminTakeover: true,
+      });
+
+      expect(updated).toEqual({
+        id: conversation.id,
+        adminTakeover: true,
+      });
+    });
+
+    it('returns null when the conversation does not exist', async () => {
+      const result = await ConversationRepository.findConversationById({
+        conversationId: 'missing-conversation-id',
+      });
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('processIncomingMessage', () => {
     it('upserts a new conversation and message for a new customer', async () => {
       const result = await ConversationRepository.processIncomingMessage({
