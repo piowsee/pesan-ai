@@ -1,3 +1,4 @@
+import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 
@@ -37,5 +38,42 @@ export const ConversationService = {
       ...result,
     });
     return result;
+  },
+
+  async updateAdminTakeoverStatus(params: {
+    conversationId: string;
+    userId: string;
+    adminTakeover: boolean;
+  }) {
+    const { conversationId, userId, adminTakeover } = params;
+    logger.info('Updating conversation admin takeover', {
+      conversationId,
+      userId,
+      adminTakeover,
+    });
+
+    const conversation = await ConversationRepository.findConversationById({
+      conversationId,
+    });
+
+    if (!conversation || conversation.phoneNumber.waba.userId !== userId) {
+      throw new ApiError('Conversation not found or access denied', 404);
+    }
+
+    const updated = await ConversationRepository.updateAdminTakeoverStatus({
+      conversationId,
+      adminTakeover,
+    });
+
+    logger.info('Conversation admin takeover updated', {
+      conversationId,
+      userId,
+      adminTakeover: updated.adminTakeover,
+    });
+
+    return {
+      conversationId: updated.id,
+      adminTakeover: updated.adminTakeover,
+    };
   },
 };

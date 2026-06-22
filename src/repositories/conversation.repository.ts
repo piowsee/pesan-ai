@@ -120,6 +120,43 @@ export const ConversationRepository = {
     });
   },
 
+  async findConversationById(params: { conversationId: string }) {
+    const { conversationId } = params;
+    return prisma.conversation.findUnique({
+      where: {
+        id: conversationId,
+      },
+      select: {
+        id: true,
+        adminTakeover: true,
+        phoneNumber: {
+          select: {
+            waba: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  },
+
+  async updateAdminTakeoverStatus(params: {
+    conversationId: string;
+    adminTakeover: boolean;
+  }) {
+    const { conversationId, adminTakeover } = params;
+    return prisma.conversation.update({
+      where: { id: conversationId },
+      data: { adminTakeover },
+      select: {
+        id: true,
+        adminTakeover: true,
+      },
+    });
+  },
+
   async processIncomingMessage(params: {
     phoneNumberId: string; // Internal ID
     customerPhone: string;
