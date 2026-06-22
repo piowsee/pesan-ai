@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 type BetterFetchMockConfig = {
   baseURL?: string;
-  retry?: number;
+  retry?: { type: string; attempts: number };
 };
 
 const betterFetchMocks = vi.hoisted(() => {
@@ -198,7 +198,67 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
   it('configures Better Fetch for Meta Graph retries', () => {
     expect(betterFetchMocks.createFetchConfig).toMatchObject({
       baseURL: GRAPH_BASE,
-      retry: 3,
+      retry: {
+        type: 'exponential',
+        attempts: 3,
+        baseDelay: 1000,
+        maxDelay: 15000,
+      },
+    });
+  });
+
+  describe('retry shouldRetry condition', () => {
+    function getShouldRetry(): (response: Response | null) => boolean {
+      const config = betterFetchMocks.createFetchConfig as unknown as
+        | {
+            retry: {
+              shouldRetry: (response: Response | null) => boolean;
+            };
+          }
+        | undefined;
+      return config!.retry.shouldRetry;
+    }
+
+    const buildResponse = (status: number) => ({ status }) as Response;
+
+    it('does not retry on 400 Bad Request', () => {
+      expect(getShouldRetry()(buildResponse(400))).toBe(false);
+    });
+
+    it('does not retry on 401 Unauthorized', () => {
+      expect(getShouldRetry()(buildResponse(401))).toBe(false);
+    });
+
+    it('does not retry on 403 Forbidden', () => {
+      expect(getShouldRetry()(buildResponse(403))).toBe(false);
+    });
+
+    it('does not retry on 404 Not Found', () => {
+      expect(getShouldRetry()(buildResponse(404))).toBe(false);
+    });
+
+    it('does not retry on 409 Conflict', () => {
+      expect(getShouldRetry()(buildResponse(409))).toBe(false);
+    });
+
+    it('retries on 429 Too Many Requests', () => {
+      expect(getShouldRetry()(buildResponse(429))).toBe(true);
+    });
+
+    it('retries on 500 Internal Server Error', () => {
+      expect(getShouldRetry()(buildResponse(500))).toBe(true);
+    });
+
+    it('retries on 502 Bad Gateway', () => {
+      expect(getShouldRetry()(buildResponse(502))).toBe(true);
+    });
+
+    it('retries on 503 Service Unavailable', () => {
+      expect(getShouldRetry()(buildResponse(503))).toBe(true);
+    });
+
+    it('does not retry when response is null', () => {
+      expect(getShouldRetry()(null)).toBe(true);
     });
   });
 

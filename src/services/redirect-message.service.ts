@@ -1,6 +1,6 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
-import { logError } from '@/lib/server/logger';
+import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
@@ -22,18 +22,14 @@ async function _findWebhookData(params: { conversationId: string }) {
     await WebhookRepository.findWebhookByConversationId({ conversationId });
 
   if (!url || !passphrase) {
-    logError(
-      new Error(
-        `Webhook URL/passphrase is null for conversation ${conversationId}`,
-      ),
+    logger.warn(
+      `Webhook URL/passphrase is null for conversation ${conversationId}`,
     );
     return;
   }
 
   if (!isActive) {
-    logError(
-      new Error(`Webhook is inactive for conversation ${conversationId}`),
-    );
+    logger.warn(`Webhook is inactive for conversation ${conversationId}`);
     return;
   }
 
@@ -60,6 +56,19 @@ export async function redirectMessageToExternalWebhook(params: {
       type: 'linear',
       attempts: 3,
       delay: 1000, // 1 sec delay
+      shouldRetry: (response) => {
+        // Don't retry on 4xx client errors that are not transient.
+        // 429 (Too Many Requests) is retryable because the server asks us to back off.
+        if (
+          response &&
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
+          return false;
+        }
+        return true;
+      },
     },
     method: 'POST',
     auth: {
@@ -117,7 +126,7 @@ async function _handlePostRedirectMessage(params: {
   if (!tokenToUse) {
     logError(
       new Error(
-        `WhatsApp token is missing or invalid for conversation ${conversationId}`,
+        `WhatsApp token is missing or invalid for conversation ${conversationId}/ WABA ID ${conversation.phoneNumber.wabaId}`,
       ),
     );
     return;
