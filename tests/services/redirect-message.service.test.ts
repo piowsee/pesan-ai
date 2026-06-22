@@ -1,6 +1,6 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
-import { logError } from '@/lib/server/logger';
+import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
@@ -143,6 +143,23 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     eventBus.off(eventName, listener);
   });
 
+  it('returns undefined when webhook URL and passphrase are null', async () => {
+    vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
+      url: null,
+      passphrase: null,
+      isActive: true,
+    });
+
+    const result = await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      messages: ['hello'],
+    });
+
+    expect(result).toBeUndefined();
+    expect(betterFetch).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
   it('does not call the external webhook when the configured webhook is inactive', async () => {
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
       url: 'https://bot.example.com/message',
@@ -157,11 +174,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     expect(result).toBeUndefined();
     expect(betterFetch).not.toHaveBeenCalled();
-    expect(logError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'Webhook is inactive for conversation conv-1',
-      }),
-    );
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   it('returns undefined and logs when the webhook response schema is invalid', async () => {
