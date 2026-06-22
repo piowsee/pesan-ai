@@ -262,5 +262,61 @@ describe('MessageService', { tags: ['backend'] }, () => {
 
       expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1', '');
     });
+
+    it('does not queue redirect message when admin has taken over the conversation', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
+        id: 'phone-1',
+      } as never);
+
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'msg-1', content: 'manual please' },
+        conversation: { id: 'conv-1', adminTakeover: true },
+        userId: 'user-123',
+      } as never);
+
+      const result = await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  messages: [
+                    {
+                      id: 'meta-msg-1',
+                      from: 'customer-1',
+                      type: 'text',
+                      text: { body: 'manual please' },
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-123'),
+        expect.objectContaining({
+          id: 'msg-1',
+          conversation: { id: 'conv-1', adminTakeover: true },
+        }),
+      );
+      expect(handleDebounceIncomingMessage).not.toHaveBeenCalled();
+    });
   });
 });

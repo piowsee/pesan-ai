@@ -297,6 +297,13 @@ export const MessageService = {
       wabaId,
     });
 
+    if (conversation.adminTakeover) {
+      logger.info('Skipping debounce queue for admin takeover conversation', {
+        conversationId: conversation.id,
+      });
+      return true;
+    }
+
     // queue message
     // still call even if content message is null
     handleDebounceIncomingMessage(conversation.id, savedMessage.content ?? '');
