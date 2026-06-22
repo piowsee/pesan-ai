@@ -56,6 +56,19 @@ export async function redirectMessageToExternalWebhook(params: {
       type: 'linear',
       attempts: 3,
       delay: 1000, // 1 sec delay
+      shouldRetry: (response) => {
+        // Don't retry on 4xx client errors that are not transient.
+        // 429 (Too Many Requests) is retryable because the server asks us to back off.
+        if (
+          response &&
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
+          return false;
+        }
+        return true;
+      },
     },
     method: 'POST',
     auth: {
