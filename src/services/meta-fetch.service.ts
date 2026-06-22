@@ -16,7 +16,25 @@ const DEFAULT_FETCH_RETRY_COUNT = 3;
 
 const metaFetch = createFetch({
   baseURL: GRAPH_BASE,
-  retry: DEFAULT_FETCH_RETRY_COUNT,
+  retry: {
+    type: 'exponential',
+    attempts: DEFAULT_FETCH_RETRY_COUNT,
+    baseDelay: 1000,
+    maxDelay: 15000,
+    shouldRetry: (response) => {
+      // Don't retry on 4xx client errors that are not transient.
+      // 429 (Too Many Requests) is retryable because the server asks us to back off.
+      if (
+        response &&
+        response.status >= 400 &&
+        response.status < 500 &&
+        response.status !== 429
+      ) {
+        return false;
+      }
+      return true;
+    },
+  },
 });
 
 type MetaFetchOptions = BetterFetchOption & {
