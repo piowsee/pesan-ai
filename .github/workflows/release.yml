@@ -1,0 +1,122 @@
+name: Release
+run-name: Release automation for ${{ github.sha }} by @${{ github.actor }}
+
+on:
+  push:
+    branches: ['main']
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.14.0'
+          cache: 'pnpm'
+          cache-dependency-path: './pnpm-lock.yaml'
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Create release pull request
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version:packages
+          title: 'chore: release'
+          commit: 'chore: release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Snapshot existing tags
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: git tag --list | sort > "$RUNNER_TEMP/tags-before.txt"
+
+      - name: Create git tags
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: pnpm release
+
+      - name: Collect new tags
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        id: release-tags
+        run: |
+          git tag --list | sort > "$RUNNER_TEMP/tags-after.txt"
+          comm -13 "$RUNNER_TEMP/tags-before.txt" "$RUNNER_TEMP/tags-after.txt" > "$RUNNER_TEMP/new-tags.txt"
+
+          if [ -s "$RUNNER_TEMP/new-tags.txt" ]; then
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push git tags
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.release-tags.outputs.created == 'true'
+        run: |
+          while IFS= read -r tag; do
+            git push origin "refs/tags/$tag"
+          done < "$RUNNER_TEMP/new-tags.txt"
+
+      - name: Create release notes
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.release-tags.outputs.created == 'true'
+        run: |
+          while IFS= read -r tag; do
+            package_name="${tag%@*}"
+            version="${tag##*@}"
+            notes_file="$RUNNER_TEMP/release-notes-$tag.md"
+            changelog_file="$(node -e '
+              const fs = require("fs");
+              const path = require("path");
+              const packageName = process.argv[1];
+              const candidates = ["package.json", "docs/package.json"];
+
+              for (const candidate of candidates) {
+                if (!fs.existsSync(candidate)) continue;
+
+                const packageJson = JSON.parse(fs.readFileSync(candidate, "utf8"));
+                if (packageJson.name === packageName) {
+                  console.log(path.join(path.dirname(candidate), "CHANGELOG.md"));
+                  break;
+                }
+              }
+            ' "$package_name")"
+
+            if [ -n "$changelog_file" ] && [ -f "$changelog_file" ]; then
+              awk -v version="$version" '
+                $0 ~ "^## \\[?" version "\\]?" { in_section = 1; next }
+                in_section && /^## / { exit }
+                in_section { print }
+              ' "$changelog_file" > "$notes_file"
+            fi
+
+            if [ ! -s "$notes_file" ]; then
+              echo "Release $tag" > "$notes_file"
+            fi
+          done < "$RUNNER_TEMP/new-tags.txt"
+
+      - name: Create GitHub releases
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.release-tags.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          while IFS= read -r tag; do
+            gh release create "$tag" --title "$tag" --notes-file "$RUNNER_TEMP/release-notes-$tag.md"
+          done < "$RUNNER_TEMP/new-tags.txt"
