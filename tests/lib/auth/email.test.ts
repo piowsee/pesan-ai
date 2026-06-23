@@ -112,6 +112,39 @@ describe('auth email helper', { tags: ['backend'] }, () => {
     expect(info).toEqual({ messageId: 'message-1' });
   });
 
+  it('escapes account request fields before rendering HTML', async () => {
+    const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
+
+    await sendEmail({
+      to: 'poc.helpteam@gmail.com',
+      replyTo: 'owner@example.com',
+      subject: 'New Pesan AI account request from Owner',
+      type: EmailType.ACCOUNT_REQUEST,
+      text: 'New account request details',
+      params: {
+        requester_name: 'Owner <img src=x onerror=alert(1)>',
+        requester_email: 'owner@example.com"><img src=x>',
+        company_name: 'Studio & Spa',
+        phone_number: '<svg/onload=alert(1)>',
+        message:
+          'Can you check this?\n<img src="https://tracker.test/pixel" /><a href="https://phish.test">Open</a>',
+      },
+    });
+
+    const html = mailMocks.sendMail.mock.calls[0]?.[0].html;
+    expect(html).not.toContain('<img src=x');
+    expect(html).not.toContain('<img src="https://tracker.test/pixel"');
+    expect(html).not.toContain('<svg/onload=alert(1)>');
+    expect(html).not.toContain('<a href="https://phish.test"');
+    expect(html).toContain('Owner &lt;img src=x onerror=alert(1)&gt;');
+    expect(html).toContain('owner@example.com&quot;&gt;&lt;img src=x&gt;');
+    expect(html).toContain('Studio &amp; Spa');
+    expect(html).toContain('&lt;svg/onload=alert(1)&gt;');
+    expect(html).toContain(
+      '&lt;img src=&quot;https://tracker.test/pixel&quot; /&gt;&lt;a href=&quot;https://phish.test&quot;&gt;Open&lt;/a&gt;',
+    );
+  });
+
   it('uses fallback sender and subject text while logging development links', async () => {
     vi.stubEnv('EMAIL_FROM', '');
     vi.stubEnv('NODE_ENV', 'development');

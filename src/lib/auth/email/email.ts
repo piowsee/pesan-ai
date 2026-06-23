@@ -44,6 +44,18 @@ type TemplateParams =
   | ChangeEmailConfirmationParams
   | AccountRequestParams;
 
+const HTML_ESCAPE_CHARS: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+const escapeHtml = (value: string): string => {
+  return value.replace(/[&<>"']/g, (character) => HTML_ESCAPE_CHARS[character]);
+};
+
 const getTransporter = (): Transporter => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
@@ -75,10 +87,15 @@ const loadTemplate = (type: EmailType, params: TemplateParams): string => {
 
   const template = fs.readFileSync(templatePath, 'utf8');
 
-  params.app_name = 'Pesan AI';
+  const templateParams: Record<string, string | undefined> = {
+    ...(params as unknown as Record<string, string | undefined>),
+    app_name: 'Pesan AI',
+  };
 
   return template.replace(/{{\s*(.+?)\s*}}/g, (match, key) => {
-    return (params as unknown as Record<string, string>)[key] || match;
+    const value = templateParams[key];
+
+    return value === undefined ? match : escapeHtml(value);
   });
 };
 
