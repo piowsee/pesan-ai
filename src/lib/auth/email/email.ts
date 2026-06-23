@@ -7,6 +7,7 @@ export enum EmailType {
   VERIFICATION = 'verification',
   RESET_PASSWORD = 'reset-password',
   CHANGE_EMAIL_CONFIRMATION = 'change-email-confirmation',
+  ACCOUNT_REQUEST = 'account-request',
 }
 
 interface BaseTemplateParams {
@@ -29,10 +30,19 @@ interface ChangeEmailConfirmationParams extends BaseTemplateParams {
   approval_url: string;
 }
 
+interface AccountRequestParams extends BaseTemplateParams {
+  requester_name: string;
+  requester_email: string;
+  company_name: string;
+  phone_number: string;
+  message: string;
+}
+
 type TemplateParams =
   | VerificationParams
   | ResetPasswordParams
-  | ChangeEmailConfirmationParams;
+  | ChangeEmailConfirmationParams
+  | AccountRequestParams;
 
 const getTransporter = (): Transporter => {
   return nodemailer.createTransport({
@@ -72,28 +82,30 @@ const loadTemplate = (type: EmailType, params: TemplateParams): string => {
   });
 };
 
+type BaseSendEmailOptions = {
+  to: string;
+  subject: string;
+  replyTo?: string;
+  text?: string;
+};
+
 type SendEmailOptions =
-  | {
-      to: string;
-      subject: string;
+  | ({
       type: EmailType.VERIFICATION;
       params: VerificationParams;
-      text?: string;
-    }
-  | {
-      to: string;
-      subject: string;
+    } & BaseSendEmailOptions)
+  | ({
       type: EmailType.RESET_PASSWORD;
       params: ResetPasswordParams;
-      text?: string;
-    }
-  | {
-      to: string;
-      subject: string;
+    } & BaseSendEmailOptions)
+  | ({
       type: EmailType.CHANGE_EMAIL_CONFIRMATION;
       params: ChangeEmailConfirmationParams;
-      text?: string;
-    };
+    } & BaseSendEmailOptions)
+  | ({
+      type: EmailType.ACCOUNT_REQUEST;
+      params: AccountRequestParams;
+    } & BaseSendEmailOptions);
 
 /**
  * Send an email using a template
@@ -109,6 +121,7 @@ export async function sendEmail(
     const info: SentMessageInfo = await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Pesan AI" <noreply@example.com>',
       to,
+      replyTo: options.replyTo,
       subject,
       text: text || subject,
       html,

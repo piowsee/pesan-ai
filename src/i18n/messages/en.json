@@ -11,6 +11,10 @@
       "title": "Login | pesan.ai",
       "description": "Sign in to your pesan.ai account and manage WhatsApp AI chat automation for your business."
     },
+    "requestAccount": {
+      "title": "Request an Account | pesan.ai",
+      "description": "Request access to pesan.ai and our team will contact you about setting up a business account."
+    },
     "terms": {
       "title": "Terms of Service | pesan.ai",
       "description": "Read the Terms of Service for pesan.ai to understand platform usage and legal obligations."
@@ -111,6 +115,10 @@
         "title": "Login to Your Account",
         "subtitle": "Enter your email and password."
       },
+      "requestAccount": {
+        "title": "Request an Account",
+        "subtitle": "Tell us how to reach you and our team will follow up."
+      },
       "forgotPassword": {
         "title": "Forgot Password",
         "subtitle": "Enter your email to receive a password reset link."
@@ -129,6 +137,7 @@
         "labels": {
           "password": "Password",
           "forgotPassword": "Forgot password?",
+          "requestAccount": "Request an account",
           "agreePrefix": "I agree to the",
           "terms": "Terms of Service",
           "and": "and",
@@ -158,6 +167,34 @@
         "errors": {
           "invalidEmail": "Invalid email format",
           "unknownError": "An error occurred while requesting a password reset. Please try again."
+        }
+      },
+      "requestAccount": {
+        "labels": {
+          "name": "Your name",
+          "namePlaceholder": "Jane Doe",
+          "companyName": "Company",
+          "companyNamePlaceholder": "Your business name",
+          "phoneNumber": "WhatsApp phone",
+          "phoneNumberPlaceholder": "6281234567890",
+          "message": "What do you need?",
+          "messagePlaceholder": "Tell us about your business, team size, or WhatsApp automation needs.",
+          "submit": "Submit Request",
+          "submitting": "Submitting...",
+          "backToLogin": "Back to login",
+          "successTitle": "Request sent",
+          "successMessage": "Thanks. Our team will review your request and contact you soon."
+        },
+        "errors": {
+          "nameRequired": "Please enter your name",
+          "nameLength": "Name must be 120 characters or fewer",
+          "invalidEmail": "Invalid email format",
+          "emailLength": "Email must be 160 characters or fewer",
+          "companyNameLength": "Company name must be 160 characters or fewer",
+          "phoneNumberLength": "Phone number must be 40 characters or fewer",
+          "phoneNumberDigits": "Phone number can only contain numbers",
+          "messageLength": "Message must be 1000 characters or fewer",
+          "unknownError": "An error occurred while submitting your request. Please try again."
         }
       },
       "resetPassword": {

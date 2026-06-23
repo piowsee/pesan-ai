@@ -18,6 +18,7 @@ import { z } from 'zod';
 type LoginFormLabels = {
   password: string;
   forgotPassword: string;
+  requestAccount: string;
   agreePrefix: string;
   terms: string;
   and: string;
@@ -241,6 +242,15 @@ export function LoginForm() {
           <Loader2 className="animate-spin" data-icon="inline-start" />
         ) : null}
         {isPending ? labels.submitting : labels.submit}
+      </Button>
+
+      <Button
+        asChild
+        variant="outline"
+        size="lg"
+        className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
+      >
+        <Link href="/request-account">{labels.requestAccount}</Link>
       </Button>
     </form>
   );
