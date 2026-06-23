@@ -37,13 +37,46 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve release pull request message
+        id: release-pr-message
+        run: |
+          set +e
+          pnpm changeset status --output "$RUNNER_TEMP/changeset-status.json"
+          status_exit=$?
+          set -e
+
+          if [ "$status_exit" -ne 0 ] || [ ! -f "$RUNNER_TEMP/changeset-status.json" ]; then
+            echo "message=chore: release" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          message="$(node -e '
+            const fs = require("fs");
+            const path = require("path");
+
+            const statusPath = path.join(process.env.RUNNER_TEMP, "changeset-status.json");
+            const status = JSON.parse(fs.readFileSync(statusPath, "utf8"));
+            const releases = status.releases ?? [];
+            const release =
+              releases.find(({ name }) => name === "pesan-ai") ??
+              releases.find(({ name }) => name === "pesan-ai-docs");
+
+            if (release) {
+              console.log(`chore: release ${release.name}@${release.newVersion}`);
+            } else {
+              console.log("chore: release");
+            }
+          ')"
+
+          echo "message=$message" >> "$GITHUB_OUTPUT"
+
       - name: Create release pull request
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm version:packages
-          title: 'chore: release'
-          commit: 'chore: release'
+          title: ${{ steps.release-pr-message.outputs.message }}
+          commit: ${{ steps.release-pr-message.outputs.message }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
