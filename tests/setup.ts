@@ -189,6 +189,12 @@ vi.mock('@/services/meta-fetch.service', () => ({
 
 vi.mock('@/services/create-user.service');
 
+vi.mock('@/services/request-account.service', () => ({
+  RequestAccountService: {
+    sendRequest: vi.fn(),
+  },
+}));
+
 vi.mock('@/services/redirect-message.service', () => ({
   redirectMessageToExternalWebhook: vi.fn(),
 }));

@@ -18,6 +18,8 @@ vi.mock('nodemailer', () => ({
 
 describe('auth email helper', { tags: ['backend'] }, () => {
   beforeEach(() => {
+    mailMocks.createTransport.mockClear();
+    mailMocks.sendMail.mockClear();
     vi.stubEnv('SMTP_HOST', 'smtp.test.local');
     vi.stubEnv('SMTP_PORT', '2525');
     vi.stubEnv('SMTP_USER', 'smtp-user');
@@ -73,6 +75,40 @@ describe('auth email helper', { tags: ['backend'] }, () => {
       subject: 'Reset your password',
       type: EmailType.RESET_PASSWORD,
     });
+    expect(info).toEqual({ messageId: 'message-1' });
+  });
+
+  it('sends account request email with reply-to details', async () => {
+    vi.stubEnv('EMAIL_FROM', '"Pesan AI" <hello@example.com>');
+    const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
+
+    const info = await sendEmail({
+      to: 'poc.helpteam@gmail.com',
+      replyTo: 'owner@example.com',
+      subject: 'New Pesan AI account request from Owner',
+      type: EmailType.ACCOUNT_REQUEST,
+      text: 'New account request details',
+      params: {
+        requester_name: 'Owner',
+        requester_email: 'owner@example.com',
+        company_name: 'Owner Studio',
+        phone_number: '+62 812 3456 7890',
+        message: 'Please contact me.',
+      },
+    });
+
+    expect(mailMocks.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: '"Pesan AI" <hello@example.com>',
+        to: 'poc.helpteam@gmail.com',
+        replyTo: 'owner@example.com',
+        subject: 'New Pesan AI account request from Owner',
+        text: 'New account request details',
+      }),
+    );
+    expect(mailMocks.sendMail.mock.calls[0]?.[0].html).toContain(
+      'Owner Studio',
+    );
     expect(info).toEqual({ messageId: 'message-1' });
   });
 
