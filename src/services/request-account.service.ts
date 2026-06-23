@@ -21,12 +21,10 @@ function buildAccountRequestText(payload: RequestAccountPayload) {
 
 export const RequestAccountService = {
   async sendRequest(payload: RequestAccountPayload) {
-    const recipient =
-      process.env.ACCOUNT_REQUEST_TO || DEFAULT_ACCOUNT_REQUEST_RECIPIENT;
     const subject = `New Pesan AI account request from ${payload.name}`;
 
     const info = await sendEmail({
-      to: recipient,
+      to: DEFAULT_ACCOUNT_REQUEST_RECIPIENT,
       replyTo: payload.email,
       subject,
       type: EmailType.ACCOUNT_REQUEST,
