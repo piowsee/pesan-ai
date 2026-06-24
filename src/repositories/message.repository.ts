@@ -17,11 +17,18 @@ export const MessageRepository = {
       },
       select: {
         content: true,
+        source: true,
+        timestamp: true,
       },
       orderBy: [{ timestamp: 'asc' }, { createdAt: 'asc' }],
     });
 
-    return messages.map(({ content }) => content!);
+    return messages.map((message, index) => ({
+      sequence: index + 1,
+      source: message.source,
+      timestamp: message.timestamp,
+      content: message.content!,
+    }));
   },
 
   async findMessagesPaginated(params: {

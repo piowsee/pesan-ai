@@ -19,6 +19,9 @@ type BotWebhookOutput = z.infer<typeof botWebhookOutputSchema>;
 type BotConversation = NonNullable<
   Awaited<ReturnType<typeof ConversationRepository.findConversationById>>
 >;
+type BotMessageHistory = Awaited<
+  ReturnType<typeof MessageRepository.findConversationTextHistory>
+>;
 
 async function _findWebhookData(params: { conversationId: string }) {
   const { conversationId } = params;
@@ -45,7 +48,7 @@ async function _findWebhookData(params: { conversationId: string }) {
 
 export async function redirectMessageToExternalWebhook(params: {
   conversationId: string;
-  messages: string[];
+  messages: BotMessageHistory;
 }): Promise<BotWebhookOutput | undefined> {
   const { conversationId, messages } = params;
   const conversation = await ConversationRepository.findConversationById({
@@ -95,8 +98,17 @@ export async function redirectMessageToExternalWebhook(params: {
       type: 'Bearer',
       token: decryptedPassphrase,
     },
+    // External webhook body:
+    // {
+    //   messages: [{
+    //     sequence: number,        // chronological order, starting at 1
+    //     source: string,          // customer | admin | bot
+    //     timestamp: ISO-8601,
+    //     content: string
+    //   }]
+    // }
     body: {
-      message: messages.join('.'),
+      messages,
     },
     output: botWebhookOutputSchema,
   });

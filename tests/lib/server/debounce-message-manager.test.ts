@@ -11,8 +11,18 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     vi.setSystemTime(new Date('2026-06-24T12:00:00.000Z'));
     vi.clearAllMocks();
     vi.mocked(MessageRepository.findConversationTextHistory).mockResolvedValue([
-      'previous message',
-      'latest message',
+      {
+        sequence: 1,
+        source: 'customer',
+        timestamp: new Date('2026-06-24T11:50:00.000Z'),
+        content: 'previous message',
+      },
+      {
+        sequence: 2,
+        source: 'customer',
+        timestamp: new Date('2026-06-24T12:00:10.000Z'),
+        content: 'latest message',
+      },
     ]);
   });
 
@@ -34,7 +44,20 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledTimes(1);
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
-      messages: ['previous message', 'latest message'],
+      messages: [
+        {
+          sequence: 1,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T11:50:00.000Z'),
+          content: 'previous message',
+        },
+        {
+          sequence: 2,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T12:00:10.000Z'),
+          content: 'latest message',
+        },
+      ],
     });
     expect(
       MessageRepository.findConversationTextHistory,
@@ -48,8 +71,22 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
 
   it('keeps separate debounce timers per conversation', async () => {
     vi.mocked(MessageRepository.findConversationTextHistory)
-      .mockResolvedValueOnce(['first history'])
-      .mockResolvedValueOnce(['second history']);
+      .mockResolvedValueOnce([
+        {
+          sequence: 1,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T11:50:00.000Z'),
+          content: 'first history',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          sequence: 1,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T11:51:00.000Z'),
+          content: 'second history',
+        },
+      ]);
     handleDebounceIncomingMessage('conv-1');
     handleDebounceIncomingMessage('conv-2');
 
@@ -57,11 +94,21 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
 
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
-      messages: ['first history'],
+      messages: [
+        expect.objectContaining({
+          sequence: 1,
+          content: 'first history',
+        }),
+      ],
     });
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-2',
-      messages: ['second history'],
+      messages: [
+        expect.objectContaining({
+          sequence: 1,
+          content: 'second history',
+        }),
+      ],
     });
   });
 });

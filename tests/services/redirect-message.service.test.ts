@@ -15,6 +15,17 @@ vi.mock('@better-fetch/fetch', () => ({
   betterFetch: vi.fn(),
 }));
 
+function messageHistory(content: string) {
+  return [
+    {
+      sequence: 1,
+      source: 'customer',
+      timestamp: new Date('2026-06-24T10:00:00.000Z'),
+      content,
+    },
+  ];
+}
+
 describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -47,7 +58,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     eventBus.removeAllListeners();
   });
 
-  it('loads active webhook data by conversation, decrypts the passphrase, and posts joined messages', async () => {
+  it('posts ordered message history with source and timestamp metadata', async () => {
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
       url: 'https://bot.example.com/message',
       passphrase: 'encrypted-passphrase',
@@ -70,7 +81,20 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello', 'need help'],
+      messages: [
+        {
+          sequence: 1,
+          source: 'bot',
+          timestamp: new Date('2026-06-24T09:59:00.000Z'),
+          content: 'hello',
+        },
+        {
+          sequence: 2,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T10:00:00.000Z'),
+          content: 'need help',
+        },
+      ],
     });
 
     expect(result).toEqual({ botResponse: 'ok', adminTakeover: false });
@@ -86,7 +110,22 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       expect.objectContaining({
         method: 'POST',
         auth: { type: 'Bearer', token: 'plain-passphrase' },
-        body: { message: 'hello.need help' },
+        body: {
+          messages: [
+            {
+              sequence: 1,
+              source: 'bot',
+              timestamp: new Date('2026-06-24T09:59:00.000Z'),
+              content: 'hello',
+            },
+            {
+              sequence: 2,
+              source: 'customer',
+              timestamp: new Date('2026-06-24T10:00:00.000Z'),
+              content: 'need help',
+            },
+          ],
+        },
       }),
     );
     expect(
@@ -120,7 +159,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['queued message'],
+      messages: messageHistory('queued message'),
     });
 
     expect(result).toBeUndefined();
@@ -161,7 +200,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['I need a human'],
+      messages: messageHistory('I need a human'),
     });
 
     expect(
@@ -200,7 +239,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(eventBus.emit).toHaveBeenCalledWith(
@@ -247,7 +286,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(result).toBeUndefined();
@@ -264,7 +303,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(result).toBeUndefined();
@@ -286,7 +325,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(result).toBeUndefined();
