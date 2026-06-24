@@ -11,7 +11,7 @@ import { MetaFetchService } from './meta-fetch.service';
 
 const botWebhookOutputSchema = z.object({
   botResponse: z.string(),
-  adminTakeover: z.boolean(),
+  adminTakeover: z.boolean().default(false),
 });
 
 type BotWebhookOutput = z.infer<typeof botWebhookOutputSchema>;
