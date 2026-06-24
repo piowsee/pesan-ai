@@ -19,10 +19,12 @@ export function handleDebounceIncomingMessage(conversationId: string) {
   timers.set(
     conversationId,
     setTimeout(async () => {
+      const expiredAt = new Date();
       timers.delete(conversationId);
       const messages = await MessageRepository.findConversationTextHistory({
         conversationId,
-        since: new Date(Date.now() - BOT_HISTORY_WINDOW_MS),
+        since: new Date(expiredAt.getTime() - BOT_HISTORY_WINDOW_MS),
+        createdBeforeOrAt: expiredAt,
       });
 
       logger.info('Debounce window expired — forwarding message history', {

@@ -42,6 +42,7 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(MessageRepository.findConversationTextHistory).toHaveBeenCalledWith({
       conversationId: 'conv-1',
       since: new Date('2026-06-24T11:00:25.000Z'),
+      createdBeforeOrAt: new Date('2026-06-24T12:00:25.000Z'),
     });
   });
 

@@ -4,14 +4,16 @@ export const MessageRepository = {
   async findConversationTextHistory(params: {
     conversationId: string;
     since: Date;
+    createdBeforeOrAt: Date;
   }) {
-    const { conversationId, since } = params;
+    const { conversationId, since, createdBeforeOrAt } = params;
     const messages = await prisma.message.findMany({
       where: {
         conversationId,
         type: 'text',
         content: { not: null },
         timestamp: { gte: since },
+        createdAt: { lte: createdBeforeOrAt },
       },
       select: {
         content: true,
