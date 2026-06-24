@@ -15,6 +15,9 @@ const botWebhookOutputSchema = z.object({
 });
 
 type BotWebhookOutput = z.infer<typeof botWebhookOutputSchema>;
+type BotConversation = NonNullable<
+  Awaited<ReturnType<typeof ConversationRepository.findConversationById>>
+>;
 
 async function _findWebhookData(params: { conversationId: string }) {
   const { conversationId } = params;
@@ -44,6 +47,22 @@ export async function redirectMessageToExternalWebhook(params: {
   messages: string[];
 }): Promise<BotWebhookOutput | undefined> {
   const { conversationId, messages } = params;
+  const conversation = await ConversationRepository.findConversationById({
+    conversationId,
+  });
+
+  if (!conversation) {
+    logError(new Error(`Conversation ${conversationId} does not exist`));
+    return;
+  }
+
+  if (conversation.adminTakeover) {
+    logger.info('Skipping bot webhook for admin takeover conversation', {
+      conversationId,
+    });
+    return;
+  }
+
   const webhookData = await _findWebhookData({ conversationId });
 
   if (!webhookData) return;
@@ -105,7 +124,7 @@ export async function redirectMessageToExternalWebhook(params: {
   });
 
   await _handlePostRedirectMessage({
-    conversationId,
+    conversation,
     content: data.botResponse,
     adminTakeover: data.adminTakeover,
   });
@@ -114,27 +133,18 @@ export async function redirectMessageToExternalWebhook(params: {
 }
 
 async function _handlePostRedirectMessage(params: {
-  conversationId: string;
+  conversation: BotConversation;
   content: string;
   adminTakeover: boolean;
 }) {
-  const { conversationId, content, adminTakeover } = params;
-  const conversation =
-    await ConversationRepository.findConversationMetaForBotReply({
-      convId: conversationId,
-    });
-
-  if (!conversation) {
-    logError(new Error(`Conversation ${conversationId} does not exist`));
-    return;
-  }
+  const { conversation, content, adminTakeover } = params;
 
   let effectiveAdminTakeover = conversation.adminTakeover;
 
   if (adminTakeover) {
     const updatedConversation =
       await ConversationRepository.updateAdminTakeoverStatus({
-        conversationId,
+        conversationId: conversation.id,
         adminTakeover: true,
       });
     effectiveAdminTakeover = updatedConversation.adminTakeover;
@@ -145,7 +155,7 @@ async function _handlePostRedirectMessage(params: {
   if (!tokenToUse) {
     logError(
       new Error(
-        `WhatsApp token is missing or invalid for conversation ${conversationId}/ WABA ID ${conversation.phoneNumber.wabaId}`,
+        `WhatsApp token is missing or invalid for conversation ${conversation.id}/ WABA ID ${conversation.phoneNumber.wabaId}`,
       ),
     );
     return;
@@ -159,7 +169,7 @@ async function _handlePostRedirectMessage(params: {
   });
 
   const savedMessage = await MessageRepository.saveMessage({
-    conversationId,
+    conversationId: conversation.id,
     direction: 'outgoing',
     source: 'bot',
     type: 'text',

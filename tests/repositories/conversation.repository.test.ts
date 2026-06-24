@@ -116,32 +116,6 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('findConversationMetaForBotReply', () => {
-    it('fetches conversation metadata needed to send a bot reply', async () => {
-      const result =
-        await ConversationRepository.findConversationMetaForBotReply({
-          convId: dbConvId,
-        });
-
-      expect(result?.id).toBe(dbConvId);
-      expect(result?.customerPhone).toBe(SEED_DATA.CUSTOMER_PHONE);
-      expect(result?.phoneNumber.id).toBe(dbPhoneNumberId);
-      expect(result?.phoneNumber.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
-      expect(result?.phoneNumber.waba.id).toBe(dbWabaId);
-      expect(result?.phoneNumber.waba.userId).toBe(userId);
-      expect(result?.phoneNumber.waba.systemUserToken).toBeTruthy();
-    });
-
-    it('returns null when the conversation does not exist', async () => {
-      const result =
-        await ConversationRepository.findConversationMetaForBotReply({
-          convId: 'missing-conversation-id',
-        });
-
-      expect(result).toBeNull();
-    });
-  });
-
   describe('findPhoneNumberByMetaId', () => {
     it('locates the seeded internal phone number by its Meta ID', async () => {
       const result = await ConversationRepository.findPhoneNumberByMetaId(
