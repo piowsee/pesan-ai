@@ -304,9 +304,7 @@ export const MessageService = {
       return true;
     }
 
-    // queue message
-    // still call even if content message is null
-    handleDebounceIncomingMessage(conversation.id, savedMessage.content ?? '');
+    handleDebounceIncomingMessage(conversation.id);
 
     return true;
   },
