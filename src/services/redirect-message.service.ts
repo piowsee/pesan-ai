@@ -9,12 +9,12 @@ import z from 'zod';
 
 import { MetaFetchService } from './meta-fetch.service';
 
-const outputSchema = z.object({
-  // TODO: add schema for validation on response
+const botWebhookOutputSchema = z.object({
   botResponse: z.string(),
+  adminTakeover: z.boolean(),
 });
 
-type webhookResponse = z.infer<typeof outputSchema>;
+type BotWebhookOutput = z.infer<typeof botWebhookOutputSchema>;
 
 async function _findWebhookData(params: { conversationId: string }) {
   const { conversationId } = params;
@@ -42,7 +42,7 @@ async function _findWebhookData(params: { conversationId: string }) {
 export async function redirectMessageToExternalWebhook(params: {
   conversationId: string;
   messages: string[];
-}): Promise<webhookResponse | undefined> {
+}): Promise<BotWebhookOutput | undefined> {
   const { conversationId, messages } = params;
   const webhookData = await _findWebhookData({ conversationId });
 
@@ -78,7 +78,7 @@ export async function redirectMessageToExternalWebhook(params: {
     body: {
       message: messages.join('.'),
     },
-    output: outputSchema,
+    output: botWebhookOutputSchema,
   });
 
   if (error) {
@@ -101,11 +101,13 @@ export async function redirectMessageToExternalWebhook(params: {
   logger.info('Bot webhook returned response', {
     conversationId,
     botResponseLength: data.botResponse.length,
+    adminTakeover: data.adminTakeover,
   });
 
   await _handlePostRedirectMessage({
     conversationId,
     content: data.botResponse,
+    adminTakeover: data.adminTakeover,
   });
 
   return data;
@@ -114,8 +116,9 @@ export async function redirectMessageToExternalWebhook(params: {
 async function _handlePostRedirectMessage(params: {
   conversationId: string;
   content: string;
+  adminTakeover: boolean;
 }) {
-  const { conversationId, content } = params;
+  const { conversationId, content, adminTakeover } = params;
   const conversation =
     await ConversationRepository.findConversationMetaForBotReply({
       convId: conversationId,
@@ -124,6 +127,17 @@ async function _handlePostRedirectMessage(params: {
   if (!conversation) {
     logError(new Error(`Conversation ${conversationId} does not exist`));
     return;
+  }
+
+  let effectiveAdminTakeover = conversation.adminTakeover;
+
+  if (adminTakeover) {
+    const updatedConversation =
+      await ConversationRepository.updateAdminTakeoverStatus({
+        conversationId,
+        adminTakeover: true,
+      });
+    effectiveAdminTakeover = updatedConversation.adminTakeover;
   }
 
   const tokenToUse = decrypt(conversation.phoneNumber.waba.systemUserToken);
@@ -162,7 +176,10 @@ async function _handlePostRedirectMessage(params: {
 
   eventBus.emit(eventName, {
     ...savedMessage,
-    conversation,
+    conversation: {
+      ...conversation,
+      adminTakeover: effectiveAdminTakeover,
+    },
     userId,
     wabaId: conversation.phoneNumber.wabaId,
   });
