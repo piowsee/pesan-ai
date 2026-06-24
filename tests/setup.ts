@@ -71,6 +71,7 @@ vi.mock('@/repositories/business-profile.repository', () => ({
 
 vi.mock('@/repositories/message.repository', () => ({
   MessageRepository: {
+    findConversationTextHistory: vi.fn(),
     findMessagesPaginated: vi.fn(),
     saveMessage: vi.fn(),
   },

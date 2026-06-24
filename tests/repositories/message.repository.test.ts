@@ -109,6 +109,68 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('findConversationTextHistory', () => {
+    it('returns recent text content in chronological order', async () => {
+      const conversation = await prisma.conversation.create({
+        data: {
+          customerPhone: '998006',
+          phoneNumberId: dbPhoneNumberId,
+        },
+      });
+      await prisma.message.createMany({
+        data: [
+          {
+            conversationId: conversation.id,
+            messageId: 'history-newer',
+            direction: 'incoming',
+            source: 'customer',
+            type: 'text',
+            content: 'second',
+            status: 'delivered',
+            timestamp: new Date('2026-06-24T10:01:00.000Z'),
+          },
+          {
+            conversationId: conversation.id,
+            messageId: 'history-older',
+            direction: 'outgoing',
+            source: 'bot',
+            type: 'text',
+            content: 'first',
+            status: 'sent',
+            timestamp: new Date('2026-06-24T10:00:00.000Z'),
+          },
+          {
+            conversationId: conversation.id,
+            messageId: 'history-non-text',
+            direction: 'incoming',
+            source: 'customer',
+            type: 'image',
+            content: 'ignored caption',
+            status: 'delivered',
+            timestamp: new Date('2026-06-24T10:02:00.000Z'),
+          },
+          {
+            conversationId: conversation.id,
+            messageId: 'history-stale',
+            direction: 'incoming',
+            source: 'customer',
+            type: 'text',
+            content: 'stale',
+            status: 'delivered',
+            timestamp: new Date('2026-06-24T09:00:00.000Z'),
+          },
+        ],
+      });
+
+      const history = await MessageRepository.findConversationTextHistory({
+        conversationId: conversation.id,
+        since: new Date('2026-06-24T09:30:00.000Z'),
+      });
+
+      expect(history).toEqual(['first', 'second']);
+    });
+  });
+
   describe('saveMessage', () => {
     it('saves a message successfully', async () => {
       const testConv = await prisma.conversation.create({
