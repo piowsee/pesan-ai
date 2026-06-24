@@ -1,3 +1,4 @@
+import { CHAT_FREEFORM_WINDOW_MS } from '@/lib/chat/chat';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
@@ -9,12 +10,15 @@ import z from 'zod';
 
 import { MetaFetchService } from './meta-fetch.service';
 
-const outputSchema = z.object({
-  // TODO: add schema for validation on response
+const botWebhookOutputSchema = z.object({
   botResponse: z.string(),
+  adminTakeover: z.boolean().default(false),
 });
 
-type webhookResponse = z.infer<typeof outputSchema>;
+type BotWebhookOutput = z.infer<typeof botWebhookOutputSchema>;
+type BotConversation = NonNullable<
+  Awaited<ReturnType<typeof ConversationRepository.findConversationById>>
+>;
 
 async function _findWebhookData(params: { conversationId: string }) {
   const { conversationId } = params;
@@ -42,8 +46,24 @@ async function _findWebhookData(params: { conversationId: string }) {
 export async function redirectMessageToExternalWebhook(params: {
   conversationId: string;
   messages: string[];
-}): Promise<webhookResponse | undefined> {
+}): Promise<BotWebhookOutput | undefined> {
   const { conversationId, messages } = params;
+  const conversation = await ConversationRepository.findConversationById({
+    conversationId,
+  });
+
+  if (!conversation) {
+    logError(new Error(`Conversation ${conversationId} does not exist`));
+    return;
+  }
+
+  if (conversation.adminTakeover) {
+    logger.info('Skipping bot webhook for admin takeover conversation', {
+      conversationId,
+    });
+    return;
+  }
+
   const webhookData = await _findWebhookData({ conversationId });
 
   if (!webhookData) return;
@@ -78,7 +98,7 @@ export async function redirectMessageToExternalWebhook(params: {
     body: {
       message: messages.join('.'),
     },
-    output: outputSchema,
+    output: botWebhookOutputSchema,
   });
 
   if (error) {
@@ -101,29 +121,34 @@ export async function redirectMessageToExternalWebhook(params: {
   logger.info('Bot webhook returned response', {
     conversationId,
     botResponseLength: data.botResponse.length,
+    adminTakeover: data.adminTakeover,
   });
 
   await _handlePostRedirectMessage({
-    conversationId,
+    conversation,
     content: data.botResponse,
+    adminTakeover: data.adminTakeover,
   });
 
   return data;
 }
 
 async function _handlePostRedirectMessage(params: {
-  conversationId: string;
+  conversation: BotConversation;
   content: string;
+  adminTakeover: boolean;
 }) {
-  const { conversationId, content } = params;
-  const conversation =
-    await ConversationRepository.findConversationMetaForBotReply({
-      convId: conversationId,
-    });
+  const { conversation, content, adminTakeover } = params;
 
-  if (!conversation) {
-    logError(new Error(`Conversation ${conversationId} does not exist`));
-    return;
+  let effectiveAdminTakeover = conversation.adminTakeover;
+
+  if (adminTakeover) {
+    const updatedConversation =
+      await ConversationRepository.updateAdminTakeoverStatus({
+        conversationId: conversation.id,
+        adminTakeover: true,
+      });
+    effectiveAdminTakeover = updatedConversation.adminTakeover;
   }
 
   const tokenToUse = decrypt(conversation.phoneNumber.waba.systemUserToken);
@@ -131,7 +156,7 @@ async function _handlePostRedirectMessage(params: {
   if (!tokenToUse) {
     logError(
       new Error(
-        `WhatsApp token is missing or invalid for conversation ${conversationId}/ WABA ID ${conversation.phoneNumber.wabaId}`,
+        `WhatsApp token is missing or invalid for conversation ${conversation.id}/ WABA ID ${conversation.phoneNumber.wabaId}`,
       ),
     );
     return;
@@ -145,7 +170,7 @@ async function _handlePostRedirectMessage(params: {
   });
 
   const savedMessage = await MessageRepository.saveMessage({
-    conversationId,
+    conversationId: conversation.id,
     direction: 'outgoing',
     source: 'bot',
     type: 'text',
@@ -160,10 +185,40 @@ async function _handlePostRedirectMessage(params: {
 
   if (eventBus.listenerCount(eventName) === 0) return;
 
+  const {
+    phoneNumber,
+    customerPhone,
+    customerName,
+    lastMessageAt,
+    lastCustomerMessageAt,
+    unreadCount,
+    status,
+    createdAt,
+    updatedAt,
+  } = conversation;
+
   eventBus.emit(eventName, {
     ...savedMessage,
-    conversation,
+    conversation: {
+      id: conversation.id,
+      customerPhone,
+      customerName,
+      adminTakeover: effectiveAdminTakeover,
+      lastMessageAt,
+      lastCustomerMessageAt,
+      unreadCount,
+      status,
+      createdAt,
+      updatedAt,
+      freeformWindowEndsAt: lastCustomerMessageAt
+        ? new Date(lastCustomerMessageAt.getTime() + CHAT_FREEFORM_WINDOW_MS)
+        : null,
+      phoneNumber: {
+        id: phoneNumber.id,
+        displayPhoneNumber: phoneNumber.displayPhoneNumber,
+      },
+    },
     userId,
-    wabaId: conversation.phoneNumber.wabaId,
+    wabaId: phoneNumber.wabaId,
   });
 }
