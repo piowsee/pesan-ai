@@ -1,24 +1,16 @@
 // TODO: consider migrate to MQ/DB based queue worker
 // NOTE: current implementation uses direct memory from nextjs instance.
 import { logger } from '@/lib/server/logger';
+import { MessageRepository } from '@/repositories/message.repository';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
 
 const timers = new Map<string, NodeJS.Timeout>();
-const buffers = new Map<string, string[]>();
+const BOT_HISTORY_WINDOW_MS = 60 * 60 * 1000;
 
-export function handleDebounceIncomingMessage(
-  conversationId: string,
-  message: string,
-) {
-  logger.info('Append message to debounce buffer', {
+export function handleDebounceIncomingMessage(conversationId: string) {
+  logger.info('Schedule conversation for bot webhook', {
     conversationId,
   });
-
-  if (!buffers.has(conversationId)) {
-    buffers.set(conversationId, [message]);
-  } else {
-    buffers.get(conversationId)!.push(message);
-  }
 
   if (timers.has(conversationId)) {
     clearTimeout(timers.get(conversationId));
@@ -27,11 +19,13 @@ export function handleDebounceIncomingMessage(
   timers.set(
     conversationId,
     setTimeout(async () => {
-      const messages = buffers.get(conversationId) ?? [];
-      buffers.delete(conversationId);
       timers.delete(conversationId);
+      const messages = await MessageRepository.findConversationTextHistory({
+        conversationId,
+        since: new Date(Date.now() - BOT_HISTORY_WINDOW_MS),
+      });
 
-      logger.info('Debounce window expired — forwarding buffered messages', {
+      logger.info('Debounce window expired — forwarding message history', {
         conversationId,
         messageCount: messages.length,
       });
