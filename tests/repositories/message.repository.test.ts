@@ -183,7 +183,20 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
         createdBeforeOrAt: new Date('2026-06-24T10:02:30.000Z'),
       });
 
-      expect(history).toEqual(['first', 'second']);
+      expect(history).toEqual([
+        {
+          sequence: 1,
+          source: 'bot',
+          timestamp: new Date('2026-06-24T10:00:00.000Z'),
+          content: 'first',
+        },
+        {
+          sequence: 2,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T10:01:00.000Z'),
+          content: 'second',
+        },
+      ]);
     });
   });
 
