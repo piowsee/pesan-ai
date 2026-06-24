@@ -1,3 +1,4 @@
+import { CHAT_FREEFORM_WINDOW_MS } from '@/lib/chat/chat';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
@@ -184,13 +185,40 @@ async function _handlePostRedirectMessage(params: {
 
   if (eventBus.listenerCount(eventName) === 0) return;
 
+  const {
+    phoneNumber,
+    customerPhone,
+    customerName,
+    lastMessageAt,
+    lastCustomerMessageAt,
+    unreadCount,
+    status,
+    createdAt,
+    updatedAt,
+  } = conversation;
+
   eventBus.emit(eventName, {
     ...savedMessage,
     conversation: {
-      ...conversation,
+      id: conversation.id,
+      customerPhone,
+      customerName,
       adminTakeover: effectiveAdminTakeover,
+      lastMessageAt,
+      lastCustomerMessageAt,
+      unreadCount,
+      status,
+      createdAt,
+      updatedAt,
+      freeformWindowEndsAt: lastCustomerMessageAt
+        ? new Date(lastCustomerMessageAt.getTime() + CHAT_FREEFORM_WINDOW_MS)
+        : null,
+      phoneNumber: {
+        id: phoneNumber.id,
+        displayPhoneNumber: phoneNumber.displayPhoneNumber,
+      },
     },
     userId,
-    wabaId: conversation.phoneNumber.wabaId,
+    wabaId: phoneNumber.wabaId,
   });
 }

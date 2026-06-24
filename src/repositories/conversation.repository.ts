@@ -113,11 +113,19 @@ export const ConversationRepository = {
       select: {
         id: true,
         customerPhone: true,
+        customerName: true,
         adminTakeover: true,
+        lastMessageAt: true,
+        lastCustomerMessageAt: true,
+        unreadCount: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
         phoneNumber: {
           select: {
             id: true,
             phoneNumberId: true,
+            displayPhoneNumber: true,
             wabaId: true,
             waba: {
               select: {

@@ -142,7 +142,13 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       });
 
       expect(found?.id).toBe(conversation.id);
+      expect(found?.customerName).toBe('Takeover Test Customer');
       expect(found?.adminTakeover).toBe(false);
+      expect(found?.status).toBe('active');
+      expect(found?.createdAt).toBeInstanceOf(Date);
+      expect(found?.updatedAt).toBeInstanceOf(Date);
+      expect(found?.phoneNumber.id).toBe(dbPhoneNumberId);
+      expect(found?.phoneNumber.displayPhoneNumber).toBeTruthy();
       expect(found?.phoneNumber.waba.userId).toBe(userId);
 
       const updated = await ConversationRepository.updateAdminTakeoverStatus({
