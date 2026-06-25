@@ -6,6 +6,7 @@ import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
+import { WebhookService } from '@/services/webhook.service';
 import { betterFetch } from '@better-fetch/fetch';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import z from 'zod';
@@ -29,6 +30,9 @@ function messageHistory(content: string) {
 describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(WebhookService._generateWebhookToken).mockResolvedValue(
+      'signed-webhook-jwt',
+    );
     vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
       id: 'conv-1',
       customerPhone: '+123456',
@@ -105,11 +109,15 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       conversationId: 'conv-1',
     });
     expect(decrypt).toHaveBeenCalledWith('encrypted-passphrase');
+    expect(WebhookService._generateWebhookToken).toHaveBeenCalledWith({
+      url: 'https://bot.example.com/message',
+      passphrase: 'plain-passphrase',
+    });
     expect(betterFetch).toHaveBeenCalledWith(
       'https://bot.example.com/message',
       expect.objectContaining({
         method: 'POST',
-        auth: { type: 'Bearer', token: 'plain-passphrase' },
+        auth: { type: 'Bearer', token: 'signed-webhook-jwt' },
         body: {
           messages: [
             {

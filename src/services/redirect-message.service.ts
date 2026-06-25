@@ -9,6 +9,7 @@ import { betterFetch } from '@better-fetch/fetch';
 import z from 'zod';
 
 import { MetaFetchService } from './meta-fetch.service';
+import { WebhookService } from './webhook.service';
 
 const botWebhookOutputSchema = z.object({
   botResponse: z.string(),
@@ -73,6 +74,10 @@ export async function redirectMessageToExternalWebhook(params: {
 
   const { url, passphrase } = webhookData;
   const decryptedPassphrase = decrypt(passphrase);
+  const webhookToken = await WebhookService._generateWebhookToken({
+    url,
+    passphrase: decryptedPassphrase,
+  });
 
   const { data, error } = await betterFetch(url, {
     retry: {
@@ -96,7 +101,7 @@ export async function redirectMessageToExternalWebhook(params: {
     method: 'POST',
     auth: {
       type: 'Bearer',
-      token: decryptedPassphrase,
+      token: webhookToken,
     },
     // External webhook body:
     // {

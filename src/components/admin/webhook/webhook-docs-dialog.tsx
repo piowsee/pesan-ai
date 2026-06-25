@@ -42,8 +42,8 @@ export function WebhookDocsDialog() {
                   Authorization
                 </code>{' '}
                 header. Validation requests use a short-lived JWT signed with
-                your <strong>passphrase</strong>. Message requests send the
-                passphrase itself as the bearer token.
+                your <strong>passphrase</strong>. Message requests use the same
+                JWT-based authentication.
               </p>
               <pre className="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs font-mono whitespace-pre sm:whitespace-pre-wrap">
                 {`Authorization: Bearer <jwt-token>`}
@@ -92,14 +92,14 @@ Expected Response: 200 OK`}
               <p className="text-muted-foreground leading-relaxed">
                 When a new message is received, pesan-ai forwards it to your
                 webhook via a <strong>POST</strong> request. Your endpoint
-                should validate the bearer token against your configured
+                should verify the JWT bearer token using your configured
                 passphrase, process the message history, and return a bot
                 response.
               </p>
               <pre className="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs font-mono whitespace-pre sm:whitespace-pre-wrap">
                 {`POST <your-webhook-url>
 Headers:
-  Authorization: Bearer <your-passphrase>
+  Authorization: Bearer <jwt-token>
   Content-Type: application/json
 
 Request Body:
