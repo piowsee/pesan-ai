@@ -145,6 +145,17 @@ interface MarkAsReadData {
   convId: string;
 }
 
+interface UpdateAdminTakeoverData {
+  cacheWabaId: string;
+  conversationId: string;
+  adminTakeover: boolean;
+}
+
+interface ConversationListCache {
+  chats: ChatConversation[];
+  total: number;
+}
+
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
@@ -196,6 +207,84 @@ export function useMarkAsRead() {
           context.previous,
         );
       }
+    },
+  });
+}
+
+export function useUpdateAdminTakeover() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      conversationId,
+      adminTakeover,
+    }: UpdateAdminTakeoverData) => {
+      const response = await fetch('/api/admin-takeover', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ conversationId, adminTakeover }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const message =
+          body?.data?.message ?? 'Failed to update takeover status';
+        throw new Error(message);
+      }
+
+      const json = await response.json();
+      return json.data as {
+        conversationId: string;
+        adminTakeover: boolean;
+      };
+    },
+    onMutate: async ({ cacheWabaId, conversationId, adminTakeover }) => {
+      await queryClient.cancelQueries({
+        queryKey: conversationKeys.all(cacheWabaId),
+      });
+
+      const previous = queryClient.getQueryData<ConversationListCache>(
+        conversationKeys.all(cacheWabaId),
+      );
+
+      queryClient.setQueryData<ConversationListCache>(
+        conversationKeys.all(cacheWabaId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            chats: old.chats.map((chat) =>
+              chat.id === conversationId ? { ...chat, adminTakeover } : chat,
+            ),
+          };
+        },
+      );
+
+      return { previous };
+    },
+    onError: (_err, { cacheWabaId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          conversationKeys.all(cacheWabaId),
+          context.previous,
+        );
+      }
+    },
+    onSuccess: ({ conversationId, adminTakeover }, { cacheWabaId }) => {
+      queryClient.setQueryData<ConversationListCache>(
+        conversationKeys.all(cacheWabaId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            chats: old.chats.map((chat) =>
+              chat.id === conversationId ? { ...chat, adminTakeover } : chat,
+            ),
+          };
+        },
+      );
     },
   });
 }

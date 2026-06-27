@@ -31,6 +31,8 @@ export function ConversationList({
   errorMessage,
   onRetry,
   onSelectConversation,
+  onToggleTakeover,
+  pendingTakeoverConversationId,
 }: {
   conversations: ChatConversation[];
   activeConversationId?: string;
@@ -39,6 +41,11 @@ export function ConversationList({
   errorMessage?: string;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
+  onToggleTakeover: (
+    conversationId: string,
+    nextAdminTakeover: boolean,
+  ) => void;
+  pendingTakeoverConversationId?: string;
 }) {
   if (isLoading) {
     return <ConversationListSkeleton />;
@@ -81,7 +88,13 @@ export function ConversationList({
               key={conversation.id}
               conversation={conversation}
               isActive={conversation.id === activeConversationId}
+              isTakeoverPending={
+                pendingTakeoverConversationId === conversation.id
+              }
               onSelect={() => onSelectConversation(conversation.id)}
+              onToggleTakeover={(nextAdminTakeover) =>
+                onToggleTakeover(conversation.id, nextAdminTakeover)
+              }
             />
           ))}
         </div>
