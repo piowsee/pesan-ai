@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New contact request</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellspacing="0"
+      cellpadding="0"
+      style="padding: 32px 16px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="100%"
+            cellspacing="0"
+            cellpadding="0"
+            style="
+              max-width: 560px;
+              overflow: hidden;
+              border: 1px solid #e2e8f0;
+              border-radius: 14px;
+              background: #ffffff;
+            "
+          >
+            <tr>
+              <td style="padding: 28px 28px 12px">
+                <p
+                  style="
+                    margin: 0 0 8px;
+                    color: #2563eb;
+                    font-size: 13px;
+                    font-weight: 700;
+                    letter-spacing: 0.02em;
+                  "
+                >
+                  {{app_name}}
+                </p>
+                <h1 style="margin: 0; font-size: 24px; line-height: 1.25">
+                  New contact request
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 28px 28px">
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellspacing="0"
+                  cellpadding="0"
+                  style="border-collapse: collapse; font-size: 14px"
+                >
+                  <tr>
+                    <td style="padding: 10px 0; color: #64748b">Name</td>
+                    <td style="padding: 10px 0; font-weight: 600">
+                      {{requester_name}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; color: #64748b">Email</td>
+                    <td style="padding: 10px 0; font-weight: 600">
+                      {{requester_email}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; color: #64748b">Company</td>
+                    <td style="padding: 10px 0; font-weight: 600">
+                      {{company_name}}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px 0; color: #64748b">Phone</td>
+                    <td style="padding: 10px 0; font-weight: 600">
+                      {{phone_number}}
+                    </td>
+                  </tr>
+                </table>
+
+                <div
+                  style="
+                    margin-top: 18px;
+                    border-radius: 12px;
+                    background: #f8fafc;
+                    padding: 18px;
+                  "
+                >
+                  <p style="margin: 0 0 8px; color: #64748b; font-size: 13px">
+                    Message
+                  </p>
+                  <p style="margin: 0; white-space: pre-line; line-height: 1.6">
+                    {{message}}
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

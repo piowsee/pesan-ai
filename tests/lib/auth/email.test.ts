@@ -18,6 +18,8 @@ vi.mock('nodemailer', () => ({
 
 describe('auth email helper', { tags: ['backend'] }, () => {
   beforeEach(() => {
+    mailMocks.createTransport.mockClear();
+    mailMocks.sendMail.mockClear();
     vi.stubEnv('SMTP_HOST', 'smtp.test.local');
     vi.stubEnv('SMTP_PORT', '2525');
     vi.stubEnv('SMTP_USER', 'smtp-user');
@@ -74,6 +76,73 @@ describe('auth email helper', { tags: ['backend'] }, () => {
       type: EmailType.RESET_PASSWORD,
     });
     expect(info).toEqual({ messageId: 'message-1' });
+  });
+
+  it('sends contact request email with reply-to details', async () => {
+    vi.stubEnv('EMAIL_FROM', '"Pesan AI" <hello@example.com>');
+    const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
+
+    const info = await sendEmail({
+      to: 'poc.helpteam@gmail.com',
+      replyTo: 'owner@example.com',
+      subject: 'New Pesan AI contact request from Owner',
+      type: EmailType.CONTACT_US,
+      text: 'New contact request details',
+      params: {
+        requester_name: 'Owner',
+        requester_email: 'owner@example.com',
+        company_name: 'Owner Studio',
+        phone_number: '+62 812 3456 7890',
+        message: 'Please contact me.',
+      },
+    });
+
+    expect(mailMocks.sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: '"Pesan AI" <hello@example.com>',
+        to: 'poc.helpteam@gmail.com',
+        replyTo: 'owner@example.com',
+        subject: 'New Pesan AI contact request from Owner',
+        text: 'New contact request details',
+      }),
+    );
+    expect(mailMocks.sendMail.mock.calls[0]?.[0].html).toContain(
+      'Owner Studio',
+    );
+    expect(info).toEqual({ messageId: 'message-1' });
+  });
+
+  it('escapes contact request fields before rendering HTML', async () => {
+    const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
+
+    await sendEmail({
+      to: 'poc.helpteam@gmail.com',
+      replyTo: 'owner@example.com',
+      subject: 'New Pesan AI contact request from Owner',
+      type: EmailType.CONTACT_US,
+      text: 'New contact request details',
+      params: {
+        requester_name: 'Owner <img src=x onerror=alert(1)>',
+        requester_email: 'owner@example.com"><img src=x>',
+        company_name: 'Studio & Spa',
+        phone_number: '<svg/onload=alert(1)>',
+        message:
+          'Can you check this?\n<img src="https://tracker.test/pixel" /><a href="https://phish.test">Open</a>',
+      },
+    });
+
+    const html = mailMocks.sendMail.mock.calls[0]?.[0].html;
+    expect(html).not.toContain('<img src=x');
+    expect(html).not.toContain('<img src="https://tracker.test/pixel"');
+    expect(html).not.toContain('<svg/onload=alert(1)>');
+    expect(html).not.toContain('<a href="https://phish.test"');
+    expect(html).toContain('Owner &lt;img src=x onerror=alert(1)&gt;');
+    expect(html).toContain('owner@example.com&quot;&gt;&lt;img src=x&gt;');
+    expect(html).toContain('Studio &amp; Spa');
+    expect(html).toContain('&lt;svg/onload=alert(1)&gt;');
+    expect(html).toContain(
+      '&lt;img src=&quot;https://tracker.test/pixel&quot; /&gt;&lt;a href=&quot;https://phish.test&quot;&gt;Open&lt;/a&gt;',
+    );
   });
 
   it('uses fallback sender and subject text while logging development links', async () => {

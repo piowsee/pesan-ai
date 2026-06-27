@@ -7,6 +7,7 @@ export enum EmailType {
   VERIFICATION = 'verification',
   RESET_PASSWORD = 'reset-password',
   CHANGE_EMAIL_CONFIRMATION = 'change-email-confirmation',
+  CONTACT_US = 'contact-us',
 }
 
 interface BaseTemplateParams {
@@ -29,10 +30,31 @@ interface ChangeEmailConfirmationParams extends BaseTemplateParams {
   approval_url: string;
 }
 
+interface ContactUsParams extends BaseTemplateParams {
+  requester_name: string;
+  requester_email: string;
+  company_name: string;
+  phone_number: string;
+  message: string;
+}
+
 type TemplateParams =
   | VerificationParams
   | ResetPasswordParams
-  | ChangeEmailConfirmationParams;
+  | ChangeEmailConfirmationParams
+  | ContactUsParams;
+
+const HTML_ESCAPE_CHARS: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+const escapeHtml = (value: string): string => {
+  return value.replace(/[&<>"']/g, (character) => HTML_ESCAPE_CHARS[character]);
+};
 
 const getTransporter = (): Transporter => {
   return nodemailer.createTransport({
@@ -65,35 +87,42 @@ const loadTemplate = (type: EmailType, params: TemplateParams): string => {
 
   const template = fs.readFileSync(templatePath, 'utf8');
 
-  params.app_name = 'Pesan AI';
+  const templateParams: Record<string, string | undefined> = {
+    ...(params as unknown as Record<string, string | undefined>),
+    app_name: 'Pesan AI',
+  };
 
   return template.replace(/{{\s*(.+?)\s*}}/g, (match, key) => {
-    return (params as unknown as Record<string, string>)[key] || match;
+    const value = templateParams[key];
+
+    return value === undefined ? match : escapeHtml(value);
   });
 };
 
+type BaseSendEmailOptions = {
+  to: string;
+  subject: string;
+  replyTo?: string;
+  text?: string;
+};
+
 type SendEmailOptions =
-  | {
-      to: string;
-      subject: string;
+  | ({
       type: EmailType.VERIFICATION;
       params: VerificationParams;
-      text?: string;
-    }
-  | {
-      to: string;
-      subject: string;
+    } & BaseSendEmailOptions)
+  | ({
       type: EmailType.RESET_PASSWORD;
       params: ResetPasswordParams;
-      text?: string;
-    }
-  | {
-      to: string;
-      subject: string;
+    } & BaseSendEmailOptions)
+  | ({
       type: EmailType.CHANGE_EMAIL_CONFIRMATION;
       params: ChangeEmailConfirmationParams;
-      text?: string;
-    };
+    } & BaseSendEmailOptions)
+  | ({
+      type: EmailType.CONTACT_US;
+      params: ContactUsParams;
+    } & BaseSendEmailOptions);
 
 /**
  * Send an email using a template
@@ -109,6 +138,7 @@ export async function sendEmail(
     const info: SentMessageInfo = await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Pesan AI" <noreply@example.com>',
       to,
+      replyTo: options.replyTo,
       subject,
       text: text || subject,
       html,

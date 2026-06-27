@@ -11,6 +11,10 @@
       "title": "Masuk | pesan.ai",
       "description": "Masuk ke akun pesan.ai untuk mengelola otomatisasi chat WhatsApp bisnis Anda."
     },
+    "contactUs": {
+      "title": "Hubungi Kami | pesan.ai",
+      "description": "Hubungi pesan.ai untuk meminta akun atau menjadwalkan konsultasi tentang otomasi WhatsApp untuk bisnis Anda."
+    },
     "terms": {
       "title": "Syarat Layanan | pesan.ai",
       "description": "Baca Syarat Layanan pesan.ai untuk memahami ketentuan penggunaan platform dan layanan kami."
@@ -111,6 +115,10 @@
         "title": "Masuk ke Akun Anda",
         "subtitle": "Masukkan email dan kata sandi Anda."
       },
+      "contactUs": {
+        "title": "Hubungi Kami",
+        "subtitle": "Minta akun atau jadwalkan konsultasi dengan tim kami."
+      },
       "forgotPassword": {
         "title": "Lupa Kata Sandi",
         "subtitle": "Masukkan email Anda untuk menerima tautan reset kata sandi."
@@ -129,6 +137,7 @@
         "labels": {
           "password": "Kata Sandi",
           "forgotPassword": "Lupa kata sandi?",
+          "contactUs": "Hubungi kami",
           "agreePrefix": "Saya menyetujui",
           "terms": "Syarat Layanan",
           "and": "dan",
@@ -158,6 +167,34 @@
         "errors": {
           "invalidEmail": "Format email tidak valid",
           "unknownError": "Terjadi kesalahan saat meminta reset kata sandi. Silakan coba lagi."
+        }
+      },
+      "contactUs": {
+        "labels": {
+          "name": "Nama Anda",
+          "namePlaceholder": "Jane Doe",
+          "companyName": "Perusahaan",
+          "companyNamePlaceholder": "Nama bisnis Anda",
+          "phoneNumber": "Nomor WhatsApp",
+          "phoneNumberPlaceholder": "6281234567890",
+          "message": "Apa yang Anda butuhkan?",
+          "messagePlaceholder": "Ceritakan bisnis, jumlah tim, atau kebutuhan otomatisasi WhatsApp Anda.",
+          "submit": "Kirim Permintaan",
+          "submitting": "Mengirim...",
+          "backToLogin": "Kembali ke login",
+          "successTitle": "Permintaan terkirim",
+          "successMessage": "Terima kasih. Tim kami akan meninjau permintaan Anda dan segera menghubungi Anda."
+        },
+        "errors": {
+          "nameRequired": "Masukkan nama Anda",
+          "nameLength": "Nama maksimal 120 karakter",
+          "invalidEmail": "Format email tidak valid",
+          "emailLength": "Email maksimal 160 karakter",
+          "companyNameLength": "Nama perusahaan maksimal 160 karakter",
+          "phoneNumberLength": "Nomor telepon maksimal 40 karakter",
+          "phoneNumberDigits": "Nomor telepon hanya boleh berisi angka",
+          "messageLength": "Pesan maksimal 1000 karakter",
+          "unknownError": "Terjadi kesalahan saat mengirim permintaan. Silakan coba lagi."
         }
       },
       "resetPassword": {
