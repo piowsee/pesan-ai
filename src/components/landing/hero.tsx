@@ -140,7 +140,7 @@ export function Hero() {
               </Button>
               <Link
                 href="/contact-us"
-                className="group relative h-11 w-full overflow-hidden rounded-md bg-white px-5 text-center text-sm font-semibold text-zinc-900 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
+                className="group relative flex h-11 w-full items-center justify-center overflow-hidden rounded-md bg-white px-5 text-center text-sm font-semibold text-zinc-900 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
               >
                 <span className="flex h-full items-center justify-center gap-2">
                   <span className="size-2 rounded-full bg-brand transition-transform duration-300 group-hover:scale-[100.8]" />
