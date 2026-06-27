@@ -1,26 +1,26 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { EmailType, sendEmail } from '@/lib/auth/email/email';
-import { RequestAccountService } from '@/services/request-account.service';
+import { ContactUsService } from '@/services/contact-us.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/services/request-account.service');
+vi.unmock('@/services/contact-us.service');
 
 vi.mock('@/lib/auth/email/email', () => ({
   EmailType: {
-    ACCOUNT_REQUEST: 'account-request',
+    CONTACT_US: 'contact-us',
   },
   sendEmail: vi.fn(),
 }));
 
-describe('RequestAccountService', { tags: ['backend'] }, () => {
+describe('ContactUsService', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('sends an account request email to the POC inbox', async () => {
+  it('sends a contact request email to the POC inbox', async () => {
     vi.mocked(sendEmail).mockResolvedValue({ messageId: 'message-1' } as never);
 
-    const result = await RequestAccountService.sendRequest({
+    const result = await ContactUsService.submitRequest({
       name: 'Jane Owner',
       email: 'jane@example.com',
       companyName: 'Jane Studio',
@@ -31,10 +31,10 @@ describe('RequestAccountService', { tags: ['backend'] }, () => {
     expect(sendEmail).toHaveBeenCalledWith({
       to: 'poc.helpteam@gmail.com',
       replyTo: 'jane@example.com',
-      subject: 'New Pesan AI account request from Jane Owner',
-      type: EmailType.ACCOUNT_REQUEST,
+      subject: 'New Pesan AI contact request from Jane Owner',
+      type: EmailType.CONTACT_US,
       text: [
-        'New Pesan AI account request',
+        'New Pesan AI contact request',
         '',
         'Name: Jane Owner',
         'Email: jane@example.com',
@@ -53,7 +53,7 @@ describe('RequestAccountService', { tags: ['backend'] }, () => {
       },
     });
     expect(result).toEqual({
-      message: 'Account request submitted successfully',
+      message: 'Contact request submitted successfully',
     });
   });
 
@@ -61,12 +61,12 @@ describe('RequestAccountService', { tags: ['backend'] }, () => {
     vi.mocked(sendEmail).mockResolvedValue(undefined as never);
 
     await expect(
-      RequestAccountService.sendRequest({
+      ContactUsService.submitRequest({
         name: 'Jane Owner',
         email: 'jane@example.com',
       }),
     ).rejects.toMatchObject({
-      message: 'Unable to send account request',
+      message: 'Unable to send contact request',
       status: 502,
     } satisfies Partial<ApiError>);
   });

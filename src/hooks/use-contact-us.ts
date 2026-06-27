@@ -2,17 +2,17 @@
 
 import { extractJSendErrorMessage } from '@/lib/api-helper/error';
 import type { JSendResponse } from '@/lib/api-helper/jsend';
-import type { RequestAccountPayload } from '@/schemas/request-account.schema';
+import type { ContactUsPayload } from '@/schemas/contact-us.schema';
 import { useMutation } from '@tanstack/react-query';
 
-type RequestAccountResponse = {
+type ContactUsResponse = {
   message: string;
 };
 
-async function submitAccountRequest(
-  values: RequestAccountPayload,
-): Promise<RequestAccountResponse> {
-  const response = await fetch('/api/request-account', {
+async function submitContactRequest(
+  values: ContactUsPayload,
+): Promise<ContactUsResponse> {
+  const response = await fetch('/api/contact-us', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -22,19 +22,19 @@ async function submitAccountRequest(
 
   const body = (await response
     .json()
-    .catch(() => null)) as JSendResponse<RequestAccountResponse> | null;
+    .catch(() => null)) as JSendResponse<ContactUsResponse> | null;
 
   if (!response.ok || body?.status !== 'success' || !body.data) {
     throw new Error(
-      extractJSendErrorMessage(body) ?? 'Failed to submit account request',
+      extractJSendErrorMessage(body) ?? 'Failed to submit contact request',
     );
   }
 
   return body.data;
 }
 
-export function useRequestAccount() {
+export function useContactUs() {
   return useMutation({
-    mutationFn: submitAccountRequest,
+    mutationFn: submitContactRequest,
   });
 }

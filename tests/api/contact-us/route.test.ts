@@ -1,17 +1,17 @@
-import { POST } from '@/app/api/request-account/route';
-import { RequestAccountService } from '@/services/request-account.service';
+import { POST } from '@/app/api/contact-us/route';
+import { ContactUsService } from '@/services/contact-us.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('Request Account API Route (/api/request-account)', () => {
-  const url = 'http://localhost/api/request-account';
+describe('Contact Us API Route (/api/contact-us)', () => {
+  const url = 'http://localhost/api/contact-us';
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('returns 200 on successful account request submission', async () => {
-    vi.mocked(RequestAccountService.sendRequest).mockResolvedValue({
-      message: 'Account request submitted successfully',
+  it('returns 200 on successful contact request submission', async () => {
+    vi.mocked(ContactUsService.submitRequest).mockResolvedValue({
+      message: 'Contact request submitted successfully',
     });
 
     const req = new Request(url, {
@@ -32,10 +32,10 @@ describe('Request Account API Route (/api/request-account)', () => {
     expect(data).toEqual({
       status: 'success',
       data: {
-        message: 'Account request submitted successfully',
+        message: 'Contact request submitted successfully',
       },
     });
-    expect(RequestAccountService.sendRequest).toHaveBeenCalledWith({
+    expect(ContactUsService.submitRequest).toHaveBeenCalledWith({
       name: 'Jane Owner',
       email: 'jane@example.com',
       companyName: 'Jane Studio',
@@ -60,7 +60,7 @@ describe('Request Account API Route (/api/request-account)', () => {
     expect(data.status).toBe('fail');
     expect(data.data.name).toBeTruthy();
     expect(data.data.email).toBeTruthy();
-    expect(RequestAccountService.sendRequest).not.toHaveBeenCalled();
+    expect(ContactUsService.submitRequest).not.toHaveBeenCalled();
   });
 
   it('returns 400 when phone number contains non-digit characters', async () => {
@@ -79,6 +79,6 @@ describe('Request Account API Route (/api/request-account)', () => {
     expect(response.status).toBe(400);
     expect(data.status).toBe('fail');
     expect(data.data.phoneNumber).toBeTruthy();
-    expect(RequestAccountService.sendRequest).not.toHaveBeenCalled();
+    expect(ContactUsService.submitRequest).not.toHaveBeenCalled();
   });
 });

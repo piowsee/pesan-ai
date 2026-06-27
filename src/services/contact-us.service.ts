@@ -1,13 +1,13 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { EmailType, sendEmail } from '@/lib/auth/email/email';
-import type { RequestAccountPayload } from '@/schemas/request-account.schema';
+import type { ContactUsPayload } from '@/schemas/contact-us.schema';
 
-const DEFAULT_ACCOUNT_REQUEST_RECIPIENT = 'poc.helpteam@gmail.com';
+const DEFAULT_CONTACT_RECIPIENT = 'poc.helpteam@gmail.com';
 const EMPTY_FIELD_LABEL = 'Not provided';
 
-function buildAccountRequestText(payload: RequestAccountPayload) {
+function buildContactRequestText(payload: ContactUsPayload) {
   return [
-    'New Pesan AI account request',
+    'New Pesan AI contact request',
     '',
     `Name: ${payload.name}`,
     `Email: ${payload.email}`,
@@ -19,16 +19,16 @@ function buildAccountRequestText(payload: RequestAccountPayload) {
   ].join('\n');
 }
 
-export const RequestAccountService = {
-  async sendRequest(payload: RequestAccountPayload) {
-    const subject = `New Pesan AI account request from ${payload.name}`;
+export const ContactUsService = {
+  async submitRequest(payload: ContactUsPayload) {
+    const subject = `New Pesan AI contact request from ${payload.name}`;
 
     const info = await sendEmail({
-      to: DEFAULT_ACCOUNT_REQUEST_RECIPIENT,
+      to: DEFAULT_CONTACT_RECIPIENT,
       replyTo: payload.email,
       subject,
-      type: EmailType.ACCOUNT_REQUEST,
-      text: buildAccountRequestText(payload),
+      type: EmailType.CONTACT_US,
+      text: buildContactRequestText(payload),
       params: {
         requester_name: payload.name,
         requester_email: payload.email,
@@ -39,11 +39,11 @@ export const RequestAccountService = {
     });
 
     if (!info) {
-      throw new ApiError('Unable to send account request', 502);
+      throw new ApiError('Unable to send contact request', 502);
     }
 
     return {
-      message: 'Account request submitted successfully',
+      message: 'Contact request submitted successfully',
     };
   },
 };

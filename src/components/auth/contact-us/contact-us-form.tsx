@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useRequestAccount } from '@/hooks/use-request-account';
+import { useContactUs } from '@/hooks/use-contact-us';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -80,7 +80,7 @@ export function ContactUsForm() {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const requestAccountMutation = useRequestAccount();
+  const contactUsMutation = useContactUs();
 
   const schema = useMemo(() => createContactUsSchema(errors), [errors]);
 
@@ -99,7 +99,7 @@ export function ContactUsForm() {
     setFormError(null);
 
     try {
-      await requestAccountMutation.mutateAsync(values);
+      await contactUsMutation.mutateAsync(values);
       setIsSubmitted(true);
       form.reset();
     } catch (error) {
@@ -272,13 +272,13 @@ export function ContactUsForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={requestAccountMutation.isPending}
+        disabled={contactUsMutation.isPending}
         className="mt-2 h-10 w-full rounded-md shadow-sm"
       >
-        {requestAccountMutation.isPending ? (
+        {contactUsMutation.isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
         ) : null}
-        {requestAccountMutation.isPending ? labels.submitting : labels.submit}
+        {contactUsMutation.isPending ? labels.submitting : labels.submit}
       </Button>
 
       <Button

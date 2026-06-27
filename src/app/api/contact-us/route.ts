@@ -1,11 +1,11 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { jsend } from '@/lib/api-helper/jsend';
 import { logError } from '@/lib/server/logger';
-import { RequestAccountSchema } from '@/schemas/request-account.schema';
-import { RequestAccountService } from '@/services/request-account.service';
+import { ContactUsSchema } from '@/schemas/contact-us.schema';
+import { ContactUsService } from '@/services/contact-us.service';
 import { ZodError } from 'zod';
 
-function handleRequestAccountError(error: unknown, req: Request) {
+function handleContactUsError(error: unknown, req: Request) {
   const action = `${req.method} ${new URL(req.url).pathname}`;
   logError(error, { action });
 
@@ -34,11 +34,11 @@ function handleRequestAccountError(error: unknown, req: Request) {
 export async function POST(req: Request) {
   try {
     const rawBody = await req.json();
-    const body = RequestAccountSchema.parse(rawBody);
-    const result = await RequestAccountService.sendRequest(body);
+    const body = ContactUsSchema.parse(rawBody);
+    const result = await ContactUsService.submitRequest(body);
 
     return jsend.success(result);
   } catch (error) {
-    return handleRequestAccountError(error, req);
+    return handleContactUsError(error, req);
   }
 }

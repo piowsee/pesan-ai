@@ -7,7 +7,7 @@ export enum EmailType {
   VERIFICATION = 'verification',
   RESET_PASSWORD = 'reset-password',
   CHANGE_EMAIL_CONFIRMATION = 'change-email-confirmation',
-  ACCOUNT_REQUEST = 'account-request',
+  CONTACT_US = 'contact-us',
 }
 
 interface BaseTemplateParams {
@@ -30,7 +30,7 @@ interface ChangeEmailConfirmationParams extends BaseTemplateParams {
   approval_url: string;
 }
 
-interface AccountRequestParams extends BaseTemplateParams {
+interface ContactUsParams extends BaseTemplateParams {
   requester_name: string;
   requester_email: string;
   company_name: string;
@@ -42,7 +42,7 @@ type TemplateParams =
   | VerificationParams
   | ResetPasswordParams
   | ChangeEmailConfirmationParams
-  | AccountRequestParams;
+  | ContactUsParams;
 
 const HTML_ESCAPE_CHARS: Record<string, string> = {
   '&': '&amp;',
@@ -120,8 +120,8 @@ type SendEmailOptions =
       params: ChangeEmailConfirmationParams;
     } & BaseSendEmailOptions)
   | ({
-      type: EmailType.ACCOUNT_REQUEST;
-      params: AccountRequestParams;
+      type: EmailType.CONTACT_US;
+      params: ContactUsParams;
     } & BaseSendEmailOptions);
 
 /**

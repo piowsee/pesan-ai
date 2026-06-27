@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const RequestAccountSchema = z.object({
+export const ContactUsSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(160),
   companyName: z.string().trim().max(160).optional(),
@@ -8,4 +8,4 @@ export const RequestAccountSchema = z.object({
   message: z.string().trim().max(1000).optional(),
 });
 
-export type RequestAccountPayload = z.infer<typeof RequestAccountSchema>;
+export type ContactUsPayload = z.infer<typeof ContactUsSchema>;

@@ -78,16 +78,16 @@ describe('auth email helper', { tags: ['backend'] }, () => {
     expect(info).toEqual({ messageId: 'message-1' });
   });
 
-  it('sends account request email with reply-to details', async () => {
+  it('sends contact request email with reply-to details', async () => {
     vi.stubEnv('EMAIL_FROM', '"Pesan AI" <hello@example.com>');
     const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
 
     const info = await sendEmail({
       to: 'poc.helpteam@gmail.com',
       replyTo: 'owner@example.com',
-      subject: 'New Pesan AI account request from Owner',
-      type: EmailType.ACCOUNT_REQUEST,
-      text: 'New account request details',
+      subject: 'New Pesan AI contact request from Owner',
+      type: EmailType.CONTACT_US,
+      text: 'New contact request details',
       params: {
         requester_name: 'Owner',
         requester_email: 'owner@example.com',
@@ -102,8 +102,8 @@ describe('auth email helper', { tags: ['backend'] }, () => {
         from: '"Pesan AI" <hello@example.com>',
         to: 'poc.helpteam@gmail.com',
         replyTo: 'owner@example.com',
-        subject: 'New Pesan AI account request from Owner',
-        text: 'New account request details',
+        subject: 'New Pesan AI contact request from Owner',
+        text: 'New contact request details',
       }),
     );
     expect(mailMocks.sendMail.mock.calls[0]?.[0].html).toContain(
@@ -112,15 +112,15 @@ describe('auth email helper', { tags: ['backend'] }, () => {
     expect(info).toEqual({ messageId: 'message-1' });
   });
 
-  it('escapes account request fields before rendering HTML', async () => {
+  it('escapes contact request fields before rendering HTML', async () => {
     const { EmailType, sendEmail } = await import('@/lib/auth/email/email');
 
     await sendEmail({
       to: 'poc.helpteam@gmail.com',
       replyTo: 'owner@example.com',
-      subject: 'New Pesan AI account request from Owner',
-      type: EmailType.ACCOUNT_REQUEST,
-      text: 'New account request details',
+      subject: 'New Pesan AI contact request from Owner',
+      type: EmailType.CONTACT_US,
+      text: 'New contact request details',
       params: {
         requester_name: 'Owner <img src=x onerror=alert(1)>',
         requester_email: 'owner@example.com"><img src=x>',
