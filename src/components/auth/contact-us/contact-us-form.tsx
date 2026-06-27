@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-type RequestAccountFormLabels = {
+type ContactUsFormLabels = {
   name: string;
   namePlaceholder: string;
   companyName: string;
@@ -30,7 +30,7 @@ type RequestAccountFormLabels = {
   successMessage: string;
 };
 
-type RequestAccountFormErrors = {
+type ContactUsFormErrors = {
   nameRequired: string;
   nameLength: string;
   invalidEmail: string;
@@ -42,7 +42,7 @@ type RequestAccountFormErrors = {
   unknownError: string;
 };
 
-function createRequestAccountSchema(errors: RequestAccountFormErrors) {
+function createContactUsSchema(errors: ContactUsFormErrors) {
   return z.object({
     name: z
       .string()
@@ -64,7 +64,7 @@ function createRequestAccountSchema(errors: RequestAccountFormErrors) {
   });
 }
 
-type RequestAccountFormValues = {
+type ContactUsFormValues = {
   name: string;
   email: string;
   companyName: string;
@@ -72,19 +72,19 @@ type RequestAccountFormValues = {
   message: string;
 };
 
-export function RequestAccountForm() {
+export function ContactUsForm() {
   const commonT = useTranslations('Auth.forms.common');
-  const t = useTranslations('Auth.forms.requestAccount');
-  const labels = t.raw('labels') as RequestAccountFormLabels;
-  const errors = t.raw('errors') as RequestAccountFormErrors;
+  const t = useTranslations('Auth.forms.contactUs');
+  const labels = t.raw('labels') as ContactUsFormLabels;
+  const errors = t.raw('errors') as ContactUsFormErrors;
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const requestAccountMutation = useRequestAccount();
 
-  const schema = useMemo(() => createRequestAccountSchema(errors), [errors]);
+  const schema = useMemo(() => createContactUsSchema(errors), [errors]);
 
-  const form = useForm<RequestAccountFormValues>({
+  const form = useForm<ContactUsFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: '',
@@ -95,7 +95,7 @@ export function RequestAccountForm() {
     },
   });
 
-  async function onSubmit(values: RequestAccountFormValues) {
+  async function onSubmit(values: ContactUsFormValues) {
     setFormError(null);
 
     try {

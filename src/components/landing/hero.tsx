@@ -4,16 +4,15 @@ import { Container } from '@/components/Container';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { Button } from '@/components/ui/button';
 import { Highlighter } from '@/components/ui/highlighter';
-import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
 import { Meteors } from '@/components/ui/meteors';
 import { Link } from '@/i18n/navigation';
+import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export function Hero() {
   const t = useTranslations('LandingPage.hero');
-  const consultationHref = 'https://wa.me/6285129646215';
   const [showTitleHighlight, setShowTitleHighlight] = useState(false);
   const [showDescriptionHighlight, setShowDescriptionHighlight] =
     useState(false);
@@ -139,19 +138,21 @@ export function Hero() {
               >
                 <Link href="/login">{t('login')}</Link>
               </Button>
-              <InteractiveHoverButton
-                type="button"
-                className="h-11 w-full rounded-md border-0 bg-white px-5 text-sm text-zinc-900 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
-                onClick={() => {
-                  window.open(
-                    consultationHref,
-                    '_blank',
-                    'noopener,noreferrer',
-                  );
-                }}
+              <Link
+                href="/contact-us"
+                className="group relative h-11 w-full overflow-hidden rounded-md bg-white px-5 text-center text-sm font-semibold text-zinc-900 sm:h-12 sm:w-auto sm:rounded-full sm:px-7 sm:text-base"
               >
-                {t('consultation')}
-              </InteractiveHoverButton>
+                <span className="flex h-full items-center justify-center gap-2">
+                  <span className="size-2 rounded-full bg-brand transition-transform duration-300 group-hover:scale-[100.8]" />
+                  <span className="transition-all duration-300 group-hover:translate-x-12 group-hover:opacity-0">
+                    {t('consultation')}
+                  </span>
+                </span>
+                <span className="absolute inset-0 z-10 flex translate-x-12 items-center justify-center gap-2 bg-brand text-brand-foreground opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
+                  {t('consultation')}
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </span>
+              </Link>
             </ScrollReveal>
           </div>
 

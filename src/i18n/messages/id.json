@@ -11,9 +11,9 @@
       "title": "Masuk | pesan.ai",
       "description": "Masuk ke akun pesan.ai untuk mengelola otomatisasi chat WhatsApp bisnis Anda."
     },
-    "requestAccount": {
-      "title": "Minta Akun | pesan.ai",
-      "description": "Minta akses ke pesan.ai dan tim kami akan menghubungi Anda untuk menyiapkan akun bisnis."
+    "contactUs": {
+      "title": "Hubungi Kami | pesan.ai",
+      "description": "Hubungi pesan.ai untuk meminta akun atau menjadwalkan konsultasi tentang otomasi WhatsApp untuk bisnis Anda."
     },
     "terms": {
       "title": "Syarat Layanan | pesan.ai",
@@ -115,9 +115,9 @@
         "title": "Masuk ke Akun Anda",
         "subtitle": "Masukkan email dan kata sandi Anda."
       },
-      "requestAccount": {
-        "title": "Minta Akun",
-        "subtitle": "Beri tahu kami cara menghubungi Anda dan tim kami akan menindaklanjuti."
+      "contactUs": {
+        "title": "Hubungi Kami",
+        "subtitle": "Minta akun atau jadwalkan konsultasi dengan tim kami."
       },
       "forgotPassword": {
         "title": "Lupa Kata Sandi",
@@ -137,7 +137,7 @@
         "labels": {
           "password": "Kata Sandi",
           "forgotPassword": "Lupa kata sandi?",
-          "requestAccount": "Minta akun",
+          "contactUs": "Hubungi kami",
           "agreePrefix": "Saya menyetujui",
           "terms": "Syarat Layanan",
           "and": "dan",
@@ -169,7 +169,7 @@
           "unknownError": "Terjadi kesalahan saat meminta reset kata sandi. Silakan coba lagi."
         }
       },
-      "requestAccount": {
+      "contactUs": {
         "labels": {
           "name": "Nama Anda",
           "namePlaceholder": "Jane Doe",

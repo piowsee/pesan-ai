@@ -18,7 +18,7 @@ import { z } from 'zod';
 type LoginFormLabels = {
   password: string;
   forgotPassword: string;
-  requestAccount: string;
+  contactUs: string;
   agreePrefix: string;
   terms: string;
   and: string;
@@ -250,7 +250,7 @@ export function LoginForm() {
         size="lg"
         className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
       >
-        <Link href="/request-account">{labels.requestAccount}</Link>
+        <Link href="/contact-us">{labels.contactUs}</Link>
       </Button>
     </form>
   );

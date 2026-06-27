@@ -1,5 +1,5 @@
 import { AuthCard } from '@/components/auth/auth-card';
-import { RequestAccountForm } from '@/components/auth/request-account/request-account-form';
+import { ContactUsForm } from '@/components/auth/contact-us/contact-us-form';
 import { routing } from '@/i18n/routing';
 import { buildLocalizedMetadata } from '@/lib/i18n-helper/seo';
 import type { Metadata } from 'next';
@@ -18,23 +18,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
-  return buildLocalizedMetadata(locale, 'requestAccount');
+  return buildLocalizedMetadata(locale, 'contactUs');
 }
 
-export default async function LocalizedRequestAccountPage({ params }: Props) {
+export default async function LocalizedContactUsPage({ params }: Props) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
   setRequestLocale(locale);
-  const t = await getTranslations('Auth.pages.requestAccount');
+  const t = await getTranslations('Auth.pages.contactUs');
 
   return (
     <AuthCard
       title={t('title')}
       subtitle={t('subtitle')}
-      FormComponent={RequestAccountForm}
+      FormComponent={ContactUsForm}
     />
   );
 }

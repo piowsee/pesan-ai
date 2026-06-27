@@ -11,9 +11,9 @@
       "title": "Login | pesan.ai",
       "description": "Sign in to your pesan.ai account and manage WhatsApp AI chat automation for your business."
     },
-    "requestAccount": {
-      "title": "Request an Account | pesan.ai",
-      "description": "Request access to pesan.ai and our team will contact you about setting up a business account."
+    "contactUs": {
+      "title": "Contact Us | pesan.ai",
+      "description": "Contact pesan.ai to request an account or book a consultation about WhatsApp automation for your business."
     },
     "terms": {
       "title": "Terms of Service | pesan.ai",
@@ -115,9 +115,9 @@
         "title": "Login to Your Account",
         "subtitle": "Enter your email and password."
       },
-      "requestAccount": {
-        "title": "Request an Account",
-        "subtitle": "Tell us how to reach you and our team will follow up."
+      "contactUs": {
+        "title": "Contact Us",
+        "subtitle": "Request an account or book a consultation with our team."
       },
       "forgotPassword": {
         "title": "Forgot Password",
@@ -137,7 +137,7 @@
         "labels": {
           "password": "Password",
           "forgotPassword": "Forgot password?",
-          "requestAccount": "Request an account",
+          "contactUs": "Contact us",
           "agreePrefix": "I agree to the",
           "terms": "Terms of Service",
           "and": "and",
@@ -169,7 +169,7 @@
           "unknownError": "An error occurred while requesting a password reset. Please try again."
         }
       },
-      "requestAccount": {
+      "contactUs": {
         "labels": {
           "name": "Your name",
           "namePlaceholder": "Jane Doe",
