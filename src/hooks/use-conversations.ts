@@ -245,9 +245,9 @@ export function useUpdateAdminTakeover() {
         queryKey: conversationKeys.all(cacheWabaId),
       });
 
-      const previous = queryClient.getQueryData<ConversationListCache>(
-        conversationKeys.all(cacheWabaId),
-      );
+      const previousAdminTakeover = queryClient
+        .getQueryData<ConversationListCache>(conversationKeys.all(cacheWabaId))
+        ?.chats.find((chat) => chat.id === conversationId)?.adminTakeover;
 
       queryClient.setQueryData<ConversationListCache>(
         conversationKeys.all(cacheWabaId),
@@ -262,15 +262,26 @@ export function useUpdateAdminTakeover() {
         },
       );
 
-      return { previous };
+      return { previousAdminTakeover };
     },
-    onError: (_err, { cacheWabaId }, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(
-          conversationKeys.all(cacheWabaId),
-          context.previous,
-        );
-      }
+    onError: (_err, { cacheWabaId, conversationId }, context) => {
+      const previousAdminTakeover = context?.previousAdminTakeover;
+      if (previousAdminTakeover === undefined) return;
+
+      queryClient.setQueryData<ConversationListCache>(
+        conversationKeys.all(cacheWabaId),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            chats: old.chats.map((chat) =>
+              chat.id === conversationId
+                ? { ...chat, adminTakeover: previousAdminTakeover }
+                : chat,
+            ),
+          };
+        },
+      );
     },
     onSuccess: ({ conversationId, adminTakeover }, { cacheWabaId }) => {
       queryClient.setQueryData<ConversationListCache>(
