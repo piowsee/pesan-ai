@@ -1,4 +1,3 @@
-import { encrypt } from '@/lib/server/encryption';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -105,7 +104,7 @@ async function main() {
       create: {
         wabaId: '123456789012345',
         businessName: 'Piowsee Salon',
-        systemUserToken: encrypt('EAAG...fake_token...'),
+        systemUserToken: 'EAAG...fake_token...',
         status: 'active',
         userId: user.id,
       },
@@ -233,7 +232,7 @@ export const SEED_DATA = {
   PHONE_META_ID: '${phoneNumber.phoneNumberId}',
   CUSTOMER_PHONE: '${conversation.customerPhone}',
   WEBHOOK_NAME: '${webhook.name}',
-  SYSTEM_USER_TOKEN: '${waba.systemUserToken}',
+  SYSTEM_USER_TOKEN: 'EAAG...fake_token...',
 };
 `;
 

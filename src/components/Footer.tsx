@@ -97,14 +97,12 @@ export function Footer() {
               >
                 {t('login')}
               </Link>
-              <a
-                href="https://wa.me/6285129646215"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/contact-us"
                 className="pointer-events-auto transition-colors hover:text-brand"
               >
                 {t('consultation')}
-              </a>
+              </Link>
             </div>
 
             <div className="flex flex-col gap-3 text-brand/75">

@@ -4,11 +4,12 @@ import { getTranslations } from 'next-intl/server';
 
 import { type AppLocale } from './locale';
 
-type SeoPage = 'home' | 'login' | 'terms' | 'privacy';
+type SeoPage = 'home' | 'login' | 'contactUs' | 'terms' | 'privacy';
 
 const PAGE_PATHS: Record<SeoPage, string> = {
   home: '/',
   login: '/login',
+  contactUs: '/contact-us',
   terms: '/terms',
   privacy: '/privacy',
 };

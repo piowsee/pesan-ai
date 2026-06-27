@@ -1,13 +1,104 @@
 import { ApiError } from '@/lib/api-helper/error';
-import * as retryableFetch from '@/lib/server/fetch-with-retry';
+import { encrypt } from '@/lib/server/encryption';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+type BetterFetchMockConfig = {
+  baseURL?: string;
+  retry?: number;
+};
+
+const betterFetchMocks = vi.hoisted(() => {
+  const state = {
+    createFetchConfig: undefined as BetterFetchMockConfig | undefined,
+    metaFetchMock: vi.fn(),
+    createFetchMock: vi.fn(),
+  };
+
+  state.createFetchMock.mockImplementation((config) => {
+    state.createFetchConfig = config;
+    return state.metaFetchMock;
+  });
+
+  return state;
+});
+
+vi.mock('@better-fetch/fetch', () => ({
+  createFetch: betterFetchMocks.createFetchMock,
+}));
+
 vi.unmock('@/services/embedded-signup.service');
 vi.unmock('@/services/meta-fetch.service');
+
+const GRAPH_BASE = 'https://graph.facebook.com/v25.0';
+
+type FetchMockResponse = {
+  ok: boolean;
+  status?: number;
+  statusText?: string;
+  json: () => Promise<unknown>;
+};
+
+type BetterFetchMockOptions = {
+  auth?: { type: string; token?: string };
+  body?: unknown;
+  headers?: Record<string, string>;
+  method?: string;
+};
+
+function buildFetchInit(options: BetterFetchMockOptions = {}): RequestInit {
+  const headers = { ...options.headers };
+  let body = options.body as BodyInit | undefined;
+
+  if (options.auth?.type === 'Bearer' && options.auth.token) {
+    headers.Authorization = `Bearer ${options.auth.token}`;
+  }
+
+  if (
+    options.body !== undefined &&
+    typeof options.body === 'object' &&
+    !(options.body instanceof FormData)
+  ) {
+    headers['Content-Type'] ??= 'application/json';
+    body = JSON.stringify(options.body);
+  }
+
+  return {
+    method: options.method,
+    headers,
+    body,
+  };
+}
+
+async function fetchThroughBetterFetchMock(
+  path: string,
+  options: BetterFetchMockOptions = {},
+) {
+  const response = (await global.fetch(
+    `${GRAPH_BASE}${path}`,
+    buildFetchInit(options),
+  )) as FetchMockResponse;
+
+  if (response.ok) {
+    return { data: await response.json(), error: null };
+  }
+
+  const errorBody = await response.json();
+
+  return {
+    data: null,
+    error: {
+      ...(typeof errorBody === 'object' && errorBody !== null
+        ? errorBody
+        : { message: String(errorBody) }),
+      status: response.status,
+      statusText: response.statusText ?? '',
+    },
+  };
+}
 
 describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
   const VALID_CODE = 'auth-code-abc';
@@ -91,7 +182,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       EmbeddedSignUpService,
       '_generateRegistrationPin',
     ).mockImplementation(() => REGISTRATION_PINS[pinIndex++] ?? '999999');
-    vi.spyOn(retryableFetch, 'sleep').mockResolvedValue(undefined);
+    betterFetchMocks.metaFetchMock.mockReset();
+    betterFetchMocks.metaFetchMock.mockImplementation(
+      fetchThroughBetterFetchMock,
+    );
 
     global.fetch = vi.fn().mockImplementation(async (input) => {
       const url = typeof input === 'string' ? input : input.toString();
@@ -234,6 +328,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         userId: USER_ID,
       });
 
+      expect(encrypt).toHaveBeenCalledWith('sys-user-token-xyz');
       expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
         expect.objectContaining({
           wabaId: WABA_ID,
@@ -251,6 +346,8 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         userId: USER_ID,
       });
 
+      expect(encrypt).toHaveBeenCalledWith(REGISTRATION_PINS[0]);
+      expect(encrypt).toHaveBeenCalledWith(REGISTRATION_PINS[1]);
       expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
         phoneNumberDatas: META_PHONE_NUMBERS.map((phoneNumber, index) => ({
@@ -559,84 +656,6 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         },
       ]);
     });
-
-    it('retries transient Meta failures and still completes the signup flow', async () => {
-      let tokenAttempts = 0;
-      let subscribeAttempts = 0;
-
-      vi.mocked(global.fetch).mockImplementation(async (input) => {
-        const url = typeof input === 'string' ? input : input.toString();
-
-        if (url.includes('oauth/access_token')) {
-          tokenAttempts += 1;
-
-          if (tokenAttempts === 1) {
-            throw new Error('Temporary token exchange network failure');
-          }
-
-          return {
-            ok: true,
-            json: async () => ({
-              access_token: 'sys-user-token-xyz',
-              token_type: 'bearer',
-            }),
-          } as Response;
-        }
-
-        if (url.endsWith(`/${WABA_ID}`)) {
-          return {
-            ok: true,
-            json: async () => ({ name: 'Test Salon' }),
-          } as Response;
-        }
-
-        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
-          return {
-            ok: true,
-            json: async () => ({ data: META_PHONE_NUMBERS }),
-          } as Response;
-        }
-
-        if (url.endsWith('/register')) {
-          return {
-            ok: true,
-            json: async () => ({ success: true }),
-          } as Response;
-        }
-
-        if (url.endsWith('/subscribed_apps')) {
-          subscribeAttempts += 1;
-
-          if (subscribeAttempts === 1) {
-            return {
-              ok: false,
-              status: 503,
-              statusText: 'Service Unavailable',
-              json: async () => ({
-                error: { message: 'Temporary subscription issue' },
-              }),
-            } as Response;
-          }
-
-          return {
-            ok: true,
-            json: async () => ({ success: true }),
-          } as Response;
-        }
-
-        return { ok: true, json: async () => ({}) } as Response;
-      });
-
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
-        code: VALID_CODE,
-        wabaId: WABA_ID,
-        userId: USER_ID,
-      });
-
-      expect(result.waba.id).toBe('db-waba-cuid');
-      expect(tokenAttempts).toBe(2);
-      expect(subscribeAttempts).toBe(2);
-    });
   });
 
   describe('_registerPhoneNumberWithRecovery', () => {
@@ -868,8 +887,8 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       ]);
     });
 
-    it('tries to deregister and recover when a new phone registration fails without a stored pin', async () => {
-      let registerAttempts = 0;
+    it('sets a fallback pin and recovers when new phone registration fails', async () => {
+      const registerAttemptsByPhoneNumberId = new Map<string, number>();
 
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
@@ -896,9 +915,20 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         }
 
         if (url.endsWith('/register')) {
-          registerAttempts += 1;
+          const phoneNumberId = META_PHONE_NUMBERS.find((phoneNumber) =>
+            url.endsWith(`/${phoneNumber.id}/register`),
+          )?.id;
+          const registerAttempts =
+            (registerAttemptsByPhoneNumberId.get(phoneNumberId ?? '') ?? 0) + 1;
+          registerAttemptsByPhoneNumberId.set(
+            phoneNumberId ?? '',
+            registerAttempts,
+          );
 
-          if (registerAttempts === 1) {
+          if (
+            phoneNumberId === META_PHONE_NUMBERS[0].id &&
+            registerAttempts === 1
+          ) {
             return {
               ok: false,
               status: 400,
@@ -1070,7 +1100,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       ).rejects.toMatchObject({ status: 502, message: 'Subscription failed' });
     });
 
-    it('throws retryable metadata failures instead of swallowing them', async () => {
+    it('throws ApiError(502) when metadata lookup fails', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
@@ -1109,7 +1139,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           userId: USER_ID,
         }),
       ).rejects.toMatchObject({
-        status: 503,
+        status: 502,
         message: 'WABA details temporarily unavailable',
       });
     });

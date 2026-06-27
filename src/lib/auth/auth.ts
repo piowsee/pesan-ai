@@ -54,6 +54,23 @@ export const auth = betterAuth({
       maxAge: 5 * 60,
     },
   },
+  user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+        void sendEmail({
+          to: user.email,
+          subject: 'Approve email change',
+          type: EmailType.CHANGE_EMAIL_CONFIRMATION,
+          params: {
+            user_name: user.name || 'User',
+            new_email: newEmail,
+            approval_url: url,
+          },
+        });
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,

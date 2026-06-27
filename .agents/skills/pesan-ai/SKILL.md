@@ -34,6 +34,7 @@ If a specialized skill and this repo skill overlap, use `pesan-ai` for local con
 - Keep route handlers thin. Parse input, call a service, return `jsend`.
 - Put business logic in `src/services` and Prisma access in `src/repositories`.
 - Reuse the existing helpers in `src/lib/api-helper`, `src/lib/server`, `src/lib/chat`, `src/lib/i18n-helper`, and `src/lib/auth` before adding new ones.
+- Use `@better-fetch/fetch` (`betterFetch` or `createFetch`) for any external HTTP API call. Do not use raw `fetch` for external services; Better Fetch provides retry, typed errors, and consistent response handling.
 - Do not edit `src/generated/prisma`; the generated client comes from `prisma/schema.prisma`.
 - Be explicit about internal database IDs vs Meta IDs. This repo uses both, and mixing them causes subtle bugs.
 - Prefer extending existing hooks and components over introducing parallel abstractions.

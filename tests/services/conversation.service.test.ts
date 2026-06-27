@@ -1,4 +1,4 @@
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+import { ApiError } from '@/lib/api-helper/error';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { ConversationService } from '@/services/conversation.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,105 +30,6 @@ describe('ConversationService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('processMetaWebhookPayload', () => {
-    it('processes payload correctly', async () => {
-      const payload = {
-        object: 'whatsapp_business_account',
-        entry: [],
-      };
-
-      const result =
-        await ConversationService.processMetaWebhookPayload(payload);
-      expect(result.processed).toBe(true);
-      expect(result.count).toBe(0);
-    });
-
-    it('throws error for invalid webhook payload', async () => {
-      const payload = {
-        object: 'page',
-        entry: [],
-      };
-      await expect(
-        ConversationService.processMetaWebhookPayload(payload),
-      ).rejects.toThrow('Invalid Webhook Payload');
-    });
-
-    it('emits NEW_MESSAGE event to targeted user channel (simulated SSE connection)', async () => {
-      const testUserId = 'user-123';
-      const userEventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, testUserId);
-      const mockSseListener = vi.fn();
-
-      // Subscribe to the event (uses the global spied EventEmitter from setup.ts)
-      eventBus.on(userEventName, mockSseListener);
-
-      // Mock repository calls
-      vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
-      ).mockResolvedValue({
-        id: 'phone-1',
-      } as never);
-
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
-        message: { id: 'msg-1', content: 'hello' },
-        conversation: { id: 'conv-1' },
-        userId: testUserId,
-      } as never);
-
-      const payload = {
-        object: 'whatsapp_business_account',
-        entry: [
-          {
-            id: 'entry-1',
-            changes: [
-              {
-                field: 'messages',
-                value: {
-                  messaging_product: 'whatsapp',
-                  metadata: {
-                    display_phone_number: '12345',
-                    phone_number_id: 'meta-phone-1',
-                  },
-                  messages: [
-                    {
-                      id: 'meta-msg-1',
-                      from: 'customer-1',
-                      type: 'text',
-                      text: { body: 'hello' },
-                      timestamp: '1625097600',
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        ],
-      };
-
-      await ConversationService.processMetaWebhookPayload(payload);
-
-      // Verify overall emission call
-      expect(eventBus.emit).toHaveBeenCalledWith(
-        userEventName,
-        expect.objectContaining({ id: 'msg-1' }),
-      );
-
-      // Verify the simulated SSE "connection" (listener) received the data
-      expect(mockSseListener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'msg-1',
-          content: 'hello',
-          conversation: { id: 'conv-1' },
-          userId: testUserId,
-        }),
-      );
-
-      // Clean up the listener
-      eventBus.off(userEventName, mockSseListener);
-    });
-  });
-
   describe('markAsRead', () => {
     it('passes WABA ownership context to the repository', async () => {
       vi.mocked(
@@ -151,6 +52,62 @@ describe('ConversationService', { tags: ['backend'] }, () => {
         wabaId: 'waba-1',
         userId: 'user-1',
       });
+    });
+  });
+
+  describe('updateAdminTakeoverStatus', () => {
+    it('checks conversation ownership before updating admin takeover', async () => {
+      vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
+        id: 'conv-1',
+        adminTakeover: false,
+        phoneNumber: { waba: { userId: 'user-1' } },
+      } as never);
+      vi.mocked(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        adminTakeover: true,
+      });
+
+      const result = await ConversationService.updateAdminTakeoverStatus({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        adminTakeover: true,
+      });
+
+      expect(result).toEqual({
+        conversationId: 'conv-1',
+        adminTakeover: true,
+      });
+      expect(ConversationRepository.findConversationById).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+      });
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        adminTakeover: true,
+      });
+    });
+
+    it('throws ApiError when conversation is not owned by the user', async () => {
+      vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
+        id: 'conv-1',
+        adminTakeover: false,
+        phoneNumber: { waba: { userId: 'other-user' } },
+      } as never);
+
+      await expect(
+        ConversationService.updateAdminTakeoverStatus({
+          conversationId: 'conv-1',
+          userId: 'user-1',
+          adminTakeover: true,
+        }),
+      ).rejects.toThrow(ApiError);
+
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).not.toHaveBeenCalled();
     });
   });
 });

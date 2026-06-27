@@ -1,6 +1,36 @@
 import prisma from '@/lib/server/prisma';
 
 export const MessageRepository = {
+  async findConversationTextHistory(params: {
+    conversationId: string;
+    since: Date;
+    createdBeforeOrAt: Date;
+  }) {
+    const { conversationId, since, createdBeforeOrAt } = params;
+    const messages = await prisma.message.findMany({
+      where: {
+        conversationId,
+        type: 'text',
+        content: { not: null },
+        timestamp: { gte: since },
+        createdAt: { lte: createdBeforeOrAt },
+      },
+      select: {
+        content: true,
+        source: true,
+        timestamp: true,
+      },
+      orderBy: [{ timestamp: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    return messages.map((message, index) => ({
+      sequence: index + 1,
+      source: message.source,
+      timestamp: message.timestamp,
+      content: message.content!,
+    }));
+  },
+
   async findMessagesPaginated(params: {
     convId: string;
     wabaId: string;

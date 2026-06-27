@@ -1,5 +1,4 @@
 import { ApiError } from '@/lib/api-helper/error';
-import * as retryableFetch from '@/lib/server/fetch-with-retry';
 import { logError, logger } from '@/lib/server/logger';
 import {
   PhoneNumberMetaResponse,
@@ -9,9 +8,83 @@ import {
   WhatsappBusinessProfile,
   WhatsappBusinessProfileMetaResponse,
 } from '@/types/waba';
+import { type BetterFetchOption, createFetch } from '@better-fetch/fetch';
 
 const GRAPH_API_VERSION = 'v25.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
+const DEFAULT_FETCH_RETRY_COUNT = 3;
+
+const metaFetch = createFetch({
+  baseURL: GRAPH_BASE,
+  retry: {
+    type: 'exponential',
+    attempts: DEFAULT_FETCH_RETRY_COUNT,
+    baseDelay: 1000,
+    maxDelay: 15000,
+    shouldRetry: (response) => {
+      // Don't retry on 4xx client errors that are not transient.
+      // 429 (Too Many Requests) is retryable because the server asks us to back off.
+      if (
+        response &&
+        response.status >= 400 &&
+        response.status < 500 &&
+        response.status !== 429
+      ) {
+        return false;
+      }
+      return true;
+    },
+  },
+});
+
+type MetaFetchOptions = BetterFetchOption & {
+  action: string;
+};
+
+type MetaFetchError = {
+  status: number;
+  statusText: string;
+  error?: {
+    message: string;
+    type: string;
+    code: number;
+    error_subcode: number;
+    error_user_title: string;
+    error_user_msg: string;
+    fbtrace_id: string;
+  };
+  message?: string;
+};
+
+function getBearerAuth(token: string): BetterFetchOption['auth'] {
+  return {
+    type: 'Bearer',
+    token,
+  };
+}
+
+async function fetchMeta<T>(path: string, options: MetaFetchOptions) {
+  const { action, ...fetchOptions } = options;
+  const { data, error } = await metaFetch<T, MetaFetchError>(path, {
+    ...fetchOptions,
+    onRetry: ({ response }) => {
+      logger.warn('Retrying Meta API request', {
+        action,
+        status: response.status,
+      });
+    },
+  });
+
+  if (error) {
+    return { data: null, error } as const;
+  }
+
+  if (data === null) {
+    throw new Error(`Meta API request did not return data for ${action}`);
+  }
+
+  return { data, error: null } as const;
+}
 
 function getMetaAppCredentials() {
   return {
@@ -21,25 +94,13 @@ function getMetaAppCredentials() {
 }
 
 export const MetaFetchService = {
-  async _extractMetaErrorMessage(
-    response: Response,
+  _extractMetaErrorMessage(
+    metaError: MetaFetchError,
     fallbackMessage: string,
-  ): Promise<string> {
+  ): string {
     try {
-      // Support test mocks that might not implement response.clone()
-      const clonedResponse =
-        typeof response.clone === 'function' ? response.clone() : response;
-      const data = await clonedResponse.json();
-
-      if (
-        typeof data === 'object' &&
-        data !== null &&
-        'error' in data &&
-        typeof data.error === 'object' &&
-        data.error !== null
-      ) {
-        const err = data.error as Record<string, unknown>;
-        const parts: string[] = [];
+      if (metaError.error && typeof metaError.error === 'object') {
+        const err = metaError.error;
 
         const msg = typeof err.message === 'string' ? err.message : null;
         const userTitle =
@@ -48,43 +109,31 @@ export const MetaFetchService = {
             : null;
         const userMsg =
           typeof err.error_user_msg === 'string' ? err.error_user_msg : null;
-        const errorData = err.error_data;
 
-        if (msg) parts.push(msg);
-        if (userTitle) parts.push(userTitle);
-        if (userMsg) parts.push(userMsg);
-        if (errorData) parts.push(`Data: ${JSON.stringify(errorData)}`);
+        logError(new Error('Meta API error'), {
+          message: msg,
+          userTitle,
+          userMsg,
+          status: metaError.status,
+          statusText: metaError.statusText,
+        });
 
-        if (parts.length > 0) {
-          const detailedMessage = parts.join(' | ');
-          logError(new Error('Meta API Detailed Extract'), {
-            detailedMessage,
-            url: response.url,
-          });
+        return userMsg ?? userTitle ?? msg ?? fallbackMessage;
+      }
 
-          return userMsg || msg || detailedMessage;
-        }
+      if (typeof metaError.message === 'string' && metaError.message) {
+        logError(new Error('Meta API error'), {
+          message: metaError.message,
+          status: metaError.status,
+          statusText: metaError.statusText,
+        });
+        return metaError.message;
       }
     } catch {
-      // Ignore JSON parsing errors and fall back to the provided message.
+      // Ignore malformed Meta errors and fall back to the provided message.
     }
 
     return fallbackMessage;
-  },
-
-  async _throwIfRetryableResponse(
-    response: Response,
-    fallbackMessage: string,
-  ): Promise<void> {
-    if (!retryableFetch.shouldRetryMetaResponse(response)) {
-      return;
-    }
-
-    const message = await this._extractMetaErrorMessage(
-      response,
-      fallbackMessage,
-    );
-    throw new ApiError(message, response.status);
   },
 
   async fetchWabaDetails(params: {
@@ -92,27 +141,19 @@ export const MetaFetchService = {
     token: string;
   }): Promise<WabaDetails> {
     const { wabaId, token } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${wabaId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-      { action: 'MetaFetchService.fetchWabaDetails' },
-    );
+    const { data, error } = await fetchMeta<WabaMetaResponse>(`/${wabaId}`, {
+      action: 'MetaFetchService.fetchWabaDetails',
+      auth: getBearerAuth(token),
+    });
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to fetch WABA details for ${wabaId}`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to fetch WABA details for ${wabaId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    const data: WabaMetaResponse = await response.json();
     return { businessName: data.name ?? null };
   },
 
@@ -121,27 +162,27 @@ export const MetaFetchService = {
     token: string;
   }): Promise<PhoneNumberMetaResponse[]> {
     const { wabaId, token } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${wabaId}/phone_numbers?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
+    const { data, error } = await fetchMeta<
+      | {
+          data?: PhoneNumberMetaResponse[];
+        }
+      | PhoneNumberMetaResponse[]
+    >(
+      `/${wabaId}/phone_numbers?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        action: 'MetaFetchService.fetchPhoneNumberDetails',
+        auth: getBearerAuth(token),
       },
-      { action: 'MetaFetchService.fetchPhoneNumberDetails' },
     );
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to fetch phone numbers for ${wabaId}`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to fetch phone numbers for ${wabaId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    const data = await response.json();
     return Array.isArray(data) ? data : data.data || [];
   },
 
@@ -150,27 +191,23 @@ export const MetaFetchService = {
     token: string;
   }): Promise<WhatsappBusinessProfile | null> {
     const { phoneNumberId, token } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/whatsapp_business_profile`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-      { action: 'MetaFetchService.fetchBusinessProfile' },
-    );
-
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to fetch business profile for ${phoneNumberId}`,
+    const { data, error } =
+      await fetchMeta<WhatsappBusinessProfileMetaResponse>(
+        `/${phoneNumberId}/whatsapp_business_profile`,
+        {
+          action: 'MetaFetchService.fetchBusinessProfile',
+          auth: getBearerAuth(token),
+        },
       );
-      const message = await this._extractMetaErrorMessage(
-        response,
+
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to fetch business profile for ${phoneNumberId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    const data: WhatsappBusinessProfileMetaResponse = await response.json();
     return data.data?.[0]?.business_profile ?? null;
   },
 
@@ -180,36 +217,23 @@ export const MetaFetchService = {
     pin: string;
   }): Promise<void> {
     const { phoneNumberId, token, pin } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/register`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          pin,
-        }),
+    const { error } = await fetchMeta<unknown>(`/${phoneNumberId}/register`, {
+      action: 'MetaFetchService.registerPhoneNumber',
+      method: 'POST',
+      auth: getBearerAuth(token),
+      body: {
+        messaging_product: 'whatsapp',
+        pin,
       },
-      {
-        action: 'MetaFetchService.registerPhoneNumber',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
-      },
-    );
+    });
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to register phone number ${phoneNumberId} with Meta`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to register phone number ${phoneNumberId} with Meta`,
       );
 
-      if (response.status === 403) {
+      if (error.status === 403) {
         logger.warn('Phone number is already registered in Meta', {
           phoneNumberId,
         });
@@ -224,29 +248,15 @@ export const MetaFetchService = {
     token: string;
   }): Promise<void> {
     const { phoneNumberId, token } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/deregister`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      },
-      {
-        action: 'MetaFetchService.deregisterPhoneNumber',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
-      },
-    );
+    const { error } = await fetchMeta<unknown>(`/${phoneNumberId}/deregister`, {
+      action: 'MetaFetchService.deregisterPhoneNumber',
+      method: 'POST',
+      auth: getBearerAuth(token),
+    });
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to deregister phone number ${phoneNumberId} from Meta`,
-      );
-
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to deregister phone number ${phoneNumberId} from Meta`,
       );
       throw new ApiError(message, 502);
@@ -259,30 +269,16 @@ export const MetaFetchService = {
     pin: string;
   }): Promise<void> {
     const { phoneNumberId, token, pin } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ pin }),
-      },
-      {
-        action: 'MetaFetchService.setPhoneNumberPin',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
-      },
-    );
+    const { error } = await fetchMeta<unknown>(`/${phoneNumberId}`, {
+      action: 'MetaFetchService.setPhoneNumberPin',
+      method: 'POST',
+      auth: getBearerAuth(token),
+      body: { pin },
+    });
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to set new pin for phone number ${phoneNumberId}`,
-      );
-
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to set new pin for phone number ${phoneNumberId}`,
       );
       throw new ApiError(message, 502);
@@ -294,24 +290,15 @@ export const MetaFetchService = {
     token: string;
   }): Promise<void> {
     const { wabaId, token } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${wabaId}/subscribed_apps`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      { action: 'MetaFetchService.subscribeWabaApps' },
-    );
+    const { error } = await fetchMeta<unknown>(`/${wabaId}/subscribed_apps`, {
+      action: 'MetaFetchService.subscribeWabaApps',
+      method: 'POST',
+      auth: getBearerAuth(token),
+    });
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to subscribe apps for WABA ${wabaId}`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to subscribe apps for WABA ${wabaId}`,
       );
       throw new ApiError(message, 502);
@@ -328,42 +315,30 @@ export const MetaFetchService = {
     phoneNumberId: string;
   }> {
     const { countryCode = '62', phoneNumber, token, wabaId, name } = params;
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${wabaId}/phone_numbers`,
+    const { data, error } = await fetchMeta<{ id: string }>(
+      `/${wabaId}/phone_numbers`,
       {
+        action: 'MetaFetchService.createPhoneNumber',
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        auth: getBearerAuth(token),
+        body: {
           cc: countryCode,
           phone_number: phoneNumber,
           verified_name: name,
-        }),
-      },
-      {
-        action: 'MetaFetchService.createPhoneNumber',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+        },
       },
     );
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to create phone number for ${wabaId}`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to create phone number for ${wabaId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    const idResponse: { id: string } = await response.json();
-
     return {
-      phoneNumberId: idResponse.id,
+      phoneNumberId: data.id,
     };
   },
 
@@ -384,33 +359,23 @@ export const MetaFetchService = {
       language,
     });
 
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/request_code?${queryParams.toString()}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const { data, error } = await fetchMeta<{ success?: boolean }>(
+      `/${phoneNumberId}/request_code?${queryParams.toString()}`,
       {
         action: 'MetaFetchService.requestVerificationCode',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+        method: 'POST',
+        auth: getBearerAuth(token),
       },
     );
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to request verification code for ${phoneNumberId}`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to request verification code for ${phoneNumberId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    const data = await response.json();
     return { success: data.success ?? true };
   },
 
@@ -422,33 +387,23 @@ export const MetaFetchService = {
     const { phoneNumberId, token, code } = params;
     const queryParams = new URLSearchParams({ code });
 
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/verify_code?${queryParams.toString()}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+    const { data, error } = await fetchMeta<{ success?: boolean }>(
+      `/${phoneNumberId}/verify_code?${queryParams.toString()}`,
       {
         action: 'MetaFetchService.verifyCode',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
+        method: 'POST',
+        auth: getBearerAuth(token),
       },
     );
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        `Failed to verify code for ${phoneNumberId}`,
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         `Failed to verify code for ${phoneNumberId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    const data = await response.json();
     return { success: data.success ?? true };
   },
 
@@ -472,34 +427,27 @@ export const MetaFetchService = {
       userId,
     });
 
-    const tokenResponse = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/oauth/access_token`,
+    const { data: tokenData, error } = await fetchMeta<TokenExchangeResponse>(
+      '/oauth/access_token',
       {
+        action: 'MetaFetchService.exchangeCodeForToken',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           client_id: appId,
           client_secret: appSecret,
           grant_type: 'authorization_code',
           code,
-        }),
+        },
       },
-      { action: 'MetaFetchService.exchangeCodeForToken' },
     );
-    if (!tokenResponse.ok) {
-      await this._throwIfRetryableResponse(
-        tokenResponse,
-        'Failed to exchange Meta authorization code',
-      );
-      const errorMessage = await this._extractMetaErrorMessage(
-        tokenResponse,
+    if (error) {
+      const errorMessage = this._extractMetaErrorMessage(
+        error,
         'Failed to exchange Meta authorization code',
       );
 
       throw new ApiError(errorMessage, 502);
     }
-
-    const tokenData: TokenExchangeResponse = await tokenResponse.json();
 
     if (tokenData.error || !tokenData.access_token) {
       const errorMessage =
@@ -534,41 +482,29 @@ export const MetaFetchService = {
 
     logger.info('Sending WhatsApp message', { phoneNumberId, to });
 
-    const response = await retryableFetch.fetchWithRetry(
-      `${GRAPH_BASE}/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      },
-      {
-        action: 'MetaFetchService.sendTextMessage',
-        shouldRetryResponse: retryableFetch.shouldRetryMetaResponse,
-      },
-    );
+    const { data, error } = await fetchMeta<{
+      messages?: Array<{ id?: string }>;
+    }>(`/${phoneNumberId}/messages`, {
+      action: 'MetaFetchService.sendTextMessage',
+      method: 'POST',
+      auth: getBearerAuth(token),
+      body: payload,
+    });
 
-    if (!response.ok) {
-      await this._throwIfRetryableResponse(
-        response,
-        'Failed to send WhatsApp message',
-      );
-      const message = await this._extractMetaErrorMessage(
-        response,
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
         'Failed to send WhatsApp message',
       );
       throw new ApiError(message, 502);
     }
 
-    const data = await response.json();
     logger.info('WhatsApp message sent successfully', {
       messageId: data.messages?.[0]?.id,
     });
 
     return {
-      messageId: data.messages?.[0]?.id,
+      messageId: data.messages?.[0]?.id ?? '',
       status: 'sent',
     };
   },

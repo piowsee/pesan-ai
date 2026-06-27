@@ -1,0 +1,17 @@
+[book]
+title = "pesan-ai-guide-docs"
+authors = [
+  "Wilson Angelie Tan <wilsonangelietann@gmail.com>",
+]
+language = "en"
+
+[preprocessor.gettext]
+after = ["links"]
+
+[output.html]
+additional-css = [
+  "./theme/css/language-picker.css",
+]
+
+[build]
+extra-watch-dirs = ["po"]

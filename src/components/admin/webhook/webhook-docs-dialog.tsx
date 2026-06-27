@@ -12,8 +12,6 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookOpen } from 'lucide-react';
 
-// TODO: Add detailed documentation for the POST request body schema and response body format
-
 export function WebhookDocsDialog() {
   return (
     <Dialog>
@@ -39,16 +37,13 @@ export function WebhookDocsDialog() {
             <div className="flex flex-col gap-3 min-w-0">
               <h3 className="font-semibold text-foreground">Authentication</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Every request includes a JWT bearer token in the{' '}
+                Every request includes a bearer token in the{' '}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono whitespace-nowrap">
                   Authorization
                 </code>{' '}
-                header, signed with your <strong>passphrase</strong> using the{' '}
-                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
-                  HS256
-                </code>{' '}
-                algorithm. Verify this token on your server to authenticate
-                requests.
+                header. Validation requests use a short-lived JWT signed with
+                your <strong>passphrase</strong>. Message requests use the same
+                JWT-based authentication.
               </p>
               <pre className="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs font-mono whitespace-pre sm:whitespace-pre-wrap">
                 {`Authorization: Bearer <jwt-token>`}
@@ -97,23 +92,119 @@ Expected Response: 200 OK`}
               <p className="text-muted-foreground leading-relaxed">
                 When a new message is received, pesan-ai forwards it to your
                 webhook via a <strong>POST</strong> request. Your endpoint
-                should validate the JWT token, process the message, and return a
+                should verify the JWT bearer token using your configured
+                passphrase, process the message history, and return a bot
                 response.
               </p>
-              {/* TODO: Document the exact POST request body schema (fields, types, example payload) */}
-              {/* TODO: Document the expected response body format and status codes */}
               <pre className="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs font-mono whitespace-pre sm:whitespace-pre-wrap">
                 {`POST <your-webhook-url>
 Headers:
   Authorization: Bearer <jwt-token>
   Content-Type: application/json
 
-Body: { ... }
-
-Expected Response: 200 OK with JSON body`}
+Request Body:
+{
+  "messages": [
+    {
+      "sequence": 1,
+      "source": "customer",
+      "timestamp": "2026-06-24T10:00:00.000Z",
+      "content": "Hi, I need help with my booking."
+    },
+    {
+      "sequence": 2,
+      "source": "bot",
+      "timestamp": "2026-06-24T10:00:05.000Z",
+      "content": "Sure, what would you like to change?"
+    }
+  ]
+}`}
               </pre>
-              <p className="text-xs italic text-muted-foreground/70">
-                Request and response body documentation coming soon.
+              <div className="flex flex-col gap-2 text-muted-foreground">
+                <p className="leading-relaxed">
+                  The{' '}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                    messages
+                  </code>{' '}
+                  array contains text messages in chronological order.
+                </p>
+                <ul className="list-disc pl-5 leading-relaxed">
+                  <li>
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      sequence
+                    </code>
+                    : number, chronological order starting at 1.
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      source
+                    </code>
+                    : one of{' '}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      customer
+                    </code>
+                    ,{' '}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      admin
+                    </code>
+                    , or{' '}
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      bot
+                    </code>
+                    .
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      timestamp
+                    </code>
+                    : ISO-8601 timestamp string.
+                  </li>
+                  <li>
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      content
+                    </code>
+                    : text message content.
+                  </li>
+                </ul>
+              </div>
+              <pre className="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs font-mono whitespace-pre sm:whitespace-pre-wrap">
+                {`Expected Response: 200 OK
+Content-Type: application/json
+
+{
+  "botResponse": "Thanks. I found your booking and can help update it.",
+  "adminTakeover": false
+}`}
+              </pre>
+              <p className="text-muted-foreground leading-relaxed">
+                The{' '}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                  botResponse
+                </code>{' '}
+                field is required and will be sent to the customer as a bot
+                message.{' '}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                  adminTakeover
+                </code>{' '}
+                is optional and defaults to{' '}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                  false
+                </code>
+                ; when set to{' '}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                  true
+                </code>
+                , pesan-ai marks the conversation for admin takeover before
+                sending the bot response.
+              </p>
+              <p className="text-xs text-muted-foreground/80 leading-relaxed">
+                Return a non-2xx status only when pesan-ai should treat the
+                webhook call as failed. Client errors are not retried, except{' '}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                  429
+                </code>
+                . Rate limits and server errors are retried up to 3 times with a
+                1 second linear delay.
               </p>
             </div>
           </div>

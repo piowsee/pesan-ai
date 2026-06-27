@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approve Email Change</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b1220;
+            background-image:
+                radial-gradient(circle at top left, rgba(71, 85, 105, 0.55), transparent 34%),
+                radial-gradient(circle at bottom right, rgba(148, 163, 184, 0.22), transparent 30%),
+                linear-gradient(180deg, #0b1220 0%, #111827 100%);
+            color: #dbe4f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .shell {
+            width: 100%;
+            padding: 32px 16px;
+        }
+        .frame {
+            max-width: 640px;
+            margin: 0 auto;
+            border-radius: 28px;
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow:
+                0 24px 80px rgba(2, 6, 23, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        .hero {
+            position: relative;
+            padding: 34px 40px 28px;
+            background:
+                linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(15, 23, 42, 0.9)),
+                linear-gradient(135deg, rgba(71, 85, 105, 0.36), rgba(30, 41, 59, 0.2));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .brand {
+            display: inline-block;
+            margin: 0 0 18px;
+            font-size: 27px;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+        .hero h1 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 34px;
+            line-height: 1.15;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+        }
+        .hero p {
+            margin: 16px 0 0;
+            max-width: 460px;
+            color: #cbd5e1;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .content {
+            padding: 36px 40px 20px;
+            background: rgba(248, 250, 252, 0.96);
+            color: #1e293b;
+        }
+        .content p {
+            margin: 0 0 18px;
+            font-size: 16px;
+            line-height: 1.75;
+        }
+        .message-box {
+            margin: 28px 0;
+            padding: 22px 24px;
+            border: 1px solid rgba(71, 85, 105, 0.15);
+            border-radius: 20px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.96));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        .message-box strong {
+            color: #0f172a;
+        }
+        .cta-wrap {
+            margin: 30px 0 26px;
+            text-align: center;
+        }
+        .cta {
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 12px 32px rgba(51, 65, 85, 0.24);
+        }
+        .link-card {
+            margin: 24px 0 0;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background-color: #e2e8f0;
+        }
+        .link-label {
+            display: block;
+            margin: 0 0 10px;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .link-url {
+            color: #334155;
+            font-size: 13px;
+            line-height: 1.7;
+            word-break: break-all;
+        }
+        .notice {
+            margin: 28px 0 0;
+            padding: 18px 20px;
+            border-left: 4px solid #475569;
+            border-radius: 0 18px 18px 0;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .footer {
+            padding: 22px 40px 34px;
+            background: rgba(248, 250, 252, 0.96);
+            color: #64748b;
+        }
+        .footer-line {
+            height: 1px;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, rgba(100, 116, 139, 0), rgba(100, 116, 139, 0.32), rgba(100, 116, 139, 0));
+        }
+        .footer p {
+            margin: 5px 0;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        @media only screen and (max-width: 640px) {
+            .hero,
+            .content,
+            .footer {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+            .hero h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="frame">
+            <div class="hero">
+                <div class="brand">pesan-ai</div>
+                <div class="eyebrow">Account Security</div>
+                <h1>Approve email change</h1>
+                <p>Confirm this request to keep your account secure and avoid losing access.</p>
+            </div>
+
+            <div class="content">
+                <p>Hi {{user_name}},</p>
+                <p>We received a request to change the email address on your <strong>{{app_name}}</strong> account to <strong>{{new_email}}</strong>.</p>
+
+                <div class="message-box">
+                    <p style="margin: 0;">Click the button below to approve this change. If you did not make this request, do not click the link and contact our support team immediately.</p>
+                </div>
+
+                <div class="cta-wrap">
+                    <a href="{{approval_url}}" class="cta">Approve Email Change</a>
+                </div>
+
+                <p>If the button does not open correctly, copy and paste this link into your browser:</p>
+
+                <div class="link-card">
+                    <span class="link-label">Approval Link</span>
+                    <div class="link-url">{{approval_url}}</div>
+                </div>
+
+                <div class="notice">
+                    This link will expire in 3 days for security reasons. If you did not request this change, please ignore this email and contact our support team at poc.helpteam@gmail.com.
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="footer-line"></div>
+                <p>&copy; 2026 {{app_name}}. All rights reserved.</p>
+                <p>Support: poc.helpteam@gmail.com</p>
+                <p>WhatsApp assistance: +62 851 9556 3454</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

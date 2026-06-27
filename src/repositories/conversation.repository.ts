@@ -104,6 +104,57 @@ export const ConversationRepository = {
     });
   },
 
+  async findConversationById(params: { conversationId: string }) {
+    const { conversationId } = params;
+    return prisma.conversation.findUnique({
+      where: {
+        id: conversationId,
+      },
+      select: {
+        id: true,
+        customerPhone: true,
+        customerName: true,
+        adminTakeover: true,
+        lastMessageAt: true,
+        lastCustomerMessageAt: true,
+        unreadCount: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        phoneNumber: {
+          select: {
+            id: true,
+            phoneNumberId: true,
+            displayPhoneNumber: true,
+            wabaId: true,
+            waba: {
+              select: {
+                id: true,
+                userId: true,
+                systemUserToken: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  },
+
+  async updateAdminTakeoverStatus(params: {
+    conversationId: string;
+    adminTakeover: boolean;
+  }) {
+    const { conversationId, adminTakeover } = params;
+    return prisma.conversation.update({
+      where: { id: conversationId },
+      data: { adminTakeover },
+      select: {
+        id: true,
+        adminTakeover: true,
+      },
+    });
+  },
+
   async processIncomingMessage(params: {
     phoneNumberId: string; // Internal ID
     customerPhone: string;
