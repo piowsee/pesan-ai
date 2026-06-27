@@ -61,7 +61,7 @@ describe('ConversationService', { tags: ['backend'] }, () => {
         id: 'conv-1',
         adminTakeover: false,
         phoneNumber: { waba: { userId: 'user-1' } },
-      });
+      } as never);
       vi.mocked(
         ConversationRepository.updateAdminTakeoverStatus,
       ).mockResolvedValue({
@@ -95,7 +95,7 @@ describe('ConversationService', { tags: ['backend'] }, () => {
         id: 'conv-1',
         adminTakeover: false,
         phoneNumber: { waba: { userId: 'other-user' } },
-      });
+      } as never);
 
       await expect(
         ConversationService.updateAdminTakeoverStatus({

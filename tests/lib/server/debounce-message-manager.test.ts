@@ -1,4 +1,5 @@
 import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
+import { MessageRepository } from '@/repositories/message.repository';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,7 +8,22 @@ vi.unmock('@/lib/server/debounce-message-manager');
 describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-24T12:00:00.000Z'));
     vi.clearAllMocks();
+    vi.mocked(MessageRepository.findConversationTextHistory).mockResolvedValue([
+      {
+        sequence: 1,
+        source: 'customer',
+        timestamp: new Date('2026-06-24T11:50:00.000Z'),
+        content: 'previous message',
+      },
+      {
+        sequence: 2,
+        source: 'customer',
+        timestamp: new Date('2026-06-24T12:00:10.000Z'),
+        content: 'latest message',
+      },
+    ]);
   });
 
   afterEach(() => {
@@ -15,11 +31,11 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     vi.useRealTimers();
   });
 
-  it('buffers messages for the same conversation and redirects only after the debounce window', async () => {
-    handleDebounceIncomingMessage('conv-1', 'hello');
+  it('resets the timer and sends persisted history after the debounce window', async () => {
+    handleDebounceIncomingMessage('conv-1');
 
     await vi.advanceTimersByTimeAsync(10_000);
-    handleDebounceIncomingMessage('conv-1', 'are you there?');
+    handleDebounceIncomingMessage('conv-1');
 
     await vi.advanceTimersByTimeAsync(14_999);
     expect(redirectMessageToExternalWebhook).not.toHaveBeenCalled();
@@ -28,23 +44,71 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledTimes(1);
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
-      messages: ['hello', 'are you there?'],
+      messages: [
+        {
+          sequence: 1,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T11:50:00.000Z'),
+          content: 'previous message',
+        },
+        {
+          sequence: 2,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T12:00:10.000Z'),
+          content: 'latest message',
+        },
+      ],
+    });
+    expect(
+      MessageRepository.findConversationTextHistory,
+    ).toHaveBeenCalledOnce();
+    expect(MessageRepository.findConversationTextHistory).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      since: new Date('2026-06-24T11:00:25.000Z'),
+      createdBeforeOrAt: new Date('2026-06-24T12:00:25.000Z'),
     });
   });
 
-  it('keeps separate debounce buffers per conversation', async () => {
-    handleDebounceIncomingMessage('conv-1', 'first');
-    handleDebounceIncomingMessage('conv-2', 'second');
+  it('keeps separate debounce timers per conversation', async () => {
+    vi.mocked(MessageRepository.findConversationTextHistory)
+      .mockResolvedValueOnce([
+        {
+          sequence: 1,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T11:50:00.000Z'),
+          content: 'first history',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          sequence: 1,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T11:51:00.000Z'),
+          content: 'second history',
+        },
+      ]);
+    handleDebounceIncomingMessage('conv-1');
+    handleDebounceIncomingMessage('conv-2');
 
     await vi.advanceTimersByTimeAsync(15_000);
 
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
-      messages: ['first'],
+      messages: [
+        expect.objectContaining({
+          sequence: 1,
+          content: 'first history',
+        }),
+      ],
     });
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-2',
-      messages: ['second'],
+      messages: [
+        expect.objectContaining({
+          sequence: 1,
+          content: 'second history',
+        }),
+      ],
     });
   });
 });

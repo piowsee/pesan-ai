@@ -19,6 +19,8 @@ export function ChatSidebar({
   errorMessage,
   onRetry,
   onSelectConversation,
+  onToggleTakeover,
+  pendingTakeoverConversationId,
 }: {
   className?: string;
   searchValue: string;
@@ -35,6 +37,11 @@ export function ChatSidebar({
   errorMessage?: string;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
+  onToggleTakeover: (
+    conversationId: string,
+    nextAdminTakeover: boolean,
+  ) => void;
+  pendingTakeoverConversationId?: string;
 }) {
   return (
     <aside className={cn('flex h-full flex-col bg-background', className)}>
@@ -57,6 +64,8 @@ export function ChatSidebar({
           errorMessage={errorMessage}
           onRetry={onRetry}
           onSelectConversation={onSelectConversation}
+          onToggleTakeover={onToggleTakeover}
+          pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
       </div>
     </aside>

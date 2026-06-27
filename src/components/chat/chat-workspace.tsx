@@ -7,7 +7,11 @@ import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
 import { WabaSwitcher } from '@/components/chat/waba-switcher';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
-import { useConversations, useMarkAsRead } from '@/hooks/use-conversations';
+import {
+  useConversations,
+  useMarkAsRead,
+  useUpdateAdminTakeover,
+} from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useMessages, useSendMessage } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
@@ -21,6 +25,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { toast } from 'sonner';
 
 const CHAT_STATE_STORAGE_KEY = 'dashboard-chat-state';
 const CHAT_STATE_PARAM_KEYS = [
@@ -392,6 +397,14 @@ export function ChatWorkspace() {
 
   const showMobileDetail = Boolean(selectedConversationId);
   const { mutate: markAsRead } = useMarkAsRead();
+  const {
+    mutate: updateAdminTakeover,
+    isPending: isUpdatingAdminTakeover,
+    variables: updateAdminTakeoverVariables,
+  } = useUpdateAdminTakeover();
+  const pendingTakeoverConversationId = isUpdatingAdminTakeover
+    ? updateAdminTakeoverVariables?.conversationId
+    : undefined;
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
@@ -411,6 +424,33 @@ export function ChatWorkspace() {
       }
     },
     [activeWabaId, allConversations, markAsRead, replaceChatState],
+  );
+
+  const handleToggleTakeover = useCallback(
+    (conversationId: string, nextAdminTakeover: boolean) => {
+      if (!activeWabaId) return;
+
+      updateAdminTakeover(
+        {
+          cacheWabaId: activeWabaId,
+          conversationId,
+          adminTakeover: nextAdminTakeover,
+        },
+        {
+          onSuccess: () => {
+            toast.success(
+              nextAdminTakeover
+                ? 'Admin takeover enabled'
+                : 'Conversation returned to bot',
+            );
+          },
+          onError: (error) => {
+            toast.error(error.message || 'Failed to update takeover status');
+          },
+        },
+      );
+    },
+    [activeWabaId, updateAdminTakeover],
   );
 
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
@@ -491,6 +531,8 @@ export function ChatWorkspace() {
             errorMessage={conversationsError?.message}
             onRetry={() => refetch()}
             onSelectConversation={handleSelectConversation}
+            onToggleTakeover={handleToggleTakeover}
+            pendingTakeoverConversationId={pendingTakeoverConversationId}
           />
         </div>
 

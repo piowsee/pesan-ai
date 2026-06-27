@@ -207,16 +207,13 @@ describe('MessageService', { tags: ['backend'] }, () => {
         }),
       );
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith(
-        'conv-1',
-        'hello',
-      );
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
 
       // Clean up the listener
       eventBus.off(userEventName, mockSseListener);
     });
 
-    it('queues an empty redirect message when saved text content is missing', async () => {
+    it('queues the conversation when saved text content is missing', async () => {
       vi.mocked(
         ConversationRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
@@ -260,7 +257,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ],
       });
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1', '');
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
     });
 
     it('does not queue redirect message when admin has taken over the conversation', async () => {

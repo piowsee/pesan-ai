@@ -49,7 +49,6 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findAllByWabaId: vi.fn(),
     findById: vi.fn(),
     getConversationMetaForSending: vi.fn(),
-    findConversationMetaForBotReply: vi.fn(),
     markConversationAsRead: vi.fn(),
     findPhoneNumberByMetaId: vi.fn(),
     findConversationById: vi.fn(),
@@ -72,6 +71,7 @@ vi.mock('@/repositories/business-profile.repository', () => ({
 
 vi.mock('@/repositories/message.repository', () => ({
   MessageRepository: {
+    findConversationTextHistory: vi.fn(),
     findMessagesPaginated: vi.fn(),
     saveMessage: vi.fn(),
   },

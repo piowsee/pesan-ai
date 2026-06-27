@@ -201,6 +201,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
               found = true;
               return {
                 ...chat,
+                adminTakeover: conversation.adminTakeover,
                 lastMessage: newMessage,
                 lastMessageAt: newMessage.timestamp,
                 unreadCount: isActive ? 0 : chat.unreadCount + 1,

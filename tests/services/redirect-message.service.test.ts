@@ -6,8 +6,9 @@ import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
+import { WebhookService } from '@/services/webhook.service';
 import { betterFetch } from '@better-fetch/fetch';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import z from 'zod';
 
 vi.unmock('@/services/redirect-message.service');
@@ -15,12 +16,53 @@ vi.mock('@better-fetch/fetch', () => ({
   betterFetch: vi.fn(),
 }));
 
+function messageHistory(content: string) {
+  return [
+    {
+      sequence: 1,
+      source: 'customer',
+      timestamp: new Date('2026-06-24T10:00:00.000Z'),
+      content,
+    },
+  ];
+}
+
 describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(WebhookService._generateWebhookToken).mockResolvedValue(
+      'signed-webhook-jwt',
+    );
+    vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
+      id: 'conv-1',
+      customerPhone: '+123456',
+      customerName: 'Test Customer',
+      adminTakeover: false,
+      lastMessageAt: new Date('2026-06-24T10:00:00.000Z'),
+      lastCustomerMessageAt: new Date('2026-06-24T09:00:00.000Z'),
+      unreadCount: 2,
+      status: 'active',
+      createdAt: new Date('2026-06-23T10:00:00.000Z'),
+      updatedAt: new Date('2026-06-24T10:00:00.000Z'),
+      phoneNumber: {
+        id: 'phone-1',
+        phoneNumberId: 'meta-phone-1',
+        displayPhoneNumber: '+654321',
+        wabaId: 'waba-1',
+        waba: {
+          id: 'waba-1',
+          systemUserToken: 'encrypted-token',
+          userId: 'user-1',
+        },
+      },
+    });
   });
 
-  it('loads active webhook data by conversation, decrypts the passphrase, and posts joined messages', async () => {
+  afterEach(() => {
+    eventBus.removeAllListeners();
+  });
+
+  it('posts ordered message history with source and timestamp metadata', async () => {
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
       url: 'https://bot.example.com/message',
       passphrase: 'encrypted-passphrase',
@@ -30,21 +72,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       value === 'encrypted-passphrase' ? 'plain-passphrase' : 'plain-token',
     );
     vi.mocked(betterFetch).mockResolvedValue({
-      data: { botResponse: 'ok' },
+      data: { botResponse: 'ok', adminTakeover: false },
       error: null,
-    } as never);
-    vi.mocked(
-      ConversationRepository.findConversationMetaForBotReply,
-    ).mockResolvedValue({
-      customerPhone: '+123456',
-      phoneNumber: {
-        phoneNumberId: 'meta-phone-1',
-        wabaId: 'waba-1',
-        waba: {
-          systemUserToken: 'encrypted-token',
-          userId: 'user-1',
-        },
-      },
     } as never);
     vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
       status: 'sent',
@@ -56,22 +85,60 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello', 'need help'],
+      messages: [
+        {
+          sequence: 1,
+          source: 'bot',
+          timestamp: new Date('2026-06-24T09:59:00.000Z'),
+          content: 'hello',
+        },
+        {
+          sequence: 2,
+          source: 'customer',
+          timestamp: new Date('2026-06-24T10:00:00.000Z'),
+          content: 'need help',
+        },
+      ],
     });
 
-    expect(result).toEqual({ botResponse: 'ok' });
+    expect(result).toEqual({ botResponse: 'ok', adminTakeover: false });
+    expect(ConversationRepository.findConversationById).toHaveBeenCalledTimes(
+      1,
+    );
     expect(WebhookRepository.findWebhookByConversationId).toHaveBeenCalledWith({
       conversationId: 'conv-1',
     });
     expect(decrypt).toHaveBeenCalledWith('encrypted-passphrase');
+    expect(WebhookService._generateWebhookToken).toHaveBeenCalledWith({
+      url: 'https://bot.example.com/message',
+      passphrase: 'plain-passphrase',
+    });
     expect(betterFetch).toHaveBeenCalledWith(
       'https://bot.example.com/message',
       expect.objectContaining({
         method: 'POST',
-        auth: { type: 'Bearer', token: 'plain-passphrase' },
-        body: { message: 'hello.need help' },
+        auth: { type: 'Bearer', token: 'signed-webhook-jwt' },
+        body: {
+          messages: [
+            {
+              sequence: 1,
+              source: 'bot',
+              timestamp: new Date('2026-06-24T09:59:00.000Z'),
+              content: 'hello',
+            },
+            {
+              sequence: 2,
+              source: 'customer',
+              timestamp: new Date('2026-06-24T10:00:00.000Z'),
+              content: 'need help',
+            },
+          ],
+        },
       }),
     );
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).not.toHaveBeenCalled();
     expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith({
       phoneNumberId: 'meta-phone-1',
       token: 'plain-token',
@@ -91,32 +158,84 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     );
   });
 
-  it('emits the saved bot message only when the user SSE channel has listeners', async () => {
-    const eventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1');
-    const listener = vi.fn();
-    eventBus.on(eventName, listener);
+  it('does not call queued bot work after admin takeover is enabled', async () => {
+    vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
+      id: 'conv-1',
+      adminTakeover: true,
+      phoneNumber: { waba: { userId: 'user-1' } },
+    } as never);
+
+    const result = await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      messages: messageHistory('queued message'),
+    });
+
+    expect(result).toBeUndefined();
+    expect(
+      WebhookRepository.findWebhookByConversationId,
+    ).not.toHaveBeenCalled();
+    expect(betterFetch).not.toHaveBeenCalled();
+    expect(MetaFetchService.sendTextMessage).not.toHaveBeenCalled();
+    expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+  });
+
+  it('persists the external agent takeover decision before sending its response', async () => {
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
       url: 'https://bot.example.com/message',
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
     vi.mocked(betterFetch).mockResolvedValue({
-      data: { botResponse: 'bot reply' },
+      data: {
+        botResponse: 'I am connecting you with an admin.',
+        adminTakeover: true,
+      },
       error: null,
     } as never);
     vi.mocked(
-      ConversationRepository.findConversationMetaForBotReply,
+      ConversationRepository.updateAdminTakeoverStatus,
     ).mockResolvedValue({
       id: 'conv-1',
-      customerPhone: '+123456',
-      phoneNumber: {
-        phoneNumberId: 'meta-phone-1',
-        wabaId: 'waba-1',
-        waba: {
-          systemUserToken: 'encrypted-token',
-          userId: 'user-1',
-        },
-      },
+      adminTakeover: true,
+    });
+    vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
+      status: 'sent',
+      messageId: 'wa-msg-1',
+    });
+    vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
+      id: 'msg-1',
+    } as never);
+
+    await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      messages: messageHistory('I need a human'),
+    });
+
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
+    expect(
+      vi.mocked(ConversationRepository.updateAdminTakeoverStatus).mock
+        .invocationCallOrder[0],
+    ).toBeLessThan(
+      vi.mocked(MetaFetchService.sendTextMessage).mock.invocationCallOrder[0],
+    );
+  });
+
+  it('emits a complete public conversation without sensitive bot metadata', async () => {
+    const eventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1');
+    eventBus.on(eventName, vi.fn());
+    vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
+      url: 'https://bot.example.com/message',
+      passphrase: 'encrypted-passphrase',
+      isActive: true,
+    });
+    vi.mocked(betterFetch).mockResolvedValue({
+      data: { botResponse: 'bot reply', adminTakeover: false },
+      error: null,
     } as never);
     vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
       status: 'sent',
@@ -124,35 +243,58 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     });
     vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
       id: 'msg-1',
-      content: 'bot reply',
     } as never);
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(eventBus.emit).toHaveBeenCalledWith(
       eventName,
       expect.objectContaining({
-        id: 'msg-1',
+        conversation: {
+          id: 'conv-1',
+          customerPhone: '+123456',
+          customerName: 'Test Customer',
+          adminTakeover: false,
+          lastMessageAt: new Date('2026-06-24T10:00:00.000Z'),
+          lastCustomerMessageAt: new Date('2026-06-24T09:00:00.000Z'),
+          unreadCount: 2,
+          status: 'active',
+          createdAt: new Date('2026-06-23T10:00:00.000Z'),
+          updatedAt: new Date('2026-06-24T10:00:00.000Z'),
+          freeformWindowEndsAt: new Date('2026-06-25T09:00:00.000Z'),
+          phoneNumber: {
+            id: 'phone-1',
+            displayPhoneNumber: '+654321',
+          },
+        },
         userId: 'user-1',
         wabaId: 'waba-1',
       }),
     );
-    eventBus.off(eventName, listener);
+
+    const emittedPayload = vi
+      .mocked(eventBus.emit)
+      .mock.calls.find(([name]) => name === eventName)?.[1];
+    const serializedPayload = JSON.stringify(emittedPayload);
+
+    expect(serializedPayload).not.toContain('systemUserToken');
+    expect(serializedPayload).not.toContain('encrypted-token');
+    expect(serializedPayload).not.toContain('phoneNumberId');
   });
 
-  it('returns undefined when webhook URL and passphrase are null', async () => {
+  it('returns undefined when webhook URL and passphrase are missing', async () => {
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
-      url: null,
-      passphrase: null,
+      url: undefined,
+      passphrase: undefined,
       isActive: true,
     });
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(result).toBeUndefined();
@@ -169,7 +311,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(result).toBeUndefined();
@@ -191,7 +333,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
-      messages: ['hello'],
+      messages: messageHistory('hello'),
     });
 
     expect(result).toBeUndefined();
