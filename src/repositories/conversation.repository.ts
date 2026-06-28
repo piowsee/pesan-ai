@@ -235,4 +235,84 @@ export const ConversationRepository = {
       };
     });
   },
+
+  async processOutgoingMessageEcho(params: {
+    phoneNumberId: string;
+    customerPhone: string;
+    customerName?: string;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string;
+      timestamp: Date;
+      metadata?: string;
+    };
+  }) {
+    const { phoneNumberId, customerPhone, customerName, message } = params;
+
+    return prisma.$transaction(async (tx) => {
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            customerPhone,
+          },
+        },
+        update: {
+          customerName,
+        },
+        create: {
+          phoneNumberId,
+          customerPhone,
+          customerName,
+          lastMessageAt: message.timestamp,
+        },
+        include: {
+          phoneNumber: true,
+        },
+      });
+
+      // check to make sure last message at doesnt go backward
+      const latestConversation =
+        conversation.lastMessageAt &&
+        conversation.lastMessageAt >= message.timestamp
+          ? conversation
+          : await tx.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: message.timestamp },
+              include: { phoneNumber: true },
+            });
+
+      const savedMessage = await tx.message.create({
+        data: {
+          conversationId: latestConversation.id,
+          messageId: message.messageId,
+          direction: 'outgoing',
+          // `whatsapp_app` covers live echoes and all history-sync messages,
+          // regardless of their original sender. Only realtime inbound messages use `customer`.
+          source: 'whatsapp_app',
+          type: message.type,
+          content: message.content,
+          timestamp: message.timestamp,
+          metadata: message.metadata,
+          status: 'sent',
+        },
+      });
+
+      const waba = await tx.whatsappBusinessAccount.findFirst({
+        where: { phoneNumbers: { some: { id: phoneNumberId } } },
+        select: {
+          id: true,
+          userId: true,
+        },
+      });
+
+      return {
+        conversation: latestConversation,
+        message: savedMessage,
+        userId: waba?.userId,
+        wabaId: waba?.id,
+      };
+    });
+  },
 };

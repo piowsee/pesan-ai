@@ -6,8 +6,14 @@ import {
   mapRawConversationToChatConversation,
 } from '@/hooks/use-conversations';
 import { messageKeys } from '@/hooks/use-message';
+import { CHAT_FREEFORM_WINDOW_MS, isFreeformWindowOpen } from '@/lib/chat/chat';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
-import { type InfiniteData, useQueryClient } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  type QueryClient,
+  type QueryKey,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   type ReactNode,
   createContext,
@@ -23,6 +29,54 @@ interface RealtimeContextType {
   activate: () => void;
 }
 
+export function isIncomingCustomerMessage(
+  message: Pick<ChatMessage, 'direction' | 'source'>,
+): boolean {
+  return message.direction === 'incoming' && message.source === 'customer';
+}
+
+export function applyRealtimeMessageToConversation(params: {
+  chat: ChatConversation;
+  message: ChatMessage;
+  adminTakeover: boolean;
+  isActive: boolean;
+}): ChatConversation {
+  const { chat, message, adminTakeover, isActive } = params;
+  const isCustomerMessage = isIncomingCustomerMessage(message);
+  const isLatestMessage =
+    !chat.lastMessageAt ||
+    new Date(message.timestamp).getTime() >=
+      new Date(chat.lastMessageAt).getTime();
+  const isLatestCustomerMessage =
+    isCustomerMessage &&
+    (!chat.lastCustomerMessageAt ||
+      new Date(message.timestamp).getTime() >=
+        new Date(chat.lastCustomerMessageAt).getTime());
+  const lastCustomerMessageAt = isLatestCustomerMessage
+    ? message.timestamp
+    : chat.lastCustomerMessageAt;
+
+  return {
+    ...chat,
+    adminTakeover,
+    lastMessage: isLatestMessage ? message : chat.lastMessage,
+    lastMessageAt: isLatestMessage ? message.timestamp : chat.lastMessageAt,
+    lastCustomerMessageAt,
+    canSendFreeform: isFreeformWindowOpen(lastCustomerMessageAt),
+    freeformWindowEndsAt: lastCustomerMessageAt
+      ? new Date(
+          new Date(lastCustomerMessageAt).getTime() + CHAT_FREEFORM_WINDOW_MS,
+        ).toISOString()
+      : null,
+    unreadCount: isCustomerMessage
+      ? isActive
+        ? 0
+        : chat.unreadCount + 1
+      : chat.unreadCount,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 const RealtimeContext = createContext<RealtimeContextType | null>(null);
 
 export function useRealtime() {
@@ -36,6 +90,33 @@ export function useRealtime() {
 interface SSEMessagePayload extends ChatMessage {
   wabaId: string;
   conversation: RawConversation;
+}
+
+interface BotWebhookFailedPayload {
+  conversationId: string;
+  wabaId: string;
+  adminTakeover: true;
+}
+
+export function applyBotWebhookFailureToConversations(
+  chats: ChatConversation[],
+  payload: BotWebhookFailedPayload,
+): ChatConversation[] {
+  return chats.map((chat) =>
+    chat.id === payload.conversationId
+      ? { ...chat, adminTakeover: payload.adminTakeover }
+      : chat,
+  );
+}
+
+export async function refetchRealtimeCache(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  exact = false,
+): Promise<void> {
+  const filters = { queryKey, exact };
+  await queryClient.cancelQueries(filters);
+  await queryClient.invalidateQueries(filters);
 }
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
@@ -144,11 +225,22 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // so the connection is persistent as long as the provider is mounted.
     const eventSource = new EventSource('/api/sse');
 
+    const handleOpen = () => {
+      void refetchRealtimeCache(queryClient, conversationKeys.root);
+      void refetchRealtimeCache(queryClient, messageKeys.root);
+    };
+
     const handleNewMessage = (payload: SSEMessagePayload) => {
       const { wabaId, conversationId, conversation, ...newMessage } = payload;
+      const realtimeMessage: ChatMessage = { ...newMessage, conversationId };
       const isActive =
         isPageVisibleRef.current &&
         conversationId === viewingConversationIdRef.current;
+
+      const hasMessageCache =
+        queryClient.getQueryData(messageKeys.all(conversationId)) !== undefined;
+      const hasConversationCache =
+        queryClient.getQueryData(conversationKeys.all(wabaId)) !== undefined;
 
       // 1. Update Messages Timeline Cache
       queryClient.setQueryData(
@@ -171,13 +263,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
               if (index === 0) {
                 // Check if message already exists (e.g. added by useSendMessage)
                 const exists = page.messages.some(
-                  (m) => m.id === newMessage.id,
+                  (m) => m.id === realtimeMessage.id,
                 );
                 if (exists) return page;
 
                 return {
                   ...page,
-                  messages: [newMessage, ...page.messages],
+                  messages: [realtimeMessage, ...page.messages],
                   total: page.total + 1,
                 };
               }
@@ -186,6 +278,14 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           };
         },
       );
+
+      if (!hasMessageCache) {
+        void refetchRealtimeCache(
+          queryClient,
+          messageKeys.all(conversationId),
+          true,
+        );
+      }
 
       // 2. Update Conversations Sidebar Cache
       queryClient.setQueryData(
@@ -199,14 +299,12 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           const updatedChats = old.chats.map((chat) => {
             if (chat.id === conversationId) {
               found = true;
-              return {
-                ...chat,
+              return applyRealtimeMessageToConversation({
+                chat,
+                message: realtimeMessage,
                 adminTakeover: conversation.adminTakeover,
-                lastMessage: newMessage,
-                lastMessageAt: newMessage.timestamp,
-                unreadCount: isActive ? 0 : chat.unreadCount + 1,
-                updatedAt: new Date().toISOString(),
-              };
+                isActive,
+              });
             }
             return chat;
           });
@@ -215,7 +313,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
             // Instead of invalidating, construct and add the new conversation
             const newChat = mapRawConversationToChatConversation({
               ...conversation,
-              messages: [{ ...newMessage, conversationId }],
+              messages: [realtimeMessage],
             });
 
             return {
@@ -239,10 +337,51 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         },
       );
 
-      if (isActive) {
+      if (!hasConversationCache) {
+        void refetchRealtimeCache(
+          queryClient,
+          conversationKeys.all(wabaId),
+          true,
+        );
+      }
+
+      if (isActive && isIncomingCustomerMessage(realtimeMessage)) {
         pendingReadReceiptsRef.current.set(conversationId, wabaId);
       }
     };
+
+    const handleBotWebhookFailed = (payload: BotWebhookFailedPayload) => {
+      const cachedConversations = queryClient.getQueryData<{
+        chats: ChatConversation[];
+        total: number;
+      }>(conversationKeys.all(payload.wabaId));
+      const hasConversation = cachedConversations?.chats.some(
+        (chat) => chat.id === payload.conversationId,
+      );
+
+      if (!hasConversation) {
+        void refetchRealtimeCache(
+          queryClient,
+          conversationKeys.all(payload.wabaId),
+          true,
+        );
+        return;
+      }
+
+      queryClient.setQueryData(
+        conversationKeys.all(payload.wabaId),
+        (old: { chats: ChatConversation[]; total: number } | undefined) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            chats: applyBotWebhookFailureToConversations(old.chats, payload),
+          };
+        },
+      );
+    };
+
+    eventSource.addEventListener('open', handleOpen);
 
     eventSource.addEventListener('NEW_MESSAGE', (event: MessageEvent) => {
       try {
@@ -253,11 +392,24 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    eventSource.addEventListener(
+      'BOT_WEBHOOK_FAILED',
+      (event: MessageEvent) => {
+        try {
+          const payload: BotWebhookFailedPayload = JSON.parse(event.data);
+          if (payload) handleBotWebhookFailed(payload);
+        } catch (err) {
+          console.error('Failed to parse BOT_WEBHOOK_FAILED event:', err);
+        }
+      },
+    );
+
     eventSource.onerror = (err) => {
       console.error('SSE Error:', err);
     };
 
     return () => {
+      eventSource.removeEventListener('open', handleOpen);
       eventSource.close();
     };
   }, [queryClient, isActivated]);

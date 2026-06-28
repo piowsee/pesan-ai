@@ -12,7 +12,7 @@ import { MetaFetchService } from './meta-fetch.service';
 import { WebhookService } from './webhook.service';
 
 const botWebhookOutputSchema = z.object({
-  botResponse: z.string(),
+  botResponse: z.string().trim().min(1),
   adminTakeover: z.boolean().default(false),
 });
 
@@ -23,6 +23,19 @@ type BotConversation = NonNullable<
 type BotMessageHistory = Awaited<
   ReturnType<typeof MessageRepository.findConversationTextHistory>
 >;
+function _toBotWebhookMessages(messages: BotMessageHistory) {
+  return messages.map((message) => ({
+    sequence: message.sequence,
+    source:
+      message.source === 'whatsapp_app'
+        ? message.direction === 'incoming'
+          ? 'customer'
+          : 'admin'
+        : message.source,
+    timestamp: message.timestamp,
+    content: message.content,
+  }));
+}
 
 async function _findWebhookData(params: { conversationId: string }) {
   const { conversationId } = params;
@@ -30,15 +43,13 @@ async function _findWebhookData(params: { conversationId: string }) {
     await WebhookRepository.findWebhookByConversationId({ conversationId });
 
   if (!url || !passphrase) {
-    logger.warn(
-      `Webhook URL/passphrase is null for conversation ${conversationId}`,
+    throw new Error(
+      `Webhook URL/passphrase is missing for conversation ${conversationId}`,
     );
-    return;
   }
 
   if (!isActive) {
-    logger.warn(`Webhook is inactive for conversation ${conversationId}`);
-    return;
+    throw new Error(`Webhook is inactive for conversation ${conversationId}`);
   }
 
   return {
@@ -68,12 +79,38 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
-  const webhookData = await _findWebhookData({ conversationId });
+  let data: BotWebhookOutput;
 
-  if (!webhookData) return;
+  try {
+    data = await _requestBotWebhook({ conversationId, messages });
+  } catch (error) {
+    await _handleBotWebhookFailure({ conversation, error });
+    return;
+  }
 
-  const { url, passphrase } = webhookData;
+  logger.info('Bot webhook returned response', {
+    conversationId,
+    botResponseLength: data.botResponse.length,
+    adminTakeover: data.adminTakeover,
+  });
+
+  await _handlePostRedirectMessage({
+    conversation,
+    content: data.botResponse,
+    adminTakeover: data.adminTakeover,
+  });
+
+  return data;
+}
+
+async function _requestBotWebhook(params: {
+  conversationId: string;
+  messages: BotMessageHistory;
+}): Promise<BotWebhookOutput> {
+  const { conversationId, messages } = params;
+  const { url, passphrase } = await _findWebhookData({ conversationId });
   const decryptedPassphrase = decrypt(passphrase);
+  const webhookMessages = _toBotWebhookMessages(messages);
   const webhookToken = await WebhookService._generateWebhookToken({
     url,
     passphrase: decryptedPassphrase,
@@ -83,10 +120,10 @@ export async function redirectMessageToExternalWebhook(params: {
     retry: {
       type: 'linear',
       attempts: 3,
-      delay: 1000, // 1 sec delay
+      delay: 1000, // 1 second between retry attempts
       shouldRetry: (response) => {
-        // Don't retry on 4xx client errors that are not transient.
-        // 429 (Too Many Requests) is retryable because the server asks us to back off.
+        // Do not retry non-transient 4xx responses. Rate limits are transient,
+        // so 429 responses are retried alongside network and server failures.
         if (
           response &&
           response.status >= 400 &&
@@ -106,48 +143,68 @@ export async function redirectMessageToExternalWebhook(params: {
     // External webhook body:
     // {
     //   messages: [{
-    //     sequence: number,        // chronological order, starting at 1
-    //     source: string,          // customer | admin | bot
+    //     sequence: number,  // chronological order, starting at 1
+    //     source: string,    // customer | admin | bot
     //     timestamp: ISO-8601,
     //     content: string
     //   }]
     // }
-    body: {
-      messages,
-    },
+    body: { messages: webhookMessages },
     output: botWebhookOutputSchema,
   });
 
-  if (error) {
-    // schema validation failed
-    if (error instanceof z.ZodError) {
-      logError(new Error(`Webhook response schema mismatch: ${error.message}`));
-      return;
-    }
+  if (error instanceof z.ZodError) {
+    throw new Error(`Webhook response schema mismatch: ${error.message}`);
+  }
 
-    // network / http error
-    logError(new Error(`Failed to reach bot webhook: ${error.message}`));
-    return;
+  if (error) {
+    throw new Error(`Failed to reach bot webhook: ${error.message}`);
   }
 
   if (!data) {
-    logError(new Error('Empty response from bot webhook'));
+    throw new Error('Empty response from bot webhook');
+  }
+
+  return data;
+}
+
+async function _handleBotWebhookFailure(params: {
+  conversation: BotConversation;
+  error: unknown;
+}) {
+  const { conversation, error } = params;
+  const webhookError =
+    error instanceof Error ? error : new Error(String(error));
+
+  logError(webhookError, {
+    action: 'Bot webhook failed; enabling admin takeover',
+    conversationId: conversation.id,
+  });
+
+  try {
+    await ConversationRepository.updateAdminTakeoverStatus({
+      conversationId: conversation.id,
+      adminTakeover: true,
+    });
+  } catch (takeoverError) {
+    logError(takeoverError, {
+      action: 'Failed to enable admin takeover after bot webhook failure',
+      conversationId: conversation.id,
+    });
     return;
   }
 
-  logger.info('Bot webhook returned response', {
-    conversationId,
-    botResponseLength: data.botResponse.length,
-    adminTakeover: data.adminTakeover,
-  });
+  _emitBotWebhookFailed(conversation);
+}
 
-  await _handlePostRedirectMessage({
-    conversation,
-    content: data.botResponse,
-    adminTakeover: data.adminTakeover,
-  });
+function _emitBotWebhookFailed(conversation: BotConversation) {
+  const userId = conversation.phoneNumber.waba.userId;
 
-  return data;
+  eventBus.emit(getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, userId), {
+    conversationId: conversation.id,
+    wabaId: conversation.phoneNumber.wabaId,
+    adminTakeover: true,
+  });
 }
 
 async function _handlePostRedirectMessage(params: {

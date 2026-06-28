@@ -6,7 +6,7 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 
 /**
  * @route POST /api/embedded-signup
- * @body { code: string, wabaId: string, sessionPayload?: unknown }
+ * @body { code: string, event: string, wabaId: string, sessionPayload?: unknown }
  * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers, message, failedPhoneNumberIds } }
  * @access Authenticated users
  * @description Receives the Embedded Signup authorization code, exchanges it for a
@@ -16,11 +16,13 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
 
-  const { code, wabaId, sessionPayload } = EmbeddedSignupSchema.parse(rawBody);
+  const { code, event, wabaId, sessionPayload } =
+    EmbeddedSignupSchema.parse(rawBody);
 
   logger.info('Embedded signup payload received', {
     userId: user.id,
     hasCode: Boolean(code),
+    event,
     wabaId,
     hasSessionPayload: sessionPayload !== undefined,
   });
@@ -28,6 +30,7 @@ export const POST = withApiAuth(async ({ req, user }) => {
   const { failedPhoneNumberIds, message, phoneNumbers, waba } =
     await EmbeddedSignUpService.completeEmbeddedSignup({
       code,
+      event,
       wabaId,
       userId: user.id,
     });

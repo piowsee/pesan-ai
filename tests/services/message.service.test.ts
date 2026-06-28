@@ -126,6 +126,91 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(result.count).toBe(0);
     });
 
+    it('stores WhatsApp Business App message echoes with a distinct source', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({ id: 'phone-1' } as never);
+      vi.mocked(
+        ConversationRepository.processOutgoingMessageEcho,
+      ).mockResolvedValue({
+        message: {
+          id: 'db-message-1',
+          direction: 'outgoing',
+          source: 'whatsapp_app',
+          content: 'Ou',
+        },
+        conversation: { id: 'conversation-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      } as never);
+
+      const result = await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '1055765170435443',
+            changes: [
+              {
+                field: 'smb_message_echoes',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '6285195563454',
+                    phone_number_id: '1120639457807711',
+                  },
+                  contacts: [
+                    {
+                      wa_id: '628116150122',
+                      user_id: 'ID.1728689754990890',
+                    },
+                  ],
+                  message_echoes: [
+                    {
+                      from: '6285195563454',
+                      to: '628116150122',
+                      id: 'wamid.echo-1',
+                      to_user_id: 'ID.1728689754990890',
+                      timestamp: '1782640182',
+                      text: { body: 'Ou' },
+                      type: 'text',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(
+        ConversationRepository.processOutgoingMessageEcho,
+      ).toHaveBeenCalledWith({
+        phoneNumberId: 'phone-1',
+        customerPhone: '628116150122',
+        customerName: undefined,
+        message: {
+          messageId: 'wamid.echo-1',
+          type: 'text',
+          content: 'Ou',
+          timestamp: new Date(1782640182 * 1000),
+          metadata: expect.any(String),
+        },
+      });
+      expect(
+        ConversationRepository.processIncomingMessage,
+      ).not.toHaveBeenCalled();
+      expect(handleDebounceIncomingMessage).not.toHaveBeenCalled();
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
+        expect.objectContaining({
+          id: 'db-message-1',
+          direction: 'outgoing',
+          source: 'whatsapp_app',
+        }),
+      );
+    });
+
     it('throws error for invalid webhook payload', async () => {
       const payload = {
         object: 'page',

@@ -11,6 +11,8 @@ import {
   MetaWebhookPayloadSchema,
   WebhookEntry,
   WebhookMessage,
+  WebhookMessageEcho,
+  WebhookMessageEchoValue,
   WebhookValue,
 } from '@/schemas/webhook.schema';
 
@@ -165,11 +167,18 @@ export const MessageService = {
 
     for (const entry of entries) {
       for (const change of entry.changes || []) {
-        if (change.field !== 'messages') continue;
+        let changeProcessedCount = 0;
 
-        const changeProcessedCount = await this._processMessageChange(
-          change.value,
-        );
+        if (change.field === 'messages') {
+          changeProcessedCount = await this._processIncomingMessageChange(
+            change.value,
+          );
+        } else if (change.field === 'smb_message_echoes') {
+          changeProcessedCount = await this._processMessageEchoChange(
+            change.value,
+          );
+        }
+
         processedCount += changeProcessedCount;
       }
     }
@@ -177,7 +186,7 @@ export const MessageService = {
     return processedCount;
   },
 
-  async _processMessageChange(value: WebhookValue): Promise<number> {
+  async _processIncomingMessageChange(value: WebhookValue): Promise<number> {
     const metaPhoneNumberId = value.metadata?.phone_number_id;
     if (!metaPhoneNumberId) return 0;
 
@@ -196,6 +205,29 @@ export const MessageService = {
       messages: value.messages,
       internalPhoneId: internalPhoneResult.id,
       contactsMap,
+    });
+  },
+
+  async _processMessageEchoChange(
+    value: WebhookMessageEchoValue,
+  ): Promise<number> {
+    const metaPhoneNumberId = value.metadata?.phone_number_id;
+    if (!metaPhoneNumberId) return 0;
+
+    const internalPhoneResult =
+      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
+
+    if (!internalPhoneResult) {
+      logger.warn('Received message echo for unknown Meta Phone Number ID', {
+        metaPhoneNumberId,
+      });
+      return 0;
+    }
+
+    return this._processMessageEchoesList({
+      messageEchoes: value.message_echoes,
+      internalPhoneId: internalPhoneResult.id,
+      contactsMap: this._mapContacts(value.contacts),
     });
   },
 
@@ -229,6 +261,33 @@ export const MessageService = {
         logError(msgErr, {
           action: 'process_single_message',
           messageId: message.id,
+        });
+      }
+    }
+
+    return count;
+  },
+
+  async _processMessageEchoesList(params: {
+    messageEchoes?: WebhookMessageEcho[];
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<number> {
+    const { messageEchoes = [], internalPhoneId, contactsMap } = params;
+    let count = 0;
+
+    for (const messageEcho of messageEchoes) {
+      try {
+        const wasProcessed = await this._processSingleMessageEcho({
+          messageEcho,
+          internalPhoneId,
+          contactsMap,
+        });
+        if (wasProcessed) count++;
+      } catch (error) {
+        logError(error, {
+          action: 'process_single_message_echo',
+          messageId: messageEcho.id,
         });
       }
     }
@@ -305,6 +364,65 @@ export const MessageService = {
     }
 
     handleDebounceIncomingMessage(conversation.id);
+
+    return true;
+  },
+
+  async _processSingleMessageEcho(params: {
+    messageEcho: WebhookMessageEcho;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { messageEcho, internalPhoneId, contactsMap } = params;
+    if (messageEcho.type !== 'text') {
+      logger.info('Skipping non-text message echo', {
+        type: messageEcho.type,
+        messageId: messageEcho.id,
+      });
+      return false;
+    }
+
+    const customerPhone = messageEcho.to;
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processOutgoingMessageEcho({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName: contactsMap[customerPhone],
+      message: {
+        messageId: messageEcho.id,
+        type: 'text',
+        content: messageEcho.text?.body,
+        timestamp: new Date(parseInt(messageEcho.timestamp) * 1000),
+        metadata: JSON.stringify(messageEcho),
+      },
+    });
+
+    logger.info('Saved outgoing WhatsApp Business App message to DB', {
+      messageId: messageEcho.id,
+      customerPhone,
+    });
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for message echo notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    });
 
     return true;
   },

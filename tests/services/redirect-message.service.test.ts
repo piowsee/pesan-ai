@@ -1,6 +1,6 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
-import { logError, logger } from '@/lib/server/logger';
+import { logError } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
@@ -21,6 +21,7 @@ function messageHistory(content: string) {
     {
       sequence: 1,
       source: 'customer',
+      direction: 'incoming',
       timestamp: new Date('2026-06-24T10:00:00.000Z'),
       content,
     },
@@ -56,6 +57,12 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         },
       },
     });
+    vi.mocked(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).mockResolvedValue({
+      id: 'conv-1',
+      adminTakeover: true,
+    });
   });
 
   afterEach(() => {
@@ -88,13 +95,15 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       messages: [
         {
           sequence: 1,
-          source: 'bot',
+          source: 'whatsapp_app',
+          direction: 'outgoing',
           timestamp: new Date('2026-06-24T09:59:00.000Z'),
           content: 'hello',
         },
         {
           sequence: 2,
-          source: 'customer',
+          source: 'whatsapp_app',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T10:00:00.000Z'),
           content: 'need help',
         },
@@ -122,7 +131,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
           messages: [
             {
               sequence: 1,
-              source: 'bot',
+              source: 'admin',
               timestamp: new Date('2026-06-24T09:59:00.000Z'),
               content: 'hello',
             },
@@ -299,7 +308,20 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     expect(result).toBeUndefined();
     expect(betterFetch).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalled();
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
+    expect(eventBus.emit).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, 'user-1'),
+      {
+        conversationId: 'conv-1',
+        wabaId: 'waba-1',
+        adminTakeover: true,
+      },
+    );
   });
 
   it('does not call the external webhook when the configured webhook is inactive', async () => {
@@ -316,7 +338,12 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     expect(result).toBeUndefined();
     expect(betterFetch).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalled();
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
   });
 
   it('returns undefined and logs when the webhook response schema is invalid', async () => {
@@ -340,6 +367,47 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     expect(logError).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.stringContaining('Webhook response schema mismatch'),
+      }),
+      expect.objectContaining({
+        conversationId: 'conv-1',
+      }),
+    );
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
+  });
+
+  it('enables admin takeover after the webhook exhausts request retries', async () => {
+    vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
+      url: 'https://bot.example.com/message',
+      passphrase: 'encrypted-passphrase',
+      isActive: true,
+    });
+    vi.mocked(betterFetch).mockResolvedValue({
+      data: null,
+      error: new Error('Service unavailable'),
+    } as never);
+
+    const result = await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      messages: messageHistory('hello'),
+    });
+
+    expect(result).toBeUndefined();
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
+    expect(eventBus.emit).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, 'user-1'),
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        adminTakeover: true,
       }),
     );
   });
