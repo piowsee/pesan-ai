@@ -187,12 +187,14 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
         {
           sequence: 1,
           source: 'bot',
+          direction: 'outgoing',
           timestamp: new Date('2026-06-24T10:00:00.000Z'),
           content: 'first',
         },
         {
           sequence: 2,
           source: 'customer',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T10:01:00.000Z'),
           content: 'second',
         },

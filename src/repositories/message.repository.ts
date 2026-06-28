@@ -20,6 +20,7 @@ export const MessageRepository = {
         content: true,
         source: true,
         timestamp: true,
+        direction: true,
       },
       orderBy: [{ timestamp: 'asc' }, { createdAt: 'asc' }],
     });
@@ -27,6 +28,7 @@ export const MessageRepository = {
     return messages.map((message, index) => ({
       sequence: index + 1,
       source: message.source,
+      direction: message.direction,
       timestamp: message.timestamp,
       content: message.content!,
     }));
