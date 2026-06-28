@@ -38,15 +38,24 @@ export function applyRealtimeMessageToConversation(params: {
 }): ChatConversation {
   const { chat, message, adminTakeover, isActive } = params;
   const isCustomerMessage = isIncomingCustomerMessage(message);
-  const lastCustomerMessageAt = isCustomerMessage
+  const isLatestMessage =
+    !chat.lastMessageAt ||
+    new Date(message.timestamp).getTime() >=
+      new Date(chat.lastMessageAt).getTime();
+  const isLatestCustomerMessage =
+    isCustomerMessage &&
+    (!chat.lastCustomerMessageAt ||
+      new Date(message.timestamp).getTime() >=
+        new Date(chat.lastCustomerMessageAt).getTime());
+  const lastCustomerMessageAt = isLatestCustomerMessage
     ? message.timestamp
     : chat.lastCustomerMessageAt;
 
   return {
     ...chat,
     adminTakeover,
-    lastMessage: message,
-    lastMessageAt: message.timestamp,
+    lastMessage: isLatestMessage ? message : chat.lastMessage,
+    lastMessageAt: isLatestMessage ? message.timestamp : chat.lastMessageAt,
     lastCustomerMessageAt,
     canSendFreeform: isFreeformWindowOpen(lastCustomerMessageAt),
     freeformWindowEndsAt: lastCustomerMessageAt

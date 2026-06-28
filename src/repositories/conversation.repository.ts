@@ -260,7 +260,6 @@ export const ConversationRepository = {
         },
         update: {
           customerName,
-          lastMessageAt: message.timestamp,
         },
         create: {
           phoneNumberId,
@@ -273,9 +272,20 @@ export const ConversationRepository = {
         },
       });
 
+      // check to make sure last message at doesnt go backward
+      const latestConversation =
+        conversation.lastMessageAt &&
+        conversation.lastMessageAt >= message.timestamp
+          ? conversation
+          : await tx.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: message.timestamp },
+              include: { phoneNumber: true },
+            });
+
       const savedMessage = await tx.message.create({
         data: {
-          conversationId: conversation.id,
+          conversationId: latestConversation.id,
           messageId: message.messageId,
           direction: 'outgoing',
           // `whatsapp_app` covers live echoes and all history-sync messages,
@@ -298,7 +308,7 @@ export const ConversationRepository = {
       });
 
       return {
-        conversation,
+        conversation: latestConversation,
         message: savedMessage,
         userId: waba?.userId,
         wabaId: waba?.id,
