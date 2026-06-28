@@ -7,6 +7,8 @@ import { MetaFetchService } from '@/services/meta-fetch.service';
 import { PhoneNumberMetaResponse, WhatsappBusinessProfile } from '@/types/waba';
 import { randomInt } from 'node:crypto';
 
+const COEXISTENCE_SIGNUP_EVENT = 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';
+
 type PhoneRegistration = PhoneNumberMetaResponse & {
   fallbackEncryptedRegistrationPin: string;
   fallbackRegistrationPin: string;
@@ -231,10 +233,11 @@ export const EmbeddedSignUpService = {
    */
   async completeEmbeddedSignup(params: {
     code: string;
+    event?: string;
     wabaId: string;
     userId: string;
   }): Promise<EmbeddedSignupResult> {
-    const { code, wabaId, userId } = params;
+    const { code, event, wabaId, userId } = params;
     const existingWaba = await WabaRepository.findByMetaWabaId({ wabaId });
 
     if (existingWaba && existingWaba.userId !== userId) {
@@ -268,15 +271,29 @@ export const EmbeddedSignUpService = {
       existingPhoneNumbers,
     );
 
-    const [registrationResults] = await Promise.all([
-      Promise.allSettled(
+    const shouldRegisterPhoneNumbers = event !== COEXISTENCE_SIGNUP_EVENT;
+    let registrationPromise: Promise<PromiseSettledResult<PhoneRegistration>[]>;
+
+    if (shouldRegisterPhoneNumbers) {
+      registrationPromise = Promise.allSettled(
         phoneRegistrations.map((phoneNumber) =>
           this._registerPhoneNumberWithRecovery({
             phoneNumber,
             token: systemUserToken,
           }),
         ),
-      ),
+      );
+    } else {
+      registrationPromise = Promise.resolve(
+        phoneRegistrations.map((phoneNumber) => ({
+          status: 'fulfilled' as const,
+          value: phoneNumber,
+        })),
+      );
+    }
+
+    const [registrationResults] = await Promise.all([
+      registrationPromise,
       MetaFetchService.subscribeWabaApps({ wabaId, token: systemUserToken }),
     ]);
 
@@ -312,6 +329,7 @@ export const EmbeddedSignUpService = {
     logger.info('Meta phone registration and app subscription completed', {
       phoneNumberCount: registeredPhoneNumbers.length,
       failedPhoneNumberCount: failedPhoneRegistrations.length,
+      skippedPhoneRegistration: !shouldRegisterPhoneNumbers,
       wabaId,
     });
 

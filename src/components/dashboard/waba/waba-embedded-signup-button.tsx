@@ -74,6 +74,8 @@ const SIGNUP_EXTRAS: FacebookLoginOptions['extras'] = {
     preVerifiedPhone: { ids: null },
     solutionID: null,
     whatsAppBusinessAccount: { ids: null },
+    // @see https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users
+    featureType: 'whatsapp_business_app_onboarding',
   },
 };
 
@@ -145,6 +147,7 @@ export function WabaEmbeddedSignupButton({
     if (
       !authorizationCode ||
       !session?.wabaId ||
+      !session.event?.startsWith('FINISH') ||
       signupMutation.isPending ||
       handledCodeRef.current === authorizationCode
     ) {
@@ -152,11 +155,13 @@ export function WabaEmbeddedSignupButton({
     }
 
     handledCodeRef.current = authorizationCode;
+    const signupEvent = session.event;
 
     const submitData = async () => {
       try {
         const result = await signupMutation.mutateAsync({
           code: authorizationCode,
+          event: signupEvent,
           wabaId: session.wabaId,
           sessionPayload: session.payload ?? null,
         });

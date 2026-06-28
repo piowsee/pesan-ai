@@ -31,6 +31,7 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
+        event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
         wabaId: 'meta-waba-1',
         sessionPayload: { step: 'finish' },
       }),
@@ -49,6 +50,7 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     });
     expect(EmbeddedSignUpService.completeEmbeddedSignup).toHaveBeenCalledWith({
       code: 'auth-code-123',
+      event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
       wabaId: 'meta-waba-1',
       userId: 'user-1',
     });
@@ -87,6 +89,7 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
+        event: 'FINISH',
         wabaId: 'meta-waba-1',
       }),
       { params: Promise.resolve({}) } as never,
@@ -106,6 +109,7 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
+        event: 'FINISH',
         wabaId: 'meta-waba-1',
       }),
       { params: Promise.resolve({}) } as never,
@@ -133,6 +137,7 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
+        event: 'FINISH',
         wabaId: 'meta-waba-1',
       }),
       { params: Promise.resolve({}) } as never,
