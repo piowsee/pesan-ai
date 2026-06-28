@@ -18,6 +18,7 @@ import {
 // ─── Query Keys ──────────────────────────────────────────────────────
 
 export const messageKeys = {
+  root: ['messages'] as const,
   all: (convId: string) => ['messages', convId] as const,
 };
 
