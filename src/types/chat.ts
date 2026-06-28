@@ -1,4 +1,9 @@
 export type ChatSidebarFilter = 'all' | 'admin' | 'bot';
+export type ChatMessageSource =
+  | 'customer'
+  | 'admin'
+  | 'bot'
+  | 'admin_whatsapp_app';
 
 export interface ChatBusinessProfile {
   profilePictureUrl: string | null;
@@ -9,7 +14,7 @@ export interface ChatMessage {
   messageId: string | null;
   conversationId: string;
   direction: 'incoming' | 'outgoing';
-  source: 'customer' | 'admin' | 'bot';
+  source: ChatMessageSource;
   type: string;
   content: string | null;
   mediaUrl: string | null;

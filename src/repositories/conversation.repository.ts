@@ -278,7 +278,7 @@ export const ConversationRepository = {
           conversationId: conversation.id,
           messageId: message.messageId,
           direction: 'outgoing',
-          source: 'admin',
+          source: 'admin_whatsapp_app',
           type: message.type,
           content: message.content,
           timestamp: message.timestamp,

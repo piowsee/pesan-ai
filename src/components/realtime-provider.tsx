@@ -6,6 +6,7 @@ import {
   mapRawConversationToChatConversation,
 } from '@/hooks/use-conversations';
 import { messageKeys } from '@/hooks/use-message';
+import { CHAT_FREEFORM_WINDOW_MS, isFreeformWindowOpen } from '@/lib/chat/chat';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import { type InfiniteData, useQueryClient } from '@tanstack/react-query';
 import {
@@ -21,6 +22,45 @@ import {
 interface RealtimeContextType {
   setViewingConversationId: (id: string | undefined) => void;
   activate: () => void;
+}
+
+export function isIncomingCustomerMessage(
+  message: Pick<ChatMessage, 'direction' | 'source'>,
+): boolean {
+  return message.direction === 'incoming' && message.source === 'customer';
+}
+
+export function applyRealtimeMessageToConversation(params: {
+  chat: ChatConversation;
+  message: ChatMessage;
+  adminTakeover: boolean;
+  isActive: boolean;
+}): ChatConversation {
+  const { chat, message, adminTakeover, isActive } = params;
+  const isCustomerMessage = isIncomingCustomerMessage(message);
+  const lastCustomerMessageAt = isCustomerMessage
+    ? message.timestamp
+    : chat.lastCustomerMessageAt;
+
+  return {
+    ...chat,
+    adminTakeover,
+    lastMessage: message,
+    lastMessageAt: message.timestamp,
+    lastCustomerMessageAt,
+    canSendFreeform: isFreeformWindowOpen(lastCustomerMessageAt),
+    freeformWindowEndsAt: lastCustomerMessageAt
+      ? new Date(
+          new Date(lastCustomerMessageAt).getTime() + CHAT_FREEFORM_WINDOW_MS,
+        ).toISOString()
+      : null,
+    unreadCount: isCustomerMessage
+      ? isActive
+        ? 0
+        : chat.unreadCount + 1
+      : chat.unreadCount,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 const RealtimeContext = createContext<RealtimeContextType | null>(null);
@@ -146,6 +186,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     const handleNewMessage = (payload: SSEMessagePayload) => {
       const { wabaId, conversationId, conversation, ...newMessage } = payload;
+      const realtimeMessage: ChatMessage = { ...newMessage, conversationId };
       const isActive =
         isPageVisibleRef.current &&
         conversationId === viewingConversationIdRef.current;
@@ -171,13 +212,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
               if (index === 0) {
                 // Check if message already exists (e.g. added by useSendMessage)
                 const exists = page.messages.some(
-                  (m) => m.id === newMessage.id,
+                  (m) => m.id === realtimeMessage.id,
                 );
                 if (exists) return page;
 
                 return {
                   ...page,
-                  messages: [newMessage, ...page.messages],
+                  messages: [realtimeMessage, ...page.messages],
                   total: page.total + 1,
                 };
               }
@@ -199,14 +240,12 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           const updatedChats = old.chats.map((chat) => {
             if (chat.id === conversationId) {
               found = true;
-              return {
-                ...chat,
+              return applyRealtimeMessageToConversation({
+                chat,
+                message: realtimeMessage,
                 adminTakeover: conversation.adminTakeover,
-                lastMessage: newMessage,
-                lastMessageAt: newMessage.timestamp,
-                unreadCount: isActive ? 0 : chat.unreadCount + 1,
-                updatedAt: new Date().toISOString(),
-              };
+                isActive,
+              });
             }
             return chat;
           });
@@ -215,7 +254,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
             // Instead of invalidating, construct and add the new conversation
             const newChat = mapRawConversationToChatConversation({
               ...conversation,
-              messages: [{ ...newMessage, conversationId }],
+              messages: [realtimeMessage],
             });
 
             return {
@@ -239,7 +278,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         },
       );
 
-      if (isActive) {
+      if (isActive && isIncomingCustomerMessage(realtimeMessage)) {
         pendingReadReceiptsRef.current.set(conversationId, wabaId);
       }
     };
