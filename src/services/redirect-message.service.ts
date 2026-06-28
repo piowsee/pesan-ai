@@ -106,8 +106,10 @@ async function _requestBotWebhook(params: {
     retry: {
       type: 'linear',
       attempts: 3,
-      delay: 1000,
+      delay: 1000, // 1 second between retry attempts
       shouldRetry: (response) => {
+        // Do not retry non-transient 4xx responses. Rate limits are transient,
+        // so 429 responses are retried alongside network and server failures.
         if (
           response &&
           response.status >= 400 &&
@@ -124,6 +126,15 @@ async function _requestBotWebhook(params: {
       type: 'Bearer',
       token: webhookToken,
     },
+    // External webhook body:
+    // {
+    //   messages: [{
+    //     sequence: number,  // chronological order, starting at 1
+    //     source: string,    // customer | admin | bot | whatsapp_app
+    //     timestamp: ISO-8601,
+    //     content: string
+    //   }]
+    // }
     body: { messages },
     output: botWebhookOutputSchema,
   });
