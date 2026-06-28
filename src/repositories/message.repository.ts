@@ -1,4 +1,5 @@
 import prisma from '@/lib/server/prisma';
+import type { ChatMessageSource } from '@/types/chat';
 
 export const MessageRepository = {
   async findConversationTextHistory(params: {
@@ -73,7 +74,7 @@ export const MessageRepository = {
   async saveMessage(data: {
     conversationId: string;
     direction: 'incoming' | 'outgoing';
-    source: 'customer' | 'admin' | 'bot';
+    source: ChatMessageSource;
     type: string;
     content?: string;
     status: string;

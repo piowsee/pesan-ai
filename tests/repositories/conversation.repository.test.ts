@@ -220,7 +220,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       expect(result.conversation.lastCustomerMessageAt).toBeNull();
       expect(result.message).toMatchObject({
         direction: 'outgoing',
-        source: 'admin',
+        source: 'whatsapp_app',
         status: 'sent',
         content: 'Sent from WhatsApp Business App',
       });

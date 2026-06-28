@@ -278,7 +278,9 @@ export const ConversationRepository = {
           conversationId: conversation.id,
           messageId: message.messageId,
           direction: 'outgoing',
-          source: 'admin',
+          // `whatsapp_app` covers live echoes and all history-sync messages,
+          // regardless of their original sender. Only realtime inbound messages use `customer`.
+          source: 'whatsapp_app',
           type: message.type,
           content: message.content,
           timestamp: message.timestamp,

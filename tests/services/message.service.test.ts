@@ -126,7 +126,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(result.count).toBe(0);
     });
 
-    it('stores WhatsApp Business App message echoes as outgoing admin messages', async () => {
+    it('stores WhatsApp Business App message echoes with a distinct source', async () => {
       vi.mocked(
         ConversationRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
@@ -136,7 +136,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: {
           id: 'db-message-1',
           direction: 'outgoing',
-          source: 'admin',
+          source: 'whatsapp_app',
           content: 'Ou',
         },
         conversation: { id: 'conversation-1' },
@@ -206,7 +206,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         expect.objectContaining({
           id: 'db-message-1',
           direction: 'outgoing',
-          source: 'admin',
+          source: 'whatsapp_app',
         }),
       );
     });

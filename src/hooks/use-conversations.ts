@@ -1,7 +1,7 @@
 'use client';
 
 import { isFreeformWindowOpen } from '@/lib/chat/chat';
-import type { ChatConversation } from '@/types/chat';
+import type { ChatConversation, ChatMessageSource } from '@/types/chat';
 import {
   keepPreviousData,
   queryOptions,
@@ -40,7 +40,7 @@ export interface RawConversation {
     messageId: string | null;
     conversationId: string;
     direction: 'incoming' | 'outgoing';
-    source: 'customer' | 'admin' | 'bot';
+    source: ChatMessageSource;
     type: string;
     content: string | null;
     mediaUrl: string | null;
