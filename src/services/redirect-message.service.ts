@@ -23,6 +23,19 @@ type BotConversation = NonNullable<
 type BotMessageHistory = Awaited<
   ReturnType<typeof MessageRepository.findConversationTextHistory>
 >;
+function _toBotWebhookMessages(messages: BotMessageHistory) {
+  return messages.map((message) => ({
+    sequence: message.sequence,
+    source:
+      message.source === 'whatsapp_app'
+        ? message.direction === 'incoming'
+          ? 'customer'
+          : 'admin'
+        : message.source,
+    timestamp: message.timestamp,
+    content: message.content,
+  }));
+}
 
 async function _findWebhookData(params: { conversationId: string }) {
   const { conversationId } = params;
@@ -97,6 +110,7 @@ async function _requestBotWebhook(params: {
   const { conversationId, messages } = params;
   const { url, passphrase } = await _findWebhookData({ conversationId });
   const decryptedPassphrase = decrypt(passphrase);
+  const webhookMessages = _toBotWebhookMessages(messages);
   const webhookToken = await WebhookService._generateWebhookToken({
     url,
     passphrase: decryptedPassphrase,
@@ -130,12 +144,12 @@ async function _requestBotWebhook(params: {
     // {
     //   messages: [{
     //     sequence: number,  // chronological order, starting at 1
-    //     source: string,    // customer | admin | bot | whatsapp_app
+    //     source: string,    // customer | admin | bot
     //     timestamp: ISO-8601,
     //     content: string
     //   }]
     // }
-    body: { messages },
+    body: { messages: webhookMessages },
     output: botWebhookOutputSchema,
   });
 

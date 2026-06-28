@@ -14,12 +14,14 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
       {
         sequence: 1,
         source: 'customer',
+        direction: 'incoming',
         timestamp: new Date('2026-06-24T11:50:00.000Z'),
         content: 'previous message',
       },
       {
         sequence: 2,
         source: 'customer',
+        direction: 'incoming',
         timestamp: new Date('2026-06-24T12:00:10.000Z'),
         content: 'latest message',
       },
@@ -48,12 +50,14 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
         {
           sequence: 1,
           source: 'customer',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T11:50:00.000Z'),
           content: 'previous message',
         },
         {
           sequence: 2,
           source: 'customer',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T12:00:10.000Z'),
           content: 'latest message',
         },
@@ -75,6 +79,7 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
         {
           sequence: 1,
           source: 'customer',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T11:50:00.000Z'),
           content: 'first history',
         },
@@ -83,6 +88,7 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
         {
           sequence: 1,
           source: 'customer',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T11:51:00.000Z'),
           content: 'second history',
         },

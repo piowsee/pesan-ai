@@ -21,6 +21,7 @@ function messageHistory(content: string) {
     {
       sequence: 1,
       source: 'customer',
+      direction: 'incoming',
       timestamp: new Date('2026-06-24T10:00:00.000Z'),
       content,
     },
@@ -94,13 +95,15 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       messages: [
         {
           sequence: 1,
-          source: 'bot',
+          source: 'whatsapp_app',
+          direction: 'outgoing',
           timestamp: new Date('2026-06-24T09:59:00.000Z'),
           content: 'hello',
         },
         {
           sequence: 2,
-          source: 'customer',
+          source: 'whatsapp_app',
+          direction: 'incoming',
           timestamp: new Date('2026-06-24T10:00:00.000Z'),
           content: 'need help',
         },
@@ -128,7 +131,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
           messages: [
             {
               sequence: 1,
-              source: 'bot',
+              source: 'admin',
               timestamp: new Date('2026-06-24T09:59:00.000Z'),
               content: 'hello',
             },
