@@ -54,6 +54,7 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findConversationById: vi.fn(),
     updateAdminTakeoverStatus: vi.fn(),
     processIncomingMessage: vi.fn(),
+    processOutgoingMessageEcho: vi.fn(),
   },
 }));
 
