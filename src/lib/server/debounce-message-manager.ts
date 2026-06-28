@@ -1,6 +1,6 @@
 // TODO: consider migrate to MQ/DB based queue worker
 // NOTE: current implementation uses direct memory from nextjs instance.
-import { logger } from '@/lib/server/logger';
+import { logError, logger } from '@/lib/server/logger';
 import { MessageRepository } from '@/repositories/message.repository';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
 
@@ -32,7 +32,14 @@ export function handleDebounceIncomingMessage(conversationId: string) {
         messageCount: messages.length,
       });
 
-      await redirectMessageToExternalWebhook({ conversationId, messages });
+      try {
+        await redirectMessageToExternalWebhook({ conversationId, messages });
+      } catch (error) {
+        logError(error, {
+          action: 'Unhandled bot webhook redirect failure',
+          conversationId,
+        });
+      }
     }, 15_000),
   );
 }

@@ -1,4 +1,5 @@
 import {
+  applyBotWebhookFailureToConversations,
   applyRealtimeMessageToConversation,
   isIncomingCustomerMessage,
 } from '@/components/realtime-provider';
@@ -120,5 +121,25 @@ describe('realtime conversation updates', () => {
 
     expect(result.lastCustomerMessageAt).toBe(lastCustomerMessageAt);
     expect(result.canSendFreeform).toBe(true);
+  });
+
+  it('enables admin takeover without adding a message after bot failure', () => {
+    const conversations = [
+      createConversation(),
+      createConversation({ id: 'conversation-2' }),
+    ];
+
+    const result = applyBotWebhookFailureToConversations(conversations, {
+      conversationId: 'conversation-1',
+      wabaId: 'waba-1',
+      adminTakeover: true,
+    });
+
+    expect(result[0]).toMatchObject({
+      id: 'conversation-1',
+      adminTakeover: true,
+      lastMessage: null,
+    });
+    expect(result[1]).toBe(conversations[1]);
   });
 });

@@ -32,6 +32,10 @@ describe('SSE Route', () => {
       expectedEvent,
       expect.any(Function),
     );
+    expect(eventBus.on).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, mockUser.id),
+      expect.any(Function),
+    );
   });
 
   it('unsubscribes and clears heartbeat when connection is aborted', async () => {
@@ -58,6 +62,10 @@ describe('SSE Route', () => {
       expectedEvent,
       expect.any(Function),
     );
+    expect(eventBus.off).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, mockUser.id),
+      expect.any(Function),
+    );
 
     // Cleanup
     await reader?.cancel();
@@ -82,6 +90,32 @@ describe('SSE Route', () => {
     const decoded = new TextDecoder().decode(value);
 
     expect(decoded).toContain(`event: ${SSE_EVENTS.NEW_MESSAGE}`);
+    expect(decoded).toContain(`data: ${JSON.stringify(testPayload)}`);
+
+    await reader?.cancel();
+  });
+
+  it('streams bot webhook failures as conversation-only events', async () => {
+    const req = new Request('http://localhost/api/sse');
+    const response = await GET(req, { params: Promise.resolve({}) });
+    const reader = response.body?.getReader();
+    const eventName = getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, mockUser.id);
+    const onBotWebhookFailed = vi
+      .mocked(eventBus.on)
+      .mock.calls.find(([name]) => name === eventName)?.[1];
+    const testPayload = {
+      conversationId: 'conv-1',
+      wabaId: 'waba-1',
+      adminTakeover: true,
+    };
+
+    const readPromise = reader!.read();
+    onBotWebhookFailed!(testPayload);
+
+    const { value } = await readPromise;
+    const decoded = new TextDecoder().decode(value);
+
+    expect(decoded).toContain(`event: ${SSE_EVENTS.BOT_WEBHOOK_FAILED}`);
     expect(decoded).toContain(`data: ${JSON.stringify(testPayload)}`);
 
     await reader?.cancel();

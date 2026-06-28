@@ -7,6 +7,18 @@ import { formatConversationTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 
+export function getConversationStatusLabel(adminTakeover: boolean) {
+  return adminTakeover ? 'Admin' : 'Bot';
+}
+
+export function shouldHighlightAdminConversation(params: {
+  adminTakeover: boolean;
+  unreadCount: number;
+}) {
+  const { adminTakeover, unreadCount } = params;
+  return adminTakeover && Number.isFinite(unreadCount) && unreadCount > 0;
+}
+
 export function ConversationListItem({
   conversation,
   isActive,
@@ -22,13 +34,12 @@ export function ConversationListItem({
 }) {
   const unreadCount = Number(conversation.unreadCount ?? 0);
   const hasUnread = Number.isFinite(unreadCount) && unreadCount > 0;
-  const needsAdminAttention = hasUnread && !conversation.adminTakeover;
+  const requiresAdminResponse = shouldHighlightAdminConversation({
+    adminTakeover: conversation.adminTakeover,
+    unreadCount,
+  });
   const messagePreview = getMessagePreview(conversation.lastMessage);
-  const statusLabel = conversation.adminTakeover
-    ? 'Admin'
-    : needsAdminAttention
-      ? 'Needs admin'
-      : null;
+  const statusLabel = getConversationStatusLabel(conversation.adminTakeover);
 
   return (
     <div
@@ -36,16 +47,18 @@ export function ConversationListItem({
         'group flex w-full min-w-0 overflow-hidden transition-all',
         isActive
           ? 'bg-brand/10 hover:bg-brand/10'
-          : needsAdminAttention
+          : hasUnread
             ? 'bg-brand/5 hover:bg-brand/8'
             : 'bg-transparent hover:bg-brand/5',
+        requiresAdminResponse &&
+          'bg-amber-50/90 ring-1 ring-inset ring-amber-400/45 shadow-sm hover:bg-amber-100/80 dark:bg-amber-500/10 dark:ring-amber-400/25 dark:hover:bg-amber-500/15',
       )}
     >
       <Button
         variant="unstyled"
         type="button"
         onClick={onSelect}
-        aria-label={`Open conversation with ${conversation.displayName}`}
+        aria-label={`Open conversation with ${conversation.displayName}${requiresAdminResponse ? ', requires admin response' : ''}`}
         className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 px-4 py-3 text-left"
       >
         <Avatar className="mt-0.5 size-11 border">
@@ -80,19 +93,25 @@ export function ConversationListItem({
             </p>
 
             <div className="flex min-w-fit shrink-0 items-center justify-end gap-1.5">
-              {statusLabel ? (
-                <Badge
-                  variant={conversation.adminTakeover ? 'outline' : 'secondary'}
-                  className="px-1.5 text-[10px] font-semibold"
-                >
-                  {statusLabel}
-                </Badge>
-              ) : null}
+              <Badge
+                variant={conversation.adminTakeover ? 'outline' : 'secondary'}
+                className={cn(
+                  'px-1.5 text-[10px] font-semibold',
+                  requiresAdminResponse &&
+                    'border-amber-500/45 bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-100',
+                )}
+              >
+                {statusLabel}
+              </Badge>
 
               {hasUnread && (
                 <Badge
                   variant="default"
-                  className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-brand-foreground"
+                  className={cn(
+                    'flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-brand-foreground',
+                    requiresAdminResponse &&
+                      'bg-amber-600 text-white dark:bg-amber-500 dark:text-amber-950',
+                  )}
                 >
                   {unreadCount}
                 </Badge>

@@ -78,6 +78,23 @@ interface SSEMessagePayload extends ChatMessage {
   conversation: RawConversation;
 }
 
+interface BotWebhookFailedPayload {
+  conversationId: string;
+  wabaId: string;
+  adminTakeover: true;
+}
+
+export function applyBotWebhookFailureToConversations(
+  chats: ChatConversation[],
+  payload: BotWebhookFailedPayload,
+): ChatConversation[] {
+  return chats.map((chat) =>
+    chat.id === payload.conversationId
+      ? { ...chat, adminTakeover: payload.adminTakeover }
+      : chat,
+  );
+}
+
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [isActivated, setIsActivated] = useState(false);
@@ -283,6 +300,20 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const handleBotWebhookFailed = (payload: BotWebhookFailedPayload) => {
+      queryClient.setQueryData(
+        conversationKeys.all(payload.wabaId),
+        (old: { chats: ChatConversation[]; total: number } | undefined) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            chats: applyBotWebhookFailureToConversations(old.chats, payload),
+          };
+        },
+      );
+    };
+
     eventSource.addEventListener('NEW_MESSAGE', (event: MessageEvent) => {
       try {
         const payload: SSEMessagePayload = JSON.parse(event.data);
@@ -291,6 +322,18 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         console.error('Failed to parse NEW_MESSAGE event:', err);
       }
     });
+
+    eventSource.addEventListener(
+      'BOT_WEBHOOK_FAILED',
+      (event: MessageEvent) => {
+        try {
+          const payload: BotWebhookFailedPayload = JSON.parse(event.data);
+          if (payload) handleBotWebhookFailed(payload);
+        } catch (err) {
+          console.error('Failed to parse BOT_WEBHOOK_FAILED event:', err);
+        }
+      },
+    );
 
     eventSource.onerror = (err) => {
       console.error('SSE Error:', err);
