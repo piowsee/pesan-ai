@@ -1,9 +1,12 @@
 export type ChatSidebarFilter = 'all' | 'admin' | 'bot';
-export type ChatMessageSource =
-  | 'customer'
-  | 'admin'
-  | 'bot'
-  | 'admin_whatsapp_app';
+
+/**
+ * `whatsapp_app` identifies messages received through WhatsApp Business App
+ * data flows: live message echoes and every history-sync message, regardless
+ * of whether the original sender was the customer or business owner.
+ * Only realtime inbound customer messages use `customer`.
+ */
+export type ChatMessageSource = 'customer' | 'admin' | 'bot' | 'whatsapp_app';
 
 export interface ChatBusinessProfile {
   profilePictureUrl: string | null;

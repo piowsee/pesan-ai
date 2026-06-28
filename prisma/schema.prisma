@@ -181,7 +181,7 @@ model Message {
   id            String   @id @default(cuid())
   messageId     String?  @unique // Meta message ID (wamid.xxx) - null for outgoing pre-confirmation
   direction     String   // incoming, outgoing
-  source        String   // customer, admin, bot, admin_whatsapp_app
+  source        String   // customer, admin, bot, whatsapp_app
   type          String   // text, image, video, audio, document, sticker, location
   content       String?  // Text content or caption
   mediaUrl      String?  // S3/Cloudflare R2 URL

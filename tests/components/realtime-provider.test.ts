@@ -84,7 +84,7 @@ describe('realtime conversation updates', () => {
   it('does not open the window or increase unread count for an app echo', () => {
     const message = createMessage({
       direction: 'outgoing',
-      source: 'admin_whatsapp_app',
+      source: 'whatsapp_app',
     });
 
     const result = applyRealtimeMessageToConversation({
@@ -112,7 +112,7 @@ describe('realtime conversation updates', () => {
       }),
       message: createMessage({
         direction: 'outgoing',
-        source: 'admin_whatsapp_app',
+        source: 'whatsapp_app',
       }),
       adminTakeover: false,
       isActive: false,

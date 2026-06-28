@@ -136,7 +136,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: {
           id: 'db-message-1',
           direction: 'outgoing',
-          source: 'admin_whatsapp_app',
+          source: 'whatsapp_app',
           content: 'Ou',
         },
         conversation: { id: 'conversation-1' },
@@ -206,7 +206,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         expect.objectContaining({
           id: 'db-message-1',
           direction: 'outgoing',
-          source: 'admin_whatsapp_app',
+          source: 'whatsapp_app',
         }),
       );
     });
