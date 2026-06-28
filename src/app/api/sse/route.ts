@@ -25,9 +25,18 @@ export const GET = withApiAuth(async ({ req, user }) => {
         sendEvent(SSE_EVENTS.NEW_MESSAGE, payload);
       };
 
+      const onBotWebhookFailed = (payload: unknown) => {
+        sendEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, payload);
+      };
+
       // Subscribe ONLY to this user's messages
-      const userEventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
-      eventBus.on(userEventName, onNewMessage);
+      const newMessageEvent = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
+      const botWebhookFailedEvent = getUserEvent(
+        SSE_EVENTS.BOT_WEBHOOK_FAILED,
+        userId,
+      );
+      eventBus.on(newMessageEvent, onNewMessage);
+      eventBus.on(botWebhookFailedEvent, onBotWebhookFailed);
 
       // Keep-alive heartbeat every 30 seconds to prevent connection timeout
       const keepAlive = setInterval(() => {
@@ -44,7 +53,8 @@ export const GET = withApiAuth(async ({ req, user }) => {
       req.signal.addEventListener('abort', () => {
         logger.info('SSE connection aborted by client', { userId });
         clearInterval(keepAlive);
-        eventBus.off(userEventName, onNewMessage);
+        eventBus.off(newMessageEvent, onNewMessage);
+        eventBus.off(botWebhookFailedEvent, onBotWebhookFailed);
 
         try {
           controller.close();

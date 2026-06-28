@@ -7,6 +7,10 @@ import { formatConversationTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 
+export function getConversationStatusLabel(adminTakeover: boolean) {
+  return adminTakeover ? 'Admin' : 'Bot';
+}
+
 export function ConversationListItem({
   conversation,
   isActive,
@@ -22,13 +26,8 @@ export function ConversationListItem({
 }) {
   const unreadCount = Number(conversation.unreadCount ?? 0);
   const hasUnread = Number.isFinite(unreadCount) && unreadCount > 0;
-  const needsAdminAttention = hasUnread && !conversation.adminTakeover;
   const messagePreview = getMessagePreview(conversation.lastMessage);
-  const statusLabel = conversation.adminTakeover
-    ? 'Admin'
-    : needsAdminAttention
-      ? 'Needs admin'
-      : null;
+  const statusLabel = getConversationStatusLabel(conversation.adminTakeover);
 
   return (
     <div
@@ -36,7 +35,7 @@ export function ConversationListItem({
         'group flex w-full min-w-0 overflow-hidden transition-all',
         isActive
           ? 'bg-brand/10 hover:bg-brand/10'
-          : needsAdminAttention
+          : hasUnread
             ? 'bg-brand/5 hover:bg-brand/8'
             : 'bg-transparent hover:bg-brand/5',
       )}
@@ -80,14 +79,12 @@ export function ConversationListItem({
             </p>
 
             <div className="flex min-w-fit shrink-0 items-center justify-end gap-1.5">
-              {statusLabel ? (
-                <Badge
-                  variant={conversation.adminTakeover ? 'outline' : 'secondary'}
-                  className="px-1.5 text-[10px] font-semibold"
-                >
-                  {statusLabel}
-                </Badge>
-              ) : null}
+              <Badge
+                variant={conversation.adminTakeover ? 'outline' : 'secondary'}
+                className="px-1.5 text-[10px] font-semibold"
+              >
+                {statusLabel}
+              </Badge>
 
               {hasUnread && (
                 <Badge

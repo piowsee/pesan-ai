@@ -12,7 +12,7 @@ import { MetaFetchService } from './meta-fetch.service';
 import { WebhookService } from './webhook.service';
 
 const botWebhookOutputSchema = z.object({
-  botResponse: z.string(),
+  botResponse: z.string().trim().min(1),
   adminTakeover: z.boolean().default(false),
 });
 
@@ -30,15 +30,13 @@ async function _findWebhookData(params: { conversationId: string }) {
     await WebhookRepository.findWebhookByConversationId({ conversationId });
 
   if (!url || !passphrase) {
-    logger.warn(
-      `Webhook URL/passphrase is null for conversation ${conversationId}`,
+    throw new Error(
+      `Webhook URL/passphrase is missing for conversation ${conversationId}`,
     );
-    return;
   }
 
   if (!isActive) {
-    logger.warn(`Webhook is inactive for conversation ${conversationId}`);
-    return;
+    throw new Error(`Webhook is inactive for conversation ${conversationId}`);
   }
 
   return {
@@ -68,70 +66,12 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
-  const webhookData = await _findWebhookData({ conversationId });
+  let data: BotWebhookOutput;
 
-  if (!webhookData) return;
-
-  const { url, passphrase } = webhookData;
-  const decryptedPassphrase = decrypt(passphrase);
-  const webhookToken = await WebhookService._generateWebhookToken({
-    url,
-    passphrase: decryptedPassphrase,
-  });
-
-  const { data, error } = await betterFetch(url, {
-    retry: {
-      type: 'linear',
-      attempts: 3,
-      delay: 1000, // 1 sec delay
-      shouldRetry: (response) => {
-        // Don't retry on 4xx client errors that are not transient.
-        // 429 (Too Many Requests) is retryable because the server asks us to back off.
-        if (
-          response &&
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 429
-        ) {
-          return false;
-        }
-        return true;
-      },
-    },
-    method: 'POST',
-    auth: {
-      type: 'Bearer',
-      token: webhookToken,
-    },
-    // External webhook body:
-    // {
-    //   messages: [{
-    //     sequence: number,        // chronological order, starting at 1
-    //     source: string,          // customer | admin | bot
-    //     timestamp: ISO-8601,
-    //     content: string
-    //   }]
-    // }
-    body: {
-      messages,
-    },
-    output: botWebhookOutputSchema,
-  });
-
-  if (error) {
-    // schema validation failed
-    if (error instanceof z.ZodError) {
-      logError(new Error(`Webhook response schema mismatch: ${error.message}`));
-      return;
-    }
-
-    // network / http error
-    logError(new Error(`Failed to reach bot webhook: ${error.message}`));
-    return;
-  }
-
-  if (!data) {
-    logError(new Error('Empty response from bot webhook'));
+  try {
+    data = await _requestBotWebhook({ conversationId, messages });
+  } catch (error) {
+    await _handleBotWebhookFailure({ conversation, error });
     return;
   }
 
@@ -148,6 +88,98 @@ export async function redirectMessageToExternalWebhook(params: {
   });
 
   return data;
+}
+
+async function _requestBotWebhook(params: {
+  conversationId: string;
+  messages: BotMessageHistory;
+}): Promise<BotWebhookOutput> {
+  const { conversationId, messages } = params;
+  const { url, passphrase } = await _findWebhookData({ conversationId });
+  const decryptedPassphrase = decrypt(passphrase);
+  const webhookToken = await WebhookService._generateWebhookToken({
+    url,
+    passphrase: decryptedPassphrase,
+  });
+
+  const { data, error } = await betterFetch(url, {
+    retry: {
+      type: 'linear',
+      attempts: 3,
+      delay: 1000,
+      shouldRetry: (response) => {
+        if (
+          response &&
+          response.status >= 400 &&
+          response.status < 500 &&
+          response.status !== 429
+        ) {
+          return false;
+        }
+        return true;
+      },
+    },
+    method: 'POST',
+    auth: {
+      type: 'Bearer',
+      token: webhookToken,
+    },
+    body: { messages },
+    output: botWebhookOutputSchema,
+  });
+
+  if (error instanceof z.ZodError) {
+    throw new Error(`Webhook response schema mismatch: ${error.message}`);
+  }
+
+  if (error) {
+    throw new Error(`Failed to reach bot webhook: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error('Empty response from bot webhook');
+  }
+
+  return data;
+}
+
+async function _handleBotWebhookFailure(params: {
+  conversation: BotConversation;
+  error: unknown;
+}) {
+  const { conversation, error } = params;
+  const webhookError =
+    error instanceof Error ? error : new Error(String(error));
+
+  logError(webhookError, {
+    action: 'Bot webhook failed; enabling admin takeover',
+    conversationId: conversation.id,
+  });
+
+  try {
+    await ConversationRepository.updateAdminTakeoverStatus({
+      conversationId: conversation.id,
+      adminTakeover: true,
+    });
+  } catch (takeoverError) {
+    logError(takeoverError, {
+      action: 'Failed to enable admin takeover after bot webhook failure',
+      conversationId: conversation.id,
+    });
+    return;
+  }
+
+  _emitBotWebhookFailed(conversation);
+}
+
+function _emitBotWebhookFailed(conversation: BotConversation) {
+  const userId = conversation.phoneNumber.waba.userId;
+
+  eventBus.emit(getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, userId), {
+    conversationId: conversation.id,
+    wabaId: conversation.phoneNumber.wabaId,
+    adminTakeover: true,
+  });
 }
 
 async function _handlePostRedirectMessage(params: {
