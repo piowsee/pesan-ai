@@ -196,4 +196,39 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       expect(savedPn?.unreadCount).toBeGreaterThan(0);
     });
   });
+
+  describe('processOutgoingMessageEcho', () => {
+    it('stores an app-sent message without increasing unread counts', async () => {
+      const phoneNumberBefore = await prisma.phoneNumber.findUniqueOrThrow({
+        where: { id: dbPhoneNumberId },
+      });
+      const timestamp = new Date();
+
+      const result = await ConversationRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone: '999004',
+        message: {
+          messageId: 'wamid.echo.test.1',
+          type: 'text',
+          content: 'Sent from WhatsApp Business App',
+          timestamp,
+        },
+      });
+
+      expect(result.conversation.customerPhone).toBe('999004');
+      expect(result.conversation.unreadCount).toBe(0);
+      expect(result.conversation.lastCustomerMessageAt).toBeNull();
+      expect(result.message).toMatchObject({
+        direction: 'outgoing',
+        source: 'admin',
+        status: 'sent',
+        content: 'Sent from WhatsApp Business App',
+      });
+
+      const phoneNumberAfter = await prisma.phoneNumber.findUniqueOrThrow({
+        where: { id: dbPhoneNumberId },
+      });
+      expect(phoneNumberAfter.unreadCount).toBe(phoneNumberBefore.unreadCount);
+    });
+  });
 });

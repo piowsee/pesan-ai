@@ -235,4 +235,72 @@ export const ConversationRepository = {
       };
     });
   },
+
+  async processOutgoingMessageEcho(params: {
+    phoneNumberId: string;
+    customerPhone: string;
+    customerName?: string;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string;
+      timestamp: Date;
+      metadata?: string;
+    };
+  }) {
+    const { phoneNumberId, customerPhone, customerName, message } = params;
+
+    return prisma.$transaction(async (tx) => {
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            customerPhone,
+          },
+        },
+        update: {
+          customerName,
+          lastMessageAt: message.timestamp,
+        },
+        create: {
+          phoneNumberId,
+          customerPhone,
+          customerName,
+          lastMessageAt: message.timestamp,
+        },
+        include: {
+          phoneNumber: true,
+        },
+      });
+
+      const savedMessage = await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          messageId: message.messageId,
+          direction: 'outgoing',
+          source: 'admin',
+          type: message.type,
+          content: message.content,
+          timestamp: message.timestamp,
+          metadata: message.metadata,
+          status: 'sent',
+        },
+      });
+
+      const waba = await tx.whatsappBusinessAccount.findFirst({
+        where: { phoneNumbers: { some: { id: phoneNumberId } } },
+        select: {
+          id: true,
+          userId: true,
+        },
+      });
+
+      return {
+        conversation,
+        message: savedMessage,
+        userId: waba?.userId,
+        wabaId: waba?.id,
+      };
+    });
+  },
 };

@@ -321,6 +321,30 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
     });
 
+    it('skips phone registration for WhatsApp Business App coexistence', async () => {
+      const registerPhoneNumberSpy = vi.spyOn(
+        MetaFetchService,
+        'registerPhoneNumber',
+      );
+
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
+
+      expect(registerPhoneNumberSpy).not.toHaveBeenCalled();
+      expect(result.phoneNumbers).toHaveLength(2);
+      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+        wabaDbId: 'db-waba-cuid',
+        phoneNumberDatas: META_PHONE_NUMBERS.map((phoneNumber, index) => ({
+          ...phoneNumber,
+          registrationPin: REGISTRATION_PINS[index],
+        })),
+      });
+    });
+
     it('saves the encrypted access token on the WABA record', async () => {
       await EmbeddedSignUpService.completeEmbeddedSignup({
         code: VALID_CODE,

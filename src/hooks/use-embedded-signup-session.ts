@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 export type JsonRecord = Record<string, unknown>;
 
 export type EmbeddedSignupSession = {
-  eventType: string | null;
+  event: string | null;
   wabaId: string | null;
   phoneNumberId: string | null;
   payload: unknown;
@@ -85,33 +85,29 @@ function findNestedString(
   return null;
 }
 
-function findEventType(payload: unknown): string | null {
+export function findEmbeddedSignupEvent(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return null;
   }
 
-  const record = payload as Record<string, unknown>;
-  for (const field of ['type', 'event', 'eventType']) {
-    const v = record[field];
-    if (typeof v === 'string' && v.trim()) return v;
-  }
+  const event = (payload as Record<string, unknown>).event;
 
-  return null;
+  return typeof event === 'string' && event.trim() ? event : null;
 }
 
 function isRelevantPayload(
   payload: unknown,
   wabaId: string | null,
   phoneNumberId: string | null,
-  eventType: string | null,
+  signupEvent: string | null,
 ): boolean {
   const payloadText =
     typeof payload === 'string' ? payload.toLowerCase() : undefined;
 
   return (
     Boolean(wabaId || phoneNumberId) ||
-    Boolean(eventType?.toLowerCase().includes('whatsapp')) ||
-    Boolean(eventType?.toLowerCase().includes('signup')) ||
+    Boolean(signupEvent?.toLowerCase().includes('whatsapp')) ||
+    Boolean(signupEvent?.toLowerCase().includes('signup')) ||
     Boolean(payloadText?.includes('whatsapp')) ||
     Boolean(payloadText?.includes('signup'))
   );
@@ -133,7 +129,7 @@ export function useEmbeddedSignupSession() {
       if (!TRUSTED_ORIGINS.has(event.origin)) return;
 
       const payload = parseMessageData(event.data);
-      const eventType = findEventType(payload);
+      const signupEvent = findEmbeddedSignupEvent(payload);
       const wabaId = findNestedString(
         payload,
         new Set([
@@ -148,12 +144,12 @@ export function useEmbeddedSignupSession() {
         new Set(['phonenumberid', 'phoneid', 'whatsappphonenumberid']),
       );
 
-      if (!isRelevantPayload(payload, wabaId, phoneNumberId, eventType)) {
+      if (!isRelevantPayload(payload, wabaId, phoneNumberId, signupEvent)) {
         return;
       }
 
       setSession({
-        eventType,
+        event: signupEvent,
         wabaId,
         phoneNumberId,
         payload,

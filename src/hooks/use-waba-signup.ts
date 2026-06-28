@@ -21,6 +21,7 @@ export class WabaSignupError extends Error {
 
 export interface WabaSignupPayload {
   code: string;
+  event: string;
   wabaId: string | null;
   sessionPayload: unknown;
 }
