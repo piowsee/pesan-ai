@@ -30,6 +30,7 @@ type FacebookLoginOptions = {
   extras: {
     version: string;
     setup: Record<string, unknown>;
+    featureType: string;
   };
 };
 
@@ -74,9 +75,9 @@ const SIGNUP_EXTRAS: FacebookLoginOptions['extras'] = {
     preVerifiedPhone: { ids: null },
     solutionID: null,
     whatsAppBusinessAccount: { ids: null },
-    // @see https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users
-    featureType: 'whatsapp_business_app_onboarding',
   },
+  // @see https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users
+  featureType: 'whatsapp_business_app_onboarding',
 };
 
 function useIsHttpsPage() {
