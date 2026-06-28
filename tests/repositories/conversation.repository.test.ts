@@ -230,5 +230,50 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       });
       expect(phoneNumberAfter.unreadCount).toBe(phoneNumberBefore.unreadCount);
     });
+
+    it('preserves the latest message timestamp when echoes arrive out of order', async () => {
+      const newerTimestamp = new Date('2026-06-28T12:00:00.000Z');
+      const olderTimestamp = new Date('2026-06-28T11:00:00.000Z');
+      const customerPhone = '999005';
+
+      await ConversationRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.echo.test.newer',
+          type: 'text',
+          content: 'Newer message',
+          timestamp: newerTimestamp,
+        },
+      });
+
+      const result = await ConversationRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.echo.test.older',
+          type: 'text',
+          content: 'Older message',
+          timestamp: olderTimestamp,
+        },
+      });
+
+      expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
+
+      const savedConversation = await prisma.conversation.findUniqueOrThrow({
+        where: {
+          unique_conversation: {
+            phoneNumberId: dbPhoneNumberId,
+            customerPhone,
+          },
+        },
+        include: {
+          messages: { orderBy: { timestamp: 'desc' }, take: 1 },
+        },
+      });
+
+      expect(savedConversation.lastMessageAt).toEqual(newerTimestamp);
+      expect(savedConversation.messages[0]?.content).toBe('Newer message');
+    });
   });
 });

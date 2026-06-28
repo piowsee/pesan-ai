@@ -123,6 +123,37 @@ describe('realtime conversation updates', () => {
     expect(result.canSendFreeform).toBe(true);
   });
 
+  it('does not replace the latest conversation message with an older app echo', () => {
+    const latestTimestamp = NOW.toISOString();
+    const latestMessage = createMessage({
+      id: 'message-latest',
+      timestamp: latestTimestamp,
+    });
+    const olderTimestamp = new Date(
+      NOW.getTime() - 60 * 60 * 1000,
+    ).toISOString();
+
+    const result = applyRealtimeMessageToConversation({
+      chat: createConversation({
+        lastMessage: latestMessage,
+        lastMessageAt: latestTimestamp,
+        unreadCount: 2,
+      }),
+      message: createMessage({
+        id: 'message-older-echo',
+        direction: 'outgoing',
+        source: 'whatsapp_app',
+        timestamp: olderTimestamp,
+      }),
+      adminTakeover: false,
+      isActive: false,
+    });
+
+    expect(result.lastMessage).toBe(latestMessage);
+    expect(result.lastMessageAt).toBe(latestTimestamp);
+    expect(result.unreadCount).toBe(2);
+  });
+
   it('enables admin takeover without adding a message after bot failure', () => {
     const conversations = [
       createConversation(),
