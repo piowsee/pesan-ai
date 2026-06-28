@@ -8,7 +8,12 @@ import {
 import { messageKeys } from '@/hooks/use-message';
 import { CHAT_FREEFORM_WINDOW_MS, isFreeformWindowOpen } from '@/lib/chat/chat';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
-import { type InfiniteData, useQueryClient } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  type QueryClient,
+  type QueryKey,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   type ReactNode,
   createContext,
@@ -102,6 +107,16 @@ export function applyBotWebhookFailureToConversations(
       ? { ...chat, adminTakeover: payload.adminTakeover }
       : chat,
   );
+}
+
+export async function refetchRealtimeCache(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  exact = false,
+): Promise<void> {
+  const filters = { queryKey, exact };
+  await queryClient.cancelQueries(filters);
+  await queryClient.invalidateQueries(filters);
 }
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
@@ -210,12 +225,22 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // so the connection is persistent as long as the provider is mounted.
     const eventSource = new EventSource('/api/sse');
 
+    const handleOpen = () => {
+      void refetchRealtimeCache(queryClient, conversationKeys.root);
+      void refetchRealtimeCache(queryClient, messageKeys.root);
+    };
+
     const handleNewMessage = (payload: SSEMessagePayload) => {
       const { wabaId, conversationId, conversation, ...newMessage } = payload;
       const realtimeMessage: ChatMessage = { ...newMessage, conversationId };
       const isActive =
         isPageVisibleRef.current &&
         conversationId === viewingConversationIdRef.current;
+
+      const hasMessageCache =
+        queryClient.getQueryData(messageKeys.all(conversationId)) !== undefined;
+      const hasConversationCache =
+        queryClient.getQueryData(conversationKeys.all(wabaId)) !== undefined;
 
       // 1. Update Messages Timeline Cache
       queryClient.setQueryData(
@@ -253,6 +278,14 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           };
         },
       );
+
+      if (!hasMessageCache) {
+        void refetchRealtimeCache(
+          queryClient,
+          messageKeys.all(conversationId),
+          true,
+        );
+      }
 
       // 2. Update Conversations Sidebar Cache
       queryClient.setQueryData(
@@ -304,12 +337,37 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         },
       );
 
+      if (!hasConversationCache) {
+        void refetchRealtimeCache(
+          queryClient,
+          conversationKeys.all(wabaId),
+          true,
+        );
+      }
+
       if (isActive && isIncomingCustomerMessage(realtimeMessage)) {
         pendingReadReceiptsRef.current.set(conversationId, wabaId);
       }
     };
 
     const handleBotWebhookFailed = (payload: BotWebhookFailedPayload) => {
+      const cachedConversations = queryClient.getQueryData<{
+        chats: ChatConversation[];
+        total: number;
+      }>(conversationKeys.all(payload.wabaId));
+      const hasConversation = cachedConversations?.chats.some(
+        (chat) => chat.id === payload.conversationId,
+      );
+
+      if (!hasConversation) {
+        void refetchRealtimeCache(
+          queryClient,
+          conversationKeys.all(payload.wabaId),
+          true,
+        );
+        return;
+      }
+
       queryClient.setQueryData(
         conversationKeys.all(payload.wabaId),
         (old: { chats: ChatConversation[]; total: number } | undefined) => {
@@ -322,6 +380,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         },
       );
     };
+
+    eventSource.addEventListener('open', handleOpen);
 
     eventSource.addEventListener('NEW_MESSAGE', (event: MessageEvent) => {
       try {
@@ -349,6 +409,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     };
 
     return () => {
+      eventSource.removeEventListener('open', handleOpen);
       eventSource.close();
     };
   }, [queryClient, isActivated]);

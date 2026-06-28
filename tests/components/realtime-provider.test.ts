@@ -2,8 +2,11 @@ import {
   applyBotWebhookFailureToConversations,
   applyRealtimeMessageToConversation,
   isIncomingCustomerMessage,
+  refetchRealtimeCache,
 } from '@/components/realtime-provider';
+import { conversationKeys } from '@/hooks/use-conversations';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
+import { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const NOW = new Date('2026-06-28T12:00:00.000Z');
@@ -172,5 +175,22 @@ describe('realtime conversation updates', () => {
       lastMessage: null,
     });
     expect(result[1]).toBe(conversations[1]);
+  });
+
+  it('cancels stale loading data before refetching a missing cache', async () => {
+    const queryClient = new QueryClient();
+    const cancelQueries = vi
+      .spyOn(queryClient, 'cancelQueries')
+      .mockResolvedValue();
+    const invalidateQueries = vi
+      .spyOn(queryClient, 'invalidateQueries')
+      .mockResolvedValue();
+    const queryKey = conversationKeys.all('waba-1');
+
+    await refetchRealtimeCache(queryClient, queryKey, true);
+
+    const filters = { queryKey, exact: true };
+    expect(cancelQueries).toHaveBeenCalledWith(filters);
+    expect(invalidateQueries).toHaveBeenCalledWith(filters);
   });
 });

@@ -13,6 +13,7 @@ import {
 // ─── Query Keys ──────────────────────────────────────────────────────
 
 export const conversationKeys = {
+  root: ['conversations'] as const,
   all: (wabaId: string) => ['conversations', wabaId] as const,
 };
 
