@@ -167,6 +167,73 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     );
   });
 
+  it.each([
+    { label: 'missing', data: { adminTakeover: false } },
+    { label: 'empty', data: { botResponse: '', adminTakeover: false } },
+    { label: 'null', data: { botResponse: null, adminTakeover: false } },
+  ])(
+    'does not send a WhatsApp message when bot response is $label',
+    async ({ data }) => {
+      vi.mocked(
+        WebhookRepository.findWebhookByConversationId,
+      ).mockResolvedValue({
+        url: 'https://bot.example.com/message',
+        passphrase: 'encrypted-passphrase',
+        isActive: true,
+      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data,
+        error: null,
+      } as never);
+
+      const result = await redirectMessageToExternalWebhook({
+        conversationId: 'conv-1',
+        messages: messageHistory('hello'),
+      });
+
+      expect(result).toEqual(data);
+      expect(MetaFetchService.sendTextMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it('persists admin takeover without sending when bot response is empty', async () => {
+    vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
+      url: 'https://bot.example.com/message',
+      passphrase: 'encrypted-passphrase',
+      isActive: true,
+    });
+    vi.mocked(betterFetch).mockResolvedValue({
+      data: { botResponse: '', adminTakeover: true },
+      error: null,
+    } as never);
+
+    await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      messages: messageHistory('I need a human'),
+    });
+
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
+    expect(eventBus.emit).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, 'user-1'),
+      {
+        conversationId: 'conv-1',
+        wabaId: 'waba-1',
+        adminTakeover: true,
+      },
+    );
+    expect(MetaFetchService.sendTextMessage).not.toHaveBeenCalled();
+    expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+  });
+
   it('does not call queued bot work after admin takeover is enabled', async () => {
     vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
       id: 'conv-1',

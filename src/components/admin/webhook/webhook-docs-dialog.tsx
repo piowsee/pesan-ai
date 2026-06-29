@@ -181,7 +181,7 @@ Content-Type: application/json
                 <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
                   botResponse
                 </code>{' '}
-                field is required and will be sent to the customer as a bot
+                field is optional and will be sent to the customer as a bot
                 message.{' '}
                 <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
                   adminTakeover

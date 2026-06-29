@@ -12,7 +12,10 @@ import { MetaFetchService } from './meta-fetch.service';
 import { WebhookService } from './webhook.service';
 
 const botWebhookOutputSchema = z.object({
-  botResponse: z.string().trim().min(1),
+  botResponse: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    z.string().trim().optional(),
+  ),
   adminTakeover: z.boolean().default(false),
 });
 
@@ -90,7 +93,7 @@ export async function redirectMessageToExternalWebhook(params: {
 
   logger.info('Bot webhook returned response', {
     conversationId,
-    botResponseLength: data.botResponse.length,
+    botResponseLength: data.botResponse?.length ?? 0,
     adminTakeover: data.adminTakeover,
   });
 
@@ -209,7 +212,7 @@ function _emitBotWebhookFailed(conversation: BotConversation) {
 
 async function _handlePostRedirectMessage(params: {
   conversation: BotConversation;
-  content: string;
+  content?: string | null;
   adminTakeover: boolean;
 }) {
   const { conversation, content, adminTakeover } = params;
@@ -223,6 +226,19 @@ async function _handlePostRedirectMessage(params: {
         adminTakeover: true,
       });
     effectiveAdminTakeover = updatedConversation.adminTakeover;
+  }
+
+  if (!content) {
+    logger.info('Skipping bot WhatsApp message for empty webhook response', {
+      conversationId: conversation.id,
+    });
+    if (adminTakeover) {
+      _emitConversationUpdated({
+        conversation,
+        adminTakeover: effectiveAdminTakeover,
+      });
+    }
+    return;
   }
 
   const tokenToUse = decrypt(conversation.phoneNumber.waba.systemUserToken);
@@ -294,5 +310,19 @@ async function _handlePostRedirectMessage(params: {
     },
     userId,
     wabaId: phoneNumber.wabaId,
+  });
+}
+
+function _emitConversationUpdated(params: {
+  conversation: BotConversation;
+  adminTakeover: boolean;
+}) {
+  const { conversation, adminTakeover } = params;
+  const userId = conversation.phoneNumber.waba.userId;
+
+  eventBus.emit(getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, userId), {
+    conversationId: conversation.id,
+    wabaId: conversation.phoneNumber.wabaId,
+    adminTakeover,
   });
 }
