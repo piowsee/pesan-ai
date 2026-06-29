@@ -178,8 +178,11 @@ describe('realtime conversation updates', () => {
     expect(result[1]).toBe(conversations[1]);
   });
 
-  it('keeps bot webhook failure updates compatible with conversation updates', () => {
-    const conversations = [createConversation()];
+  it('updates admin takeover without adding a message after bot webhook failure', () => {
+    const conversations = [
+      createConversation(),
+      createConversation({ id: 'conversation-2' }),
+    ];
 
     const result = applyBotWebhookFailureToConversations(conversations, {
       conversationId: 'conversation-1',
@@ -187,7 +190,12 @@ describe('realtime conversation updates', () => {
       adminTakeover: true,
     });
 
-    expect(result[0].adminTakeover).toBe(true);
+    expect(result[0]).toMatchObject({
+      id: 'conversation-1',
+      adminTakeover: true,
+      lastMessage: null,
+    });
+    expect(result[1]).toBe(conversations[1]);
   });
 
   it('cancels stale loading data before refetching a missing cache', async () => {
