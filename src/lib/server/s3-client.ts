@@ -13,6 +13,7 @@ function requiredEnv(name: string): string {
 const s3Client = new S3Client({
   forcePathStyle: false,
   endpoint: requiredEnv('DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT'),
+  // @see https://docs.digitalocean.com/products/spaces/reference/aws-sdks/
   region: 'us-east-1',
   credentials: {
     accessKeyId: requiredEnv('DIGITAL_OCEAN_SPACES_BUCKET_ACCESS_KEY'),
