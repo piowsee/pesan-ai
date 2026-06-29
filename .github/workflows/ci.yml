@@ -19,6 +19,10 @@ env:
   DATABASE_URL: postgresql://testuser:testpassword@localhost:5432/testdb
   DIRECT_URL: postgresql://testuser:testpassword@localhost:5432/testdb
   ENCRYPTION_KEY: thisisarandom32characters1234567
+  DIGITAL_OCEAN_SPACES_BUCKET_NAME=: fake_name
+  DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT: fake_endpoint
+  DIGITAL_OCEAN_SPACES_BUCKET_ACCESS_KEY: fake_access_key
+  DIGITAL_OCEAN_SPACES_BUCKET_SECRET_KEY: fake_secret_key
 
 jobs:
   ci:
