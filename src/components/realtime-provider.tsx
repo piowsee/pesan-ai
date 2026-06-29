@@ -109,6 +109,23 @@ export function applyBotWebhookFailureToConversations(
   );
 }
 
+interface ConversationUpdatedPayload {
+  conversationId: string;
+  wabaId: string;
+  adminTakeover: boolean;
+}
+
+export function applyConversationUpdateToConversations(
+  chats: ChatConversation[],
+  payload: ConversationUpdatedPayload,
+): ChatConversation[] {
+  return chats.map((chat) =>
+    chat.id === payload.conversationId
+      ? { ...chat, adminTakeover: payload.adminTakeover }
+      : chat,
+  );
+}
+
 export async function refetchRealtimeCache(
   queryClient: QueryClient,
   queryKey: QueryKey,
@@ -350,6 +367,37 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const handleConversationUpdated = (payload: ConversationUpdatedPayload) => {
+      const cachedConversations = queryClient.getQueryData<{
+        chats: ChatConversation[];
+        total: number;
+      }>(conversationKeys.all(payload.wabaId));
+      const hasConversation = cachedConversations?.chats.some(
+        (chat) => chat.id === payload.conversationId,
+      );
+
+      if (!hasConversation) {
+        void refetchRealtimeCache(
+          queryClient,
+          conversationKeys.all(payload.wabaId),
+          true,
+        );
+        return;
+      }
+
+      queryClient.setQueryData(
+        conversationKeys.all(payload.wabaId),
+        (old: { chats: ChatConversation[]; total: number } | undefined) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            chats: applyConversationUpdateToConversations(old.chats, payload),
+          };
+        },
+      );
+    };
+
     const handleBotWebhookFailed = (payload: BotWebhookFailedPayload) => {
       const cachedConversations = queryClient.getQueryData<{
         chats: ChatConversation[];
@@ -400,6 +448,18 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           if (payload) handleBotWebhookFailed(payload);
         } catch (err) {
           console.error('Failed to parse BOT_WEBHOOK_FAILED event:', err);
+        }
+      },
+    );
+
+    eventSource.addEventListener(
+      'CONVERSATION_UPDATED',
+      (event: MessageEvent) => {
+        try {
+          const payload: ConversationUpdatedPayload = JSON.parse(event.data);
+          if (payload) handleConversationUpdated(payload);
+        } catch (err) {
+          console.error('Failed to parse CONVERSATION_UPDATED event:', err);
         }
       },
     );
