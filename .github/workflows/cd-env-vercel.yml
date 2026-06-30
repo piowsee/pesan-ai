@@ -32,3 +32,7 @@ jobs:
           set_env "SMTP_USER"                      "${{ secrets.SMTP_USER }}"
           set_env "SMTP_PASS"                      "${{ secrets.SMTP_PASS }}"
           set_env "LOG_LEVEL"                      "${{ secrets.LOG_LEVEL }}"
+          set_env "DIGITAL_OCEAN_SPACES_BUCKET_NAME"       "${{ secrets.DIGITAL_OCEAN_SPACES_BUCKET_NAME }}"
+          set_env "DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT"   "${{ secrets.DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT }}"
+          set_env "DIGITAL_OCEAN_SPACES_BUCKET_ACCESS_KEY" "${{ secrets.DIGITAL_OCEAN_SPACES_BUCKET_ACCESS_KEY }}"
+          set_env "DIGITAL_OCEAN_SPACES_BUCKET_SECRET_KEY" "${{ secrets.DIGITAL_OCEAN_SPACES_BUCKET_SECRET_KEY }}"
