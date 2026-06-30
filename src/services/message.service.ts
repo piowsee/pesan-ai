@@ -17,6 +17,16 @@ import {
 } from '@/schemas/webhook.schema';
 
 import { MetaFetchService } from './meta-fetch.service';
+import { S3Service } from './s3.service';
+
+function serializeMessageForTransport<
+  T extends { mediaSize?: bigint | number | null },
+>(message: T) {
+  return {
+    ...message,
+    mediaSize: message.mediaSize == null ? null : message.mediaSize.toString(),
+  };
+}
 
 export const MessageService = {
   async getMessagesPaginated(params: {
@@ -124,6 +134,66 @@ export const MessageService = {
     });
 
     return { message: savedMessage, conversation: conversationMeta };
+  },
+
+  async confirmUploadedMediaMessage(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+    key: string;
+    caption?: string;
+  }) {
+    const { convId, wabaId, userId, key, caption } = params;
+    logger.info('Confirming uploaded media message', {
+      convId,
+      wabaId,
+      userId,
+    });
+
+    const conversationMeta =
+      await ConversationRepository.getConversationMetaForSending({
+        convId,
+        wabaId,
+        userId,
+      });
+
+    if (!conversationMeta) {
+      throw new ApiError('Conversation not found or access denied', 404);
+    }
+
+    const uploadedMedia = await S3Service.verifyUploadedMedia({
+      userId,
+      key,
+    });
+    const savedMessage = await MessageRepository.saveMessage({
+      conversationId: convId,
+      direction: 'outgoing',
+      source: 'admin',
+      type: uploadedMedia.mediaType,
+      content: caption,
+      status: 'sent',
+      timestamp: new Date(),
+      mediaUrl: uploadedMedia.key,
+      mediaMimeType: uploadedMedia.mediaMimeType,
+      mediaSize: uploadedMedia.mediaSize,
+    });
+    const message = serializeMessageForTransport(savedMessage);
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...message,
+      conversation: conversationMeta,
+      userId,
+      wabaId: conversationMeta.phoneNumber.wabaId,
+    });
+
+    logger.info('Uploaded media message saved successfully', {
+      convId,
+      wabaId,
+      userId,
+      key: uploadedMedia.key,
+    });
+
+    return { message, conversation: conversationMeta };
   },
 
   async processMetaWebhookPayload(payload: unknown) {

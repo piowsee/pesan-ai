@@ -78,10 +78,15 @@ export const MessageRepository = {
     direction: 'incoming' | 'outgoing';
     source: ChatMessageSource;
     type: string;
-    content?: string;
+    content?: string | null;
     status: string;
     messageId?: string;
     timestamp: Date;
+    mediaUrl?: string | null;
+    mediaMimeType?: string | null;
+    mediaFilename?: string | null;
+    mediaSize?: number | null;
+    metadata?: string | null;
   }) {
     return prisma.$transaction(async (tx) => {
       const savedMessage = await tx.message.create({

@@ -5,6 +5,7 @@ import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { MessageService } from '@/services/message.service';
 import { MetaFetchService } from '@/services/meta-fetch.service';
+import { S3Service } from '@/services/s3.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/message.service');
@@ -112,6 +113,93 @@ describe('MessageService', { tags: ['backend'] }, () => {
           content: 'Hello',
         }),
       ).rejects.toThrow(ApiError);
+    });
+  });
+
+  describe('confirmUploadedMediaMessage', () => {
+    it('verifies object storage, saves a media message, and emits realtime update', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        phoneNumber: {
+          wabaId: 'waba-1',
+        },
+      } as never);
+      vi.mocked(S3Service.verifyUploadedMedia).mockResolvedValue({
+        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        mediaType: 'image',
+        mediaMimeType: 'image/png',
+        mediaSize: 123,
+      });
+      vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
+        id: 'msg-1',
+        conversationId: 'conv-1',
+        direction: 'outgoing',
+        source: 'admin',
+        type: 'image',
+        content: 'caption',
+        mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        mediaMimeType: 'image/png',
+        mediaSize: 123,
+        timestamp: new Date('2026-06-30T07:00:00.000Z'),
+      } as never);
+
+      const result = await MessageService.confirmUploadedMediaMessage({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        caption: 'caption',
+      });
+
+      expect(S3Service.verifyUploadedMedia).toHaveBeenCalledWith({
+        userId: 'user-1',
+        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+      });
+      expect(MessageRepository.saveMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          conversationId: 'conv-1',
+          direction: 'outgoing',
+          source: 'admin',
+          type: 'image',
+          content: 'caption',
+          status: 'sent',
+          mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+          mediaMimeType: 'image/png',
+          mediaSize: 123,
+          timestamp: expect.any(Date),
+        }),
+      );
+      expect(result.message.mediaSize).toBe('123');
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
+        expect.objectContaining({
+          id: 'msg-1',
+          mediaSize: '123',
+          mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        }),
+      );
+    });
+
+    it('throws ApiError when the conversation is not owned by the user', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue(null);
+
+      await expect(
+        MessageService.confirmUploadedMediaMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        }),
+      ).rejects.toThrow(ApiError);
+
+      expect(S3Service.verifyUploadedMedia).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
     });
   });
   describe('processMetaWebhookPayload', () => {
