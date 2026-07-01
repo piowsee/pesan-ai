@@ -82,10 +82,15 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
+  const customerPhoneNumber: string = conversation.customerPhone;
   let data: BotWebhookOutput;
 
   try {
-    data = await _requestBotWebhook({ conversationId, messages });
+    data = await _requestBotWebhook({
+      conversationId,
+      customerPhoneNumber,
+      messages,
+    });
   } catch (error) {
     await _handleBotWebhookFailure({ conversation, error });
     return;
@@ -108,9 +113,10 @@ export async function redirectMessageToExternalWebhook(params: {
 
 async function _requestBotWebhook(params: {
   conversationId: string;
+  customerPhoneNumber: string;
   messages: BotMessageHistory;
 }): Promise<BotWebhookOutput> {
-  const { conversationId, messages } = params;
+  const { conversationId, customerPhoneNumber, messages } = params;
   const { url, passphrase } = await _findWebhookData({ conversationId });
   const decryptedPassphrase = decrypt(passphrase);
   const webhookMessages = _toBotWebhookMessages(messages);
@@ -145,6 +151,7 @@ async function _requestBotWebhook(params: {
     },
     // External webhook body:
     // {
+    //   customerPhoneNumber: "6281xxxxxxxx",
     //   messages: [{
     //     sequence: number,  // chronological order, starting at 1
     //     source: string,    // customer | admin | bot
@@ -152,7 +159,10 @@ async function _requestBotWebhook(params: {
     //     content: string
     //   }]
     // }
-    body: { messages: webhookMessages },
+    body: {
+      customerPhoneNumber,
+      messages: webhookMessages,
+    },
     output: botWebhookOutputSchema,
   });
 
