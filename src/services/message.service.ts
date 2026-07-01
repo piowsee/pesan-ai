@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import {
   Contact,
   MetaWebhookPayload,
@@ -16,7 +17,39 @@ import {
   WebhookValue,
 } from '@/schemas/webhook.schema';
 
-import { MetaFetchService } from './meta-fetch.service';
+import {
+  MetaFetchService,
+  type MetaOutboundMessage,
+} from './meta-fetch.service';
+import { S3Service } from './s3.service';
+
+function serializeMessageForTransport<
+  T extends { mediaSize?: bigint | number | null },
+>(message: T) {
+  return {
+    ...message,
+    mediaSize: message.mediaSize == null ? null : Number(message.mediaSize),
+  };
+}
+
+function buildOutboundMediaMessage(params: {
+  mediaType: UploadMediaType;
+  link: string;
+  caption?: string | null;
+}): MetaOutboundMessage {
+  const { mediaType, link, caption } = params;
+
+  switch (mediaType) {
+    case 'audio':
+      return { type: 'audio', link };
+    case 'document':
+      return { type: 'document', link, caption };
+    case 'image':
+      return { type: 'image', link, caption };
+    case 'video':
+      return { type: 'video', link, caption };
+  }
+}
 
 export const MessageService = {
   async getMessagesPaginated(params: {
@@ -46,10 +79,13 @@ export const MessageService = {
       throw new ApiError('Conversation not found or access denied', 404);
     }
 
-    return result;
+    return {
+      ...result,
+      messages: result.messages.map(serializeMessageForTransport),
+    };
   },
 
-  async sendAdminMessage(params: {
+  async sendAdminTextMessage(params: {
     convId: string;
     wabaId: string;
     userId: string;
@@ -96,11 +132,11 @@ export const MessageService = {
     }
 
     // 2. Send via WhatsApp API
-    const waResult = await MetaFetchService.sendTextMessage({
+    const waResult = await MetaFetchService.sendMessage({
       phoneNumberId,
       token: tokenToUse,
       to: customerPhone,
-      text: content,
+      message: { type: 'text', text: content },
     });
 
     // 3. Save to database via MessageRepository
@@ -124,6 +160,92 @@ export const MessageService = {
     });
 
     return { message: savedMessage, conversation: conversationMeta };
+  },
+
+  async confirmUploadedMediaMessage(params: {
+    convId: string;
+    wabaId: string;
+    userId: string;
+    key: string;
+    caption?: string;
+  }) {
+    const { convId, wabaId, userId, key, caption } = params;
+    logger.info('Confirming uploaded media message', {
+      convId,
+      wabaId,
+      userId,
+    });
+
+    const conversationMeta =
+      await ConversationRepository.getConversationMetaForSending({
+        convId,
+        wabaId,
+        userId,
+      });
+
+    if (!conversationMeta) {
+      throw new ApiError('Conversation not found or access denied', 404);
+    }
+
+    const uploadedMedia = await S3Service.verifyUploadedMedia({
+      userId,
+      wabaId,
+      convId,
+      key,
+    });
+    const { downloadUrl } = await S3Service.createPresignedDownloadUrl({
+      userId,
+      wabaId,
+      convId,
+      key: uploadedMedia.key,
+    });
+    const { phoneNumber, customerPhone } = conversationMeta;
+    const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
+
+    if (!tokenToUse) {
+      throw new ApiError('WhatsApp token is missing or invalid', 403);
+    }
+
+    const waResult = await MetaFetchService.sendMessage({
+      phoneNumberId: phoneNumber.phoneNumberId,
+      token: tokenToUse,
+      to: customerPhone,
+      message: buildOutboundMediaMessage({
+        mediaType: uploadedMedia.mediaType,
+        link: downloadUrl,
+        caption,
+      }),
+    });
+    const savedMessage = await MessageRepository.saveMessage({
+      conversationId: convId,
+      direction: 'outgoing',
+      source: 'admin',
+      type: uploadedMedia.mediaType,
+      content: caption,
+      status: waResult.status,
+      messageId: waResult.messageId,
+      timestamp: new Date(),
+      mediaUrl: uploadedMedia.key,
+      mediaMimeType: uploadedMedia.mediaMimeType,
+      mediaSize: uploadedMedia.mediaSize,
+    });
+    const message = serializeMessageForTransport(savedMessage);
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...message,
+      conversation: conversationMeta,
+      userId,
+      wabaId: conversationMeta.phoneNumber.wabaId,
+    });
+
+    logger.info('Uploaded media message saved successfully', {
+      convId,
+      wabaId,
+      userId,
+      key: uploadedMedia.key,
+    });
+
+    return { message, conversation: conversationMeta };
   },
 
   async processMetaWebhookPayload(payload: unknown) {

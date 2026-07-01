@@ -252,11 +252,11 @@ async function _handlePostRedirectMessage(params: {
     return;
   }
 
-  const waResult = await MetaFetchService.sendTextMessage({
+  const waResult = await MetaFetchService.sendMessage({
     phoneNumberId: conversation.phoneNumber.phoneNumberId,
     token: tokenToUse,
     to: conversation.customerPhone,
-    text: content,
+    message: { type: 'text', text: content },
   });
 
   const savedMessage = await MessageRepository.saveMessage({

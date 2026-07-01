@@ -2,6 +2,7 @@ import {
   applyBotWebhookFailureToConversations,
   applyConversationUpdateToConversations,
   applyRealtimeMessageToConversation,
+  applyRealtimeMessageToMessagePage,
   isIncomingCustomerMessage,
   refetchRealtimeCache,
 } from '@/components/realtime-provider';
@@ -125,6 +126,50 @@ describe('realtime conversation updates', () => {
 
     expect(result.lastCustomerMessageAt).toBe(lastCustomerMessageAt);
     expect(result.canSendFreeform).toBe(true);
+  });
+
+  it('replaces an existing cached message when a realtime message has the same internal id', () => {
+    const loadingMessage = createMessage({
+      id: 'message-1',
+      status: 'sending',
+      mediaUrl: null,
+    });
+    const realtimeMessage = createMessage({
+      id: 'message-1',
+      status: 'sent',
+      mediaUrl: '/user-1/uploaded-media',
+    });
+
+    const result = applyRealtimeMessageToMessagePage(
+      {
+        messages: [loadingMessage],
+        total: 1,
+        page: 1,
+        limit: 50,
+      },
+      realtimeMessage,
+    );
+
+    expect(result.messages).toEqual([realtimeMessage]);
+    expect(result.total).toBe(1);
+  });
+
+  it('adds a realtime message when its internal id is not already cached', () => {
+    const existingMessage = createMessage({ id: 'message-1' });
+    const realtimeMessage = createMessage({ id: 'message-2' });
+
+    const result = applyRealtimeMessageToMessagePage(
+      {
+        messages: [existingMessage],
+        total: 1,
+        page: 1,
+        limit: 50,
+      },
+      realtimeMessage,
+    );
+
+    expect(result.messages).toEqual([realtimeMessage, existingMessage]);
+    expect(result.total).toBe(2);
   });
 
   it('does not replace the latest conversation message with an older app echo', () => {

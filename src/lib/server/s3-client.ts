@@ -10,6 +10,7 @@ function requiredEnv(name: string): string {
   return value;
 }
 
+const s3BucketName = requiredEnv('DIGITAL_OCEAN_SPACES_BUCKET_NAME');
 const s3Client = new S3Client({
   forcePathStyle: false,
   endpoint: requiredEnv('DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT'),
@@ -21,4 +22,4 @@ const s3Client = new S3Client({
   },
 });
 
-export { s3Client };
+export { s3BucketName, s3Client };

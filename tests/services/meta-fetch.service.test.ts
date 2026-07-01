@@ -820,7 +820,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('sendTextMessage', () => {
+  describe('sendMessage', () => {
     it('sends message successfully and returns message info', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
@@ -835,11 +835,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      const result = await MetaFetchService.sendTextMessage({
+      const result = await MetaFetchService.sendMessage({
         phoneNumberId: PHONE_NUMBER_ID,
         token: 'sys-user-token-xyz',
         to: '+6281234567890',
-        text: 'Hello from test',
+        message: { type: 'text', text: 'Hello from test' },
       });
 
       expect(result.status).toBe('sent');
@@ -861,6 +861,96 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
     });
 
+    it.each([
+      {
+        label: 'image',
+        message: {
+          type: 'image' as const,
+          link: 'https://space.example/image.png?signature=abc',
+          caption: 'image caption',
+        },
+        expectedMedia: {
+          image: {
+            link: 'https://space.example/image.png?signature=abc',
+            caption: 'image caption',
+          },
+        },
+      },
+      {
+        label: 'video',
+        message: {
+          type: 'video' as const,
+          link: 'https://space.example/video.mp4?signature=abc',
+          caption: 'video caption',
+        },
+        expectedMedia: {
+          video: {
+            link: 'https://space.example/video.mp4?signature=abc',
+            caption: 'video caption',
+          },
+        },
+      },
+      {
+        label: 'audio',
+        message: {
+          type: 'audio' as const,
+          link: 'https://space.example/audio.mp3?signature=abc',
+        },
+        expectedMedia: {
+          audio: {
+            link: 'https://space.example/audio.mp3?signature=abc',
+          },
+        },
+      },
+      {
+        label: 'document',
+        message: {
+          type: 'document' as const,
+          link: 'https://space.example/file.pdf?signature=abc',
+          caption: 'document caption',
+        },
+        expectedMedia: {
+          document: {
+            link: 'https://space.example/file.pdf?signature=abc',
+            caption: 'document caption',
+          },
+        },
+      },
+    ])(
+      'sends $label media messages by link',
+      async ({ message, expectedMedia }) => {
+        vi.mocked(global.fetch).mockImplementation(async (input) => {
+          const url = typeof input === 'string' ? input : input.toString();
+          if (url.includes('/messages')) {
+            return {
+              ok: true,
+              json: async () => ({
+                messages: [{ id: 'wamid.media' }],
+              }),
+            } as Response;
+          }
+          return { ok: true, json: async () => ({}) } as Response;
+        });
+
+        await MetaFetchService.sendMessage({
+          phoneNumberId: PHONE_NUMBER_ID,
+          token: 'sys-user-token-xyz',
+          to: '+6281234567890',
+          message,
+        });
+
+        const sendCall = vi
+          .mocked(global.fetch)
+          .mock.calls.find(([url]) => String(url).includes('/messages'));
+        expect(JSON.parse(sendCall?.[1]?.body as string)).toEqual({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: '+6281234567890',
+          type: message.type,
+          ...expectedMedia,
+        });
+      },
+    );
     it('wraps non-retryable failures as ApiError(502)', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
@@ -878,11 +968,11 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
 
       await expect(
-        MetaFetchService.sendTextMessage({
+        MetaFetchService.sendMessage({
           phoneNumberId: PHONE_NUMBER_ID,
           token: 'token-1',
           to: '+123',
-          text: 'Hi',
+          message: { type: 'text', text: 'Hi' },
         }),
       ).rejects.toMatchObject({
         status: 502,
