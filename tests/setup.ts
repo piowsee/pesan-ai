@@ -175,6 +175,7 @@ vi.mock('@/services/webhook.service', () => ({
 vi.mock('@/services/s3.service', () => ({
   S3Service: {
     createPresignedUploadUrl: vi.fn(),
+    createPresignedDownloadUrl: vi.fn(),
     verifyUploadedMedia: vi.fn(),
   },
 }));
@@ -191,7 +192,7 @@ vi.mock('@/services/meta-fetch.service', () => ({
     createPhoneNumber: vi.fn(),
     requestVerificationCode: vi.fn(),
     verifyCode: vi.fn(),
-    sendTextMessage: vi.fn(),
+    sendMessage: vi.fn(),
   },
 }));
 
