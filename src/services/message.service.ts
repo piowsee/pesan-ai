@@ -76,10 +76,12 @@ function getWebhookMediaFilename(mediaPayload: WebhookMediaPayload) {
     : null;
 }
 
+// Route-facing wabaId values here are internal DB WhatsappBusinessAccount.id.
+// Meta API calls use phoneNumber.phoneNumberId, which is the Meta Phone Number ID.
 export const MessageService = {
   async getMessagesPaginated(params: {
     convId: string;
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
     page: number;
     limit: number;
@@ -112,7 +114,7 @@ export const MessageService = {
 
   async sendAdminTextMessage(params: {
     convId: string;
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
     content: string;
   }) {
@@ -139,7 +141,7 @@ export const MessageService = {
     }
 
     const { phoneNumber, customerPhone } = conversationMeta;
-    const { phoneNumberId } = phoneNumber;
+    const { phoneNumberId } = phoneNumber; // Meta Phone Number ID.
 
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
@@ -189,7 +191,7 @@ export const MessageService = {
 
   async confirmUploadedMediaMessage(params: {
     convId: string;
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
     key: string;
     caption?: string;
@@ -348,7 +350,7 @@ export const MessageService = {
   // --- Incoming customer message processing ---
 
   async _processIncomingMessageChange(value: WebhookValue): Promise<number> {
-    const metaPhoneNumberId = value.metadata?.phone_number_id;
+    const metaPhoneNumberId = value.metadata?.phone_number_id; // Meta Phone Number ID.
     if (!metaPhoneNumberId) return 0;
 
     const internalPhoneResult =
@@ -371,7 +373,7 @@ export const MessageService = {
 
   async _processMessagesList(params: {
     messages?: WebhookMessage[];
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<number> {
     const { messages = [], internalPhoneId, contactsMap } = params;
@@ -398,7 +400,7 @@ export const MessageService = {
 
   async _processSingleMessage(params: {
     message: WebhookMessage;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<boolean> {
     const { message } = params;
@@ -436,14 +438,14 @@ export const MessageService = {
 
   async _processIncomingTextMessage(params: {
     message: WebhookMessage;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<boolean> {
-    const { message, internalPhoneId, contactsMap } = params;
-    const customerPhone = message.from;
+    const { message: webhookMessage, internalPhoneId, contactsMap } = params;
+    const customerPhone = webhookMessage.from;
     const customerName = contactsMap[customerPhone];
-    const content = message.text?.body;
-    const timestamp = new Date(parseInt(message.timestamp) * 1000);
+    const content = webhookMessage.text?.body;
+    const timestamp = new Date(parseInt(webhookMessage.timestamp) * 1000);
 
     const {
       message: savedMessage,
@@ -455,18 +457,20 @@ export const MessageService = {
       customerPhone,
       customerName,
       message: {
-        messageId: message.id,
+        messageId: webhookMessage.id,
         type: 'text',
         content,
         timestamp,
-        metadata: JSON.stringify(message),
+        metadata: JSON.stringify(webhookMessage),
       },
     });
 
     logger.info('Saved incoming text message to DB successfully', {
-      messageId: message.id,
+      messageId: webhookMessage.id,
       customerPhone,
     });
+
+    const message = serializeMessageForTransport(savedMessage);
 
     if (!userId) {
       logError(
@@ -480,7 +484,7 @@ export const MessageService = {
     }
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
+      ...message,
       conversation,
       userId,
       wabaId,
@@ -500,13 +504,18 @@ export const MessageService = {
 
   async _processIncomingMediaMessage(params: {
     message: WebhookMessage;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
     mediaType: WebhookMediaMessageType;
   }): Promise<boolean> {
-    const { message, internalPhoneId, contactsMap, mediaType } = params;
-    const mediaPayload = getWebhookMediaPayload(message, mediaType);
-    const customerPhone = message.from;
+    const {
+      message: webhookMessage,
+      internalPhoneId,
+      contactsMap,
+      mediaType,
+    } = params;
+    const mediaPayload = getWebhookMediaPayload(webhookMessage, mediaType);
+    const customerPhone = webhookMessage.from;
     const customerName = contactsMap[customerPhone];
     const preparedConversation =
       await ConversationRepository.prepareWebhookMessageConversation({
@@ -538,11 +547,11 @@ export const MessageService = {
       customerPhone,
       customerName,
       message: {
-        messageId: message.id,
+        messageId: webhookMessage.id,
         type: mediaType,
         content: mediaPayload.caption,
-        timestamp: new Date(parseInt(message.timestamp) * 1000),
-        metadata: JSON.stringify(message),
+        timestamp: new Date(parseInt(webhookMessage.timestamp) * 1000),
+        metadata: JSON.stringify(webhookMessage),
         mediaObjectKey: uploadedMedia.key,
         mediaMimeType: uploadedMedia.mediaMimeType,
         mediaFilename: getWebhookMediaFilename(mediaPayload),
@@ -551,11 +560,13 @@ export const MessageService = {
     });
 
     logger.info('Saved incoming media message to DB successfully', {
-      messageId: message.id,
+      messageId: webhookMessage.id,
       customerPhone,
       mediaType,
       key: uploadedMedia.key,
     });
+
+    const message = serializeMessageForTransport(savedMessage);
 
     if (!userId) {
       logError(
@@ -569,7 +580,7 @@ export const MessageService = {
     }
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
+      ...message,
       conversation,
       userId,
       wabaId,
@@ -592,7 +603,7 @@ export const MessageService = {
   async _processMessageEchoChange(
     value: WebhookMessageEchoValue,
   ): Promise<number> {
-    const metaPhoneNumberId = value.metadata?.phone_number_id;
+    const metaPhoneNumberId = value.metadata?.phone_number_id; // Meta Phone Number ID.
     if (!metaPhoneNumberId) return 0;
 
     const internalPhoneResult =
@@ -614,7 +625,7 @@ export const MessageService = {
 
   async _processMessageEchoesList(params: {
     messageEchoes?: WebhookMessageEcho[];
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<number> {
     const { messageEchoes = [], internalPhoneId, contactsMap } = params;
@@ -641,7 +652,7 @@ export const MessageService = {
 
   async _processSingleMessageEcho(params: {
     messageEcho: WebhookMessageEcho;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<boolean> {
     const { messageEcho } = params;
@@ -679,7 +690,7 @@ export const MessageService = {
 
   async _processMessageEchoTextMessage(params: {
     messageEcho: WebhookMessageEcho;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<boolean> {
     const { messageEcho, internalPhoneId, contactsMap } = params;
@@ -707,6 +718,8 @@ export const MessageService = {
       customerPhone,
     });
 
+    const message = serializeMessageForTransport(savedMessage);
+
     if (!userId) {
       logError(
         new Error('Could not determine userId for real-time notification'),
@@ -719,7 +732,7 @@ export const MessageService = {
     }
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
+      ...message,
       conversation,
       userId,
       wabaId,
@@ -730,7 +743,7 @@ export const MessageService = {
 
   async _processMessageEchoMediaMessage(params: {
     messageEcho: WebhookMessageEcho;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
     mediaType: WebhookMediaMessageType;
   }): Promise<boolean> {
@@ -787,6 +800,8 @@ export const MessageService = {
       key: uploadedMedia.key,
     });
 
+    const message = serializeMessageForTransport(savedMessage);
+
     if (!userId) {
       logError(
         new Error('Could not determine userId for real-time notification'),
@@ -799,7 +814,7 @@ export const MessageService = {
     }
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
+      ...message,
       conversation,
       userId,
       wabaId,
