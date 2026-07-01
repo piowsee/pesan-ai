@@ -116,13 +116,11 @@ export const S3Service = {
       );
     }
 
-    const mediaMimeType =
-      params.contentType?.trim().toLowerCase() ||
-      response.headers.get('content-type')?.trim().toLowerCase() ||
-      null;
-    const uploadConfig = getSupportedUploadConfig(mediaMimeType);
+    const rawContentType =
+      params.contentType || response.headers.get('content-type');
+    const uploadConfig = getSupportedUploadConfig(rawContentType);
 
-    if (!mediaMimeType || !uploadConfig) {
+    if (!rawContentType || !uploadConfig) {
       throw new ApiError('WhatsApp media content type is not supported', 400);
     }
 
@@ -140,7 +138,7 @@ export const S3Service = {
         Bucket: s3BucketName,
         Key: objectKey,
         Body: response.body,
-        ContentType: mediaMimeType,
+        ContentType: rawContentType,
       },
       queueSize: 4,
       partSize: 5 * 1024 * 1024,
@@ -166,7 +164,7 @@ export const S3Service = {
     return {
       key: objectKey,
       mediaType: uploadConfig.mediaType,
-      mediaMimeType,
+      mediaMimeType: rawContentType,
       mediaSize,
     };
   },
