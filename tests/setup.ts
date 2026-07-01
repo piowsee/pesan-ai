@@ -53,6 +53,7 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findPhoneNumberByMetaId: vi.fn(),
     findConversationById: vi.fn(),
     updateAdminTakeoverStatus: vi.fn(),
+    prepareWebhookMessageConversation: vi.fn(),
     processIncomingMessage: vi.fn(),
     processOutgoingMessageEcho: vi.fn(),
   },
@@ -177,6 +178,7 @@ vi.mock('@/services/s3.service', () => ({
     createPresignedUploadUrl: vi.fn(),
     createPresignedDownloadUrl: vi.fn(),
     verifyUploadedMedia: vi.fn(),
+    streamWhatsAppMediaToObjectStorage: vi.fn(),
   },
 }));
 vi.mock('@/services/meta-fetch.service', () => ({

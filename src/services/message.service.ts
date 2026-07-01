@@ -52,12 +52,28 @@ function buildOutboundMediaMessage(params: {
 }
 
 type WebhookMediaMessageType = UploadMediaType;
+type WebhookMediaPayload = NonNullable<WebhookMessage[WebhookMediaMessageType]>;
 
-function getWebhookMessageMediaPayload(
+function getWebhookMediaPayload(
   message: WebhookMessage,
   mediaType: WebhookMediaMessageType,
-) {
-  return message[mediaType];
+): WebhookMediaPayload {
+  const mediaPayload = message[mediaType];
+
+  if (!mediaPayload?.url) {
+    logger.warn('WhatsApp sent type media with no media URL');
+    throw new ApiError('WhatsApp media URL is missing', 400);
+  }
+
+  return mediaPayload;
+}
+
+function getWebhookMediaFilename(mediaPayload: WebhookMediaPayload) {
+  if (!('filename' in mediaPayload)) return null;
+
+  return typeof mediaPayload.filename === 'string'
+    ? mediaPayload.filename
+    : null;
 }
 
 export const MessageService = {
@@ -484,21 +500,91 @@ export const MessageService = {
 
   async _processIncomingMediaMessage(params: {
     message: WebhookMessage;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
     mediaType: WebhookMediaMessageType;
   }): Promise<boolean> {
-    const { message, mediaType } = params;
-    const mediaPayload = getWebhookMessageMediaPayload(message, mediaType);
+    const { message, internalPhoneId, contactsMap, mediaType } = params;
+    const mediaPayload = getWebhookMediaPayload(message, mediaType);
+    const customerPhone = message.from;
+    const customerName = contactsMap[customerPhone];
+    const preparedConversation =
+      await ConversationRepository.prepareWebhookMessageConversation({
+        phoneNumberId: internalPhoneId,
+        customerPhone,
+        customerName,
+      });
+    const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
 
-    logger.info('Received incoming media message; persistence is pending', {
-      messageId: message.id,
-      mediaType,
-      mediaPayload,
+    if (!tokenToUse) {
+      throw new ApiError('WhatsApp token is missing or invalid', 403);
+    }
+
+    const uploadedMedia = await S3Service.streamWhatsAppMediaToObjectStorage({
+      whatsappUrl: mediaPayload.url,
+      token: tokenToUse,
+      userId: preparedConversation.userId,
+      wabaId: preparedConversation.wabaId,
+      convId: preparedConversation.conversation.id,
+      contentType: mediaPayload.mime_type,
+    });
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processIncomingMessage({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName,
+      message: {
+        messageId: message.id,
+        type: mediaType,
+        content: mediaPayload.caption,
+        timestamp: new Date(parseInt(message.timestamp) * 1000),
+        metadata: JSON.stringify(message),
+        mediaObjectKey: uploadedMedia.key,
+        mediaMimeType: uploadedMedia.mediaMimeType,
+        mediaFilename: getWebhookMediaFilename(mediaPayload),
+        mediaSize: uploadedMedia.mediaSize,
+      },
     });
 
-    // TODO: Download the media asset from Meta using the media payload id/url,
-    // upload it to object storage, then save the incoming message with
-    // mediaObjectKey, mediaMimeType, mediaSize, caption/content, and metadata.
-    return false;
+    logger.info('Saved incoming media message to DB successfully', {
+      messageId: message.id,
+      customerPhone,
+      mediaType,
+      key: uploadedMedia.key,
+    });
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for real-time notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    });
+
+    if (conversation.adminTakeover) {
+      logger.info('Skipping debounce queue for admin takeover conversation', {
+        conversationId: conversation.id,
+      });
+      return true;
+    }
+
+    handleDebounceIncomingMessage(conversation.id);
+
+    return true;
   },
 
   // --- WhatsApp Business App message echo processing ---
@@ -644,21 +730,81 @@ export const MessageService = {
 
   async _processMessageEchoMediaMessage(params: {
     messageEcho: WebhookMessageEcho;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
     mediaType: WebhookMediaMessageType;
   }): Promise<boolean> {
-    const { messageEcho, mediaType } = params;
-    const mediaPayload = getWebhookMessageMediaPayload(messageEcho, mediaType);
+    const { messageEcho, internalPhoneId, contactsMap, mediaType } = params;
+    const mediaPayload = getWebhookMediaPayload(messageEcho, mediaType);
+    const customerPhone = messageEcho.to;
+    const customerName = contactsMap[customerPhone];
+    const preparedConversation =
+      await ConversationRepository.prepareWebhookMessageConversation({
+        phoneNumberId: internalPhoneId,
+        customerPhone,
+        customerName,
+      });
+    const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
 
-    logger.info('Received media message echo; persistence is pending', {
-      messageId: messageEcho.id,
-      mediaType,
-      mediaPayload,
+    if (!tokenToUse) {
+      throw new ApiError('WhatsApp token is missing or invalid', 403);
+    }
+
+    const uploadedMedia = await S3Service.streamWhatsAppMediaToObjectStorage({
+      whatsappUrl: mediaPayload.url,
+      token: tokenToUse,
+      userId: preparedConversation.userId,
+      wabaId: preparedConversation.wabaId,
+      convId: preparedConversation.conversation.id,
+      contentType: mediaPayload.mime_type,
+    });
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processOutgoingMessageEcho({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName,
+      message: {
+        messageId: messageEcho.id,
+        type: mediaType,
+        content: mediaPayload.caption,
+        timestamp: new Date(parseInt(messageEcho.timestamp) * 1000),
+        metadata: JSON.stringify(messageEcho),
+        mediaObjectKey: uploadedMedia.key,
+        mediaMimeType: uploadedMedia.mediaMimeType,
+        mediaFilename: getWebhookMediaFilename(mediaPayload),
+        mediaSize: uploadedMedia.mediaSize,
+      },
     });
 
-    // TODO: Download the media asset from Meta using the media payload id/url,
-    // upload it to object storage, then save the echoed WhatsApp Business App
-    // message with mediaObjectKey, mediaMimeType, mediaSize, caption/content,
-    // metadata, and source='whatsapp_app'.
-    return false;
+    logger.info('Saved media message echo to DB successfully', {
+      messageId: messageEcho.id,
+      customerPhone,
+      mediaType,
+      key: uploadedMedia.key,
+    });
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for message echo notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    });
+
+    return true;
   },
 };

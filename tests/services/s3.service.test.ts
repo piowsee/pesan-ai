@@ -2,6 +2,7 @@ import { s3Client } from '@/lib/server/s3-client';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { S3Service } from '@/services/s3.service';
 import { S3ServiceException } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,6 +16,10 @@ vi.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: vi.fn(),
 }));
 
+vi.mock('@aws-sdk/lib-storage', () => ({
+  Upload: vi.fn(),
+}));
+
 vi.mock('@aws-sdk/s3-presigned-post', () => ({
   createPresignedPost: vi.fn(),
 }));
@@ -24,6 +29,7 @@ vi.unmock('@/services/s3.service');
 describe('S3Service', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
   describe('createPresignedUploadUrl', () => {
@@ -131,6 +137,71 @@ describe('S3Service', { tags: ['backend'] }, () => {
         message: 'Conversation not found or access denied',
       });
       expect(createPresignedPost).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('streamWhatsAppMediaToObjectStorage', () => {
+    it('streams WhatsApp media into object storage with an explicit object key', async () => {
+      const responseBody = new ReadableStream();
+      const done = vi.fn().mockResolvedValue({});
+      const on = vi.fn();
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          body: responseBody,
+          headers: new Headers({
+            'content-type': 'image/png',
+            'content-length': '1234',
+          }),
+        }),
+      );
+      vi.mocked(Upload).mockImplementation(function (options) {
+        return { on, done, options } as never;
+      });
+
+      const result = await S3Service.streamWhatsAppMediaToObjectStorage({
+        whatsappUrl: 'https://lookaside.whatsapp.com/media-1',
+        token: 'meta-token',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+        convId: 'conv-1',
+        contentType: 'image/png',
+      });
+      const uploadOptions = vi.mocked(Upload).mock.calls[0]?.[0];
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://lookaside.whatsapp.com/media-1',
+        {
+          headers: { Authorization: 'Bearer meta-token' },
+        },
+      );
+      expect(uploadOptions).toMatchObject({
+        client: s3Client,
+        params: {
+          Bucket: 'test-bucket',
+          ContentType: 'image/png',
+          Body: responseBody,
+        },
+        queueSize: 4,
+        partSize: 5 * 1024 * 1024,
+      });
+      expect(uploadOptions?.params?.Key).toMatch(
+        /^user-1\/waba-1\/conv-1\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      );
+      expect(on).toHaveBeenCalledWith(
+        'httpUploadProgress',
+        expect.any(Function),
+      );
+      expect(done).toHaveBeenCalled();
+      expect(result).toEqual({
+        key: uploadOptions?.params?.Key,
+        mediaType: 'image',
+        mediaMimeType: 'image/png',
+        mediaSize: 1234,
+      });
     });
   });
 

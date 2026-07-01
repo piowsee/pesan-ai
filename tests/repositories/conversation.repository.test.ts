@@ -19,6 +19,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
   let dbWabaId: string;
   let dbPhoneNumberId: string;
   let dbConvId: string;
+  let systemUserToken: string;
 
   beforeEach(async () => {
     const user = await prisma.user.findUnique({
@@ -41,6 +42,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       );
     }
     dbWabaId = waba.id;
+    systemUserToken = waba.systemUserToken;
 
     const pn = waba.phoneNumbers.find(
       (p) => p.phoneNumberId === SEED_DATA.PHONE_META_ID,
@@ -122,6 +124,59 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         SEED_DATA.PHONE_META_ID,
       );
       expect(result?.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
+    });
+  });
+
+  describe('prepareWebhookMessageConversation', () => {
+    it('creates a conversation and returns storage key metadata for webhook media', async () => {
+      const result =
+        await ConversationRepository.prepareWebhookMessageConversation({
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999006',
+          customerName: 'Webhook Media Customer',
+        });
+
+      expect(result).toMatchObject({
+        userId,
+        wabaId: dbWabaId,
+        systemUserToken,
+      });
+      expect(result.conversation).toMatchObject({
+        customerPhone: '999006',
+        customerName: 'Webhook Media Customer',
+        phoneNumberId: dbPhoneNumberId,
+        unreadCount: 0,
+      });
+      expect(result.conversation.id).toBeTruthy();
+      expect(result.conversation.phoneNumber.waba.id).toBe(dbWabaId);
+      expect(result.conversation.phoneNumber.waba.userId).toBe(userId);
+    });
+
+    it('reuses the existing conversation and updates the customer name', async () => {
+      const first =
+        await ConversationRepository.prepareWebhookMessageConversation({
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999007',
+          customerName: 'Initial Webhook Customer',
+        });
+
+      const second =
+        await ConversationRepository.prepareWebhookMessageConversation({
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999007',
+          customerName: 'Updated Webhook Customer',
+        });
+
+      expect(second.conversation.id).toBe(first.conversation.id);
+      expect(second.conversation.customerName).toBe('Updated Webhook Customer');
+
+      const conversationCount = await prisma.conversation.count({
+        where: {
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999007',
+        },
+      });
+      expect(conversationCount).toBe(1);
     });
   });
 

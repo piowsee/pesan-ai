@@ -12,7 +12,7 @@ const WebhookMediaAssetSchema = z
     mime_type: z.string().optional(),
     sha256: z.string().optional(),
     id: z.string(),
-    url: z.string().optional(),
+    url: z.string(),
   })
   .passthrough();
 
