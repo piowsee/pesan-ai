@@ -2,7 +2,12 @@ import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { s3BucketName, s3Client } from '@/lib/server/s3-client';
 import { getSupportedUploadConfig } from '@/schemas/s3-upload.schema';
-import { GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  HeadObjectCommand,
+  type HeadObjectCommandOutput,
+  S3ServiceException,
+} from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
@@ -70,12 +75,27 @@ export const S3Service = {
 
   async verifyUploadedMedia(params: { userId: string; key: string }) {
     const objectKey = assertUserOwnsKey(params);
-    const object = await s3Client.send(
-      new HeadObjectCommand({
-        Bucket: s3BucketName,
-        Key: objectKey,
-      }),
-    );
+    let object: HeadObjectCommandOutput;
+
+    try {
+      object = await s3Client.send(
+        new HeadObjectCommand({
+          Bucket: s3BucketName,
+          Key: objectKey,
+        }),
+      );
+    } catch (error) {
+      // The S3 SDK throws provider-specific errors; convert missing objects
+      // to our API error contract so upload confirmation returns a JSend 404.
+      if (
+        error instanceof S3ServiceException &&
+        error.$metadata.httpStatusCode === 404
+      ) {
+        throw new ApiError('Upload key not found or access denied', 404);
+      }
+
+      throw error;
+    }
 
     const mediaMimeType = object.ContentType ?? null;
     const uploadConfig = getSupportedUploadConfig(mediaMimeType);

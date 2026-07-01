@@ -1,5 +1,6 @@
 import { s3Client } from '@/lib/server/s3-client';
 import { S3Service } from '@/services/s3.service';
+import { S3ServiceException } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -143,6 +144,26 @@ describe('S3Service', { tags: ['backend'] }, () => {
       });
     });
 
+    it('returns ApiError 404 when the uploaded object is missing', async () => {
+      vi.mocked(s3Client.send).mockRejectedValue(
+        new S3ServiceException({
+          name: 'NotFound',
+          $metadata: { httpStatusCode: 404 },
+          message: 'Not found',
+          $fault: 'client',
+        }),
+      );
+
+      await expect(
+        S3Service.verifyUploadedMedia({
+          userId: 'user-1',
+          key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        }),
+      ).rejects.toMatchObject({
+        status: 404,
+        message: 'Upload key not found or access denied',
+      });
+    });
     it('rejects unsupported object metadata content types', async () => {
       vi.mocked(s3Client.send).mockResolvedValue({
         ContentType: 'image/gif',
