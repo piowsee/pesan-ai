@@ -51,11 +51,11 @@ function buildOutboundMediaMessage(params: {
   }
 }
 
-type IncomingMediaMessageType = UploadMediaType;
+type WebhookMediaMessageType = UploadMediaType;
 
 function getWebhookMessageMediaPayload(
   message: WebhookMessage,
-  mediaType: IncomingMediaMessageType,
+  mediaType: WebhookMediaMessageType,
 ) {
   return message[mediaType];
 }
@@ -484,7 +484,7 @@ export const MessageService = {
 
   async _processIncomingMediaMessage(params: {
     message: WebhookMessage;
-    mediaType: IncomingMediaMessageType;
+    mediaType: WebhookMediaMessageType;
   }): Promise<boolean> {
     const { message, mediaType } = params;
     const mediaPayload = getWebhookMessageMediaPayload(message, mediaType);
@@ -558,15 +558,45 @@ export const MessageService = {
     internalPhoneId: string;
     contactsMap: Record<string, string>;
   }): Promise<boolean> {
-    const { messageEcho, internalPhoneId, contactsMap } = params;
-    if (messageEcho.type !== 'text') {
-      logger.info('Skipping non-text message echo', {
-        type: messageEcho.type,
-        messageId: messageEcho.id,
+    const { messageEcho } = params;
+
+    if (messageEcho.type === 'text') {
+      return this._processMessageEchoTextMessage(params);
+    } else if (messageEcho.type === 'image') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'image',
       });
-      return false;
+    } else if (messageEcho.type === 'audio') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'audio',
+      });
+    } else if (messageEcho.type === 'video') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'video',
+      });
+    } else if (messageEcho.type === 'document') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'document',
+      });
     }
 
+    logger.info('Skipping unsupported message echo type', {
+      type: messageEcho.type,
+      messageId: messageEcho.id,
+    });
+    return false;
+  },
+
+  async _processMessageEchoTextMessage(params: {
+    messageEcho: WebhookMessageEcho;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { messageEcho, internalPhoneId, contactsMap } = params;
     const customerPhone = messageEcho.to;
     const {
       message: savedMessage,
@@ -610,5 +640,25 @@ export const MessageService = {
     });
 
     return true;
+  },
+
+  async _processMessageEchoMediaMessage(params: {
+    messageEcho: WebhookMessageEcho;
+    mediaType: WebhookMediaMessageType;
+  }): Promise<boolean> {
+    const { messageEcho, mediaType } = params;
+    const mediaPayload = getWebhookMessageMediaPayload(messageEcho, mediaType);
+
+    logger.info('Received media message echo; persistence is pending', {
+      messageId: messageEcho.id,
+      mediaType,
+      mediaPayload,
+    });
+
+    // TODO: Download the media asset from Meta using the media payload id/url,
+    // upload it to object storage, then save the echoed WhatsApp Business App
+    // message with mediaObjectKey, mediaMimeType, mediaSize, caption/content,
+    // metadata, and source='whatsapp_app'.
+    return false;
   },
 };

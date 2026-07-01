@@ -341,6 +341,64 @@ describe('MessageService', { tags: ['backend'] }, () => {
     });
 
     it.each([
+      ['image', { id: 'echo-image-1', mime_type: 'image/png' }],
+      ['audio', { id: 'echo-audio-1', mime_type: 'audio/ogg', voice: true }],
+      ['video', { id: 'echo-video-1', mime_type: 'video/mp4' }],
+      [
+        'document',
+        {
+          id: 'echo-document-1',
+          mime_type: 'application/pdf',
+          filename: 'receipt.pdf',
+        },
+      ],
+    ])(
+      'recognizes %s message echoes without saving them yet',
+      async (type, media) => {
+        vi.mocked(
+          ConversationRepository.findPhoneNumberByMetaId,
+        ).mockResolvedValue({ id: 'phone-1' } as never);
+
+        const result = await MessageService.processMetaWebhookPayload({
+          object: 'whatsapp_business_account',
+          entry: [
+            {
+              id: 'entry-1',
+              changes: [
+                {
+                  field: 'smb_message_echoes',
+                  value: {
+                    messaging_product: 'whatsapp',
+                    metadata: {
+                      display_phone_number: '6285195563454',
+                      phone_number_id: '1120639457807711',
+                    },
+                    message_echoes: [
+                      {
+                        from: '6285195563454',
+                        to: '628116150122',
+                        id: `wamid.echo-${type}-1`,
+                        timestamp: '1782640182',
+                        type,
+                        [type]: media,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        expect(result).toEqual({ processed: true, count: 0 });
+        expect(
+          ConversationRepository.processOutgoingMessageEcho,
+        ).not.toHaveBeenCalled();
+        expect(eventBus.emit).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
       ['image', { id: 'media-image-1', mime_type: 'image/png' }],
       ['audio', { id: 'media-audio-1', mime_type: 'audio/ogg', voice: true }],
       ['video', { id: 'media-video-1', mime_type: 'video/mp4' }],
