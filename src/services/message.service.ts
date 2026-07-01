@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import {
   Contact,
   MetaWebhookPayload,
@@ -16,7 +17,10 @@ import {
   WebhookValue,
 } from '@/schemas/webhook.schema';
 
-import { MetaFetchService } from './meta-fetch.service';
+import {
+  MetaFetchService,
+  type MetaOutboundMessage,
+} from './meta-fetch.service';
 import { S3Service } from './s3.service';
 
 function serializeMessageForTransport<
@@ -26,6 +30,25 @@ function serializeMessageForTransport<
     ...message,
     mediaSize: message.mediaSize == null ? null : message.mediaSize.toString(),
   };
+}
+
+function buildOutboundMediaMessage(params: {
+  mediaType: UploadMediaType;
+  link: string;
+  caption?: string | null;
+}): MetaOutboundMessage {
+  const { mediaType, link, caption } = params;
+
+  switch (mediaType) {
+    case 'audio':
+      return { type: 'audio', link };
+    case 'document':
+      return { type: 'document', link, caption };
+    case 'image':
+      return { type: 'image', link, caption };
+    case 'video':
+      return { type: 'video', link, caption };
+  }
 }
 
 export const MessageService = {
@@ -106,11 +129,11 @@ export const MessageService = {
     }
 
     // 2. Send via WhatsApp API
-    const waResult = await MetaFetchService.sendTextMessage({
+    const waResult = await MetaFetchService.sendMessage({
       phoneNumberId,
       token: tokenToUse,
       to: customerPhone,
-      text: content,
+      message: { type: 'text', text: content },
     });
 
     // 3. Save to database via MessageRepository
@@ -165,13 +188,35 @@ export const MessageService = {
       userId,
       key,
     });
+    const { downloadUrl } = await S3Service.createPresignedDownloadUrl({
+      userId,
+      key: uploadedMedia.key,
+    });
+    const { phoneNumber, customerPhone } = conversationMeta;
+    const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
+
+    if (!tokenToUse) {
+      throw new ApiError('WhatsApp token is missing or invalid', 403);
+    }
+
+    const waResult = await MetaFetchService.sendMessage({
+      phoneNumberId: phoneNumber.phoneNumberId,
+      token: tokenToUse,
+      to: customerPhone,
+      message: buildOutboundMediaMessage({
+        mediaType: uploadedMedia.mediaType,
+        link: downloadUrl,
+        caption,
+      }),
+    });
     const savedMessage = await MessageRepository.saveMessage({
       conversationId: convId,
       direction: 'outgoing',
       source: 'admin',
       type: uploadedMedia.mediaType,
       content: caption,
-      status: 'sent',
+      status: waResult.status,
+      messageId: waResult.messageId,
       timestamp: new Date(),
       mediaUrl: uploadedMedia.key,
       mediaMimeType: uploadedMedia.mediaMimeType,

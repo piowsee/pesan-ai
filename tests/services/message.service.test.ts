@@ -69,7 +69,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         },
         customerPhone: '+123456',
       } as never);
-      vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
+      vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
         status: 'sent',
         messageId: 'wa-msg-1',
       });
@@ -92,11 +92,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         wabaId: 'waba-1',
         userId: 'user-1',
       });
-      expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith({
+      expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
         to: '+123456',
-        text: 'Hello Admin',
+        message: { type: 'text', text: 'Hello Admin' },
       });
       expect(MessageRepository.saveMessage).toHaveBeenCalled();
     });
@@ -122,8 +122,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.getConversationMetaForSending,
       ).mockResolvedValue({
         id: 'conv-1',
+        customerPhone: '+123456',
         phoneNumber: {
+          phoneNumberId: 'pn-1',
           wabaId: 'waba-1',
+          waba: { systemUserToken: 'token' },
         },
       } as never);
       vi.mocked(S3Service.verifyUploadedMedia).mockResolvedValue({
@@ -131,6 +134,14 @@ describe('MessageService', { tags: ['backend'] }, () => {
         mediaType: 'image',
         mediaMimeType: 'image/png',
         mediaSize: 123,
+      });
+      vi.mocked(S3Service.createPresignedDownloadUrl).mockResolvedValue({
+        downloadUrl: 'https://space.example/download?signature=abc',
+        expiresIn: 1800,
+      });
+      vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
+        status: 'sent',
+        messageId: 'wa-media-msg-1',
       });
       vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
         id: 'msg-1',
@@ -157,6 +168,20 @@ describe('MessageService', { tags: ['backend'] }, () => {
         userId: 'user-1',
         key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
       });
+      expect(S3Service.createPresignedDownloadUrl).toHaveBeenCalledWith({
+        userId: 'user-1',
+        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+      });
+      expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
+        phoneNumberId: 'pn-1',
+        token: 'token',
+        to: '+123456',
+        message: {
+          type: 'image',
+          link: 'https://space.example/download?signature=abc',
+          caption: 'caption',
+        },
+      });
       expect(MessageRepository.saveMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           conversationId: 'conv-1',
@@ -165,6 +190,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
           type: 'image',
           content: 'caption',
           status: 'sent',
+          messageId: 'wa-media-msg-1',
           mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
           mediaMimeType: 'image/png',
           mediaSize: 123,
@@ -182,6 +208,14 @@ describe('MessageService', { tags: ['backend'] }, () => {
           wabaId: 'waba-1',
         }),
       );
+      expect(
+        vi.mocked(MetaFetchService.sendMessage).mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        vi.mocked(MessageRepository.saveMessage).mock.invocationCallOrder[0],
+      );
+      expect(
+        vi.mocked(MessageRepository.saveMessage).mock.invocationCallOrder[0],
+      ).toBeLessThan(vi.mocked(eventBus.emit).mock.invocationCallOrder[0]);
     });
 
     it('throws ApiError when the conversation is not owned by the user', async () => {

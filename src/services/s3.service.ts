@@ -2,11 +2,13 @@ import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { s3BucketName, s3Client } from '@/lib/server/s3-client';
 import { getSupportedUploadConfig } from '@/schemas/s3-upload.schema';
-import { HeadObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 
 const PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS = 1800;
+const PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS = 1800;
 
 function toPublicMediaKey(objectKey: string) {
   return `/${objectKey}`;
@@ -87,6 +89,28 @@ export const S3Service = {
       mediaType: uploadConfig.mediaType,
       mediaMimeType,
       mediaSize: object.ContentLength ?? null,
+    };
+  },
+
+  async createPresignedDownloadUrl(params: { userId: string; key: string }) {
+    const objectKey = assertUserOwnsKey(params);
+    const command = new GetObjectCommand({
+      Bucket: s3BucketName,
+      Key: objectKey,
+    });
+
+    const downloadUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS,
+    });
+
+    logger.info('Created S3 presigned GET download url', {
+      key: toPublicMediaKey(objectKey),
+      userId: params.userId,
+    });
+
+    return {
+      downloadUrl,
+      expiresIn: PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS,
     };
   },
 };

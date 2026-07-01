@@ -1,11 +1,16 @@
 import { s3Client } from '@/lib/server/s3-client';
 import { S3Service } from '@/services/s3.service';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/server/s3-client', () => ({
   s3BucketName: 'test-bucket',
   s3Client: { send: vi.fn() },
+}));
+
+vi.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: vi.fn(),
 }));
 
 vi.mock('@aws-sdk/s3-presigned-post', () => ({
@@ -91,6 +96,33 @@ describe('S3Service', { tags: ['backend'] }, () => {
     });
   });
 
+  describe('createPresignedDownloadUrl', () => {
+    it('generates a presigned GET URL for an owned object key', async () => {
+      vi.mocked(getSignedUrl).mockResolvedValue(
+        'https://space.example/download?signature=abc',
+      );
+
+      const result = await S3Service.createPresignedDownloadUrl({
+        userId: 'user-1',
+        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+      });
+      const command = vi.mocked(getSignedUrl).mock.calls[0]?.[1] as
+        | { input?: Record<string, unknown> }
+        | undefined;
+
+      expect(result).toEqual({
+        downloadUrl: 'https://space.example/download?signature=abc',
+        expiresIn: 1800,
+      });
+      expect(getSignedUrl).toHaveBeenCalledWith(s3Client, expect.anything(), {
+        expiresIn: 1800,
+      });
+      expect(command?.input).toMatchObject({
+        Bucket: 'test-bucket',
+        Key: 'user-1/550e8400-e29b-41d4-a716-446655440000',
+      });
+    });
+  });
   describe('verifyUploadedMedia', () => {
     it('accepts supported document content types from object metadata', async () => {
       vi.mocked(s3Client.send).mockResolvedValue({
