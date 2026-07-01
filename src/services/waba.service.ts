@@ -3,7 +3,7 @@ import { logger } from '@/lib/server/logger';
 import { WabaRepository } from '@/repositories/waba.repository';
 
 interface PhoneNumberWithWebhook {
-  id: string;
+  id: string; // Internal DB PhoneNumber.id.
   displayPhoneNumber: string;
   botWebhook?: {
     id: string;
@@ -13,8 +13,8 @@ interface PhoneNumberWithWebhook {
 }
 
 interface WabaWithRelations {
-  id: string;
-  wabaId: string;
+  id: string; // Internal DB WhatsappBusinessAccount.id.
+  wabaId: string; // Meta WABA ID.
   businessName: string | null;
   status: string;
   createdAt: Date;
@@ -94,7 +94,7 @@ export const WabaService = {
   },
 
   async assignWebhookToWaba(params: {
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     webhookId: string | null;
   }) {
     const { wabaId, webhookId } = params;

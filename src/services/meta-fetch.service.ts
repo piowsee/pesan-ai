@@ -174,6 +174,7 @@ function getMetaAppCredentials() {
   };
 }
 
+// IDs in this service are Meta provider IDs unless explicitly named as DB IDs.
 export const MetaFetchService = {
   _extractMetaErrorMessage(
     metaError: MetaFetchError,

@@ -19,8 +19,8 @@ const PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS = 1800;
 
 function createObjectKey(params: {
   userId: string;
-  wabaId: string;
-  convId: string;
+  wabaId: string; // Internal DB WhatsappBusinessAccount.id.
+  convId: string; // Internal DB Conversation.id.
 }) {
   return `${params.userId}/${params.wabaId}/${params.convId}/${randomUUID()}`;
 }
@@ -44,8 +44,8 @@ function assertUserOwnsKey(params: {
 export const S3Service = {
   async createPresignedUploadUrl(params: {
     userId: string;
-    wabaId: string;
-    convId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
+    convId: string; // Internal DB Conversation.id.
     contentType: string;
   }) {
     const uploadConfig = getSupportedUploadConfig(params.contentType);
@@ -101,8 +101,8 @@ export const S3Service = {
     whatsappUrl: string;
     token: string;
     userId: string;
-    wabaId: string;
-    convId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
+    convId: string; // Internal DB Conversation.id.
     contentType?: string | null;
   }) {
     const response = await fetch(params.whatsappUrl, {
@@ -173,8 +173,8 @@ export const S3Service = {
 
   async verifyUploadedMedia(params: {
     userId: string;
-    wabaId: string;
-    convId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
+    convId: string; // Internal DB Conversation.id.
     key: string;
   }) {
     const objectKey = assertUserOwnsKey(params);
@@ -217,8 +217,8 @@ export const S3Service = {
 
   async createPresignedDownloadUrl(params: {
     userId: string;
-    wabaId: string;
-    convId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
+    convId: string; // Internal DB Conversation.id.
     key: string;
   }) {
     const objectKey = assertUserOwnsKey(params);

@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 
+// wabaId in this service is the internal DB WhatsappBusinessAccount.id.
 export const ConversationService = {
   async getAllConversations(params: { wabaId: string; userId: string }) {
     const { wabaId, userId } = params;

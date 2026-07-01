@@ -24,8 +24,8 @@ export const PhoneNumberService = {
    * calls `POST /<phoneNumberId>/request_code`.
    */
   async requestVerificationCode(params: {
-    phoneNumberId: string;
-    wabaId: string;
+    phoneNumberId: string; // Meta Phone Number ID.
+    wabaId: string; // Meta WABA ID.
     userId: string;
     codeMethod?: 'SMS' | 'VOICE';
     language?: string;
@@ -66,8 +66,8 @@ export const PhoneNumberService = {
    * Finally, persists the phone number record in our database.
    */
   async verifyAndRegister(params: {
-    phoneNumberId: string;
-    wabaId: string;
+    phoneNumberId: string; // Meta Phone Number ID.
+    wabaId: string; // Meta WABA ID.
     userId: string;
     code: string;
   }): Promise<{ success: boolean }> {
@@ -152,10 +152,10 @@ export const PhoneNumberService = {
    * Creates a new phone number in Meta.
    */
   async createPhoneNumber(params: {
-    wabaId: string;
+    wabaId: string; // Meta WABA ID.
     userId: string;
     countryCode: string;
-    phoneNumber: string;
+    phoneNumber: string; // Plain phone number to create in Meta.
     name: string;
   }): Promise<{ phoneNumberId: string }> {
     const { wabaId, userId, countryCode, phoneNumber, name } = params;
@@ -188,7 +188,7 @@ export const PhoneNumberService = {
   },
 
   async _getSystemUserToken(params: {
-    wabaId: string;
+    wabaId: string; // Meta WABA ID.
     userId: string;
   }): Promise<{ wabaDbId: string; systemUserToken: string }> {
     const { wabaId, userId } = params;
