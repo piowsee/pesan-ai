@@ -6,7 +6,7 @@ CREATE TABLE "message" (
     "source" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "content" TEXT,
-    "mediaUrl" TEXT,
+    "mediaObjectKey" TEXT,
     "mediaMimeType" TEXT,
     "mediaFilename" TEXT,
     "mediaSize" BIGINT,

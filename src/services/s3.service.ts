@@ -16,21 +16,13 @@ import { randomUUID } from 'crypto';
 const PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS = 1800;
 const PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS = 1800;
 
-function toPublicMediaKey(objectKey: string) {
-  return `/${objectKey}`;
-}
-
-function toObjectKey(publicKey: string) {
-  return publicKey.replace(/^\/+/, '');
-}
-
 function assertUserOwnsKey(params: {
   key: string;
   userId: string;
   wabaId: string;
   convId: string;
 }) {
-  const objectKey = toObjectKey(params.key);
+  const objectKey = params.key;
   const expectedPrefix = `${params.userId}/${params.wabaId}/${params.convId}/`;
 
   if (!objectKey.startsWith(expectedPrefix)) {
@@ -80,14 +72,14 @@ export const S3Service = {
     });
 
     logger.info('Created S3 presigned POST URL', {
-      key: toPublicMediaKey(objectKey),
+      key: objectKey,
       userId: params.userId,
       wabaId: params.wabaId,
       convId: params.convId,
     });
 
     return {
-      key: toPublicMediaKey(objectKey),
+      key: objectKey,
       url,
       method: 'POST' as const,
       fields,
@@ -133,7 +125,7 @@ export const S3Service = {
     }
 
     return {
-      key: toPublicMediaKey(objectKey),
+      key: objectKey,
       mediaType: uploadConfig.mediaType,
       mediaMimeType,
       mediaSize: object.ContentLength ?? null,
@@ -157,7 +149,7 @@ export const S3Service = {
     });
 
     logger.info('Created S3 presigned GET download url', {
-      key: toPublicMediaKey(objectKey),
+      key: objectKey,
       userId: params.userId,
     });
 

@@ -50,7 +50,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
       const presignOptions = vi.mocked(createPresignedPost).mock.calls[0]?.[1];
 
       expect(result).toEqual({
-        key: `/${presignOptions?.Key}`,
+        key: presignOptions?.Key,
         url: 'https://space.example/upload',
         method: 'POST',
         fields: {
@@ -144,7 +144,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
         userId: 'user-1',
         wabaId: 'waba-1',
         convId: 'conv-1',
-        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
       });
       const command = vi.mocked(getSignedUrl).mock.calls[0]?.[1] as
         | { input?: Record<string, unknown> }
@@ -174,11 +174,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
         userId: 'user-1',
         wabaId: 'waba-1',
         convId: 'conv-1',
-        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
       });
 
       expect(result).toEqual({
-        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         mediaType: 'document',
         mediaMimeType: 'application/pdf',
         mediaSize: 1234,
@@ -200,7 +200,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         }),
       ).rejects.toMatchObject({
         status: 404,
@@ -213,7 +213,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          key: '/user-1/waba-2/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          key: 'user-1/waba-2/conv-1/550e8400-e29b-41d4-a716-446655440000',
         }),
       ).rejects.toMatchObject({
         status: 404,
@@ -233,7 +233,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         }),
       ).rejects.toMatchObject({ status: 400 });
     });
