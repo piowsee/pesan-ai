@@ -22,7 +22,7 @@ function createMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
     source: 'customer',
     type: 'text',
     content: 'Hello',
-    mediaUrl: null,
+    mediaObjectKey: null,
     mediaMimeType: null,
     mediaFilename: null,
     mediaSize: null,
@@ -132,12 +132,12 @@ describe('realtime conversation updates', () => {
     const loadingMessage = createMessage({
       id: 'message-1',
       status: 'sending',
-      mediaUrl: null,
+      mediaObjectKey: null,
     });
     const realtimeMessage = createMessage({
       id: 'message-1',
       status: 'sent',
-      mediaUrl: '/user-1/uploaded-media',
+      mediaObjectKey: 'user-1/uploaded-media',
     });
 
     const result = applyRealtimeMessageToMessagePage(

@@ -197,7 +197,7 @@ export function useSendMessage() {
         source: 'admin',
         type: 'text',
         content,
-        mediaUrl: null,
+        mediaObjectKey: null,
         mediaMimeType: null,
         mediaFilename: null,
         mediaSize: null,
