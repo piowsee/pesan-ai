@@ -115,7 +115,8 @@ vi.mock('@/services/conversation.service', () => ({
 vi.mock('@/services/message.service', () => ({
   MessageService: {
     getMessagesPaginated: vi.fn(),
-    sendAdminMessage: vi.fn(),
+    sendAdminTextMessage: vi.fn(),
+    confirmUploadedMediaMessage: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
   },
 }));
@@ -171,6 +172,13 @@ vi.mock('@/services/webhook.service', () => ({
   },
 }));
 
+vi.mock('@/services/s3.service', () => ({
+  S3Service: {
+    createPresignedUploadUrl: vi.fn(),
+    createPresignedDownloadUrl: vi.fn(),
+    verifyUploadedMedia: vi.fn(),
+  },
+}));
 vi.mock('@/services/meta-fetch.service', () => ({
   MetaFetchService: {
     exchangeCodeForToken: vi.fn(),
@@ -184,7 +192,7 @@ vi.mock('@/services/meta-fetch.service', () => ({
     createPhoneNumber: vi.fn(),
     requestVerificationCode: vi.fn(),
     verifyCode: vi.fn(),
-    sendTextMessage: vi.fn(),
+    sendMessage: vi.fn(),
   },
 }));
 

@@ -16,7 +16,7 @@ describe(
       vi.mocked(AuthHelper.requireUser).mockResolvedValue({
         id: 'user-1',
       } as never);
-      vi.mocked(MessageService.sendAdminMessage).mockResolvedValue({
+      vi.mocked(MessageService.sendAdminTextMessage).mockResolvedValue({
         message: { id: 'msg-1', content: 'hello' } as never,
         conversation: { id: convId } as never,
       });
@@ -33,7 +33,7 @@ describe(
       expect(response.status).toBe(200);
       expect(data.data.message).toEqual({ id: 'msg-1', content: 'hello' });
       expect(data.data.conversation).toBeDefined();
-      expect(MessageService.sendAdminMessage).toHaveBeenCalledWith({
+      expect(MessageService.sendAdminTextMessage).toHaveBeenCalledWith({
         convId,
         wabaId,
         userId: 'user-1',
@@ -63,7 +63,7 @@ describe(
       vi.mocked(AuthHelper.requireUser).mockResolvedValue({
         id: 'user-1',
       } as never);
-      vi.mocked(MessageService.sendAdminMessage).mockRejectedValue(
+      vi.mocked(MessageService.sendAdminTextMessage).mockRejectedValue(
         new ApiError('Conversation not found or access denied', 404),
       );
 

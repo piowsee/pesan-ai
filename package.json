@@ -27,6 +27,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1075.0",
+    "@aws-sdk/s3-presigned-post": "^3.1075.0",
+    "@aws-sdk/s3-request-presigner": "^3.1075.0",
     "@better-auth/i18n": "^1.6.13",
     "@better-fetch/fetch": "^1.2.2",
     "@hookform/resolvers": "^5.2.2",
@@ -37,6 +39,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
+    "fast-xml-parser": "^5.9.3",
     "input-otp": "^1.4.2",
     "jose": "^6.2.1",
     "lucide-react": "^0.577.0",

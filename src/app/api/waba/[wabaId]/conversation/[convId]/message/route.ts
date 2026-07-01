@@ -25,7 +25,7 @@ export const POST = withApiAuth<{ wabaId: string; convId: string }>(
 
     const { message } = validated.data;
 
-    const result = await MessageService.sendAdminMessage({
+    const result = await MessageService.sendAdminTextMessage({
       convId,
       wabaId,
       userId: user.id,

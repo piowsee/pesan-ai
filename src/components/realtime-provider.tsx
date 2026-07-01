@@ -92,6 +92,37 @@ interface SSEMessagePayload extends ChatMessage {
   conversation: RawConversation;
 }
 
+interface MessagePageCache {
+  messages: ChatMessage[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function applyRealtimeMessageToMessagePage(
+  page: MessagePageCache,
+  realtimeMessage: ChatMessage,
+): MessagePageCache {
+  const existingMessageIndex = page.messages.findIndex(
+    (message) => message.id === realtimeMessage.id,
+  );
+
+  if (existingMessageIndex !== -1) {
+    return {
+      ...page,
+      messages: page.messages.map((message) =>
+        message.id === realtimeMessage.id ? realtimeMessage : message,
+      ),
+    };
+  }
+
+  return {
+    ...page,
+    messages: [realtimeMessage, ...page.messages],
+    total: page.total + 1,
+  };
+}
+
 interface BotWebhookFailedPayload {
   conversationId: string;
   wabaId: string;
@@ -262,36 +293,16 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       // 1. Update Messages Timeline Cache
       queryClient.setQueryData(
         messageKeys.all(conversationId),
-        (
-          old:
-            | InfiniteData<{
-                messages: ChatMessage[];
-                total: number;
-                page: number;
-                limit: number;
-              }>
-            | undefined,
-        ) => {
+        (old: InfiniteData<MessagePageCache> | undefined) => {
           if (!old) return old;
 
           return {
             ...old,
-            pages: old.pages.map((page, index) => {
-              if (index === 0) {
-                // Check if message already exists (e.g. added by useSendMessage)
-                const exists = page.messages.some(
-                  (m) => m.id === realtimeMessage.id,
-                );
-                if (exists) return page;
-
-                return {
-                  ...page,
-                  messages: [realtimeMessage, ...page.messages],
-                  total: page.total + 1,
-                };
-              }
-              return page;
-            }),
+            pages: old.pages.map((page, index) =>
+              index === 0
+                ? applyRealtimeMessageToMessagePage(page, realtimeMessage)
+                : page,
+            ),
           };
         },
       );
