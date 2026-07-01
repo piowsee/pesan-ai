@@ -115,7 +115,7 @@ vi.mock('@/services/conversation.service', () => ({
 vi.mock('@/services/message.service', () => ({
   MessageService: {
     getMessagesPaginated: vi.fn(),
-    sendAdminMessage: vi.fn(),
+    sendAdminTextMessage: vi.fn(),
     confirmUploadedMediaMessage: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
   },

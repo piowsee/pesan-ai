@@ -82,7 +82,7 @@ export const MessageService = {
     return result;
   },
 
-  async sendAdminMessage(params: {
+  async sendAdminTextMessage(params: {
     convId: string;
     wabaId: string;
     userId: string;

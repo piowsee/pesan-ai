@@ -58,7 +58,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('sendAdminMessage', () => {
+  describe('sendAdminTextMessage', () => {
     it('sends message and saves to db', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
@@ -77,7 +77,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         id: 'msg-1',
       } as never);
 
-      const result = await MessageService.sendAdminMessage({
+      const result = await MessageService.sendAdminTextMessage({
         convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
@@ -106,7 +106,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.getConversationMetaForSending,
       ).mockResolvedValue(null);
       await expect(
-        MessageService.sendAdminMessage({
+        MessageService.sendAdminTextMessage({
           convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
