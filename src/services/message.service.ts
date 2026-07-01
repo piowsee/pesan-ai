@@ -28,7 +28,7 @@ function serializeMessageForTransport<
 >(message: T) {
   return {
     ...message,
-    mediaSize: message.mediaSize == null ? null : message.mediaSize.toString(),
+    mediaSize: message.mediaSize == null ? null : Number(message.mediaSize),
   };
 }
 
@@ -79,7 +79,10 @@ export const MessageService = {
       throw new ApiError('Conversation not found or access denied', 404);
     }
 
-    return result;
+    return {
+      ...result,
+      messages: result.messages.map(serializeMessageForTransport),
+    };
   },
 
   async sendAdminTextMessage(params: {

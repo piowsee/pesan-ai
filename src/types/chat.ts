@@ -23,7 +23,7 @@ export interface ChatMessage {
   mediaUrl: string | null;
   mediaMimeType: string | null;
   mediaFilename: string | null;
-  mediaSize: string | null;
+  mediaSize: number | null;
   status: string;
   errorMessage: string | null;
   metadata: string | null;

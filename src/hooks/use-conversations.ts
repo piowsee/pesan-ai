@@ -47,7 +47,7 @@ export interface RawConversation {
     mediaUrl: string | null;
     mediaMimeType: string | null;
     mediaFilename: string | null;
-    mediaSize: number | string | null;
+    mediaSize: number | null;
     status: string;
     errorMessage: string | null;
     metadata: string | null;
@@ -83,7 +83,7 @@ export function mapRawConversationToChatConversation(
     lastMessage: chat.messages?.[0]
       ? {
           ...chat.messages[0],
-          mediaSize: chat.messages[0].mediaSize?.toString() ?? null,
+          mediaSize: chat.messages[0].mediaSize ?? null,
           timestamp: chat.messages[0].timestamp.toString(),
           createdAt: chat.messages[0].createdAt.toString(),
         }

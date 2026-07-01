@@ -18,7 +18,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
   describe('getMessagesPaginated', () => {
     it('returns paginated messages', async () => {
       vi.mocked(MessageRepository.findMessagesPaginated).mockResolvedValue({
-        messages: [{ id: 'msg-1' }],
+        messages: [{ id: 'msg-1', mediaSize: BigInt(123) }],
         total: 1,
       } as never);
 
@@ -30,7 +30,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         limit: 10,
       });
 
-      expect(result.messages).toEqual([{ id: 'msg-1' }]);
+      expect(result.messages).toEqual([{ id: 'msg-1', mediaSize: 123 }]);
       expect(result.total).toBe(1);
       expect(MessageRepository.findMessagesPaginated).toHaveBeenCalledWith({
         convId: 'conv-1',
@@ -197,12 +197,12 @@ describe('MessageService', { tags: ['backend'] }, () => {
           timestamp: expect.any(Date),
         }),
       );
-      expect(result.message.mediaSize).toBe('123');
+      expect(result.message.mediaSize).toBe(123);
       expect(eventBus.emit).toHaveBeenCalledWith(
         getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
         expect.objectContaining({
           id: 'msg-1',
-          mediaSize: '123',
+          mediaSize: 123,
           mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
           userId: 'user-1',
           wabaId: 'waba-1',
