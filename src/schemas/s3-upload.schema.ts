@@ -83,17 +83,25 @@ export const MediaContentTypeSchema = z
     'Unsupported upload content type',
   );
 
+const UploadPathSegmentSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .regex(/^[^/]+$/);
+
 export const CreateS3UploadUrlSchema = z.object({
+  wabaId: UploadPathSegmentSchema,
+  convId: UploadPathSegmentSchema,
   contentType: MediaContentTypeSchema,
 });
 
 export const ConfirmS3UploadSchema = z.object({
-  wabaId: z.string().min(1, 'WABA id is required'),
-  convId: z.string().min(1, 'Conversation id is required'),
+  wabaId: UploadPathSegmentSchema,
+  convId: UploadPathSegmentSchema,
   key: z
     .string()
     .regex(
-      /^\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+      /^\/[^/]+\/[^/]+\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
       'Invalid upload key',
     ),
   caption: z.string().trim().max(4096).optional(),

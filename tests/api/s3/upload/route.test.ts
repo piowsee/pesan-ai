@@ -17,11 +17,11 @@ describe('GET /api/s3/upload', { tags: ['backend'] }, () => {
       id: 'user-1',
     } as never);
     vi.mocked(S3Service.createPresignedUploadUrl).mockResolvedValue({
-      key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+      key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
       url: 'https://space.example/upload',
       method: 'POST',
       fields: {
-        key: 'user-1/550e8400-e29b-41d4-a716-446655440000',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         'Content-Type': 'image/png',
         Policy: 'encoded-policy',
         'X-Amz-Signature': 'signature',
@@ -31,16 +31,22 @@ describe('GET /api/s3/upload', { tags: ['backend'] }, () => {
     });
 
     const response = await GET(
-      new Request(`${url}?contentType=image/png`, { method: 'GET' }),
+      new Request(`${url}?wabaId=waba-1&convId=conv-1&contentType=image/png`, {
+        method: 'GET',
+      }),
       { params: Promise.resolve({}) } as never,
     );
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.status).toBe('success');
-    expect(body.data.key).toBe('/user-1/550e8400-e29b-41d4-a716-446655440000');
+    expect(body.data.key).toBe(
+      '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+    );
     expect(S3Service.createPresignedUploadUrl).toHaveBeenCalledWith({
       userId: 'user-1',
+      wabaId: 'waba-1',
+      convId: 'conv-1',
       contentType: 'image/png',
     });
   });
@@ -51,7 +57,9 @@ describe('GET /api/s3/upload', { tags: ['backend'] }, () => {
     } as never);
 
     const response = await GET(
-      new Request(`${url}?contentType=image/gif`, { method: 'GET' }),
+      new Request(`${url}?wabaId=waba-1&convId=conv-1&contentType=image/gif`, {
+        method: 'GET',
+      }),
       { params: Promise.resolve({}) } as never,
     );
     const body = await response.json();
@@ -65,7 +73,7 @@ describe('GET /api/s3/upload', { tags: ['backend'] }, () => {
 
 describe('POST /api/s3/upload', { tags: ['backend'] }, () => {
   const url = 'http://localhost/api/s3/upload';
-  const key = '/user-1/550e8400-e29b-41d4-a716-446655440000';
+  const key = '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000';
 
   it('confirms an uploaded object and returns success with no data', async () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({

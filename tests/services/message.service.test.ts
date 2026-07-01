@@ -130,7 +130,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         },
       } as never);
       vi.mocked(S3Service.verifyUploadedMedia).mockResolvedValue({
-        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         mediaType: 'image',
         mediaMimeType: 'image/png',
         mediaSize: 123,
@@ -150,7 +150,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         source: 'admin',
         type: 'image',
         content: 'caption',
-        mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        mediaUrl: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         mediaMimeType: 'image/png',
         mediaSize: 123,
         timestamp: new Date('2026-06-30T07:00:00.000Z'),
@@ -160,17 +160,21 @@ describe('MessageService', { tags: ['backend'] }, () => {
         convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
-        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         caption: 'caption',
       });
 
       expect(S3Service.verifyUploadedMedia).toHaveBeenCalledWith({
         userId: 'user-1',
-        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        wabaId: 'waba-1',
+        convId: 'conv-1',
+        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
       });
       expect(S3Service.createPresignedDownloadUrl).toHaveBeenCalledWith({
         userId: 'user-1',
-        key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+        wabaId: 'waba-1',
+        convId: 'conv-1',
+        key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
       });
       expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
@@ -191,7 +195,8 @@ describe('MessageService', { tags: ['backend'] }, () => {
           content: 'caption',
           status: 'sent',
           messageId: 'wa-media-msg-1',
-          mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+          mediaUrl:
+            '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
           mediaMimeType: 'image/png',
           mediaSize: 123,
           timestamp: expect.any(Date),
@@ -203,7 +208,8 @@ describe('MessageService', { tags: ['backend'] }, () => {
         expect.objectContaining({
           id: 'msg-1',
           mediaSize: 123,
-          mediaUrl: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+          mediaUrl:
+            '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
           userId: 'user-1',
           wabaId: 'waba-1',
         }),
@@ -228,7 +234,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
           convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
-          key: '/user-1/550e8400-e29b-41d4-a716-446655440000',
+          key: '/user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         }),
       ).rejects.toThrow(ApiError);
 

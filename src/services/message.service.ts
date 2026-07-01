@@ -189,10 +189,14 @@ export const MessageService = {
 
     const uploadedMedia = await S3Service.verifyUploadedMedia({
       userId,
+      wabaId,
+      convId,
       key,
     });
     const { downloadUrl } = await S3Service.createPresignedDownloadUrl({
       userId,
+      wabaId,
+      convId,
       key: uploadedMedia.key,
     });
     const { phoneNumber, customerPhone } = conversationMeta;

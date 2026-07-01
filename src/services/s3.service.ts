@@ -1,6 +1,7 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { s3BucketName, s3Client } from '@/lib/server/s3-client';
+import { ConversationRepository } from '@/repositories/conversation.repository';
 import { getSupportedUploadConfig } from '@/schemas/s3-upload.schema';
 import {
   GetObjectCommand,
@@ -23,10 +24,16 @@ function toObjectKey(publicKey: string) {
   return publicKey.replace(/^\/+/, '');
 }
 
-// check object's key userId
-function assertUserOwnsKey(params: { key: string; userId: string }) {
+function assertUserOwnsKey(params: {
+  key: string;
+  userId: string;
+  wabaId: string;
+  convId: string;
+}) {
   const objectKey = toObjectKey(params.key);
-  if (!objectKey.startsWith(`${params.userId}/`)) {
+  const expectedPrefix = `${params.userId}/${params.wabaId}/${params.convId}/`;
+
+  if (!objectKey.startsWith(expectedPrefix)) {
     throw new ApiError('Upload key not found or access denied', 404);
   }
 
@@ -36,14 +43,28 @@ function assertUserOwnsKey(params: { key: string; userId: string }) {
 export const S3Service = {
   async createPresignedUploadUrl(params: {
     userId: string;
+    wabaId: string;
+    convId: string;
     contentType: string;
   }) {
-    const objectKey = `${params.userId}/${randomUUID()}`;
     const uploadConfig = getSupportedUploadConfig(params.contentType);
 
     if (!uploadConfig) {
       throw new ApiError('Unsupported upload content type', 400);
     }
+
+    const conversationMeta =
+      await ConversationRepository.getConversationMetaForSending({
+        convId: params.convId,
+        wabaId: params.wabaId,
+        userId: params.userId,
+      });
+
+    if (!conversationMeta) {
+      throw new ApiError('Conversation not found or access denied', 404);
+    }
+
+    const objectKey = `${params.userId}/${params.wabaId}/${params.convId}/${randomUUID()}`;
 
     const { url, fields } = await createPresignedPost(s3Client, {
       Bucket: s3BucketName,
@@ -61,6 +82,8 @@ export const S3Service = {
     logger.info('Created S3 presigned POST URL', {
       key: toPublicMediaKey(objectKey),
       userId: params.userId,
+      wabaId: params.wabaId,
+      convId: params.convId,
     });
 
     return {
@@ -73,7 +96,12 @@ export const S3Service = {
     };
   },
 
-  async verifyUploadedMedia(params: { userId: string; key: string }) {
+  async verifyUploadedMedia(params: {
+    userId: string;
+    wabaId: string;
+    convId: string;
+    key: string;
+  }) {
     const objectKey = assertUserOwnsKey(params);
     let object: HeadObjectCommandOutput;
 
@@ -112,7 +140,12 @@ export const S3Service = {
     };
   },
 
-  async createPresignedDownloadUrl(params: { userId: string; key: string }) {
+  async createPresignedDownloadUrl(params: {
+    userId: string;
+    wabaId: string;
+    convId: string;
+    key: string;
+  }) {
     const objectKey = assertUserOwnsKey(params);
     const command = new GetObjectCommand({
       Bucket: s3BucketName,
