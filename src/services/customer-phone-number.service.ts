@@ -9,8 +9,8 @@ export interface CustomerPhoneNumberContact {
 export const CustomerPhoneNumberService = {
   async getCustomerPhoneNumbers(params: {
     userId: string;
-    wabaIds?: string[];
-    phoneNumbers?: string[];
+    wabaIds?: string[]; // Internal DB WhatsappBusinessAccount.id values.
+    phoneNumbers?: string[]; // Display/customer phone number strings.
     page?: number;
     limit?: number;
   }): Promise<{

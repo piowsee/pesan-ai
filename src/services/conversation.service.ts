@@ -2,6 +2,19 @@ import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 
+function serializeConversationForTransport<
+  T extends { messages?: Array<{ mediaSize?: bigint | number | null }> },
+>(conversation: T) {
+  return {
+    ...conversation,
+    messages: conversation.messages?.map((message) => ({
+      ...message,
+      mediaSize: message.mediaSize == null ? null : Number(message.mediaSize),
+    })),
+  };
+}
+
+// wabaId in this service is the internal DB WhatsappBusinessAccount.id.
 export const ConversationService = {
   async getAllConversations(params: { wabaId: string; userId: string }) {
     const { wabaId, userId } = params;
@@ -19,7 +32,10 @@ export const ConversationService = {
       userId,
       count: conversations.length,
     });
-    return { conversations, total: conversations.length };
+    return {
+      conversations: conversations.map(serializeConversationForTransport),
+      total: conversations.length,
+    };
   },
 
   async markAsRead(params: { convId: string; wabaId: string; userId: string }) {

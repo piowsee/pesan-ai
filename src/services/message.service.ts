@@ -51,10 +51,37 @@ function buildOutboundMediaMessage(params: {
   }
 }
 
+type WebhookMediaMessageType = UploadMediaType;
+type WebhookMediaPayload = NonNullable<WebhookMessage[WebhookMediaMessageType]>;
+
+function getWebhookMediaPayload(
+  message: WebhookMessage,
+  mediaType: WebhookMediaMessageType,
+): WebhookMediaPayload {
+  const mediaPayload = message[mediaType];
+
+  if (!mediaPayload?.url) {
+    logger.warn('WhatsApp sent type media with no media URL');
+    throw new ApiError('WhatsApp media URL is missing', 400);
+  }
+
+  return mediaPayload;
+}
+
+function getWebhookMediaFilename(mediaPayload: WebhookMediaPayload) {
+  if (!('filename' in mediaPayload)) return null;
+
+  return typeof mediaPayload.filename === 'string'
+    ? mediaPayload.filename
+    : null;
+}
+
+// Route-facing wabaId values here are internal DB WhatsappBusinessAccount.id.
+// Meta API calls use phoneNumber.phoneNumberId, which is the Meta Phone Number ID.
 export const MessageService = {
   async getMessagesPaginated(params: {
     convId: string;
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
     page: number;
     limit: number;
@@ -87,7 +114,7 @@ export const MessageService = {
 
   async sendAdminTextMessage(params: {
     convId: string;
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
     content: string;
   }) {
@@ -114,7 +141,7 @@ export const MessageService = {
     }
 
     const { phoneNumber, customerPhone } = conversationMeta;
-    const { phoneNumberId } = phoneNumber;
+    const { phoneNumberId } = phoneNumber; // Meta Phone Number ID.
 
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
@@ -164,7 +191,7 @@ export const MessageService = {
 
   async confirmUploadedMediaMessage(params: {
     convId: string;
-    wabaId: string;
+    wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
     key: string;
     caption?: string;
@@ -308,8 +335,22 @@ export const MessageService = {
     return processedCount;
   },
 
+  // --- Shared webhook helpers ---
+
+  _mapContacts(contacts: Contact[] = []): Record<string, string> {
+    const contactsMap: Record<string, string> = {};
+    for (const contact of contacts) {
+      if (contact.wa_id && contact.profile?.name) {
+        contactsMap[contact.wa_id] = contact.profile.name;
+      }
+    }
+    return contactsMap;
+  },
+
+  // --- Incoming customer message processing ---
+
   async _processIncomingMessageChange(value: WebhookValue): Promise<number> {
-    const metaPhoneNumberId = value.metadata?.phone_number_id;
+    const metaPhoneNumberId = value.metadata?.phone_number_id; // Meta Phone Number ID.
     if (!metaPhoneNumberId) return 0;
 
     const internalPhoneResult =
@@ -330,42 +371,9 @@ export const MessageService = {
     });
   },
 
-  async _processMessageEchoChange(
-    value: WebhookMessageEchoValue,
-  ): Promise<number> {
-    const metaPhoneNumberId = value.metadata?.phone_number_id;
-    if (!metaPhoneNumberId) return 0;
-
-    const internalPhoneResult =
-      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
-
-    if (!internalPhoneResult) {
-      logger.warn('Received message echo for unknown Meta Phone Number ID', {
-        metaPhoneNumberId,
-      });
-      return 0;
-    }
-
-    return this._processMessageEchoesList({
-      messageEchoes: value.message_echoes,
-      internalPhoneId: internalPhoneResult.id,
-      contactsMap: this._mapContacts(value.contacts),
-    });
-  },
-
-  _mapContacts(contacts: Contact[] = []): Record<string, string> {
-    const contactsMap: Record<string, string> = {};
-    for (const contact of contacts) {
-      if (contact.wa_id && contact.profile?.name) {
-        contactsMap[contact.wa_id] = contact.profile.name;
-      }
-    }
-    return contactsMap;
-  },
-
   async _processMessagesList(params: {
     messages?: WebhookMessage[];
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<number> {
     const { messages = [], internalPhoneId, contactsMap } = params;
@@ -390,9 +398,234 @@ export const MessageService = {
     return count;
   },
 
+  async _processSingleMessage(params: {
+    message: WebhookMessage;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { message } = params;
+
+    if (message.type === 'text') {
+      return this._processIncomingTextMessage(params);
+    } else if (message.type === 'image') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'image',
+      });
+    } else if (message.type === 'audio') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'audio',
+      });
+    } else if (message.type === 'video') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'video',
+      });
+    } else if (message.type === 'document') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'document',
+      });
+    }
+
+    logger.info('Skipping unsupported incoming message type', {
+      type: message.type,
+      messageId: message.id,
+    });
+    return false;
+  },
+
+  async _processIncomingTextMessage(params: {
+    message: WebhookMessage;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { message: webhookMessage, internalPhoneId, contactsMap } = params;
+    const customerPhone = webhookMessage.from;
+    const customerName = contactsMap[customerPhone];
+    const content = webhookMessage.text?.body;
+    const timestamp = new Date(parseInt(webhookMessage.timestamp) * 1000);
+
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processIncomingMessage({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName,
+      message: {
+        messageId: webhookMessage.id,
+        type: 'text',
+        content,
+        timestamp,
+        metadata: JSON.stringify(webhookMessage),
+      },
+    });
+
+    logger.info('Saved incoming text message to DB successfully', {
+      messageId: webhookMessage.id,
+      customerPhone,
+    });
+
+    const message = serializeMessageForTransport(savedMessage);
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for real-time notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...message,
+      conversation,
+      userId,
+      wabaId,
+    });
+
+    if (conversation.adminTakeover) {
+      logger.info('Skipping debounce queue for admin takeover conversation', {
+        conversationId: conversation.id,
+      });
+      return true;
+    }
+
+    handleDebounceIncomingMessage(conversation.id);
+
+    return true;
+  },
+
+  async _processIncomingMediaMessage(params: {
+    message: WebhookMessage;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
+    contactsMap: Record<string, string>;
+    mediaType: WebhookMediaMessageType;
+  }): Promise<boolean> {
+    const {
+      message: webhookMessage,
+      internalPhoneId,
+      contactsMap,
+      mediaType,
+    } = params;
+    const mediaPayload = getWebhookMediaPayload(webhookMessage, mediaType);
+    const customerPhone = webhookMessage.from;
+    const customerName = contactsMap[customerPhone];
+    const preparedConversation =
+      await ConversationRepository.prepareWebhookMessageConversation({
+        phoneNumberId: internalPhoneId,
+        customerPhone,
+        customerName,
+      });
+    const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
+
+    if (!tokenToUse) {
+      throw new ApiError('WhatsApp token is missing or invalid', 403);
+    }
+
+    const uploadedMedia = await S3Service.streamWhatsAppMediaToObjectStorage({
+      whatsappUrl: mediaPayload.url,
+      token: tokenToUse,
+      userId: preparedConversation.userId,
+      wabaId: preparedConversation.wabaId,
+      convId: preparedConversation.conversation.id,
+      contentType: mediaPayload.mime_type,
+    });
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processIncomingMessage({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName,
+      message: {
+        messageId: webhookMessage.id,
+        type: mediaType,
+        content: mediaPayload.caption,
+        timestamp: new Date(parseInt(webhookMessage.timestamp) * 1000),
+        metadata: JSON.stringify(webhookMessage),
+        mediaObjectKey: uploadedMedia.key,
+        mediaMimeType: uploadedMedia.mediaMimeType,
+        mediaFilename: getWebhookMediaFilename(mediaPayload),
+        mediaSize: uploadedMedia.mediaSize,
+      },
+    });
+
+    logger.info('Saved incoming media message to DB successfully', {
+      messageId: webhookMessage.id,
+      customerPhone,
+      mediaType,
+      key: uploadedMedia.key,
+    });
+
+    const message = serializeMessageForTransport(savedMessage);
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for real-time notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...message,
+      conversation,
+      userId,
+      wabaId,
+    });
+
+    if (conversation.adminTakeover) {
+      logger.info('Skipping debounce queue for admin takeover conversation', {
+        conversationId: conversation.id,
+      });
+      return true;
+    }
+
+    handleDebounceIncomingMessage(conversation.id);
+
+    return true;
+  },
+
+  // --- WhatsApp Business App message echo processing ---
+
+  async _processMessageEchoChange(
+    value: WebhookMessageEchoValue,
+  ): Promise<number> {
+    const metaPhoneNumberId = value.metadata?.phone_number_id; // Meta Phone Number ID.
+    if (!metaPhoneNumberId) return 0;
+
+    const internalPhoneResult =
+      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
+
+    if (!internalPhoneResult) {
+      logger.warn('Received message echo for unknown Meta Phone Number ID', {
+        metaPhoneNumberId,
+      });
+      return 0;
+    }
+
+    return this._processMessageEchoesList({
+      messageEchoes: value.message_echoes,
+      internalPhoneId: internalPhoneResult.id,
+      contactsMap: this._mapContacts(value.contacts),
+    });
+  },
+
   async _processMessageEchoesList(params: {
     messageEchoes?: WebhookMessageEcho[];
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<number> {
     const { messageEchoes = [], internalPhoneId, contactsMap } = params;
@@ -417,93 +650,50 @@ export const MessageService = {
     return count;
   },
 
-  async _processSingleMessage(params: {
-    message: WebhookMessage;
-    internalPhoneId: string;
-    contactsMap: Record<string, string>;
-  }): Promise<boolean> {
-    const { message, internalPhoneId, contactsMap } = params;
-    if (message.type !== 'text') {
-      logger.info('Skipping non-text message', {
-        type: message.type,
-        messageId: message.id,
-      });
-      return false;
-    }
-
-    const customerPhone = message.from;
-    const customerName = contactsMap[customerPhone];
-    const content = message.text?.body;
-    const timestamp = new Date(parseInt(message.timestamp) * 1000);
-
-    const {
-      message: savedMessage,
-      conversation,
-      userId,
-      wabaId,
-    } = await ConversationRepository.processIncomingMessage({
-      phoneNumberId: internalPhoneId,
-      customerPhone,
-      customerName,
-      message: {
-        messageId: message.id,
-        type: 'text',
-        content,
-        timestamp,
-        metadata: JSON.stringify(message),
-      },
-    });
-
-    logger.info('Saved incoming message to DB successfully', {
-      messageId: message.id,
-      customerPhone,
-    });
-
-    if (!userId) {
-      logError(
-        new Error('Could not determine userId for real-time notification'),
-        {
-          action: 'Could not determine userId for real-time notification',
-          phoneNumberId: internalPhoneId,
-        },
-      );
-      return true;
-    }
-
-    // Emit real-time event via SSE to the specific user channel
-    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
-      conversation,
-      userId,
-      wabaId,
-    });
-
-    if (conversation.adminTakeover) {
-      logger.info('Skipping debounce queue for admin takeover conversation', {
-        conversationId: conversation.id,
-      });
-      return true;
-    }
-
-    handleDebounceIncomingMessage(conversation.id);
-
-    return true;
-  },
-
   async _processSingleMessageEcho(params: {
     messageEcho: WebhookMessageEcho;
-    internalPhoneId: string;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { messageEcho } = params;
+
+    if (messageEcho.type === 'text') {
+      return this._processMessageEchoTextMessage(params);
+    } else if (messageEcho.type === 'image') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'image',
+      });
+    } else if (messageEcho.type === 'audio') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'audio',
+      });
+    } else if (messageEcho.type === 'video') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'video',
+      });
+    } else if (messageEcho.type === 'document') {
+      return this._processMessageEchoMediaMessage({
+        ...params,
+        mediaType: 'document',
+      });
+    }
+
+    logger.info('Skipping unsupported message echo type', {
+      type: messageEcho.type,
+      messageId: messageEcho.id,
+    });
+    return false;
+  },
+
+  async _processMessageEchoTextMessage(params: {
+    messageEcho: WebhookMessageEcho;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
     contactsMap: Record<string, string>;
   }): Promise<boolean> {
     const { messageEcho, internalPhoneId, contactsMap } = params;
-    if (messageEcho.type !== 'text') {
-      logger.info('Skipping non-text message echo', {
-        type: messageEcho.type,
-        messageId: messageEcho.id,
-      });
-      return false;
-    }
-
     const customerPhone = messageEcho.to;
     const {
       message: savedMessage,
@@ -528,6 +718,8 @@ export const MessageService = {
       customerPhone,
     });
 
+    const message = serializeMessageForTransport(savedMessage);
+
     if (!userId) {
       logError(
         new Error('Could not determine userId for real-time notification'),
@@ -540,7 +732,89 @@ export const MessageService = {
     }
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
+      ...message,
+      conversation,
+      userId,
+      wabaId,
+    });
+
+    return true;
+  },
+
+  async _processMessageEchoMediaMessage(params: {
+    messageEcho: WebhookMessageEcho;
+    internalPhoneId: string; // Internal DB PhoneNumber.id.
+    contactsMap: Record<string, string>;
+    mediaType: WebhookMediaMessageType;
+  }): Promise<boolean> {
+    const { messageEcho, internalPhoneId, contactsMap, mediaType } = params;
+    const mediaPayload = getWebhookMediaPayload(messageEcho, mediaType);
+    const customerPhone = messageEcho.to;
+    const customerName = contactsMap[customerPhone];
+    const preparedConversation =
+      await ConversationRepository.prepareWebhookMessageConversation({
+        phoneNumberId: internalPhoneId,
+        customerPhone,
+        customerName,
+      });
+    const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
+
+    if (!tokenToUse) {
+      throw new ApiError('WhatsApp token is missing or invalid', 403);
+    }
+
+    const uploadedMedia = await S3Service.streamWhatsAppMediaToObjectStorage({
+      whatsappUrl: mediaPayload.url,
+      token: tokenToUse,
+      userId: preparedConversation.userId,
+      wabaId: preparedConversation.wabaId,
+      convId: preparedConversation.conversation.id,
+      contentType: mediaPayload.mime_type,
+    });
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processOutgoingMessageEcho({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName,
+      message: {
+        messageId: messageEcho.id,
+        type: mediaType,
+        content: mediaPayload.caption,
+        timestamp: new Date(parseInt(messageEcho.timestamp) * 1000),
+        metadata: JSON.stringify(messageEcho),
+        mediaObjectKey: uploadedMedia.key,
+        mediaMimeType: uploadedMedia.mediaMimeType,
+        mediaFilename: getWebhookMediaFilename(mediaPayload),
+        mediaSize: uploadedMedia.mediaSize,
+      },
+    });
+
+    logger.info('Saved media message echo to DB successfully', {
+      messageId: messageEcho.id,
+      customerPhone,
+      mediaType,
+      key: uploadedMedia.key,
+    });
+
+    const message = serializeMessageForTransport(savedMessage);
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for message echo notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...message,
       conversation,
       userId,
       wabaId,

@@ -202,6 +202,7 @@ async function _handleBotWebhookFailure(params: {
 
 function _emitBotWebhookFailed(conversation: BotConversation) {
   const userId = conversation.phoneNumber.waba.userId;
+  // conversation.phoneNumber.wabaId is the internal DB WhatsappBusinessAccount.id.
 
   eventBus.emit(getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, userId), {
     conversationId: conversation.id,
@@ -253,7 +254,7 @@ async function _handlePostRedirectMessage(params: {
   }
 
   const waResult = await MetaFetchService.sendMessage({
-    phoneNumberId: conversation.phoneNumber.phoneNumberId,
+    phoneNumberId: conversation.phoneNumber.phoneNumberId, // Meta Phone Number ID.
     token: tokenToUse,
     to: conversation.customerPhone,
     message: { type: 'text', text: content },
@@ -309,7 +310,7 @@ async function _handlePostRedirectMessage(params: {
       },
     },
     userId,
-    wabaId: phoneNumber.wabaId,
+    wabaId: phoneNumber.wabaId, // Internal DB WhatsappBusinessAccount.id.
   });
 }
 
@@ -319,6 +320,7 @@ function _emitConversationUpdated(params: {
 }) {
   const { conversation, adminTakeover } = params;
   const userId = conversation.phoneNumber.waba.userId;
+  // conversation.phoneNumber.wabaId is the internal DB WhatsappBusinessAccount.id.
 
   eventBus.emit(getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, userId), {
     conversationId: conversation.id,

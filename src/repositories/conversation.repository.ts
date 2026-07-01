@@ -104,6 +104,45 @@ export const ConversationRepository = {
     });
   },
 
+  async prepareWebhookMessageConversation(params: {
+    phoneNumberId: string;
+    customerPhone: string;
+    customerName?: string;
+  }) {
+    const { phoneNumberId, customerPhone, customerName } = params;
+
+    const conversation = await prisma.conversation.upsert({
+      where: {
+        unique_conversation: {
+          phoneNumberId,
+          customerPhone,
+        },
+      },
+      update: {
+        customerName,
+      },
+      create: {
+        phoneNumberId,
+        customerPhone,
+        customerName,
+      },
+      include: {
+        phoneNumber: {
+          include: {
+            waba: true,
+          },
+        },
+      },
+    });
+
+    return {
+      conversation,
+      userId: conversation.phoneNumber.waba.userId,
+      wabaId: conversation.phoneNumber.waba.id,
+      systemUserToken: conversation.phoneNumber.waba.systemUserToken,
+    };
+  },
+
   async findConversationById(params: { conversationId: string }) {
     const { conversationId } = params;
     return prisma.conversation.findUnique({
@@ -162,9 +201,13 @@ export const ConversationRepository = {
     message: {
       messageId: string;
       type: string;
-      content?: string;
+      content?: string | null;
       timestamp: Date;
-      metadata?: string;
+      metadata?: string | null;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
     };
   }) {
     const { phoneNumberId, customerPhone, customerName, message } = params;
@@ -208,6 +251,10 @@ export const ConversationRepository = {
           content: message.content,
           timestamp: message.timestamp,
           metadata: message.metadata,
+          mediaObjectKey: message.mediaObjectKey,
+          mediaMimeType: message.mediaMimeType,
+          mediaFilename: message.mediaFilename,
+          mediaSize: message.mediaSize,
           status: 'delivered', // Incoming messages from Meta are delivered
         },
       });
@@ -243,9 +290,13 @@ export const ConversationRepository = {
     message: {
       messageId: string;
       type: string;
-      content?: string;
+      content?: string | null;
       timestamp: Date;
-      metadata?: string;
+      metadata?: string | null;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
     };
   }) {
     const { phoneNumberId, customerPhone, customerName, message } = params;
@@ -295,6 +346,10 @@ export const ConversationRepository = {
           content: message.content,
           timestamp: message.timestamp,
           metadata: message.metadata,
+          mediaObjectKey: message.mediaObjectKey,
+          mediaMimeType: message.mediaMimeType,
+          mediaFilename: message.mediaFilename,
+          mediaSize: message.mediaSize,
           status: 'sent',
         },
       });

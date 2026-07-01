@@ -66,18 +66,25 @@ export const SUPPORTED_UPLOAD_CONFIG = {
   { mediaType: UploadMediaType; maxSizeBytes: number }
 >;
 
+export function normalizeContentType(contentType?: string | null) {
+  return contentType?.split(';')[0]?.trim().toLowerCase() || null;
+}
+
 export function getSupportedUploadConfig(contentType?: string | null) {
-  if (!contentType) return null;
+  const normalizedContentType = normalizeContentType(contentType);
+  if (!normalizedContentType) return null;
 
   return (
-    SUPPORTED_UPLOAD_CONFIG[contentType as SupportedUploadContentType] ?? null
+    SUPPORTED_UPLOAD_CONFIG[
+      normalizedContentType as SupportedUploadContentType
+    ] ?? null
   );
 }
 
 export const MediaContentTypeSchema = z
   .string()
-  .trim()
-  .toLowerCase()
+  .transform((contentType) => normalizeContentType(contentType))
+  .pipe(z.string())
   .refine(
     (contentType) => getSupportedUploadConfig(contentType) !== null,
     'Unsupported upload content type',
