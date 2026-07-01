@@ -41,13 +41,30 @@ export function WebhookDocsDialog() {
                 <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono whitespace-nowrap">
                   Authorization
                 </code>{' '}
-                header. Validation requests use a short-lived JWT signed with
-                your <strong>passphrase</strong>. Message requests use the same
-                JWT-based authentication.
+                header. The token is a short-lived JWT signed with the{' '}
+                <strong>HS256</strong> algorithm using your configured{' '}
+                <strong>passphrase</strong> as the shared secret.
               </p>
               <pre className="w-full overflow-x-auto rounded-md bg-muted p-3 text-xs font-mono whitespace-pre sm:whitespace-pre-wrap">
-                {`Authorization: Bearer <jwt-token>`}
+                {`Authorization: Bearer <jwt-token>
+
+JWT verification setup:
+  Token type: JWT
+  Algorithm: HS256
+  Key type: Passphrase
+  Passphrase: <the same passphrase saved in pesan-ai>
+
+JWT claims:
+  url: <your-webhook-url>
+  iat: issued-at timestamp
+  exp: expires in 1 minute`}
               </pre>
+              <p className="text-xs text-muted-foreground/80 leading-relaxed">
+                If your webhook tool asks for JWT credentials, configure the key
+                type as <strong>passphrase</strong>, choose{' '}
+                <strong>HS256</strong> as the algorithm, and use the exact
+                passphrase entered when creating the webhook in pesan-ai.
+              </p>
             </div>
 
             {/* GET Request */}
@@ -104,6 +121,7 @@ Headers:
 
 Request Body:
 {
+  "customerPhoneNumber": "6281234567890",
   "messages": [
     {
       "sequence": 1,
@@ -124,11 +142,21 @@ Request Body:
                 <p className="leading-relaxed">
                   The{' '}
                   <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                    customerPhoneNumber
+                  </code>{' '}
+                  field identifies the customer, and the{' '}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
                     messages
                   </code>{' '}
                   array contains text messages in chronological order.
                 </p>
                 <ul className="list-disc pl-5 leading-relaxed">
+                  <li>
+                    <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
+                      customerPhoneNumber
+                    </code>
+                    : customer WhatsApp phone number in international format.
+                  </li>
                   <li>
                     <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
                       sequence
