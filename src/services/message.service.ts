@@ -225,7 +225,7 @@ export const MessageService = {
       status: waResult.status,
       messageId: waResult.messageId,
       timestamp: new Date(),
-      mediaUrl: uploadedMedia.key,
+      mediaObjectKey: uploadedMedia.key,
       mediaMimeType: uploadedMedia.mediaMimeType,
       mediaSize: uploadedMedia.mediaSize,
     });

@@ -44,7 +44,7 @@ export interface RawConversation {
     source: ChatMessageSource;
     type: string;
     content: string | null;
-    mediaUrl: string | null;
+    mediaObjectKey: string | null;
     mediaMimeType: string | null;
     mediaFilename: string | null;
     mediaSize: number | null;

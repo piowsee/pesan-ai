@@ -82,7 +82,7 @@ export const MessageRepository = {
     status: string;
     messageId?: string;
     timestamp: Date;
-    mediaUrl?: string | null;
+    mediaObjectKey?: string | null;
     mediaMimeType?: string | null;
     mediaFilename?: string | null;
     mediaSize?: number | null;
