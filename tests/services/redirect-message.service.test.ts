@@ -128,6 +128,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         method: 'POST',
         auth: { type: 'Bearer', token: 'signed-webhook-jwt' },
         body: {
+          customerPhoneNumber: '+123456',
           messages: [
             {
               sequence: 1,
