@@ -340,6 +340,66 @@ describe('MessageService', { tags: ['backend'] }, () => {
       );
     });
 
+    it.each([
+      ['image', { id: 'media-image-1', mime_type: 'image/png' }],
+      ['audio', { id: 'media-audio-1', mime_type: 'audio/ogg', voice: true }],
+      ['video', { id: 'media-video-1', mime_type: 'video/mp4' }],
+      [
+        'document',
+        {
+          id: 'media-document-1',
+          mime_type: 'application/pdf',
+          filename: 'receipt.pdf',
+        },
+      ],
+    ])(
+      'recognizes incoming %s messages without saving them yet',
+      async (type, media) => {
+        vi.mocked(
+          ConversationRepository.findPhoneNumberByMetaId,
+        ).mockResolvedValue({
+          id: 'phone-1',
+        } as never);
+
+        const result = await MessageService.processMetaWebhookPayload({
+          object: 'whatsapp_business_account',
+          entry: [
+            {
+              id: 'entry-1',
+              changes: [
+                {
+                  field: 'messages',
+                  value: {
+                    messaging_product: 'whatsapp',
+                    metadata: {
+                      display_phone_number: '12345',
+                      phone_number_id: 'meta-phone-1',
+                    },
+                    messages: [
+                      {
+                        id: `meta-${type}-msg-1`,
+                        from: 'customer-1',
+                        type,
+                        [type]: media,
+                        timestamp: '1625097600',
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        expect(result).toEqual({ processed: true, count: 0 });
+        expect(
+          ConversationRepository.processIncomingMessage,
+        ).not.toHaveBeenCalled();
+        expect(eventBus.emit).not.toHaveBeenCalled();
+        expect(handleDebounceIncomingMessage).not.toHaveBeenCalled();
+      },
+    );
+
     it('throws error for invalid webhook payload', async () => {
       const payload = {
         object: 'page',

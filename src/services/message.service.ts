@@ -51,6 +51,15 @@ function buildOutboundMediaMessage(params: {
   }
 }
 
+type IncomingMediaMessageType = UploadMediaType;
+
+function getWebhookMessageMediaPayload(
+  message: WebhookMessage,
+  mediaType: IncomingMediaMessageType,
+) {
+  return message[mediaType];
+}
+
 export const MessageService = {
   async getMessagesPaginated(params: {
     convId: string;
@@ -308,6 +317,20 @@ export const MessageService = {
     return processedCount;
   },
 
+  // --- Shared webhook helpers ---
+
+  _mapContacts(contacts: Contact[] = []): Record<string, string> {
+    const contactsMap: Record<string, string> = {};
+    for (const contact of contacts) {
+      if (contact.wa_id && contact.profile?.name) {
+        contactsMap[contact.wa_id] = contact.profile.name;
+      }
+    }
+    return contactsMap;
+  },
+
+  // --- Incoming customer message processing ---
+
   async _processIncomingMessageChange(value: WebhookValue): Promise<number> {
     const metaPhoneNumberId = value.metadata?.phone_number_id;
     if (!metaPhoneNumberId) return 0;
@@ -328,39 +351,6 @@ export const MessageService = {
       internalPhoneId: internalPhoneResult.id,
       contactsMap,
     });
-  },
-
-  async _processMessageEchoChange(
-    value: WebhookMessageEchoValue,
-  ): Promise<number> {
-    const metaPhoneNumberId = value.metadata?.phone_number_id;
-    if (!metaPhoneNumberId) return 0;
-
-    const internalPhoneResult =
-      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
-
-    if (!internalPhoneResult) {
-      logger.warn('Received message echo for unknown Meta Phone Number ID', {
-        metaPhoneNumberId,
-      });
-      return 0;
-    }
-
-    return this._processMessageEchoesList({
-      messageEchoes: value.message_echoes,
-      internalPhoneId: internalPhoneResult.id,
-      contactsMap: this._mapContacts(value.contacts),
-    });
-  },
-
-  _mapContacts(contacts: Contact[] = []): Record<string, string> {
-    const contactsMap: Record<string, string> = {};
-    for (const contact of contacts) {
-      if (contact.wa_id && contact.profile?.name) {
-        contactsMap[contact.wa_id] = contact.profile.name;
-      }
-    }
-    return contactsMap;
   },
 
   async _processMessagesList(params: {
@@ -390,6 +380,152 @@ export const MessageService = {
     return count;
   },
 
+  async _processSingleMessage(params: {
+    message: WebhookMessage;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { message } = params;
+
+    if (message.type === 'text') {
+      return this._processIncomingTextMessage(params);
+    } else if (message.type === 'image') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'image',
+      });
+    } else if (message.type === 'audio') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'audio',
+      });
+    } else if (message.type === 'video') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'video',
+      });
+    } else if (message.type === 'document') {
+      return this._processIncomingMediaMessage({
+        ...params,
+        mediaType: 'document',
+      });
+    }
+
+    logger.info('Skipping unsupported incoming message type', {
+      type: message.type,
+      messageId: message.id,
+    });
+    return false;
+  },
+
+  async _processIncomingTextMessage(params: {
+    message: WebhookMessage;
+    internalPhoneId: string;
+    contactsMap: Record<string, string>;
+  }): Promise<boolean> {
+    const { message, internalPhoneId, contactsMap } = params;
+    const customerPhone = message.from;
+    const customerName = contactsMap[customerPhone];
+    const content = message.text?.body;
+    const timestamp = new Date(parseInt(message.timestamp) * 1000);
+
+    const {
+      message: savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    } = await ConversationRepository.processIncomingMessage({
+      phoneNumberId: internalPhoneId,
+      customerPhone,
+      customerName,
+      message: {
+        messageId: message.id,
+        type: 'text',
+        content,
+        timestamp,
+        metadata: JSON.stringify(message),
+      },
+    });
+
+    logger.info('Saved incoming text message to DB successfully', {
+      messageId: message.id,
+      customerPhone,
+    });
+
+    if (!userId) {
+      logError(
+        new Error('Could not determine userId for real-time notification'),
+        {
+          action: 'Could not determine userId for real-time notification',
+          phoneNumberId: internalPhoneId,
+        },
+      );
+      return true;
+    }
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+      ...savedMessage,
+      conversation,
+      userId,
+      wabaId,
+    });
+
+    if (conversation.adminTakeover) {
+      logger.info('Skipping debounce queue for admin takeover conversation', {
+        conversationId: conversation.id,
+      });
+      return true;
+    }
+
+    handleDebounceIncomingMessage(conversation.id);
+
+    return true;
+  },
+
+  async _processIncomingMediaMessage(params: {
+    message: WebhookMessage;
+    mediaType: IncomingMediaMessageType;
+  }): Promise<boolean> {
+    const { message, mediaType } = params;
+    const mediaPayload = getWebhookMessageMediaPayload(message, mediaType);
+
+    logger.info('Received incoming media message; persistence is pending', {
+      messageId: message.id,
+      mediaType,
+      mediaPayload,
+    });
+
+    // TODO: Download the media asset from Meta using the media payload id/url,
+    // upload it to object storage, then save the incoming message with
+    // mediaObjectKey, mediaMimeType, mediaSize, caption/content, and metadata.
+    return false;
+  },
+
+  // --- WhatsApp Business App message echo processing ---
+
+  async _processMessageEchoChange(
+    value: WebhookMessageEchoValue,
+  ): Promise<number> {
+    const metaPhoneNumberId = value.metadata?.phone_number_id;
+    if (!metaPhoneNumberId) return 0;
+
+    const internalPhoneResult =
+      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
+
+    if (!internalPhoneResult) {
+      logger.warn('Received message echo for unknown Meta Phone Number ID', {
+        metaPhoneNumberId,
+      });
+      return 0;
+    }
+
+    return this._processMessageEchoesList({
+      messageEchoes: value.message_echoes,
+      internalPhoneId: internalPhoneResult.id,
+      contactsMap: this._mapContacts(value.contacts),
+    });
+  },
+
   async _processMessageEchoesList(params: {
     messageEchoes?: WebhookMessageEcho[];
     internalPhoneId: string;
@@ -415,79 +551,6 @@ export const MessageService = {
     }
 
     return count;
-  },
-
-  async _processSingleMessage(params: {
-    message: WebhookMessage;
-    internalPhoneId: string;
-    contactsMap: Record<string, string>;
-  }): Promise<boolean> {
-    const { message, internalPhoneId, contactsMap } = params;
-    if (message.type !== 'text') {
-      logger.info('Skipping non-text message', {
-        type: message.type,
-        messageId: message.id,
-      });
-      return false;
-    }
-
-    const customerPhone = message.from;
-    const customerName = contactsMap[customerPhone];
-    const content = message.text?.body;
-    const timestamp = new Date(parseInt(message.timestamp) * 1000);
-
-    const {
-      message: savedMessage,
-      conversation,
-      userId,
-      wabaId,
-    } = await ConversationRepository.processIncomingMessage({
-      phoneNumberId: internalPhoneId,
-      customerPhone,
-      customerName,
-      message: {
-        messageId: message.id,
-        type: 'text',
-        content,
-        timestamp,
-        metadata: JSON.stringify(message),
-      },
-    });
-
-    logger.info('Saved incoming message to DB successfully', {
-      messageId: message.id,
-      customerPhone,
-    });
-
-    if (!userId) {
-      logError(
-        new Error('Could not determine userId for real-time notification'),
-        {
-          action: 'Could not determine userId for real-time notification',
-          phoneNumberId: internalPhoneId,
-        },
-      );
-      return true;
-    }
-
-    // Emit real-time event via SSE to the specific user channel
-    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...savedMessage,
-      conversation,
-      userId,
-      wabaId,
-    });
-
-    if (conversation.adminTakeover) {
-      logger.info('Skipping debounce queue for admin takeover conversation', {
-        conversationId: conversation.id,
-      });
-      return true;
-    }
-
-    handleDebounceIncomingMessage(conversation.id);
-
-    return true;
   },
 
   async _processSingleMessageEcho(params: {

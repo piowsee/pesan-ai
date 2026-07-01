@@ -1,8 +1,30 @@
 import { z } from 'zod';
 
+// --- Message content payloads ---
+
 const TextMessageSchema = z.object({
   body: z.string(),
 });
+
+const WebhookMediaAssetSchema = z
+  .object({
+    caption: z.string().optional(),
+    mime_type: z.string().optional(),
+    sha256: z.string().optional(),
+    id: z.string(),
+    url: z.string().optional(),
+  })
+  .passthrough();
+
+const AudioMessageSchema = WebhookMediaAssetSchema.extend({
+  voice: z.boolean().optional(),
+});
+
+const DocumentMessageSchema = WebhookMediaAssetSchema.extend({
+  filename: z.string().optional(),
+});
+
+// --- Contact payloads ---
 
 const ContactProfileSchema = z.object({
   name: z.string(),
@@ -13,20 +35,28 @@ const ContactSchema = z.object({
   wa_id: z.string(),
 });
 
-const BaseWebhookMessageSchema = z.object({
-  from: z.string(),
-  id: z.string(),
-  timestamp: z.string(), // Meta sends it as a string
-  type: z.string(),
-  text: TextMessageSchema.optional(),
-});
+// --- Message payloads ---
 
-const WebhookMessageSchema = BaseWebhookMessageSchema.passthrough();
+const WebhookMessageSchema = z
+  .object({
+    from: z.string(),
+    id: z.string(),
+    timestamp: z.string(), // Meta sends it as a string
+    type: z.string(),
+    text: TextMessageSchema.optional(),
+    image: WebhookMediaAssetSchema.optional(),
+    audio: AudioMessageSchema.optional(),
+    video: WebhookMediaAssetSchema.optional(),
+    document: DocumentMessageSchema.optional(),
+  })
+  .passthrough();
 
-const WebhookMessageEchoSchema = BaseWebhookMessageSchema.extend({
+const WebhookMessageEchoSchema = WebhookMessageSchema.extend({
   to: z.string(),
   to_user_id: z.string().optional(),
-}).passthrough();
+});
+
+// --- Webhook value payloads ---
 
 const WebhookMetadataSchema = z.object({
   display_phone_number: z.string(),
@@ -51,6 +81,8 @@ const WebhookMessageEchoValueSchema = z
   })
   .passthrough();
 
+// --- Webhook envelope ---
+
 const WebhookChangeSchema = z.discriminatedUnion('field', [
   z.object({
     field: z.literal('messages'),
@@ -71,6 +103,8 @@ export const MetaWebhookPayloadSchema = z.object({
   object: z.literal('whatsapp_business_account'),
   entry: z.array(WebhookEntrySchema).optional(),
 });
+
+// --- Exported types ---
 
 export type MetaWebhookPayload = z.infer<typeof MetaWebhookPayloadSchema>;
 export type WebhookEntry = z.infer<typeof WebhookEntrySchema>;
