@@ -2,6 +2,9 @@ packages:
   - .
   - docs
 
+# 12 hours
+minimumReleaseAge: 720
+
 allowBuilds:
   '@parcel/watcher': true
   '@prisma/engines': true
