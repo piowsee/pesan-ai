@@ -1,0 +1,158 @@
+:root,
+html,
+html.light,
+html.rust,
+html.coal,
+html.navy,
+html.ayu {
+  --brand: #475569;
+  --brand-foreground: #f8fafc;
+  --surface: #f8fafc;
+  --surface-raised: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --text-muted: #64748b;
+
+  --bg: var(--surface);
+  --fg: var(--brand);
+  --sidebar-bg: var(--surface-muted);
+  --sidebar-fg: var(--brand);
+  --sidebar-non-existant: #94a3b8;
+  --sidebar-active: var(--brand);
+  --sidebar-spacer: var(--border-subtle);
+  --scrollbar: #cbd5e1;
+  --icons: var(--brand);
+  --icons-hover: #334155;
+  --links: var(--brand);
+  --inline-code-color: #334155;
+  --theme-popup-bg: var(--surface-raised);
+  --theme-popup-border: var(--border-subtle);
+  --theme-hover: #e2e8f0;
+  --quote-bg: #eef2f7;
+  --quote-border: var(--border-subtle);
+  --table-border-color: var(--border-subtle);
+  --table-header-bg: #e2e8f0;
+  --table-alternate-bg: #f6f8fb;
+  --searchbar-border-color: #cbd5e1;
+  --searchbar-bg: var(--surface-raised);
+  --searchbar-fg: var(--brand);
+  --searchbar-shadow-color: rgba(71, 85, 105, 0.22);
+  --searchresults-header-fg: var(--brand);
+  --searchresults-border-color: var(--border-subtle);
+  --searchresults-li-bg: #eef2f7;
+  --search-mark-bg: #dbeafe;
+  --color-scheme: light;
+  --sidebar-header-border-color: var(--brand);
+  --overlay-bg: rgba(71, 85, 105, 0.18);
+}
+
+#mdbook-theme-toggle,
+#mdbook-theme-list {
+  display: none !important;
+}
+
+html,
+body,
+.page-wrapper {
+  background: var(--surface);
+}
+
+#mdbook-menu-bar {
+  background: rgba(248, 250, 252, 0.92);
+  border-block-end-color: var(--border-subtle);
+  backdrop-filter: blur(12px);
+}
+
+.menu-title {
+  color: var(--brand);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.menu-bar,
+.menu-bar:visited,
+.nav-chapters,
+.nav-chapters:visited,
+.mobile-nav-chapters,
+.mobile-nav-chapters:visited,
+.menu-bar .icon-button,
+.menu-bar a .fa-svg {
+  color: var(--brand);
+}
+
+.content main {
+  color: var(--brand);
+}
+
+.content h1,
+.content h2,
+.content h3,
+.content h4,
+.content h5,
+.content h6,
+.content .header:link,
+.content .header:visited {
+  color: var(--brand);
+}
+
+.content p,
+.content li,
+.content dd,
+.content dt {
+  color: var(--brand);
+}
+
+.content a:link,
+.content a:visited,
+#mdbook-searchresults a {
+  color: var(--brand);
+}
+
+.sidebar {
+  border-inline-end: 1px solid var(--border-subtle);
+  background: var(--surface-muted);
+}
+
+.chapter li a,
+.chapter li.part-title,
+.chapter a.current-header {
+  color: var(--brand);
+}
+
+.chapter li a:hover,
+.chapter li a.active {
+  color: #334155;
+}
+
+.chapter li a.active {
+  font-weight: 700;
+}
+
+.content img,
+.content video {
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+}
+
+blockquote,
+pre,
+table {
+  border-radius: 8px;
+}
+
+pre,
+#mdbook-searchbar {
+  border: 1px solid var(--border-subtle);
+}
+
+pre,
+pre code,
+pre > code,
+.hljs,
+a > .hljs,
+:not(pre) > .hljs,
+:not(pre):not(a) > .hljs {
+  color: var(--brand) !important;
+  background: var(--surface-raised) !important;
+}
