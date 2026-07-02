@@ -14,7 +14,17 @@ type BotMessageHistory = Awaited<
 >;
 type RedirectableBotMessage = Omit<BotMessageHistory[number], 'type'>;
 
-export function handleDebounceIncomingMessage(conversationId: string) {
+type DebouncedConversationContext = {
+  conversationId: string;
+  userId: string;
+  wabaId: string;
+};
+
+export function handleDebounceIncomingMessage(
+  params: DebouncedConversationContext,
+) {
+  const { conversationId } = params;
+
   logger.info('Schedule conversation for bot webhook', {
     conversationId,
   });
@@ -25,17 +35,21 @@ export function handleDebounceIncomingMessage(conversationId: string) {
 
   timers.set(
     conversationId,
-    setTimeout(() => {
-      // fire and forget
-      void processDebouncedConversation({ conversationId });
-    }, 15_000),
+    setTimeout(
+      (context: DebouncedConversationContext) => {
+        // fire and forget
+        void processDebouncedConversation(context);
+      },
+      15_000,
+      params,
+    ),
   );
 }
 
-async function processDebouncedConversation(params: {
-  conversationId: string;
-}) {
-  const { conversationId } = params;
+async function processDebouncedConversation(
+  params: DebouncedConversationContext,
+) {
+  const { conversationId, userId, wabaId } = params;
   const expiredAt = new Date();
   timers.delete(conversationId);
 
@@ -53,7 +67,11 @@ async function processDebouncedConversation(params: {
     // if history has message type other than text
     // system will update conversation to AdminTakeover
     if (hasNonTextMessage) {
-      await triggerAdminTakeoverForNonTextHistory({ conversationId });
+      await triggerAdminTakeoverForNonTextHistory({
+        conversationId,
+        userId,
+        wabaId,
+      });
       return;
     }
 
@@ -64,6 +82,8 @@ async function processDebouncedConversation(params: {
 
     await redirectMessageToExternalWebhook({
       conversationId,
+      userId,
+      wabaId,
       messages: removeMessageTypes(messages),
     });
   } catch (error) {
@@ -88,12 +108,14 @@ function removeMessageTypes(
   );
 }
 
-async function triggerAdminTakeoverForNonTextHistory(params: {
-  conversationId: string;
-}) {
-  const { conversationId } = params;
+async function triggerAdminTakeoverForNonTextHistory(
+  params: DebouncedConversationContext,
+) {
+  const { conversationId, userId, wabaId } = params;
   const conversation = await ConversationRepository.findConversationById({
     conversationId,
+    userId,
+    wabaId,
   });
 
   if (!conversation) {
@@ -109,12 +131,9 @@ async function triggerAdminTakeoverForNonTextHistory(params: {
     conversationId,
   });
 
-  const userId = conversation.phoneNumber.waba.userId;
-  // conversation.phoneNumber.wabaId is the internal DB WhatsappBusinessAccount.id.
-
   eventBus.emit(getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, userId), {
     conversationId,
-    wabaId: conversation.phoneNumber.wabaId,
+    wabaId,
     adminTakeover: true,
   });
 }

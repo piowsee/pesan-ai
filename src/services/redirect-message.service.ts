@@ -65,11 +65,15 @@ async function _findWebhookData(params: { conversationId: string }) {
 
 export async function redirectMessageToExternalWebhook(params: {
   conversationId: string;
+  userId: string;
+  wabaId: string;
   messages: BotWebhookMessageHistory;
 }): Promise<BotWebhookOutput | undefined> {
-  const { conversationId, messages } = params;
+  const { conversationId, userId, wabaId, messages } = params;
   const conversation = await ConversationRepository.findConversationById({
     conversationId,
+    userId,
+    wabaId,
   });
 
   if (!conversation) {

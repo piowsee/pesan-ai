@@ -30,7 +30,11 @@ describe('PATCH /api/admin-takeover', { tags: ['backend'] }, () => {
     });
 
     const response = await PATCH(
-      createRequest({ conversationId: 'conv-1', adminTakeover: true }),
+      createRequest({
+        conversationId: 'conv-1',
+        wabaId: 'waba-1',
+        adminTakeover: true,
+      }),
       { params: Promise.resolve({}) } as never,
     );
     const data = await response.json();
@@ -44,6 +48,7 @@ describe('PATCH /api/admin-takeover', { tags: ['backend'] }, () => {
     expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledWith({
       conversationId: 'conv-1',
       userId: 'user-1',
+      wabaId: 'waba-1',
       adminTakeover: true,
     });
   });
@@ -75,7 +80,11 @@ describe('PATCH /api/admin-takeover', { tags: ['backend'] }, () => {
     );
 
     const response = await PATCH(
-      createRequest({ conversationId: 'conv-1', adminTakeover: true }),
+      createRequest({
+        conversationId: 'conv-1',
+        wabaId: 'waba-1',
+        adminTakeover: true,
+      }),
       { params: Promise.resolve({}) } as never,
     );
 

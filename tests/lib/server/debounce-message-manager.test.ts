@@ -60,10 +60,18 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
   });
 
   it('resets the timer and sends persisted history after the debounce window', async () => {
-    handleDebounceIncomingMessage('conv-1');
+    handleDebounceIncomingMessage({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
 
     await vi.advanceTimersByTimeAsync(10_000);
-    handleDebounceIncomingMessage('conv-1');
+    handleDebounceIncomingMessage({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
 
     await vi.advanceTimersByTimeAsync(14_999);
     expect(redirectMessageToExternalWebhook).not.toHaveBeenCalled();
@@ -74,6 +82,8 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledTimes(1);
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: [
         {
           sequence: 1,
@@ -125,7 +135,11 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
       },
     ]);
 
-    handleDebounceIncomingMessage('conv-1');
+    handleDebounceIncomingMessage({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
 
     await vi.advanceTimersByTimeAsync(15_000);
     await flushDebouncedProcessing();
@@ -133,6 +147,8 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(redirectMessageToExternalWebhook).not.toHaveBeenCalled();
     expect(ConversationRepository.findConversationById).toHaveBeenCalledWith({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
     });
     expect(
       ConversationRepository.updateAdminTakeoverStatus,
@@ -172,14 +188,24 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
           content: 'second history',
         },
       ]);
-    handleDebounceIncomingMessage('conv-1');
-    handleDebounceIncomingMessage('conv-2');
+    handleDebounceIncomingMessage({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+    handleDebounceIncomingMessage({
+      conversationId: 'conv-2',
+      userId: 'user-2',
+      wabaId: 'waba-2',
+    });
 
     await vi.advanceTimersByTimeAsync(15_000);
     await flushDebouncedProcessing();
 
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: [
         {
           sequence: 1,
@@ -192,6 +218,8 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     });
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-2',
+      userId: 'user-2',
+      wabaId: 'waba-2',
       messages: [
         {
           sequence: 1,

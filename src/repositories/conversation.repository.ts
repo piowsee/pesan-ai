@@ -143,11 +143,21 @@ export const ConversationRepository = {
     };
   },
 
-  async findConversationById(params: { conversationId: string }) {
-    const { conversationId } = params;
-    return prisma.conversation.findUnique({
+  async findConversationById(params: {
+    conversationId: string;
+    userId: string;
+    wabaId: string;
+  }) {
+    const { conversationId, userId, wabaId } = params;
+    return prisma.conversation.findFirst({
       where: {
         id: conversationId,
+        phoneNumber: {
+          waba: {
+            id: wabaId,
+            userId,
+          },
+        },
       },
       select: {
         id: true,
@@ -213,6 +223,18 @@ export const ConversationRepository = {
     const { phoneNumberId, customerPhone, customerName, message } = params;
 
     return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
       // 1. Upsert conversation
       const conversation = await tx.conversation.upsert({
         where: {
@@ -265,20 +287,11 @@ export const ConversationRepository = {
         data: { unreadCount: { increment: 1 } },
       });
 
-      // 4. Fetch the userId associated with the owner (WABA)
-      const waba = await tx.whatsappBusinessAccount.findFirst({
-        where: { phoneNumbers: { some: { id: phoneNumberId } } },
-        select: {
-          id: true,
-          userId: true,
-        },
-      });
-
       return {
         conversation,
         message: savedMessage,
-        userId: waba?.userId,
-        wabaId: waba?.id,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
       };
     });
   },
@@ -302,6 +315,18 @@ export const ConversationRepository = {
     const { phoneNumberId, customerPhone, customerName, message } = params;
 
     return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
       const conversation = await tx.conversation.upsert({
         where: {
           unique_conversation: {
@@ -354,19 +379,11 @@ export const ConversationRepository = {
         },
       });
 
-      const waba = await tx.whatsappBusinessAccount.findFirst({
-        where: { phoneNumbers: { some: { id: phoneNumberId } } },
-        select: {
-          id: true,
-          userId: true,
-        },
-      });
-
       return {
         conversation: latestConversation,
         message: savedMessage,
-        userId: waba?.userId,
-        wabaId: waba?.id,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
       };
     });
   },
