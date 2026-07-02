@@ -222,6 +222,10 @@ export function MessageComposer({
     textareaRef.current.style.overflowY = 'hidden';
   };
 
+  useEffect(() => {
+    resetTextarea();
+  }, [conversation.id]);
+
   const clearSelectedMedia = () => {
     setSelectedMedia((current) => {
       if (current) {
@@ -338,8 +342,8 @@ export function MessageComposer({
         onChange={handleFileChange}
       />
 
-      <div className="flex items-end gap-2 bg-transparent px-4 py-1">
-        <div className="flex flex-1 items-end rounded-2xl border border-brand/15 bg-brand/5 px-2 py-2 shadow-sm transition-colors focus-within:border-brand/30 focus-within:bg-brand/10">
+      <div className="flex items-end bg-transparent px-4 py-1">
+        <div className="flex min-h-14 flex-1 items-end gap-1 rounded-2xl border border-brand/15 bg-brand/5 px-2 py-2 shadow-sm transition-colors focus-within:border-brand/30 focus-within:bg-brand/10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -347,7 +351,7 @@ export function MessageComposer({
                 size="icon"
                 variant="ghost"
                 disabled={!conversation.canSendFreeform || isSending}
-                className="mb-0.5 size-10 shrink-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
               >
                 <PlusIcon />
                 <span className="sr-only">Attach media</span>
@@ -385,6 +389,7 @@ export function MessageComposer({
                 handleSend();
               }
             }}
+            rows={1}
             maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
             disabled={!conversation.canSendFreeform || isSending}
             placeholder={
@@ -394,7 +399,7 @@ export function MessageComposer({
                   : 'Message...'
                 : 'Template message required'
             }
-            className="min-h-10 max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:opacity-50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="h-10 min-h-10! max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 text-[15px] leading-tight shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:opacity-50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           />
 
           <Button
@@ -403,7 +408,7 @@ export function MessageComposer({
             size="icon"
             variant="ghost"
             className={cn(
-              'mb-0.5 size-10 shrink-0 cursor-pointer rounded-full transition-colors',
+              'size-10 shrink-0 cursor-pointer rounded-full transition-colors',
               canSendMessage
                 ? 'text-primary hover:bg-primary/10 hover:text-primary'
                 : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
