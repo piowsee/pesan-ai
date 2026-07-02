@@ -77,7 +77,6 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
       messages: [
         {
           sequence: 1,
-          type: 'text',
           source: 'customer',
           direction: 'incoming',
           timestamp: new Date('2026-06-24T11:50:00.000Z'),
@@ -85,7 +84,6 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
         },
         {
           sequence: 2,
-          type: 'text',
           source: 'customer',
           direction: 'incoming',
           timestamp: new Date('2026-06-24T12:00:10.000Z'),
@@ -183,19 +181,25 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
       messages: [
-        expect.objectContaining({
+        {
           sequence: 1,
+          source: 'customer',
+          direction: 'incoming',
+          timestamp: new Date('2026-06-24T11:50:00.000Z'),
           content: 'first history',
-        }),
+        },
       ],
     });
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-2',
       messages: [
-        expect.objectContaining({
+        {
           sequence: 1,
+          source: 'customer',
+          direction: 'incoming',
+          timestamp: new Date('2026-06-24T11:51:00.000Z'),
           content: 'second history',
-        }),
+        },
       ],
     });
   });

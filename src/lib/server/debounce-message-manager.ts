@@ -9,6 +9,11 @@ import { redirectMessageToExternalWebhook } from '@/services/redirect-message.se
 const timers = new Map<string, NodeJS.Timeout>();
 const BOT_HISTORY_WINDOW_MS = 60 * 60 * 1000;
 
+type BotMessageHistory = Awaited<
+  ReturnType<typeof MessageRepository.findConversationMessageHistory>
+>;
+type RedirectableBotMessage = Omit<BotMessageHistory[number], 'type'>;
+
 export function handleDebounceIncomingMessage(conversationId: string) {
   logger.info('Schedule conversation for bot webhook', {
     conversationId,
@@ -57,13 +62,30 @@ async function processDebouncedConversation(params: {
       messageCount: messages.length,
     });
 
-    await redirectMessageToExternalWebhook({ conversationId, messages });
+    await redirectMessageToExternalWebhook({
+      conversationId,
+      messages: removeMessageTypes(messages),
+    });
   } catch (error) {
     logError(error, {
       action: 'Unhandled bot webhook redirect failure',
       conversationId,
     });
   }
+}
+
+function removeMessageTypes(
+  messages: BotMessageHistory,
+): RedirectableBotMessage[] {
+  return messages.map(
+    ({ sequence, source, direction, timestamp, content }) => ({
+      sequence,
+      source,
+      direction,
+      timestamp,
+      content,
+    }),
+  );
 }
 
 async function triggerAdminTakeoverForNonTextHistory(params: {
