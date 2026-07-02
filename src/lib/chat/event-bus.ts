@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 
 export const SSE_EVENTS = {
   BOT_WEBHOOK_FAILED: 'BOT_WEBHOOK_FAILED',
+  CONVERSATION_UPDATED: 'CONVERSATION_UPDATED',
   NEW_MESSAGE: 'NEW_MESSAGE',
 } as const;
 

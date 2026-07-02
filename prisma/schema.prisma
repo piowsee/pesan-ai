@@ -32,7 +32,7 @@ model User {
   // Relations
   whatsappBusinessAccounts  WhatsappBusinessAccount[]
   botWebhooks               BotWebhook[]
-  
+
   @@unique([email])
   @@map("user")
 }
@@ -92,7 +92,7 @@ model WhatsappBusinessAccount {
   wabaId              String   @unique // Meta WABA ID — already indexed via @unique
   businessName        String?
   businessAddress     String?
-  businessDescription String? 
+  businessDescription String?
   systemUserToken     String
   status              String   @default("active") // active, disconnected, suspended
   qualityRating       String?  // GREEN, YELLOW, RED
@@ -184,7 +184,7 @@ model Message {
   source        String   // customer, admin, bot, whatsapp_app
   type          String   // text, image, video, audio, document, sticker, location
   content       String?  // Text content or caption
-  mediaUrl      String?  // S3/Cloudflare R2 URL
+  mediaObjectKey String? // S3 object key
   mediaMimeType String?
   mediaFilename String?
   mediaSize     BigInt?  // File size in bytes

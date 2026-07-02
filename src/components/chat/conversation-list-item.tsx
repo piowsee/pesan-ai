@@ -2,10 +2,24 @@ import { ConversationActionsMenu } from '@/components/chat/conversation-actions-
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getMessagePreview } from '@/lib/chat/chat';
+import {
+  type MediaPreviewMessageType,
+  getMediaPreviewLabel,
+  getMessagePreview,
+  isMediaPreviewMessageType,
+} from '@/lib/chat/chat';
 import { formatConversationTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
+import type { LucideIcon } from 'lucide-react';
+import { FileTextIcon, ImageIcon, MusicIcon, VideoIcon } from 'lucide-react';
+
+const mediaPreviewIcons = {
+  audio: MusicIcon,
+  document: FileTextIcon,
+  image: ImageIcon,
+  video: VideoIcon,
+} satisfies Record<MediaPreviewMessageType, LucideIcon>;
 
 export function getConversationStatusLabel(adminTakeover: boolean) {
   return adminTakeover ? 'Admin' : 'Bot';
@@ -38,7 +52,17 @@ export function ConversationListItem({
     adminTakeover: conversation.adminTakeover,
     unreadCount,
   });
-  const messagePreview = getMessagePreview(conversation.lastMessage);
+  const mediaPreviewType =
+    conversation.lastMessage &&
+    isMediaPreviewMessageType(conversation.lastMessage.type)
+      ? conversation.lastMessage.type
+      : null;
+  const messagePreview = mediaPreviewType
+    ? getMediaPreviewLabel(mediaPreviewType)
+    : getMessagePreview(conversation.lastMessage);
+  const MediaPreviewIcon = mediaPreviewType
+    ? mediaPreviewIcons[mediaPreviewType]
+    : null;
   const statusLabel = getConversationStatusLabel(conversation.adminTakeover);
 
   return (
@@ -86,10 +110,13 @@ export function ConversationListItem({
 
           <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden">
             <p
-              className="block min-w-0 max-w-full truncate text-[13px] text-muted-foreground"
+              className="flex min-w-0 max-w-full items-center gap-1.5 truncate text-[13px] text-muted-foreground"
               title={messagePreview}
             >
-              {messagePreview}
+              {MediaPreviewIcon ? (
+                <MediaPreviewIcon className="size-3.5 shrink-0" />
+              ) : null}
+              <span className="min-w-0 truncate">{messagePreview}</span>
             </p>
 
             <div className="flex min-w-fit shrink-0 items-center justify-end gap-1.5">

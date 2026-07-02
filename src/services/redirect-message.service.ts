@@ -12,7 +12,10 @@ import { MetaFetchService } from './meta-fetch.service';
 import { WebhookService } from './webhook.service';
 
 const botWebhookOutputSchema = z.object({
-  botResponse: z.string().trim().min(1),
+  botResponse: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    z.string().trim().optional(),
+  ),
   adminTakeover: z.boolean().default(false),
 });
 
@@ -21,9 +24,11 @@ type BotConversation = NonNullable<
   Awaited<ReturnType<typeof ConversationRepository.findConversationById>>
 >;
 type BotMessageHistory = Awaited<
-  ReturnType<typeof MessageRepository.findConversationTextHistory>
+  ReturnType<typeof MessageRepository.findConversationMessageHistory>
 >;
-function _toBotWebhookMessages(messages: BotMessageHistory) {
+type BotWebhookMessageHistory = Array<Omit<BotMessageHistory[number], 'type'>>;
+
+function _toBotWebhookMessages(messages: BotWebhookMessageHistory) {
   return messages.map((message) => ({
     sequence: message.sequence,
     source:
@@ -60,11 +65,15 @@ async function _findWebhookData(params: { conversationId: string }) {
 
 export async function redirectMessageToExternalWebhook(params: {
   conversationId: string;
-  messages: BotMessageHistory;
+  userId: string;
+  wabaId: string;
+  messages: BotWebhookMessageHistory;
 }): Promise<BotWebhookOutput | undefined> {
-  const { conversationId, messages } = params;
+  const { conversationId, userId, wabaId, messages } = params;
   const conversation = await ConversationRepository.findConversationById({
     conversationId,
+    userId,
+    wabaId,
   });
 
   if (!conversation) {
@@ -79,10 +88,15 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
+  const customerPhoneNumber: string = conversation.customerPhone;
   let data: BotWebhookOutput;
 
   try {
-    data = await _requestBotWebhook({ conversationId, messages });
+    data = await _requestBotWebhook({
+      conversationId,
+      customerPhoneNumber,
+      messages,
+    });
   } catch (error) {
     await _handleBotWebhookFailure({ conversation, error });
     return;
@@ -90,7 +104,7 @@ export async function redirectMessageToExternalWebhook(params: {
 
   logger.info('Bot webhook returned response', {
     conversationId,
-    botResponseLength: data.botResponse.length,
+    botResponseLength: data.botResponse?.length ?? 0,
     adminTakeover: data.adminTakeover,
   });
 
@@ -105,9 +119,10 @@ export async function redirectMessageToExternalWebhook(params: {
 
 async function _requestBotWebhook(params: {
   conversationId: string;
-  messages: BotMessageHistory;
+  customerPhoneNumber: string;
+  messages: BotWebhookMessageHistory;
 }): Promise<BotWebhookOutput> {
-  const { conversationId, messages } = params;
+  const { conversationId, customerPhoneNumber, messages } = params;
   const { url, passphrase } = await _findWebhookData({ conversationId });
   const decryptedPassphrase = decrypt(passphrase);
   const webhookMessages = _toBotWebhookMessages(messages);
@@ -142,6 +157,7 @@ async function _requestBotWebhook(params: {
     },
     // External webhook body:
     // {
+    //   customerPhoneNumber: "6281xxxxxxxx",
     //   messages: [{
     //     sequence: number,  // chronological order, starting at 1
     //     source: string,    // customer | admin | bot
@@ -149,7 +165,10 @@ async function _requestBotWebhook(params: {
     //     content: string
     //   }]
     // }
-    body: { messages: webhookMessages },
+    body: {
+      customerPhoneNumber,
+      messages: webhookMessages,
+    },
     output: botWebhookOutputSchema,
   });
 
@@ -199,6 +218,7 @@ async function _handleBotWebhookFailure(params: {
 
 function _emitBotWebhookFailed(conversation: BotConversation) {
   const userId = conversation.phoneNumber.waba.userId;
+  // conversation.phoneNumber.wabaId is the internal DB WhatsappBusinessAccount.id.
 
   eventBus.emit(getUserEvent(SSE_EVENTS.BOT_WEBHOOK_FAILED, userId), {
     conversationId: conversation.id,
@@ -209,7 +229,7 @@ function _emitBotWebhookFailed(conversation: BotConversation) {
 
 async function _handlePostRedirectMessage(params: {
   conversation: BotConversation;
-  content: string;
+  content?: string | null;
   adminTakeover: boolean;
 }) {
   const { conversation, content, adminTakeover } = params;
@@ -225,6 +245,19 @@ async function _handlePostRedirectMessage(params: {
     effectiveAdminTakeover = updatedConversation.adminTakeover;
   }
 
+  if (!content) {
+    logger.info('Skipping bot WhatsApp message for empty webhook response', {
+      conversationId: conversation.id,
+    });
+    if (adminTakeover) {
+      _emitConversationUpdated({
+        conversation,
+        adminTakeover: effectiveAdminTakeover,
+      });
+    }
+    return;
+  }
+
   const tokenToUse = decrypt(conversation.phoneNumber.waba.systemUserToken);
 
   if (!tokenToUse) {
@@ -236,11 +269,11 @@ async function _handlePostRedirectMessage(params: {
     return;
   }
 
-  const waResult = await MetaFetchService.sendTextMessage({
-    phoneNumberId: conversation.phoneNumber.phoneNumberId,
+  const waResult = await MetaFetchService.sendMessage({
+    phoneNumberId: conversation.phoneNumber.phoneNumberId, // Meta Phone Number ID.
     token: tokenToUse,
     to: conversation.customerPhone,
-    text: content,
+    message: { type: 'text', text: content },
   });
 
   const savedMessage = await MessageRepository.saveMessage({
@@ -293,6 +326,21 @@ async function _handlePostRedirectMessage(params: {
       },
     },
     userId,
-    wabaId: phoneNumber.wabaId,
+    wabaId: phoneNumber.wabaId, // Internal DB WhatsappBusinessAccount.id.
+  });
+}
+
+function _emitConversationUpdated(params: {
+  conversation: BotConversation;
+  adminTakeover: boolean;
+}) {
+  const { conversation, adminTakeover } = params;
+  const userId = conversation.phoneNumber.waba.userId;
+  // conversation.phoneNumber.wabaId is the internal DB WhatsappBusinessAccount.id.
+
+  eventBus.emit(getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, userId), {
+    conversationId: conversation.id,
+    wabaId: conversation.phoneNumber.wabaId,
+    adminTakeover,
   });
 }

@@ -56,6 +56,25 @@ type MetaFetchError = {
   message?: string;
 };
 
+export type MetaOutboundMessage =
+  | { type: 'text'; text: string }
+  | { type: 'image'; link: string; caption?: string | null }
+  | { type: 'video'; link: string; caption?: string | null }
+  | { type: 'audio'; link: string; voice?: boolean }
+  | {
+      type: 'document';
+      link: string;
+      caption?: string | null;
+      filename?: string | null;
+    };
+
+type MetaMessagePayload = {
+  messaging_product: 'whatsapp';
+  recipient_type: 'individual';
+  to: string;
+  type: MetaOutboundMessage['type'];
+} & Record<string, unknown>;
+
 function getBearerAuth(token: string): BetterFetchOption['auth'] {
   return {
     type: 'Bearer',
@@ -86,6 +105,68 @@ async function fetchMeta<T>(path: string, options: MetaFetchOptions) {
   return { data, error: null } as const;
 }
 
+function withoutNullishValues<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entryValue]) => entryValue != null),
+  );
+}
+
+function buildMetaMessagePayload(params: {
+  to: string;
+  message: MetaOutboundMessage;
+}): MetaMessagePayload {
+  const { to, message } = params;
+  const basePayload = {
+    messaging_product: 'whatsapp' as const,
+    recipient_type: 'individual' as const,
+    to,
+    type: message.type,
+  };
+
+  switch (message.type) {
+    case 'text':
+      return {
+        ...basePayload,
+        text: {
+          preview_url: false,
+          body: message.text,
+        },
+      };
+    case 'audio':
+      return {
+        ...basePayload,
+        audio: withoutNullishValues({
+          link: message.link,
+          voice: message.voice,
+        }),
+      };
+    case 'document':
+      return {
+        ...basePayload,
+        document: withoutNullishValues({
+          link: message.link,
+          caption: message.caption,
+          filename: message.filename,
+        }),
+      };
+    case 'image':
+      return {
+        ...basePayload,
+        image: withoutNullishValues({
+          link: message.link,
+          caption: message.caption,
+        }),
+      };
+    case 'video':
+      return {
+        ...basePayload,
+        video: withoutNullishValues({
+          link: message.link,
+          caption: message.caption,
+        }),
+      };
+  }
+}
 function getMetaAppCredentials() {
   return {
     appId: process.env.NEXT_PUBLIC_META_APP_ID,
@@ -93,6 +174,7 @@ function getMetaAppCredentials() {
   };
 }
 
+// IDs in this service are Meta provider IDs unless explicitly named as DB IDs.
 export const MetaFetchService = {
   _extractMetaErrorMessage(
     metaError: MetaFetchError,
@@ -462,45 +544,41 @@ export const MetaFetchService = {
     return tokenData.access_token;
   },
 
-  async sendTextMessage(params: {
+  async sendMessage(params: {
     phoneNumberId: string;
     token: string;
     to: string;
-    text: string;
+    message: MetaOutboundMessage;
   }): Promise<{ messageId: string; status: string }> {
-    const { phoneNumberId, token, to, text } = params;
-    const payload = {
-      messaging_product: 'whatsapp',
-      recipient_type: 'individual',
-      to,
-      type: 'text',
-      text: {
-        preview_url: false,
-        body: text,
-      },
-    };
+    const { phoneNumberId, token, to, message } = params;
+    const payload = buildMetaMessagePayload({ to, message });
 
-    logger.info('Sending WhatsApp message', { phoneNumberId, to });
+    logger.info('Sending WhatsApp message', {
+      phoneNumberId,
+      to,
+      type: message.type,
+    });
 
     const { data, error } = await fetchMeta<{
       messages?: Array<{ id?: string }>;
     }>(`/${phoneNumberId}/messages`, {
-      action: 'MetaFetchService.sendTextMessage',
+      action: 'MetaFetchService.sendMessage',
       method: 'POST',
       auth: getBearerAuth(token),
       body: payload,
     });
 
     if (error) {
-      const message = this._extractMetaErrorMessage(
+      const errorMessage = this._extractMetaErrorMessage(
         error,
         'Failed to send WhatsApp message',
       );
-      throw new ApiError(message, 502);
+      throw new ApiError(errorMessage, 502);
     }
 
     logger.info('WhatsApp message sent successfully', {
       messageId: data.messages?.[0]?.id,
+      type: message.type,
     });
 
     return {

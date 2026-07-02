@@ -1,6 +1,8 @@
 import {
   applyBotWebhookFailureToConversations,
+  applyConversationUpdateToConversations,
   applyRealtimeMessageToConversation,
+  applyRealtimeMessageToMessagePage,
   isIncomingCustomerMessage,
   refetchRealtimeCache,
 } from '@/components/realtime-provider';
@@ -20,7 +22,7 @@ function createMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
     source: 'customer',
     type: 'text',
     content: 'Hello',
-    mediaUrl: null,
+    mediaObjectKey: null,
     mediaMimeType: null,
     mediaFilename: null,
     mediaSize: null,
@@ -126,6 +128,50 @@ describe('realtime conversation updates', () => {
     expect(result.canSendFreeform).toBe(true);
   });
 
+  it('replaces an existing cached message when a realtime message has the same internal id', () => {
+    const loadingMessage = createMessage({
+      id: 'message-1',
+      status: 'sending',
+      mediaObjectKey: null,
+    });
+    const realtimeMessage = createMessage({
+      id: 'message-1',
+      status: 'sent',
+      mediaObjectKey: 'user-1/uploaded-media',
+    });
+
+    const result = applyRealtimeMessageToMessagePage(
+      {
+        messages: [loadingMessage],
+        total: 1,
+        page: 1,
+        limit: 50,
+      },
+      realtimeMessage,
+    );
+
+    expect(result.messages).toEqual([realtimeMessage]);
+    expect(result.total).toBe(1);
+  });
+
+  it('adds a realtime message when its internal id is not already cached', () => {
+    const existingMessage = createMessage({ id: 'message-1' });
+    const realtimeMessage = createMessage({ id: 'message-2' });
+
+    const result = applyRealtimeMessageToMessagePage(
+      {
+        messages: [existingMessage],
+        total: 1,
+        page: 1,
+        limit: 50,
+      },
+      realtimeMessage,
+    );
+
+    expect(result.messages).toEqual([realtimeMessage, existingMessage]);
+    expect(result.total).toBe(2);
+  });
+
   it('does not replace the latest conversation message with an older app echo', () => {
     const latestTimestamp = NOW.toISOString();
     const latestMessage = createMessage({
@@ -157,7 +203,27 @@ describe('realtime conversation updates', () => {
     expect(result.unreadCount).toBe(2);
   });
 
-  it('enables admin takeover without adding a message after bot failure', () => {
+  it('updates admin takeover without adding a message from a conversation event', () => {
+    const conversations = [
+      createConversation(),
+      createConversation({ id: 'conversation-2' }),
+    ];
+
+    const result = applyConversationUpdateToConversations(conversations, {
+      conversationId: 'conversation-1',
+      wabaId: 'waba-1',
+      adminTakeover: true,
+    });
+
+    expect(result[0]).toMatchObject({
+      id: 'conversation-1',
+      adminTakeover: true,
+      lastMessage: null,
+    });
+    expect(result[1]).toBe(conversations[1]);
+  });
+
+  it('updates admin takeover without adding a message after bot webhook failure', () => {
     const conversations = [
       createConversation(),
       createConversation({ id: 'conversation-2' }),

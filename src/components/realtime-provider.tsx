@@ -9,7 +9,6 @@ import { messageKeys } from '@/hooks/use-message';
 import { CHAT_FREEFORM_WINDOW_MS, isFreeformWindowOpen } from '@/lib/chat/chat';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import {
-  type InfiniteData,
   type QueryClient,
   type QueryKey,
   useQueryClient,
@@ -92,6 +91,37 @@ interface SSEMessagePayload extends ChatMessage {
   conversation: RawConversation;
 }
 
+interface MessagePageCache {
+  messages: ChatMessage[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function applyRealtimeMessageToMessagePage(
+  page: MessagePageCache,
+  realtimeMessage: ChatMessage,
+): MessagePageCache {
+  const existingMessageIndex = page.messages.findIndex(
+    (message) => message.id === realtimeMessage.id,
+  );
+
+  if (existingMessageIndex !== -1) {
+    return {
+      ...page,
+      messages: page.messages.map((message) =>
+        message.id === realtimeMessage.id ? realtimeMessage : message,
+      ),
+    };
+  }
+
+  return {
+    ...page,
+    messages: [realtimeMessage, ...page.messages],
+    total: page.total + 1,
+  };
+}
+
 interface BotWebhookFailedPayload {
   conversationId: string;
   wabaId: string;
@@ -106,6 +136,89 @@ export function applyBotWebhookFailureToConversations(
     chat.id === payload.conversationId
       ? { ...chat, adminTakeover: payload.adminTakeover }
       : chat,
+  );
+}
+
+interface ConversationUpdatedPayload {
+  conversationId: string;
+  wabaId: string;
+  adminTakeover: boolean;
+}
+
+export function applyConversationUpdateToConversations(
+  chats: ChatConversation[],
+  payload: ConversationUpdatedPayload,
+): ChatConversation[] {
+  return chats.map((chat) =>
+    chat.id === payload.conversationId
+      ? { ...chat, adminTakeover: payload.adminTakeover }
+      : chat,
+  );
+}
+
+function upsertRealtimeMessageInFirstPage({
+  conversationId,
+  message,
+  queryClient,
+}: {
+  conversationId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+}) {
+  queryClient.setQueryData(
+    messageKeys.all(conversationId),
+    (old: { pages: MessagePageCache[] } | undefined) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        pages: old.pages.map((page, index) =>
+          index === 0 ? applyRealtimeMessageToMessagePage(page, message) : page,
+        ),
+      };
+    },
+  );
+}
+
+function updateRealtimeConversationListCache({
+  createChat,
+  queryClient,
+  updateChat,
+  wabaId,
+}: {
+  createChat: () => ChatConversation;
+  queryClient: QueryClient;
+  updateChat: (chat: ChatConversation) => ChatConversation;
+  wabaId: string;
+}) {
+  queryClient.setQueryData(
+    conversationKeys.all(wabaId),
+    (old: { chats: ChatConversation[]; total: number } | undefined) => {
+      if (!old) return old;
+
+      let found = false;
+      const updatedChats = old.chats.map((chat) => {
+        const updatedChat = updateChat(chat);
+        found = found || updatedChat !== chat;
+        return updatedChat;
+      });
+
+      if (!found) {
+        return {
+          ...old,
+          chats: [createChat(), ...old.chats],
+          total: old.total + 1,
+        };
+      }
+
+      const sortedChats = [...updatedChats].sort((a, b) => {
+        const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+        const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      return { ...old, chats: sortedChats };
+    },
   );
 }
 
@@ -242,42 +355,11 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       const hasConversationCache =
         queryClient.getQueryData(conversationKeys.all(wabaId)) !== undefined;
 
-      // 1. Update Messages Timeline Cache
-      queryClient.setQueryData(
-        messageKeys.all(conversationId),
-        (
-          old:
-            | InfiniteData<{
-                messages: ChatMessage[];
-                total: number;
-                page: number;
-                limit: number;
-              }>
-            | undefined,
-        ) => {
-          if (!old) return old;
-
-          return {
-            ...old,
-            pages: old.pages.map((page, index) => {
-              if (index === 0) {
-                // Check if message already exists (e.g. added by useSendMessage)
-                const exists = page.messages.some(
-                  (m) => m.id === realtimeMessage.id,
-                );
-                if (exists) return page;
-
-                return {
-                  ...page,
-                  messages: [realtimeMessage, ...page.messages],
-                  total: page.total + 1,
-                };
-              }
-              return page;
-            }),
-          };
-        },
-      );
+      upsertRealtimeMessageInFirstPage({
+        conversationId,
+        message: realtimeMessage,
+        queryClient,
+      });
 
       if (!hasMessageCache) {
         void refetchRealtimeCache(
@@ -287,55 +369,24 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      // 2. Update Conversations Sidebar Cache
-      queryClient.setQueryData(
-        conversationKeys.all(wabaId),
-        (old: { chats: ChatConversation[]; total: number } | undefined) => {
-          if (!old) return old;
-
-          // Read which conversation the user is currently viewing — no stale closure.
-          let found = false;
-
-          const updatedChats = old.chats.map((chat) => {
-            if (chat.id === conversationId) {
-              found = true;
-              return applyRealtimeMessageToConversation({
+      updateRealtimeConversationListCache({
+        createChat: () =>
+          mapRawConversationToChatConversation({
+            ...conversation,
+            messages: [realtimeMessage],
+          }),
+        queryClient,
+        updateChat: (chat) =>
+          chat.id === conversationId
+            ? applyRealtimeMessageToConversation({
                 chat,
                 message: realtimeMessage,
                 adminTakeover: conversation.adminTakeover,
                 isActive,
-              });
-            }
-            return chat;
-          });
-
-          if (!found) {
-            // Instead of invalidating, construct and add the new conversation
-            const newChat = mapRawConversationToChatConversation({
-              ...conversation,
-              messages: [realtimeMessage],
-            });
-
-            return {
-              ...old,
-              chats: [newChat, ...old.chats],
-              total: old.total + 1,
-            };
-          }
-
-          const sortedChats = [...updatedChats].sort((a, b) => {
-            const timeA = a.lastMessageAt
-              ? new Date(a.lastMessageAt).getTime()
-              : 0;
-            const timeB = b.lastMessageAt
-              ? new Date(b.lastMessageAt).getTime()
-              : 0;
-            return timeB - timeA;
-          });
-
-          return { ...old, chats: sortedChats };
-        },
-      );
+              })
+            : chat,
+        wabaId,
+      });
 
       if (!hasConversationCache) {
         void refetchRealtimeCache(
@@ -348,6 +399,37 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       if (isActive && isIncomingCustomerMessage(realtimeMessage)) {
         pendingReadReceiptsRef.current.set(conversationId, wabaId);
       }
+    };
+
+    const handleConversationUpdated = (payload: ConversationUpdatedPayload) => {
+      const cachedConversations = queryClient.getQueryData<{
+        chats: ChatConversation[];
+        total: number;
+      }>(conversationKeys.all(payload.wabaId));
+      const hasConversation = cachedConversations?.chats.some(
+        (chat) => chat.id === payload.conversationId,
+      );
+
+      if (!hasConversation) {
+        void refetchRealtimeCache(
+          queryClient,
+          conversationKeys.all(payload.wabaId),
+          true,
+        );
+        return;
+      }
+
+      queryClient.setQueryData(
+        conversationKeys.all(payload.wabaId),
+        (old: { chats: ChatConversation[]; total: number } | undefined) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            chats: applyConversationUpdateToConversations(old.chats, payload),
+          };
+        },
+      );
     };
 
     const handleBotWebhookFailed = (payload: BotWebhookFailedPayload) => {
@@ -400,6 +482,18 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
           if (payload) handleBotWebhookFailed(payload);
         } catch (err) {
           console.error('Failed to parse BOT_WEBHOOK_FAILED event:', err);
+        }
+      },
+    );
+
+    eventSource.addEventListener(
+      'CONVERSATION_UPDATED',
+      (event: MessageEvent) => {
+        try {
+          const payload: ConversationUpdatedPayload = JSON.parse(event.data);
+          if (payload) handleConversationUpdated(payload);
+        } catch (err) {
+          console.error('Failed to parse CONVERSATION_UPDATED event:', err);
         }
       },
     );

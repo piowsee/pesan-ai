@@ -23,6 +23,25 @@ export function getConversationDisplayName(
   return customerName?.trim() || customerPhone?.trim() || 'Unknown contact';
 }
 
+const mediaPreviewLabels = {
+  audio: 'Audio',
+  document: 'Document',
+  image: 'Photo',
+  video: 'Video',
+} as const;
+
+export type MediaPreviewMessageType = keyof typeof mediaPreviewLabels;
+
+export function isMediaPreviewMessageType(
+  type: string,
+): type is MediaPreviewMessageType {
+  return type in mediaPreviewLabels;
+}
+
+export function getMediaPreviewLabel(type: MediaPreviewMessageType) {
+  return mediaPreviewLabels[type];
+}
+
 export function getMessagePreview(
   message?: Pick<ChatMessage, 'type' | 'content'> | null,
 ) {
@@ -32,6 +51,10 @@ export function getMessagePreview(
 
   if (message.type === 'text' && message.content?.trim()) {
     return message.content.trim();
+  }
+
+  if (isMediaPreviewMessageType(message.type)) {
+    return getMediaPreviewLabel(message.type);
   }
 
   return `Unsupported ${message.type} message`;

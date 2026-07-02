@@ -104,11 +104,60 @@ export const ConversationRepository = {
     });
   },
 
-  async findConversationById(params: { conversationId: string }) {
-    const { conversationId } = params;
-    return prisma.conversation.findUnique({
+  async prepareWebhookMessageConversation(params: {
+    phoneNumberId: string;
+    customerPhone: string;
+    customerName?: string;
+  }) {
+    const { phoneNumberId, customerPhone, customerName } = params;
+
+    const conversation = await prisma.conversation.upsert({
+      where: {
+        unique_conversation: {
+          phoneNumberId,
+          customerPhone,
+        },
+      },
+      update: {
+        customerName,
+      },
+      create: {
+        phoneNumberId,
+        customerPhone,
+        customerName,
+      },
+      include: {
+        phoneNumber: {
+          include: {
+            waba: true,
+          },
+        },
+      },
+    });
+
+    return {
+      conversation,
+      userId: conversation.phoneNumber.waba.userId,
+      wabaId: conversation.phoneNumber.waba.id,
+      systemUserToken: conversation.phoneNumber.waba.systemUserToken,
+    };
+  },
+
+  async findConversationById(params: {
+    conversationId: string;
+    userId: string;
+    wabaId: string;
+  }) {
+    const { conversationId, userId, wabaId } = params;
+    return prisma.conversation.findFirst({
       where: {
         id: conversationId,
+        phoneNumber: {
+          waba: {
+            id: wabaId,
+            userId,
+          },
+        },
       },
       select: {
         id: true,
@@ -162,14 +211,30 @@ export const ConversationRepository = {
     message: {
       messageId: string;
       type: string;
-      content?: string;
+      content?: string | null;
       timestamp: Date;
-      metadata?: string;
+      metadata?: string | null;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
     };
   }) {
     const { phoneNumberId, customerPhone, customerName, message } = params;
 
     return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
       // 1. Upsert conversation
       const conversation = await tx.conversation.upsert({
         where: {
@@ -180,16 +245,12 @@ export const ConversationRepository = {
         },
         update: {
           customerName, // Update name if provided
-          lastMessageAt: message.timestamp,
-          lastCustomerMessageAt: message.timestamp,
           unreadCount: { increment: 1 },
         },
         create: {
           phoneNumberId,
           customerPhone,
           customerName,
-          lastMessageAt: message.timestamp,
-          lastCustomerMessageAt: message.timestamp,
           unreadCount: 1,
         },
         include: {
@@ -208,9 +269,36 @@ export const ConversationRepository = {
           content: message.content,
           timestamp: message.timestamp,
           metadata: message.metadata,
+          mediaObjectKey: message.mediaObjectKey,
+          mediaMimeType: message.mediaMimeType,
+          mediaFilename: message.mediaFilename,
+          mediaSize: message.mediaSize,
           status: 'delivered', // Incoming messages from Meta are delivered
         },
       });
+
+      const shouldUpdateLastMessageAt =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt;
+      const shouldUpdateLastCustomerMessageAt =
+        !conversation.lastCustomerMessageAt ||
+        message.timestamp > conversation.lastCustomerMessageAt;
+
+      const latestConversation =
+        shouldUpdateLastMessageAt || shouldUpdateLastCustomerMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                ...(shouldUpdateLastMessageAt && {
+                  lastMessageAt: message.timestamp,
+                }),
+                ...(shouldUpdateLastCustomerMessageAt && {
+                  lastCustomerMessageAt: message.timestamp,
+                }),
+              },
+              include: { phoneNumber: true },
+            })
+          : conversation;
 
       // 3. Update parent PhoneNumber unread count
       await tx.phoneNumber.update({
@@ -218,20 +306,11 @@ export const ConversationRepository = {
         data: { unreadCount: { increment: 1 } },
       });
 
-      // 4. Fetch the userId associated with the owner (WABA)
-      const waba = await tx.whatsappBusinessAccount.findFirst({
-        where: { phoneNumbers: { some: { id: phoneNumberId } } },
-        select: {
-          id: true,
-          userId: true,
-        },
-      });
-
       return {
-        conversation,
+        conversation: latestConversation,
         message: savedMessage,
-        userId: waba?.userId,
-        wabaId: waba?.id,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
       };
     });
   },
@@ -243,14 +322,30 @@ export const ConversationRepository = {
     message: {
       messageId: string;
       type: string;
-      content?: string;
+      content?: string | null;
       timestamp: Date;
-      metadata?: string;
+      metadata?: string | null;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
     };
   }) {
     const { phoneNumberId, customerPhone, customerName, message } = params;
 
     return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
       const conversation = await tx.conversation.upsert({
         where: {
           unique_conversation: {
@@ -265,27 +360,15 @@ export const ConversationRepository = {
           phoneNumberId,
           customerPhone,
           customerName,
-          lastMessageAt: message.timestamp,
         },
         include: {
           phoneNumber: true,
         },
       });
 
-      // check to make sure last message at doesnt go backward
-      const latestConversation =
-        conversation.lastMessageAt &&
-        conversation.lastMessageAt >= message.timestamp
-          ? conversation
-          : await tx.conversation.update({
-              where: { id: conversation.id },
-              data: { lastMessageAt: message.timestamp },
-              include: { phoneNumber: true },
-            });
-
       const savedMessage = await tx.message.create({
         data: {
-          conversationId: latestConversation.id,
+          conversationId: conversation.id,
           messageId: message.messageId,
           direction: 'outgoing',
           // `whatsapp_app` covers live echoes and all history-sync messages,
@@ -295,23 +378,29 @@ export const ConversationRepository = {
           content: message.content,
           timestamp: message.timestamp,
           metadata: message.metadata,
+          mediaObjectKey: message.mediaObjectKey,
+          mediaMimeType: message.mediaMimeType,
+          mediaFilename: message.mediaFilename,
+          mediaSize: message.mediaSize,
           status: 'sent',
         },
       });
 
-      const waba = await tx.whatsappBusinessAccount.findFirst({
-        where: { phoneNumbers: { some: { id: phoneNumberId } } },
-        select: {
-          id: true,
-          userId: true,
-        },
-      });
+      const latestConversation =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: message.timestamp },
+              include: { phoneNumber: true },
+            })
+          : conversation;
 
       return {
         conversation: latestConversation,
         message: savedMessage,
-        userId: waba?.userId,
-        wabaId: waba?.id,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
       };
     });
   },

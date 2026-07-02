@@ -13,7 +13,11 @@ import {
   useUpdateAdminTakeover,
 } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useMessages, useSendMessage } from '@/hooks/use-message';
+import {
+  useMessages,
+  useSendMediaMessage,
+  useSendMessage,
+} from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
@@ -138,6 +142,10 @@ export function ChatWorkspace() {
     return window.localStorage.getItem(CHAT_STATE_STORAGE_KEY) ?? '';
   });
   const [localSendScrollSignal, setLocalSendScrollSignal] = useState(0);
+  const [
+    initialUnreadCountByConversation,
+    setInitialUnreadCountByConversation,
+  ] = useState<Record<string, number>>({});
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
@@ -394,6 +402,11 @@ export function ChatWorkspace() {
         notes: '',
       })
     : { label: '', notes: '' };
+  const selectedInitialUnreadCount = selectedConversationId
+    ? (initialUnreadCountByConversation[selectedConversationId] ??
+      selectedConversation?.unreadCount ??
+      0)
+    : 0;
 
   const showMobileDetail = Boolean(selectedConversationId);
   const { mutate: markAsRead } = useMarkAsRead();
@@ -408,23 +421,65 @@ export function ChatWorkspace() {
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
+      const conversation = allConversations.find(
+        (c) => c.id === conversationId,
+      );
+      const unreadCount = Number(conversation?.unreadCount ?? 0);
+
+      setInitialUnreadCountByConversation((current) => {
+        if (unreadCount > 0) {
+          return { ...current, [conversationId]: unreadCount };
+        }
+
+        const next = { ...current };
+        delete next[conversationId];
+        return next;
+      });
+
       replaceChatState({
         wabaId: activeWabaId,
         conversationId,
         panel: undefined,
       });
 
-      if (activeWabaId) {
-        const conversation = allConversations.find(
-          (c) => c.id === conversationId,
-        );
-        if (conversation && conversation.unreadCount > 0) {
-          markAsRead({ wabaId: activeWabaId, convId: conversationId });
-        }
+      if (activeWabaId && unreadCount > 0) {
+        markAsRead({ wabaId: activeWabaId, convId: conversationId });
       }
     },
     [activeWabaId, allConversations, markAsRead, replaceChatState],
   );
+
+  useEffect(() => {
+    if (
+      !activeWabaId ||
+      !selectedConversation ||
+      selectedInitialUnreadCount > 0
+    ) {
+      return;
+    }
+
+    const unreadCount = Number(selectedConversation.unreadCount ?? 0);
+    if (unreadCount <= 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setInitialUnreadCountByConversation((current) => ({
+        ...current,
+        [selectedConversation.id]: unreadCount,
+      }));
+      markAsRead({ wabaId: activeWabaId, convId: selectedConversation.id });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    activeWabaId,
+    markAsRead,
+    selectedConversation,
+    selectedInitialUnreadCount,
+  ]);
 
   const handleToggleTakeover = useCallback(
     (conversationId: string, nextAdminTakeover: boolean) => {
@@ -453,7 +508,8 @@ export function ChatWorkspace() {
     [activeWabaId, updateAdminTakeover],
   );
 
-  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+  const { mutate: sendMessage } = useSendMessage();
+  const { mutate: sendMediaMessage } = useSendMediaMessage();
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -467,6 +523,21 @@ export function ChatWorkspace() {
       });
     },
     [activeWabaId, selectedConversationId, sendMessage],
+  );
+
+  const handleSendMediaMessage = useCallback(
+    ({ caption, file }: { file: File; caption?: string }) => {
+      if (!selectedConversationId || !activeWabaId) return;
+
+      setLocalSendScrollSignal((value) => value + 1);
+      sendMediaMessage({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+        file,
+        caption,
+      });
+    },
+    [activeWabaId, selectedConversationId, sendMediaMessage],
   );
 
   const isRestoringPersistedState = shouldRestoreFromStorage && !hasNoWabas;
@@ -542,14 +613,16 @@ export function ChatWorkspace() {
           {selectedConversation ? (
             <ChatDetail
               conversation={selectedConversation}
+              wabaId={activeWabaId}
               messages={messages}
               isLoading={isMessagesLoading}
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               onLoadOlder={() => fetchNextPage()}
               localSendScrollSignal={localSendScrollSignal}
-              isSending={isSending}
+              initialUnreadCount={selectedInitialUnreadCount}
               onSend={handleSendMessage}
+              onSendMedia={handleSendMediaMessage}
               showBackButton={showMobileDetail}
               onBack={() => {
                 replaceChatState({

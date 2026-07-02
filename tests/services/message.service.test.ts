@@ -5,6 +5,7 @@ import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { MessageService } from '@/services/message.service';
 import { MetaFetchService } from '@/services/meta-fetch.service';
+import { S3Service } from '@/services/s3.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/message.service');
@@ -17,7 +18,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
   describe('getMessagesPaginated', () => {
     it('returns paginated messages', async () => {
       vi.mocked(MessageRepository.findMessagesPaginated).mockResolvedValue({
-        messages: [{ id: 'msg-1' }],
+        messages: [{ id: 'msg-1', mediaSize: BigInt(123) }],
         total: 1,
       } as never);
 
@@ -29,7 +30,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         limit: 10,
       });
 
-      expect(result.messages).toEqual([{ id: 'msg-1' }]);
+      expect(result.messages).toEqual([{ id: 'msg-1', mediaSize: 123 }]);
       expect(result.total).toBe(1);
       expect(MessageRepository.findMessagesPaginated).toHaveBeenCalledWith({
         convId: 'conv-1',
@@ -57,7 +58,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('sendAdminMessage', () => {
+  describe('sendAdminTextMessage', () => {
     it('sends message and saves to db', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
@@ -68,7 +69,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         },
         customerPhone: '+123456',
       } as never);
-      vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
+      vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
         status: 'sent',
         messageId: 'wa-msg-1',
       });
@@ -76,7 +77,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         id: 'msg-1',
       } as never);
 
-      const result = await MessageService.sendAdminMessage({
+      const result = await MessageService.sendAdminTextMessage({
         convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
@@ -91,11 +92,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         wabaId: 'waba-1',
         userId: 'user-1',
       });
-      expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith({
+      expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
         to: '+123456',
-        text: 'Hello Admin',
+        message: { type: 'text', text: 'Hello Admin' },
       });
       expect(MessageRepository.saveMessage).toHaveBeenCalled();
     });
@@ -105,13 +106,152 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.getConversationMetaForSending,
       ).mockResolvedValue(null);
       await expect(
-        MessageService.sendAdminMessage({
+        MessageService.sendAdminTextMessage({
           convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
           content: 'Hello',
         }),
       ).rejects.toThrow(ApiError);
+    });
+  });
+
+  describe('confirmUploadedMediaMessage', () => {
+    it('verifies object storage, saves a media message, and emits realtime update', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        customerPhone: '+123456',
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          wabaId: 'waba-1',
+          waba: { systemUserToken: 'token' },
+        },
+      } as never);
+      vi.mocked(S3Service.verifyUploadedMedia).mockResolvedValue({
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        mediaType: 'image',
+        mediaMimeType: 'image/png',
+        mediaSize: 123,
+      });
+      vi.mocked(S3Service.createPresignedDownloadUrl).mockResolvedValue({
+        downloadUrl: 'https://space.example/download?signature=abc',
+        expiresIn: 1800,
+      });
+      vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
+        status: 'sent',
+        messageId: 'wa-media-msg-1',
+      });
+      vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
+        id: 'msg-1',
+        conversationId: 'conv-1',
+        direction: 'outgoing',
+        source: 'admin',
+        type: 'image',
+        content: 'caption',
+        mediaObjectKey:
+          'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        mediaMimeType: 'image/png',
+        mediaSize: 123,
+        timestamp: new Date('2026-06-30T07:00:00.000Z'),
+      } as never);
+
+      const result = await MessageService.confirmUploadedMediaMessage({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        caption: 'caption',
+        filename: 'receipt.png',
+      });
+
+      expect(S3Service.verifyUploadedMedia).toHaveBeenCalledWith({
+        userId: 'user-1',
+        wabaId: 'waba-1',
+        convId: 'conv-1',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+      });
+      expect(S3Service.createPresignedDownloadUrl).toHaveBeenCalledWith({
+        userId: 'user-1',
+        wabaId: 'waba-1',
+        convId: 'conv-1',
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+      });
+      expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
+        phoneNumberId: 'pn-1',
+        token: 'token',
+        to: '+123456',
+        message: {
+          type: 'image',
+          link: 'https://space.example/download?signature=abc',
+          caption: 'caption',
+        },
+      });
+      expect(MessageRepository.saveMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          conversationId: 'conv-1',
+          direction: 'outgoing',
+          source: 'admin',
+          type: 'image',
+          content: 'caption',
+          status: 'sent',
+          messageId: 'wa-media-msg-1',
+          mediaObjectKey:
+            'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          mediaMimeType: 'image/png',
+          mediaFilename: 'receipt.png',
+          mediaSize: 123,
+          timestamp: expect.any(Date),
+        }),
+      );
+      expect(result.message.mediaSize).toBe(123);
+      expect(result.conversation.phoneNumber.waba).not.toHaveProperty(
+        'systemUserToken',
+      );
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
+        expect.objectContaining({
+          id: 'msg-1',
+          mediaSize: 123,
+          mediaObjectKey:
+            'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        }),
+      );
+      const emittedPayload = vi.mocked(eventBus.emit).mock.calls[0]?.[1] as {
+        conversation: { phoneNumber: { waba: Record<string, unknown> } };
+      };
+      expect(emittedPayload.conversation.phoneNumber.waba).not.toHaveProperty(
+        'systemUserToken',
+      );
+      expect(
+        vi.mocked(MetaFetchService.sendMessage).mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        vi.mocked(MessageRepository.saveMessage).mock.invocationCallOrder[0],
+      );
+      expect(
+        vi.mocked(MessageRepository.saveMessage).mock.invocationCallOrder[0],
+      ).toBeLessThan(vi.mocked(eventBus.emit).mock.invocationCallOrder[0]);
+    });
+
+    it('throws ApiError when the conversation is not owned by the user', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue(null);
+
+      await expect(
+        MessageService.confirmUploadedMediaMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        }),
+      ).rejects.toThrow(ApiError);
+
+      expect(S3Service.verifyUploadedMedia).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
     });
   });
   describe('processMetaWebhookPayload', () => {
@@ -211,6 +351,246 @@ describe('MessageService', { tags: ['backend'] }, () => {
       );
     });
 
+    it.each([
+      ['image', { id: 'echo-image-1', mime_type: 'image/png' }],
+      ['audio', { id: 'echo-audio-1', mime_type: 'audio/ogg', voice: true }],
+      ['video', { id: 'echo-video-1', mime_type: 'video/mp4' }],
+      [
+        'document',
+        {
+          id: 'echo-document-1',
+          mime_type: 'application/pdf',
+          filename: 'receipt.pdf',
+        },
+      ],
+    ])('streams and stores %s message echoes', async (type, media) => {
+      const mediaPayload = {
+        ...media,
+        caption: 'echo caption',
+        url: `https://lookaside.whatsapp.com/${type}`,
+      };
+      const objectKey = `user-1/waba-1/conv-1/${type}-echo-key`;
+
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({ id: 'phone-1' } as never);
+      vi.mocked(
+        ConversationRepository.prepareWebhookMessageConversation,
+      ).mockResolvedValue({
+        conversation: { id: 'conv-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+        systemUserToken: 'token',
+      } as never);
+      vi.mocked(S3Service.streamWhatsAppMediaToObjectStorage).mockResolvedValue(
+        {
+          key: objectKey,
+          mediaType: type,
+          mediaMimeType: mediaPayload.mime_type,
+          mediaSize: 123,
+        } as never,
+      );
+      vi.mocked(
+        ConversationRepository.processOutgoingMessageEcho,
+      ).mockResolvedValue({
+        message: { id: 'db-echo-media-1', type, mediaObjectKey: objectKey },
+        conversation: { id: 'conv-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      } as never);
+
+      const result = await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'smb_message_echoes',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '6285195563454',
+                    phone_number_id: '1120639457807711',
+                  },
+                  message_echoes: [
+                    {
+                      from: '6285195563454',
+                      to: '628116150122',
+                      id: `wamid.echo-${type}-1`,
+                      timestamp: '1782640182',
+                      type,
+                      [type]: mediaPayload,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(S3Service.streamWhatsAppMediaToObjectStorage).toHaveBeenCalledWith(
+        {
+          whatsappUrl: mediaPayload.url,
+          token: 'token',
+          userId: 'user-1',
+          wabaId: 'waba-1',
+          convId: 'conv-1',
+          contentType: mediaPayload.mime_type,
+        },
+      );
+      expect(
+        ConversationRepository.processOutgoingMessageEcho,
+      ).toHaveBeenCalledWith({
+        phoneNumberId: 'phone-1',
+        customerPhone: '628116150122',
+        customerName: undefined,
+        message: expect.objectContaining({
+          messageId: `wamid.echo-${type}-1`,
+          type,
+          content: 'echo caption',
+          mediaObjectKey: objectKey,
+          mediaMimeType: mediaPayload.mime_type,
+          mediaFilename:
+            'filename' in mediaPayload ? mediaPayload.filename : null,
+          mediaSize: 123,
+        }),
+      });
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
+        expect.objectContaining({
+          id: 'db-echo-media-1',
+          mediaObjectKey: objectKey,
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        }),
+      );
+    });
+
+    it.each([
+      ['image', { id: 'media-image-1', mime_type: 'image/png' }],
+      ['audio', { id: 'media-audio-1', mime_type: 'audio/ogg', voice: true }],
+      ['video', { id: 'media-video-1', mime_type: 'video/mp4' }],
+      [
+        'document',
+        {
+          id: 'media-document-1',
+          mime_type: 'application/pdf',
+          filename: 'receipt.pdf',
+        },
+      ],
+    ])('streams and stores incoming %s messages', async (type, media) => {
+      const mediaPayload = {
+        ...media,
+        caption: 'incoming caption',
+        url: `https://lookaside.whatsapp.com/${type}`,
+      };
+      const objectKey = `user-1/waba-1/conv-1/${type}-incoming-key`;
+
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({ id: 'phone-1' } as never);
+      vi.mocked(
+        ConversationRepository.prepareWebhookMessageConversation,
+      ).mockResolvedValue({
+        conversation: { id: 'conv-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+        systemUserToken: 'token',
+      } as never);
+      vi.mocked(S3Service.streamWhatsAppMediaToObjectStorage).mockResolvedValue(
+        {
+          key: objectKey,
+          mediaType: type,
+          mediaMimeType: mediaPayload.mime_type,
+          mediaSize: 123,
+        } as never,
+      );
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'db-incoming-media-1', type, mediaObjectKey: objectKey },
+        conversation: { id: 'conv-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      } as never);
+
+      const result = await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  messages: [
+                    {
+                      id: `meta-${type}-msg-1`,
+                      from: 'customer-1',
+                      type,
+                      [type]: mediaPayload,
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(S3Service.streamWhatsAppMediaToObjectStorage).toHaveBeenCalledWith(
+        {
+          whatsappUrl: mediaPayload.url,
+          token: 'token',
+          userId: 'user-1',
+          wabaId: 'waba-1',
+          convId: 'conv-1',
+          contentType: mediaPayload.mime_type,
+        },
+      );
+      expect(
+        ConversationRepository.processIncomingMessage,
+      ).toHaveBeenCalledWith({
+        phoneNumberId: 'phone-1',
+        customerPhone: 'customer-1',
+        customerName: undefined,
+        message: expect.objectContaining({
+          messageId: `meta-${type}-msg-1`,
+          type,
+          content: 'incoming caption',
+          mediaObjectKey: objectKey,
+          mediaMimeType: mediaPayload.mime_type,
+          mediaFilename:
+            'filename' in mediaPayload ? mediaPayload.filename : null,
+          mediaSize: 123,
+        }),
+      });
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
+        expect.objectContaining({
+          id: 'db-incoming-media-1',
+          mediaObjectKey: objectKey,
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        }),
+      );
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      });
+    });
+
     it('throws error for invalid webhook payload', async () => {
       const payload = {
         object: 'page',
@@ -242,6 +622,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: { id: 'msg-1', content: 'hello' },
         conversation: { id: 'conv-1' },
         userId: testUserId,
+        wabaId: 'waba-1',
       } as never);
 
       const payload = {
@@ -292,7 +673,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         }),
       );
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: testUserId,
+        wabaId: 'waba-1',
+      });
 
       // Clean up the listener
       eventBus.off(userEventName, mockSseListener);
@@ -311,6 +696,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: { id: 'msg-1', content: null },
         conversation: { id: 'conv-1' },
         userId: 'user-123',
+        wabaId: 'waba-1',
       } as never);
 
       await MessageService.processMetaWebhookPayload({
@@ -342,7 +728,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ],
       });
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-123',
+        wabaId: 'waba-1',
+      });
     });
 
     it('does not queue redirect message when admin has taken over the conversation', async () => {

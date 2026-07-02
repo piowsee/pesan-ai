@@ -18,13 +18,13 @@ type PhoneRegistration = PhoneNumberMetaResponse & {
 
 type FailedPhoneRegistration = {
   error: unknown;
-  phoneNumberId?: string;
+  phoneNumberId?: string; // Meta Phone Number ID.
 };
 
 type BusinessProfileLookup = {
   businessProfile: WhatsappBusinessProfile;
-  phoneNumberDbId: string;
-  phoneNumberId: string;
+  phoneNumberDbId: string; // Internal DB PhoneNumber.id.
+  phoneNumberId: string; // Meta Phone Number ID.
 };
 
 type EmbeddedSignupResult = {
@@ -50,7 +50,7 @@ export const EmbeddedSignUpService = {
   _buildPhoneRegistrations(
     phoneNumberDatas: PhoneNumberMetaResponse[],
     existingPhoneNumbers: Array<{
-      phoneNumberId: string;
+      phoneNumberId: string; // Meta Phone Number ID stored in DB.
       registrationPin: string | null;
     }> = [],
   ): PhoneRegistration[] {
@@ -234,7 +234,7 @@ export const EmbeddedSignUpService = {
   async completeEmbeddedSignup(params: {
     code: string;
     event?: string;
-    wabaId: string;
+    wabaId: string; // Meta WABA ID from Embedded Signup.
     userId: string;
   }): Promise<EmbeddedSignupResult> {
     const { code, event, wabaId, userId } = params;
@@ -334,7 +334,7 @@ export const EmbeddedSignUpService = {
     });
 
     const waba = await WabaRepository.upsertWaba({
-      wabaId,
+      wabaId, // Meta WABA ID.
       userId,
       systemUserToken: encrypt(systemUserToken),
       businessName: wabaDetails.businessName,
@@ -347,7 +347,7 @@ export const EmbeddedSignUpService = {
     });
 
     const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
-      wabaDbId: waba.id,
+      wabaDbId: waba.id, // Internal DB WhatsappBusinessAccount.id.
       phoneNumberDatas: registeredPhoneNumbers.map((phoneNumber) => ({
         id: phoneNumber.id,
         display_phone_number: phoneNumber.display_phone_number,

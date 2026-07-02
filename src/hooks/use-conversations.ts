@@ -44,10 +44,10 @@ export interface RawConversation {
     source: ChatMessageSource;
     type: string;
     content: string | null;
-    mediaUrl: string | null;
+    mediaObjectKey: string | null;
     mediaMimeType: string | null;
     mediaFilename: string | null;
-    mediaSize: number | string | null;
+    mediaSize: number | null;
     status: string;
     errorMessage: string | null;
     metadata: string | null;
@@ -83,7 +83,7 @@ export function mapRawConversationToChatConversation(
     lastMessage: chat.messages?.[0]
       ? {
           ...chat.messages[0],
-          mediaSize: chat.messages[0].mediaSize?.toString() ?? null,
+          mediaSize: chat.messages[0].mediaSize ?? null,
           timestamp: chat.messages[0].timestamp.toString(),
           createdAt: chat.messages[0].createdAt.toString(),
         }
@@ -217,6 +217,7 @@ export function useUpdateAdminTakeover() {
 
   return useMutation({
     mutationFn: async ({
+      cacheWabaId,
       conversationId,
       adminTakeover,
     }: UpdateAdminTakeoverData) => {
@@ -225,7 +226,11 @@ export function useUpdateAdminTakeover() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ conversationId, adminTakeover }),
+        body: JSON.stringify({
+          conversationId,
+          wabaId: cacheWabaId,
+          adminTakeover,
+        }),
       });
 
       if (!response.ok) {

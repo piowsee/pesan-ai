@@ -2,7 +2,7 @@ import prisma from '@/lib/server/prisma';
 import type { ChatMessageSource } from '@/types/chat';
 
 export const MessageRepository = {
-  async findConversationTextHistory(params: {
+  async findConversationMessageHistory(params: {
     conversationId: string;
     since: Date;
     createdBeforeOrAt: Date;
@@ -11,12 +11,11 @@ export const MessageRepository = {
     const messages = await prisma.message.findMany({
       where: {
         conversationId,
-        type: 'text',
-        content: { not: null },
         timestamp: { gte: since },
         createdAt: { lte: createdBeforeOrAt },
       },
       select: {
+        type: true,
         content: true,
         source: true,
         timestamp: true,
@@ -27,10 +26,11 @@ export const MessageRepository = {
 
     return messages.map((message, index) => ({
       sequence: index + 1,
+      type: message.type,
       source: message.source,
       direction: message.direction,
       timestamp: message.timestamp,
-      content: message.content!,
+      content: message.content ?? '',
     }));
   },
 
@@ -78,10 +78,15 @@ export const MessageRepository = {
     direction: 'incoming' | 'outgoing';
     source: ChatMessageSource;
     type: string;
-    content?: string;
+    content?: string | null;
     status: string;
     messageId?: string;
     timestamp: Date;
+    mediaObjectKey?: string | null;
+    mediaMimeType?: string | null;
+    mediaFilename?: string | null;
+    mediaSize?: number | null;
+    metadata?: string | null;
   }) {
     return prisma.$transaction(async (tx) => {
       const savedMessage = await tx.message.create({

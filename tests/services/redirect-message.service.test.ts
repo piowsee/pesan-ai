@@ -82,7 +82,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       data: { botResponse: 'ok', adminTakeover: false },
       error: null,
     } as never);
-    vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
+    vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
       status: 'sent',
       messageId: 'wa-msg-1',
     });
@@ -92,6 +92,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: [
         {
           sequence: 1,
@@ -128,6 +130,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         method: 'POST',
         auth: { type: 'Bearer', token: 'signed-webhook-jwt' },
         body: {
+          customerPhoneNumber: '+123456',
           messages: [
             {
               sequence: 1,
@@ -148,11 +151,11 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     expect(
       ConversationRepository.updateAdminTakeoverStatus,
     ).not.toHaveBeenCalled();
-    expect(MetaFetchService.sendTextMessage).toHaveBeenCalledWith({
+    expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
       phoneNumberId: 'meta-phone-1',
       token: 'plain-token',
       to: '+123456',
-      text: 'ok',
+      message: { type: 'text', text: 'ok' },
     });
     expect(MessageRepository.saveMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -167,6 +170,77 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     );
   });
 
+  it.each([
+    { label: 'missing', data: { adminTakeover: false } },
+    { label: 'empty', data: { botResponse: '', adminTakeover: false } },
+    { label: 'null', data: { botResponse: null, adminTakeover: false } },
+  ])(
+    'does not send a WhatsApp message when bot response is $label',
+    async ({ data }) => {
+      vi.mocked(
+        WebhookRepository.findWebhookByConversationId,
+      ).mockResolvedValue({
+        url: 'https://bot.example.com/message',
+        passphrase: 'encrypted-passphrase',
+        isActive: true,
+      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data,
+        error: null,
+      } as never);
+
+      const result = await redirectMessageToExternalWebhook({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+        messages: messageHistory('hello'),
+      });
+
+      expect(result).toEqual(data);
+      expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).not.toHaveBeenCalled();
+    },
+  );
+
+  it('persists admin takeover without sending when bot response is empty', async () => {
+    vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
+      url: 'https://bot.example.com/message',
+      passphrase: 'encrypted-passphrase',
+      isActive: true,
+    });
+    vi.mocked(betterFetch).mockResolvedValue({
+      data: { botResponse: '', adminTakeover: true },
+      error: null,
+    } as never);
+
+    await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+      messages: messageHistory('I need a human'),
+    });
+
+    expect(
+      ConversationRepository.updateAdminTakeoverStatus,
+    ).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      adminTakeover: true,
+    });
+    expect(eventBus.emit).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, 'user-1'),
+      {
+        conversationId: 'conv-1',
+        wabaId: 'waba-1',
+        adminTakeover: true,
+      },
+    );
+    expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+    expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+  });
+
   it('does not call queued bot work after admin takeover is enabled', async () => {
     vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
       id: 'conv-1',
@@ -176,6 +250,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('queued message'),
     });
 
@@ -184,7 +260,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       WebhookRepository.findWebhookByConversationId,
     ).not.toHaveBeenCalled();
     expect(betterFetch).not.toHaveBeenCalled();
-    expect(MetaFetchService.sendTextMessage).not.toHaveBeenCalled();
+    expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
     expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
   });
 
@@ -207,7 +283,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       id: 'conv-1',
       adminTakeover: true,
     });
-    vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
+    vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
       status: 'sent',
       messageId: 'wa-msg-1',
     });
@@ -217,6 +293,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('I need a human'),
     });
 
@@ -230,7 +308,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       vi.mocked(ConversationRepository.updateAdminTakeoverStatus).mock
         .invocationCallOrder[0],
     ).toBeLessThan(
-      vi.mocked(MetaFetchService.sendTextMessage).mock.invocationCallOrder[0],
+      vi.mocked(MetaFetchService.sendMessage).mock.invocationCallOrder[0],
     );
   });
 
@@ -246,7 +324,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       data: { botResponse: 'bot reply', adminTakeover: false },
       error: null,
     } as never);
-    vi.mocked(MetaFetchService.sendTextMessage).mockResolvedValue({
+    vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
       status: 'sent',
       messageId: 'wa-msg-1',
     });
@@ -256,6 +334,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -303,6 +383,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -333,6 +415,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -360,6 +444,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -393,6 +479,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 

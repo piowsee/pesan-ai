@@ -19,6 +19,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
   let dbWabaId: string;
   let dbPhoneNumberId: string;
   let dbConvId: string;
+  let systemUserToken: string;
 
   beforeEach(async () => {
     const user = await prisma.user.findUnique({
@@ -41,6 +42,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       );
     }
     dbWabaId = waba.id;
+    systemUserToken = waba.systemUserToken;
 
     const pn = waba.phoneNumbers.find(
       (p) => p.phoneNumberId === SEED_DATA.PHONE_META_ID,
@@ -125,6 +127,59 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('prepareWebhookMessageConversation', () => {
+    it('creates a conversation and returns storage key metadata for webhook media', async () => {
+      const result =
+        await ConversationRepository.prepareWebhookMessageConversation({
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999006',
+          customerName: 'Webhook Media Customer',
+        });
+
+      expect(result).toMatchObject({
+        userId,
+        wabaId: dbWabaId,
+        systemUserToken,
+      });
+      expect(result.conversation).toMatchObject({
+        customerPhone: '999006',
+        customerName: 'Webhook Media Customer',
+        phoneNumberId: dbPhoneNumberId,
+        unreadCount: 0,
+      });
+      expect(result.conversation.id).toBeTruthy();
+      expect(result.conversation.phoneNumber.waba.id).toBe(dbWabaId);
+      expect(result.conversation.phoneNumber.waba.userId).toBe(userId);
+    });
+
+    it('reuses the existing conversation and updates the customer name', async () => {
+      const first =
+        await ConversationRepository.prepareWebhookMessageConversation({
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999007',
+          customerName: 'Initial Webhook Customer',
+        });
+
+      const second =
+        await ConversationRepository.prepareWebhookMessageConversation({
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999007',
+          customerName: 'Updated Webhook Customer',
+        });
+
+      expect(second.conversation.id).toBe(first.conversation.id);
+      expect(second.conversation.customerName).toBe('Updated Webhook Customer');
+
+      const conversationCount = await prisma.conversation.count({
+        where: {
+          phoneNumberId: dbPhoneNumberId,
+          customerPhone: '999007',
+        },
+      });
+      expect(conversationCount).toBe(1);
+    });
+  });
+
   describe('admin takeover helpers', () => {
     it('finds an owned conversation and updates admin takeover', async () => {
       const conversation = await prisma.conversation.create({
@@ -139,6 +194,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
       const found = await ConversationRepository.findConversationById({
         conversationId: conversation.id,
+        userId,
+        wabaId: dbWabaId,
       });
 
       expect(found?.id).toBe(conversation.id);
@@ -165,6 +222,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     it('returns null when the conversation does not exist', async () => {
       const result = await ConversationRepository.findConversationById({
         conversationId: 'missing-conversation-id',
+        userId,
+        wabaId: dbWabaId,
       });
 
       expect(result).toBeNull();
@@ -189,11 +248,62 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       expect(result.conversation.phoneNumber).toBeDefined();
       expect(result.conversation.phoneNumber?.id).toBe(dbPhoneNumberId);
       expect(result.message.content).toBe('Hello Test');
+      expect(result.userId).toBe(userId);
+      expect(result.wabaId).toBe(dbWabaId);
 
       const savedPn = await prisma.phoneNumber.findUnique({
         where: { id: dbPhoneNumberId },
       });
       expect(savedPn?.unreadCount).toBeGreaterThan(0);
+    });
+
+    it('preserves the latest message timestamp when incoming messages arrive out of order', async () => {
+      const newerTimestamp = new Date('2026-06-28T12:00:00.000Z');
+      const olderTimestamp = new Date('2026-06-28T11:00:00.000Z');
+      const customerPhone = '999008';
+
+      await ConversationRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.incoming.test.newer',
+          type: 'text',
+          content: 'Newer incoming message',
+          timestamp: newerTimestamp,
+        },
+      });
+
+      const result = await ConversationRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.incoming.test.older',
+          type: 'text',
+          content: 'Older incoming message',
+          timestamp: olderTimestamp,
+        },
+      });
+
+      expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
+      expect(result.conversation.lastCustomerMessageAt).toEqual(newerTimestamp);
+
+      const savedConversation = await prisma.conversation.findUniqueOrThrow({
+        where: {
+          unique_conversation: {
+            phoneNumberId: dbPhoneNumberId,
+            customerPhone,
+          },
+        },
+        include: {
+          messages: { orderBy: { timestamp: 'desc' }, take: 1 },
+        },
+      });
+
+      expect(savedConversation.lastMessageAt).toEqual(newerTimestamp);
+      expect(savedConversation.lastCustomerMessageAt).toEqual(newerTimestamp);
+      expect(savedConversation.messages[0]?.content).toBe(
+        'Newer incoming message',
+      );
     });
   });
 
@@ -224,6 +334,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         status: 'sent',
         content: 'Sent from WhatsApp Business App',
       });
+      expect(result.userId).toBe(userId);
+      expect(result.wabaId).toBe(dbWabaId);
 
       const phoneNumberAfter = await prisma.phoneNumber.findUniqueOrThrow({
         where: { id: dbPhoneNumberId },
