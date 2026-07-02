@@ -57,6 +57,7 @@ export function ChatDetail({
   isFetchingNextPage,
   onLoadOlder,
   localSendScrollSignal,
+  initialUnreadCount,
   isSending,
   onSend,
   onSendMedia,
@@ -72,6 +73,7 @@ export function ChatDetail({
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
   localSendScrollSignal: number;
+  initialUnreadCount: number;
   isSending: boolean;
   onSend: (content: string) => void;
   onSendMedia: (input: { file: File; caption?: string }) => void;
@@ -123,6 +125,7 @@ export function ChatDetail({
               isFetchingNextPage={isFetchingNextPage}
               onLoadOlderAction={onLoadOlder}
               localSendScrollSignal={localSendScrollSignal}
+              initialUnreadCount={initialUnreadCount}
             />
           )}
         </div>

@@ -142,6 +142,10 @@ export function ChatWorkspace() {
     return window.localStorage.getItem(CHAT_STATE_STORAGE_KEY) ?? '';
   });
   const [localSendScrollSignal, setLocalSendScrollSignal] = useState(0);
+  const [
+    initialUnreadCountByConversation,
+    setInitialUnreadCountByConversation,
+  ] = useState<Record<string, number>>({});
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
@@ -398,6 +402,11 @@ export function ChatWorkspace() {
         notes: '',
       })
     : { label: '', notes: '' };
+  const selectedInitialUnreadCount = selectedConversationId
+    ? (initialUnreadCountByConversation[selectedConversationId] ??
+      selectedConversation?.unreadCount ??
+      0)
+    : 0;
 
   const showMobileDetail = Boolean(selectedConversationId);
   const { mutate: markAsRead } = useMarkAsRead();
@@ -412,23 +421,65 @@ export function ChatWorkspace() {
 
   const handleSelectConversation = useCallback(
     (conversationId: string) => {
+      const conversation = allConversations.find(
+        (c) => c.id === conversationId,
+      );
+      const unreadCount = Number(conversation?.unreadCount ?? 0);
+
+      setInitialUnreadCountByConversation((current) => {
+        if (unreadCount > 0) {
+          return { ...current, [conversationId]: unreadCount };
+        }
+
+        const next = { ...current };
+        delete next[conversationId];
+        return next;
+      });
+
       replaceChatState({
         wabaId: activeWabaId,
         conversationId,
         panel: undefined,
       });
 
-      if (activeWabaId) {
-        const conversation = allConversations.find(
-          (c) => c.id === conversationId,
-        );
-        if (conversation && conversation.unreadCount > 0) {
-          markAsRead({ wabaId: activeWabaId, convId: conversationId });
-        }
+      if (activeWabaId && unreadCount > 0) {
+        markAsRead({ wabaId: activeWabaId, convId: conversationId });
       }
     },
     [activeWabaId, allConversations, markAsRead, replaceChatState],
   );
+
+  useEffect(() => {
+    if (
+      !activeWabaId ||
+      !selectedConversation ||
+      selectedInitialUnreadCount > 0
+    ) {
+      return;
+    }
+
+    const unreadCount = Number(selectedConversation.unreadCount ?? 0);
+    if (unreadCount <= 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setInitialUnreadCountByConversation((current) => ({
+        ...current,
+        [selectedConversation.id]: unreadCount,
+      }));
+      markAsRead({ wabaId: activeWabaId, convId: selectedConversation.id });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    activeWabaId,
+    markAsRead,
+    selectedConversation,
+    selectedInitialUnreadCount,
+  ]);
 
   const handleToggleTakeover = useCallback(
     (conversationId: string, nextAdminTakeover: boolean) => {
@@ -571,6 +622,7 @@ export function ChatWorkspace() {
               isFetchingNextPage={isFetchingNextPage}
               onLoadOlder={() => fetchNextPage()}
               localSendScrollSignal={localSendScrollSignal}
+              initialUnreadCount={selectedInitialUnreadCount}
               isSending={isSending}
               onSend={handleSendMessage}
               onSendMedia={handleSendMediaMessage}
