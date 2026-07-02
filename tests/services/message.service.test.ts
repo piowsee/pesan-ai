@@ -573,7 +573,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
           wabaId: 'waba-1',
         }),
       );
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      });
     });
 
     it('throws error for invalid webhook payload', async () => {
@@ -607,6 +611,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: { id: 'msg-1', content: 'hello' },
         conversation: { id: 'conv-1' },
         userId: testUserId,
+        wabaId: 'waba-1',
       } as never);
 
       const payload = {
@@ -657,7 +662,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         }),
       );
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: testUserId,
+        wabaId: 'waba-1',
+      });
 
       // Clean up the listener
       eventBus.off(userEventName, mockSseListener);
@@ -676,6 +685,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: { id: 'msg-1', content: null },
         conversation: { id: 'conv-1' },
         userId: 'user-123',
+        wabaId: 'waba-1',
       } as never);
 
       await MessageService.processMetaWebhookPayload({
@@ -707,7 +717,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ],
       });
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith('conv-1');
+      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-123',
+        wabaId: 'waba-1',
+      });
     });
 
     it('does not queue redirect message when admin has taken over the conversation', async () => {

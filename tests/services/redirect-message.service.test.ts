@@ -92,6 +92,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: [
         {
           sequence: 1,
@@ -189,6 +191,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
       const result = await redirectMessageToExternalWebhook({
         conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
         messages: messageHistory('hello'),
       });
 
@@ -214,6 +218,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('I need a human'),
     });
 
@@ -244,6 +250,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('queued message'),
     });
 
@@ -285,6 +293,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('I need a human'),
     });
 
@@ -324,6 +334,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -371,6 +383,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -401,6 +415,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -428,6 +444,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 
@@ -461,6 +479,8 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
       messages: messageHistory('hello'),
     });
 

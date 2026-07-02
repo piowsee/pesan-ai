@@ -217,6 +217,7 @@ export function useUpdateAdminTakeover() {
 
   return useMutation({
     mutationFn: async ({
+      cacheWabaId,
       conversationId,
       adminTakeover,
     }: UpdateAdminTakeoverData) => {
@@ -225,7 +226,11 @@ export function useUpdateAdminTakeover() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ conversationId, adminTakeover }),
+        body: JSON.stringify({
+          conversationId,
+          wabaId: cacheWabaId,
+          adminTakeover,
+        }),
       });
 
       if (!response.ok) {

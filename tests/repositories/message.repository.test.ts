@@ -109,8 +109,8 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('findConversationTextHistory', () => {
-    it('returns recent text content in chronological order', async () => {
+  describe('findConversationMessageHistory', () => {
+    it('returns recent messages of any type in chronological order', async () => {
       const conversation = await prisma.conversation.create({
         data: {
           customerPhone: '998006',
@@ -177,7 +177,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
         ],
       });
 
-      const history = await MessageRepository.findConversationTextHistory({
+      const history = await MessageRepository.findConversationMessageHistory({
         conversationId: conversation.id,
         since: new Date('2026-06-24T09:30:00.000Z'),
         createdBeforeOrAt: new Date('2026-06-24T10:02:30.000Z'),
@@ -186,6 +186,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(history).toEqual([
         {
           sequence: 1,
+          type: 'text',
           source: 'bot',
           direction: 'outgoing',
           timestamp: new Date('2026-06-24T10:00:00.000Z'),
@@ -193,10 +194,19 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
         },
         {
           sequence: 2,
+          type: 'text',
           source: 'customer',
           direction: 'incoming',
           timestamp: new Date('2026-06-24T10:01:00.000Z'),
           content: 'second',
+        },
+        {
+          sequence: 3,
+          type: 'image',
+          source: 'customer',
+          direction: 'incoming',
+          timestamp: new Date('2026-06-24T10:02:00.000Z'),
+          content: 'ignored caption',
         },
       ]);
     });

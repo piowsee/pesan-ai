@@ -11,7 +11,7 @@ import { ConversationService } from '@/services/conversation.service';
 
 /**
  * @route PATCH /api/admin-takeover
- * @body { conversationId: string, adminTakeover: boolean }
+ * @body { conversationId: string, wabaId: string, adminTakeover: boolean }
  * @response { status: 'success', data: { conversationId: string, adminTakeover: boolean } }
  * @access Authenticated users
  * @description Enables or disables manual admin takeover for a conversation after validating that the conversation belongs to the authenticated user.
@@ -26,6 +26,7 @@ export const PATCH = withApiAuth(async ({ req, user }) => {
 
   const result = await ConversationService.updateAdminTakeoverStatus({
     userId: user.id,
+    wabaId: validated.data.wabaId,
     conversationId: validated.data.conversationId,
     adminTakeover: validated.data.adminTakeover,
   });

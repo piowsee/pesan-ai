@@ -24,9 +24,11 @@ type BotConversation = NonNullable<
   Awaited<ReturnType<typeof ConversationRepository.findConversationById>>
 >;
 type BotMessageHistory = Awaited<
-  ReturnType<typeof MessageRepository.findConversationTextHistory>
+  ReturnType<typeof MessageRepository.findConversationMessageHistory>
 >;
-function _toBotWebhookMessages(messages: BotMessageHistory) {
+type BotWebhookMessageHistory = Array<Omit<BotMessageHistory[number], 'type'>>;
+
+function _toBotWebhookMessages(messages: BotWebhookMessageHistory) {
   return messages.map((message) => ({
     sequence: message.sequence,
     source:
@@ -63,11 +65,15 @@ async function _findWebhookData(params: { conversationId: string }) {
 
 export async function redirectMessageToExternalWebhook(params: {
   conversationId: string;
-  messages: BotMessageHistory;
+  userId: string;
+  wabaId: string;
+  messages: BotWebhookMessageHistory;
 }): Promise<BotWebhookOutput | undefined> {
-  const { conversationId, messages } = params;
+  const { conversationId, userId, wabaId, messages } = params;
   const conversation = await ConversationRepository.findConversationById({
     conversationId,
+    userId,
+    wabaId,
   });
 
   if (!conversation) {
@@ -114,7 +120,7 @@ export async function redirectMessageToExternalWebhook(params: {
 async function _requestBotWebhook(params: {
   conversationId: string;
   customerPhoneNumber: string;
-  messages: BotMessageHistory;
+  messages: BotWebhookMessageHistory;
 }): Promise<BotWebhookOutput> {
   const { conversationId, customerPhoneNumber, messages } = params;
   const { url, passphrase } = await _findWebhookData({ conversationId });

@@ -194,6 +194,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
       const found = await ConversationRepository.findConversationById({
         conversationId: conversation.id,
+        userId,
+        wabaId: dbWabaId,
       });
 
       expect(found?.id).toBe(conversation.id);
@@ -220,6 +222,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     it('returns null when the conversation does not exist', async () => {
       const result = await ConversationRepository.findConversationById({
         conversationId: 'missing-conversation-id',
+        userId,
+        wabaId: dbWabaId,
       });
 
       expect(result).toBeNull();
@@ -244,6 +248,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       expect(result.conversation.phoneNumber).toBeDefined();
       expect(result.conversation.phoneNumber?.id).toBe(dbPhoneNumberId);
       expect(result.message.content).toBe('Hello Test');
+      expect(result.userId).toBe(userId);
+      expect(result.wabaId).toBe(dbWabaId);
 
       const savedPn = await prisma.phoneNumber.findUnique({
         where: { id: dbPhoneNumberId },
@@ -279,6 +285,8 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         status: 'sent',
         content: 'Sent from WhatsApp Business App',
       });
+      expect(result.userId).toBe(userId);
+      expect(result.wabaId).toBe(dbWabaId);
 
       const phoneNumberAfter = await prisma.phoneNumber.findUniqueOrThrow({
         where: { id: dbPhoneNumberId },

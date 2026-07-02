@@ -472,17 +472,6 @@ export const MessageService = {
 
     const message = serializeMessageForTransport(savedMessage);
 
-    if (!userId) {
-      logError(
-        new Error('Could not determine userId for real-time notification'),
-        {
-          action: 'Could not determine userId for real-time notification',
-          phoneNumberId: internalPhoneId,
-        },
-      );
-      return true;
-    }
-
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
       conversation,
@@ -497,7 +486,11 @@ export const MessageService = {
       return true;
     }
 
-    handleDebounceIncomingMessage(conversation.id);
+    handleDebounceIncomingMessage({
+      conversationId: conversation.id,
+      userId,
+      wabaId,
+    });
 
     return true;
   },
@@ -568,17 +561,6 @@ export const MessageService = {
 
     const message = serializeMessageForTransport(savedMessage);
 
-    if (!userId) {
-      logError(
-        new Error('Could not determine userId for real-time notification'),
-        {
-          action: 'Could not determine userId for real-time notification',
-          phoneNumberId: internalPhoneId,
-        },
-      );
-      return true;
-    }
-
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
       conversation,
@@ -593,7 +575,11 @@ export const MessageService = {
       return true;
     }
 
-    handleDebounceIncomingMessage(conversation.id);
+    handleDebounceIncomingMessage({
+      conversationId: conversation.id,
+      userId,
+      wabaId,
+    });
 
     return true;
   },
@@ -720,17 +706,6 @@ export const MessageService = {
 
     const message = serializeMessageForTransport(savedMessage);
 
-    if (!userId) {
-      logError(
-        new Error('Could not determine userId for real-time notification'),
-        {
-          action: 'Could not determine userId for message echo notification',
-          phoneNumberId: internalPhoneId,
-        },
-      );
-      return true;
-    }
-
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
       conversation,
@@ -801,17 +776,6 @@ export const MessageService = {
     });
 
     const message = serializeMessageForTransport(savedMessage);
-
-    if (!userId) {
-      logError(
-        new Error('Could not determine userId for real-time notification'),
-        {
-          action: 'Could not determine userId for message echo notification',
-          phoneNumberId: internalPhoneId,
-        },
-      );
-      return true;
-    }
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,

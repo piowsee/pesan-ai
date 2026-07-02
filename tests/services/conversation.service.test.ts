@@ -84,6 +84,7 @@ describe('ConversationService', { tags: ['backend'] }, () => {
       const result = await ConversationService.updateAdminTakeoverStatus({
         conversationId: 'conv-1',
         userId: 'user-1',
+        wabaId: 'waba-1',
         adminTakeover: true,
       });
 
@@ -93,6 +94,8 @@ describe('ConversationService', { tags: ['backend'] }, () => {
       });
       expect(ConversationRepository.findConversationById).toHaveBeenCalledWith({
         conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
       });
       expect(
         ConversationRepository.updateAdminTakeoverStatus,
@@ -102,21 +105,25 @@ describe('ConversationService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('throws ApiError when conversation is not owned by the user', async () => {
-      vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
-        id: 'conv-1',
-        adminTakeover: false,
-        phoneNumber: { waba: { userId: 'other-user' } },
-      } as never);
+    it('throws ApiError when conversation is not owned by the user and WABA', async () => {
+      vi.mocked(ConversationRepository.findConversationById).mockResolvedValue(
+        null,
+      );
 
       await expect(
         ConversationService.updateAdminTakeoverStatus({
           conversationId: 'conv-1',
           userId: 'user-1',
+          wabaId: 'waba-1',
           adminTakeover: true,
         }),
       ).rejects.toThrow(ApiError);
 
+      expect(ConversationRepository.findConversationById).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      });
       expect(
         ConversationRepository.updateAdminTakeoverStatus,
       ).not.toHaveBeenCalled();
