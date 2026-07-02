@@ -2,6 +2,7 @@
 
 import { MessageStatus } from '@/components/chat/message-status';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
+import { useElementInViewport } from '@/hooks/use-element-in-viewport';
 import { useMessageMediaDownloadUrl } from '@/hooks/use-message';
 import { formatMessageTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
@@ -20,7 +21,6 @@ import {
 import { TextMessage } from './text-message';
 import type { MediaMessageType, MediaRendererProps } from './types';
 import { UnsupportedMessage } from './unsupported-message';
-import { useElementInViewport } from './use-element-in-viewport';
 import { VideoMessage } from './video-message';
 
 type MessageBubbleProps = {
