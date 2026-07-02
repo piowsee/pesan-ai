@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { CHAT_MESSAGE_CHARACTER_LIMIT } from '@/lib/chat/chat';
 import { cn } from '@/lib/utils';
@@ -174,12 +173,10 @@ function MediaPreview({
 
 export function MessageComposer({
   conversation,
-  isSending,
   onSendAction,
   onSendMediaAction,
 }: {
   conversation: ChatConversation;
-  isSending: boolean;
   onSendAction: (content: string) => void;
   onSendMediaAction: (input: SendMediaMessageInput) => void;
 }) {
@@ -276,7 +273,7 @@ export function MessageComposer({
   };
 
   const trimmedDraft = draft.trim();
-  const canSendMessage = Boolean(trimmedDraft || selectedMedia) && !isSending;
+  const canSendMessage = Boolean(trimmedDraft || selectedMedia);
 
   function handleSend() {
     if (!conversation.canSendFreeform || !canSendMessage) {
@@ -350,7 +347,7 @@ export function MessageComposer({
                 type="button"
                 size="icon"
                 variant="ghost"
-                disabled={!conversation.canSendFreeform || isSending}
+                disabled={!conversation.canSendFreeform}
                 className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
               >
                 <PlusIcon />
@@ -391,7 +388,7 @@ export function MessageComposer({
             }}
             rows={1}
             maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
-            disabled={!conversation.canSendFreeform || isSending}
+            disabled={!conversation.canSendFreeform}
             placeholder={
               conversation.canSendFreeform
                 ? selectedMedia
@@ -414,11 +411,7 @@ export function MessageComposer({
                 : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
             )}
           >
-            {isSending ? (
-              <Spinner className="size-5" />
-            ) : (
-              <SendHorizontalIcon className="size-5" />
-            )}
+            <SendHorizontalIcon className="size-5" />
             <span className="sr-only">Send</span>
           </Button>
         </div>

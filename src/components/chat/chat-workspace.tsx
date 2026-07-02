@@ -508,10 +508,8 @@ export function ChatWorkspace() {
     [activeWabaId, updateAdminTakeover],
   );
 
-  const { mutate: sendMessage, isPending: isSendingText } = useSendMessage();
-  const { mutate: sendMediaMessage, isPending: isSendingMedia } =
-    useSendMediaMessage();
-  const isSending = isSendingText || isSendingMedia;
+  const { mutate: sendMessage } = useSendMessage();
+  const { mutate: sendMediaMessage } = useSendMediaMessage();
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -623,7 +621,6 @@ export function ChatWorkspace() {
               onLoadOlder={() => fetchNextPage()}
               localSendScrollSignal={localSendScrollSignal}
               initialUnreadCount={selectedInitialUnreadCount}
-              isSending={isSending}
               onSend={handleSendMessage}
               onSendMedia={handleSendMediaMessage}
               showBackButton={showMobileDetail}

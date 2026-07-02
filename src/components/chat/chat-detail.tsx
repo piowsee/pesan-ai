@@ -58,7 +58,6 @@ export function ChatDetail({
   onLoadOlder,
   localSendScrollSignal,
   initialUnreadCount,
-  isSending,
   onSend,
   onSendMedia,
   showBackButton,
@@ -74,7 +73,6 @@ export function ChatDetail({
   onLoadOlder: () => void;
   localSendScrollSignal: number;
   initialUnreadCount: number;
-  isSending: boolean;
   onSend: (content: string) => void;
   onSendMedia: (input: { file: File; caption?: string }) => void;
   showBackButton: boolean;
@@ -135,7 +133,6 @@ export function ChatDetail({
         <MessageComposer
           key={conversation.id}
           conversation={conversation}
-          isSending={isSending}
           onSendAction={onSend}
           onSendMediaAction={onSendMedia}
         />
