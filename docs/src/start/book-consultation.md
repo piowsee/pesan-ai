@@ -1,0 +1,40 @@
+# Book a Consultation
+
+Before using pesan.ai, you need to request access or book a consultation with the pesan.ai team.
+
+The consultation is free and helps the team understand your business needs before setting up your account.
+
+![Contact Us page](../Images/01-contact-us-page.png)
+
+## How to request consultation
+
+1. **Open the Contact Us page.** Open **Contact us** from the login page, or choose **Book a Consultation** from the public website. This page is used to request an account or book a consultation with the pesan.ai team.
+
+2. **Fill in your contact information.** Use active business contact information so the team can reach the right person.
+
+| Field | Description |
+|---|---|
+| Your name | Your full name or the person responsible for the request. |
+| Email | Your active email address. |
+| Company | Your business or company name. |
+| WhatsApp phone | The WhatsApp number the team can contact. |
+| What do you need? | A short explanation of your business, team size, or WhatsApp automation needs. |
+
+3. **Explain what you need.** Use the **What do you need?** field to briefly explain what you want pesan.ai to help with.
+
+For example, you can mention that you want to:
+
+- Connect your WhatsApp Business account to pesan.ai.
+- Automate repetitive customer replies.
+- Prepare an AI Agent for customer service or sales inquiries.
+- Let your team monitor WhatsApp conversations from a web dashboard.
+- Collect and export customer contacts from WhatsApp conversations.
+- Ask whether you should use an existing WhatsApp Business App account or create a new WhatsApp Business Account.
+
+The more context you provide, the easier it is for the pesan.ai team to recommend the right setup.
+
+4. **Submit your request.** After filling in the form, click **Submit Request**.
+
+5. **Wait for the team to contact you.** After your request is submitted, the pesan.ai team will contact you through WhatsApp or email. The team will discuss your needs, confirm the service details, and guide you through the next steps.
+
+**Note:** Submitting the consultation form does not automatically create a pesan.ai account. The account will be created by the pesan.ai team after the consultation, agreement, and payment process are completed.
