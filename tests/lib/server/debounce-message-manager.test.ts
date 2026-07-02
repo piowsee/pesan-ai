@@ -7,6 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/lib/server/debounce-message-manager');
 
+async function flushDebouncedProcessing() {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -48,7 +54,8 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    vi.clearAllTimers();
+    eventBus.removeAllListeners();
     vi.useRealTimers();
   });
 
@@ -62,6 +69,8 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     expect(redirectMessageToExternalWebhook).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(1);
+    await flushDebouncedProcessing();
+
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledTimes(1);
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',
@@ -121,6 +130,7 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     handleDebounceIncomingMessage('conv-1');
 
     await vi.advanceTimersByTimeAsync(15_000);
+    await flushDebouncedProcessing();
 
     expect(redirectMessageToExternalWebhook).not.toHaveBeenCalled();
     expect(ConversationRepository.findConversationById).toHaveBeenCalledWith({
@@ -168,6 +178,7 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     handleDebounceIncomingMessage('conv-2');
 
     await vi.advanceTimersByTimeAsync(15_000);
+    await flushDebouncedProcessing();
 
     expect(redirectMessageToExternalWebhook).toHaveBeenCalledWith({
       conversationId: 'conv-1',

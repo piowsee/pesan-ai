@@ -20,42 +20,50 @@ export function handleDebounceIncomingMessage(conversationId: string) {
 
   timers.set(
     conversationId,
-    setTimeout(async () => {
-      const expiredAt = new Date();
-      timers.delete(conversationId);
-
-      try {
-        const messages = await MessageRepository.findConversationMessageHistory(
-          {
-            conversationId,
-            since: new Date(expiredAt.getTime() - BOT_HISTORY_WINDOW_MS),
-            createdBeforeOrAt: expiredAt,
-          },
-        );
-
-        const hasNonTextMessage = messages.some(
-          (message) => message.type !== 'text',
-        );
-
-        if (hasNonTextMessage) {
-          await triggerAdminTakeoverForNonTextHistory({ conversationId });
-          return;
-        }
-
-        logger.info('Debounce window expired — forwarding message history', {
-          conversationId,
-          messageCount: messages.length,
-        });
-
-        await redirectMessageToExternalWebhook({ conversationId, messages });
-      } catch (error) {
-        logError(error, {
-          action: 'Unhandled bot webhook redirect failure',
-          conversationId,
-        });
-      }
+    setTimeout(() => {
+      // fire and forget
+      void processDebouncedConversation({ conversationId });
     }, 15_000),
   );
+}
+
+async function processDebouncedConversation(params: {
+  conversationId: string;
+}) {
+  const { conversationId } = params;
+  const expiredAt = new Date();
+  timers.delete(conversationId);
+
+  try {
+    const messages = await MessageRepository.findConversationMessageHistory({
+      conversationId,
+      since: new Date(expiredAt.getTime() - BOT_HISTORY_WINDOW_MS),
+      createdBeforeOrAt: expiredAt,
+    });
+
+    const hasNonTextMessage = messages.some(
+      (message) => message.type !== 'text',
+    );
+
+    // if history has message type other than text
+    // system will update conversation to AdminTakeover
+    if (hasNonTextMessage) {
+      await triggerAdminTakeoverForNonTextHistory({ conversationId });
+      return;
+    }
+
+    logger.info('Debounce window expired — forwarding message history', {
+      conversationId,
+      messageCount: messages.length,
+    });
+
+    await redirectMessageToExternalWebhook({ conversationId, messages });
+  } catch (error) {
+    logError(error, {
+      action: 'Unhandled bot webhook redirect failure',
+      conversationId,
+    });
+  }
 }
 
 async function triggerAdminTakeoverForNonTextHistory(params: {
