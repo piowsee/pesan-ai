@@ -32,6 +32,33 @@ function serializeMessageForTransport<
   };
 }
 
+function sanitizeConversationForTransport<
+  T extends {
+    phoneNumber?: {
+      waba?: { systemUserToken?: string | null } | null;
+    } | null;
+  },
+>(conversation: T) {
+  const waba = conversation.phoneNumber?.waba;
+
+  if (!waba || !('systemUserToken' in waba)) {
+    return conversation;
+  }
+
+  const { systemUserToken, ...safeWaba } = waba;
+  void systemUserToken;
+
+  return {
+    ...conversation,
+    phoneNumber: conversation.phoneNumber
+      ? {
+          ...conversation.phoneNumber,
+          waba: safeWaba,
+        }
+      : conversation.phoneNumber,
+  };
+}
+
 function buildOutboundMediaMessage(params: {
   mediaType: UploadMediaType;
   link: string;
@@ -178,15 +205,17 @@ export const MessageService = {
       timestamp: new Date(),
     });
 
+    const safeConversation = sanitizeConversationForTransport(conversationMeta);
+
     // Emit real-time event via SSE to the specific user channel
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...savedMessage,
-      conversation: conversationMeta,
+      conversation: safeConversation,
       userId,
       wabaId: conversationMeta.phoneNumber.wabaId,
     });
 
-    return { message: savedMessage, conversation: conversationMeta };
+    return { message: savedMessage, conversation: safeConversation };
   },
 
   async confirmUploadedMediaMessage(params: {
@@ -195,8 +224,9 @@ export const MessageService = {
     userId: string;
     key: string;
     caption?: string;
+    filename?: string;
   }) {
-    const { convId, wabaId, userId, key, caption } = params;
+    const { convId, wabaId, userId, key, caption, filename } = params;
     logger.info('Confirming uploaded media message', {
       convId,
       wabaId,
@@ -254,13 +284,16 @@ export const MessageService = {
       timestamp: new Date(),
       mediaObjectKey: uploadedMedia.key,
       mediaMimeType: uploadedMedia.mediaMimeType,
+      mediaFilename: filename ?? null,
       mediaSize: uploadedMedia.mediaSize,
     });
     const message = serializeMessageForTransport(savedMessage);
 
+    const safeConversation = sanitizeConversationForTransport(conversationMeta);
+
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
-      conversation: conversationMeta,
+      conversation: safeConversation,
       userId,
       wabaId: conversationMeta.phoneNumber.wabaId,
     });
@@ -272,7 +305,7 @@ export const MessageService = {
       key: uploadedMedia.key,
     });
 
-    return { message, conversation: conversationMeta };
+    return { message, conversation: safeConversation };
   },
 
   async processMetaWebhookPayload(payload: unknown) {

@@ -7,33 +7,41 @@ import type { MessageGroup } from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
 import { MessageSquareIcon } from 'lucide-react';
 
+function MessageHistorySkeleton() {
+  return (
+    <div className="h-full w-full px-4 py-4 lg:px-6">
+      <div className="flex flex-col gap-4">
+        {Array.from({ length: 7 }).map((_, index) => (
+          <div
+            key={index}
+            className={
+              index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
+            }
+          >
+            <Skeleton className="h-20 w-[min(24rem,70%)] rounded-[22px]" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ChatDetailSkeleton() {
   return (
     <div className="flex h-full w-full flex-col bg-background/50">
       <div className="bg-background px-6 py-4">
         <div className="flex items-center gap-4">
-          <Skeleton className="size-11 rounded-full shrink-0" />
+          <Skeleton className="size-11 shrink-0 rounded-full" />
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-3 w-32" />
           </div>
         </div>
       </div>
-      <div className="flex-1 px-6 py-4">
-        <div className="flex flex-col gap-4">
-          {Array.from({ length: 7 }).map((_, index) => (
-            <div
-              key={index}
-              className={
-                index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
-              }
-            >
-              <Skeleton className="h-20 w-[60%] rounded-[18px]" />
-            </div>
-          ))}
-        </div>
+      <div className="min-h-0 flex-1">
+        <MessageHistorySkeleton />
       </div>
-      <div className="border-t px-6 py-4 bg-background">
+      <div className="border-t bg-background px-6 py-4">
         <Skeleton className="h-16 rounded-[18px]" />
       </div>
     </div>
@@ -42,27 +50,31 @@ function ChatDetailSkeleton() {
 
 export function ChatDetail({
   conversation,
+  wabaId,
   messages,
   isLoading,
   hasNextPage,
   isFetchingNextPage,
   onLoadOlder,
   localSendScrollSignal,
-  isSending,
+  initialUnreadCount,
   onSend,
+  onSendMedia,
   showBackButton,
   onBack,
   onContactAreaClick,
 }: {
   conversation?: ChatConversation;
+  wabaId?: string;
   messages: MessageGroup[];
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
   localSendScrollSignal: number;
-  isSending: boolean;
+  initialUnreadCount: number;
   onSend: (content: string) => void;
+  onSendMedia: (input: { file: File; caption?: string }) => void;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;
@@ -98,15 +110,22 @@ export function ChatDetail({
         style={{ backgroundImage: 'var(--chat-bg, none)' }}
       >
         <div className="absolute inset-0">
-          <MessageTimeline
-            conversationId={conversation.id}
-            messages={messages}
-            isLoading={isLoading}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            onLoadOlder={onLoadOlder}
-            localSendScrollSignal={localSendScrollSignal}
-          />
+          {isLoading ? (
+            <MessageHistorySkeleton />
+          ) : (
+            <MessageTimeline
+              key={conversation.id}
+              conversationId={conversation.id}
+              wabaId={wabaId}
+              messages={messages}
+              isLoading={false}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadOlderAction={onLoadOlder}
+              localSendScrollSignal={localSendScrollSignal}
+              initialUnreadCount={initialUnreadCount}
+            />
+          )}
         </div>
       </div>
 
@@ -114,8 +133,8 @@ export function ChatDetail({
         <MessageComposer
           key={conversation.id}
           conversation={conversation}
-          isSending={isSending}
-          onSend={onSend}
+          onSendAction={onSend}
+          onSendMediaAction={onSendMedia}
         />
       </div>
     </section>

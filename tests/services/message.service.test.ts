@@ -163,6 +163,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
         userId: 'user-1',
         key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         caption: 'caption',
+        filename: 'receipt.png',
       });
 
       expect(S3Service.verifyUploadedMedia).toHaveBeenCalledWith({
@@ -199,11 +200,15 @@ describe('MessageService', { tags: ['backend'] }, () => {
           mediaObjectKey:
             'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
           mediaMimeType: 'image/png',
+          mediaFilename: 'receipt.png',
           mediaSize: 123,
           timestamp: expect.any(Date),
         }),
       );
       expect(result.message.mediaSize).toBe(123);
+      expect(result.conversation.phoneNumber.waba).not.toHaveProperty(
+        'systemUserToken',
+      );
       expect(eventBus.emit).toHaveBeenCalledWith(
         getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
         expect.objectContaining({
@@ -214,6 +219,12 @@ describe('MessageService', { tags: ['backend'] }, () => {
           userId: 'user-1',
           wabaId: 'waba-1',
         }),
+      );
+      const emittedPayload = vi.mocked(eventBus.emit).mock.calls[0]?.[1] as {
+        conversation: { phoneNumber: { waba: Record<string, unknown> } };
+      };
+      expect(emittedPayload.conversation.phoneNumber.waba).not.toHaveProperty(
+        'systemUserToken',
       );
       expect(
         vi.mocked(MetaFetchService.sendMessage).mock.invocationCallOrder[0],

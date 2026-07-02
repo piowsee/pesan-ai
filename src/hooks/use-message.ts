@@ -1,10 +1,11 @@
-'use client';
-
+import { extractJSendErrorMessage } from '@/lib/api-helper/error';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import {
   type InfiniteData,
+  type QueryClient,
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -15,12 +16,27 @@ import {
   mapRawConversationToChatConversation,
 } from './use-conversations';
 
-// ─── Query Keys ──────────────────────────────────────────────────────
-
 export const messageKeys = {
   root: ['messages'] as const,
   all: (convId: string) => ['messages', convId] as const,
+  mediaDownloadUrl: (wabaId: string, convId: string, key: string) =>
+    ['messages', convId, 'media-download-url', wabaId, key] as const,
 };
+
+const MEDIA_DOWNLOAD_URL_EXPIRES_IN_FALLBACK_MS = 30 * 60 * 1000;
+const MEDIA_DOWNLOAD_URL_REFRESH_BUFFER_MS = 60 * 1000;
+const MEDIA_DOWNLOAD_URL_MIN_STALE_TIME_MS = 10 * 1000;
+
+function getMediaDownloadUrlStaleTime(expiresIn?: number) {
+  const expiresInMs = expiresIn
+    ? expiresIn * 1000
+    : MEDIA_DOWNLOAD_URL_EXPIRES_IN_FALLBACK_MS;
+
+  return Math.max(
+    MEDIA_DOWNLOAD_URL_MIN_STALE_TIME_MS,
+    expiresInMs - MEDIA_DOWNLOAD_URL_REFRESH_BUFFER_MS,
+  );
+}
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -29,12 +45,41 @@ export interface MessageGroup {
   messages: ChatMessage[];
 }
 
-interface MessageFetchResponse {
+interface MessagePageCache {
   messages: ChatMessage[];
   total: number;
   page: number;
   limit: number;
 }
+
+interface MediaDownloadUrlResponse {
+  downloadUrl: string;
+  expiresIn: number;
+}
+
+interface MediaDownloadUrlParams {
+  wabaId: string;
+  convId: string;
+  key: string;
+}
+
+interface MediaUploadUrlResponse {
+  key: string;
+  url: string;
+  method: 'POST';
+  fields: Record<string, string>;
+  maxSizeBytes: number;
+  expiresIn: number;
+}
+
+interface SendMediaMessageData {
+  wabaId: string;
+  convId: string;
+  file: File;
+  caption?: string;
+}
+
+type ChatMediaType = 'audio' | 'document' | 'image' | 'video';
 
 // ─── API Functions ───────────────────────────────────────────────────
 
@@ -43,7 +88,7 @@ async function fetchMessages(
   convId: string,
   page: number,
   limit = 50,
-): Promise<MessageFetchResponse> {
+): Promise<MessagePageCache> {
   const response = await fetch(
     `/api/waba/${wabaId}/conversation/${convId}/message?page=${page}&limit=${limit}`,
   );
@@ -58,7 +103,380 @@ async function fetchMessages(
   return json.data;
 }
 
+async function fetchMediaDownloadUrl({
+  wabaId,
+  convId,
+  key,
+}: MediaDownloadUrlParams): Promise<MediaDownloadUrlResponse> {
+  const searchParams = new URLSearchParams({ wabaId, convId, key });
+  const response = await fetch(`/api/media/download/url?${searchParams}`);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      extractJSendErrorMessage(body) ?? 'Failed to load media preview',
+    );
+  }
+
+  const json = await response.json();
+  return json.data;
+}
+
+async function fetchMediaUploadUrl({
+  wabaId,
+  convId,
+  contentType,
+}: {
+  wabaId: string;
+  convId: string;
+  contentType: string;
+}): Promise<MediaUploadUrlResponse> {
+  const searchParams = new URLSearchParams({ wabaId, convId, contentType });
+  const response = await fetch(`/api/media/upload/url?${searchParams}`);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      extractJSendErrorMessage(body) ?? 'Failed to prepare media upload',
+    );
+  }
+
+  const json = await response.json();
+  return json.data;
+}
+
+async function uploadFileToObjectStorage({
+  file,
+  uploadUrl,
+}: {
+  file: File;
+  uploadUrl: MediaUploadUrlResponse;
+}) {
+  if (file.size > uploadUrl.maxSizeBytes) {
+    throw new Error('Selected file is larger than the allowed upload size');
+  }
+
+  const formData = new FormData();
+
+  Object.entries(uploadUrl.fields).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+  formData.append('file', file);
+
+  const response = await fetch(uploadUrl.url, {
+    method: uploadUrl.method,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to upload media file');
+  }
+}
+
+async function confirmUploadedMediaMessage({
+  caption,
+  convId,
+  file,
+  key,
+  wabaId,
+}: SendMediaMessageData & { key: string }) {
+  const response = await fetch('/api/media/upload/confirm', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      wabaId,
+      convId,
+      key,
+      caption,
+      filename: file.name,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      extractJSendErrorMessage(body) ?? 'Failed to confirm media upload',
+    );
+  }
+
+  const json = await response.json();
+  return json.data as {
+    message: ChatMessage;
+    conversation: RawConversation;
+  };
+}
+
+async function uploadAndConfirmMediaMessage(data: SendMediaMessageData) {
+  const uploadUrl = await fetchMediaUploadUrl({
+    wabaId: data.wabaId,
+    convId: data.convId,
+    contentType: data.file.type,
+  });
+
+  await uploadFileToObjectStorage({ file: data.file, uploadUrl });
+
+  return confirmUploadedMediaMessage({ ...data, key: uploadUrl.key });
+}
+
 // ─── Grouping Helper ───────────────────────────────────────────────
+
+function getMediaTypeFromFile(file: File): ChatMediaType {
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('audio/')) return 'audio';
+  if (file.type.startsWith('video/')) return 'video';
+
+  return 'document';
+}
+
+function createLocalMediaMetadata(localMediaUrl: string) {
+  return JSON.stringify({ localMediaUrl });
+}
+
+function updateConversationListCache({
+  createChat,
+  queryClient,
+  updateChat,
+  wabaId,
+}: {
+  createChat: () => ChatConversation;
+  queryClient: QueryClient;
+  updateChat: (chat: ChatConversation) => ChatConversation;
+  wabaId: string;
+}) {
+  queryClient.setQueryData<{ chats: ChatConversation[]; total: number }>(
+    conversationKeys.all(wabaId),
+    (old) => {
+      if (!old) return old;
+
+      let found = false;
+      const updatedChats = old.chats.map((chat) => {
+        const updatedChat = updateChat(chat);
+        found = found || updatedChat !== chat;
+        return updatedChat;
+      });
+
+      if (!found) {
+        return {
+          ...old,
+          chats: [createChat(), ...old.chats],
+          total: old.total + 1,
+        };
+      }
+
+      const sortedChats = [...updatedChats].sort((a, b) => {
+        const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+        const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      return { ...old, chats: sortedChats };
+    },
+  );
+}
+
+function updateConversationCacheWithMessage({
+  conversation,
+  convId,
+  message,
+  queryClient,
+  wabaId,
+}: {
+  conversation: RawConversation;
+  convId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+  wabaId: string;
+}) {
+  updateConversationListCache({
+    createChat: () =>
+      mapRawConversationToChatConversation({
+        ...conversation,
+        messages: [message],
+      }),
+    queryClient,
+    updateChat: (chat) =>
+      chat.id === convId
+        ? {
+            ...chat,
+            lastMessage: message,
+            lastMessageAt: message.timestamp,
+            updatedAt: new Date().toISOString(),
+          }
+        : chat,
+    wabaId,
+  });
+}
+
+function upsertMessageInFirstPage({
+  convId,
+  message,
+  queryClient,
+}: {
+  convId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+}) {
+  queryClient.setQueryData<InfiniteData<MessagePageCache>>(
+    messageKeys.all(convId),
+    (old) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        pages: old.pages.map((page, index) => {
+          if (index !== 0) return page;
+
+          const existingMessage = page.messages.some(
+            (cachedMessage) => cachedMessage.id === message.id,
+          );
+
+          if (existingMessage) {
+            return {
+              ...page,
+              messages: page.messages.map((cachedMessage) =>
+                cachedMessage.id === message.id ? message : cachedMessage,
+              ),
+            };
+          }
+
+          return {
+            ...page,
+            messages: [message, ...page.messages],
+            total: page.total + 1,
+          };
+        }),
+      };
+    },
+  );
+}
+
+function insertOptimisticMessage({
+  convId,
+  message,
+  queryClient,
+}: {
+  convId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+}) {
+  upsertMessageInFirstPage({ convId, message, queryClient });
+}
+
+function markOptimisticMessageAsFailed({
+  convId,
+  errorMessage,
+  optimisticId,
+  queryClient,
+}: {
+  convId: string;
+  errorMessage: string;
+  optimisticId?: string;
+  queryClient: QueryClient;
+}) {
+  if (!optimisticId) {
+    return;
+  }
+
+  queryClient.setQueryData<InfiniteData<MessagePageCache>>(
+    messageKeys.all(convId),
+    (old) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          messages: page.messages.map((message) =>
+            message.id === optimisticId
+              ? { ...message, status: 'failed', errorMessage }
+              : message,
+          ),
+        })),
+      };
+    },
+  );
+}
+
+function replaceOptimisticMessageWithConfirmedMessage({
+  confirmedMessage,
+  convId,
+  optimisticId,
+  queryClient,
+}: {
+  confirmedMessage: ChatMessage;
+  convId: string;
+  optimisticId?: string;
+  queryClient: QueryClient;
+}) {
+  queryClient.setQueryData<InfiniteData<MessagePageCache>>(
+    messageKeys.all(convId),
+    (old) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        pages: old.pages.map((page, index) => {
+          if (index !== 0) return page;
+
+          const removedOptimisticMessage = optimisticId
+            ? page.messages.some((message) => message.id === optimisticId)
+            : false;
+          const filteredMessages = optimisticId
+            ? page.messages.filter((message) => message.id !== optimisticId)
+            : page.messages;
+          const alreadyHasConfirmedMessage = filteredMessages.some(
+            (message) => message.id === confirmedMessage.id,
+          );
+
+          if (alreadyHasConfirmedMessage) {
+            return {
+              ...page,
+              messages: filteredMessages,
+              total: removedOptimisticMessage ? page.total - 1 : page.total,
+            };
+          }
+
+          return {
+            ...page,
+            messages: [confirmedMessage, ...filteredMessages],
+          };
+        }),
+      };
+    },
+  );
+}
+
+function updateCachesWithConfirmedMessage({
+  conversation,
+  convId,
+  message,
+  optimisticId,
+  queryClient,
+  wabaId,
+}: {
+  conversation: RawConversation;
+  convId: string;
+  message: ChatMessage;
+  optimisticId?: string;
+  queryClient: QueryClient;
+  wabaId: string;
+}) {
+  replaceOptimisticMessageWithConfirmedMessage({
+    confirmedMessage: message,
+    convId,
+    optimisticId,
+    queryClient,
+  });
+  updateConversationCacheWithMessage({
+    conversation,
+    convId,
+    message,
+    queryClient,
+    wabaId,
+  });
+}
 
 export function groupMessagesByDate(messages: ChatMessage[]): MessageGroup[] {
   if (!messages.length) return [];
@@ -137,6 +555,39 @@ export function useMessages(
   });
 }
 
+export function useMessageMediaDownloadUrl({
+  wabaId,
+  convId,
+  key,
+  enabled = true,
+}: {
+  wabaId?: string;
+  convId?: string;
+  key?: string | null;
+  enabled?: boolean;
+}) {
+  return useQuery({
+    queryKey: messageKeys.mediaDownloadUrl(
+      wabaId ?? '',
+      convId ?? '',
+      key ?? '',
+    ),
+    queryFn: () =>
+      fetchMediaDownloadUrl({
+        wabaId: wabaId!,
+        convId: convId!,
+        key: key!,
+      }),
+    enabled: enabled && Boolean(wabaId && convId && key),
+    staleTime: (query) => {
+      const data = query.state.data as MediaDownloadUrlResponse | undefined;
+      return getMediaDownloadUrlStaleTime(data?.expiresIn);
+    },
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+}
+
 // ─── Mutation Hook ──────────────────────────────────────────────────
 
 interface SendMessageData {
@@ -182,12 +633,6 @@ export function useSendMessage() {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
 
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData<
-        InfiniteData<MessageFetchResponse>
-      >(messageKeys.all(convId));
-
-      // Create an optimistic message
       const optimisticId = `optimistic-${Date.now()}`;
       const optimisticMessage: ChatMessage = {
         id: optimisticId,
@@ -208,140 +653,99 @@ export function useSendMessage() {
         createdAt: new Date().toISOString(),
       };
 
-      // Optimistically update to the new value
-      queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
-        messageKeys.all(convId),
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page, index) => {
-              if (index === 0) {
-                return {
-                  ...page,
-                  messages: [optimisticMessage, ...page.messages],
-                  total: page.total + 1,
-                };
-              }
-              return page;
-            }),
-          };
-        },
-      );
+      insertOptimisticMessage({
+        convId,
+        message: optimisticMessage,
+        queryClient,
+      });
 
-      return { previousMessages, optimisticId };
+      return { optimisticId };
     },
     onError: (err, { convId }, context) => {
       // Show error toast
       toast.error(err.message || 'Failed to send message');
 
-      // Instead of rolling back the entire list, just mark the optimistic message as failed
-      if (context?.optimisticId) {
-        queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
-          messageKeys.all(convId),
-          (old) => {
-            if (!old) return old;
-            return {
-              ...old,
-              pages: old.pages.map((page) => ({
-                ...page,
-                messages: page.messages.map((m) =>
-                  m.id === context.optimisticId
-                    ? { ...m, status: 'failed', errorMessage: err.message }
-                    : m,
-                ),
-              })),
-            };
-          },
-        );
-      }
+      markOptimisticMessageAsFailed({
+        convId,
+        errorMessage: err.message,
+        optimisticId: context?.optimisticId,
+        queryClient,
+      });
     },
     onSuccess: ({ message, conversation }, { wabaId, convId }, context) => {
-      // 1. Update Messages Timeline Cache
-      queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
-        messageKeys.all(convId),
-        (old) => {
-          if (!old) return old;
+      updateCachesWithConfirmedMessage({
+        conversation,
+        convId,
+        message,
+        optimisticId: context?.optimisticId,
+        queryClient,
+        wabaId,
+      });
+    },
+  });
+}
 
-          return {
-            ...old,
-            pages: old.pages.map((page, index) => {
-              // Only modify the first page (newest messages)
-              if (index !== 0) return page;
+export function useSendMediaMessage() {
+  const queryClient = useQueryClient();
 
-              // Filter out the optimistic message if it exists
-              const filteredMessages = page.messages.filter(
-                (m) => m.id !== context?.optimisticId,
-              );
+  return useMutation({
+    mutationFn: uploadAndConfirmMediaMessage,
+    onMutate: async ({ caption, convId, file }) => {
+      await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
 
-              // Check if the real message already exists (e.g. from SSE)
-              const exists = filteredMessages.some((m) => m.id === message.id);
+      const optimisticId = `optimistic-media-${Date.now()}`;
+      const localMediaUrl = URL.createObjectURL(file);
+      const now = new Date().toISOString();
+      const optimisticMessage: ChatMessage = {
+        id: optimisticId,
+        messageId: null,
+        conversationId: convId,
+        direction: 'outgoing',
+        source: 'admin',
+        type: getMediaTypeFromFile(file),
+        content: caption?.trim() || null,
+        mediaObjectKey: null,
+        mediaMimeType: file.type,
+        mediaFilename: file.name,
+        mediaSize: file.size,
+        status: 'sending',
+        errorMessage: null,
+        metadata: createLocalMediaMetadata(localMediaUrl),
+        timestamp: now,
+        createdAt: now,
+      };
 
-              if (exists) {
-                return {
-                  ...page,
-                  messages: filteredMessages,
-                  // total count: if we removed optimistic and real exists, total-1
-                  total: page.total - 1,
-                };
-              }
+      insertOptimisticMessage({
+        convId,
+        message: optimisticMessage,
+        queryClient,
+      });
 
-              return {
-                ...page,
-                messages: [message, ...filteredMessages],
-                // total count: if we replaced optimistic with real, total stays same as after onMutate
-              };
-            }),
-          };
-        },
-      );
+      return { localMediaUrl, optimisticId };
+    },
+    onError: (err, { convId }, context) => {
+      toast.error(err.message || 'Failed to send media');
 
-      // 2. Update Conversations Sidebar Cache
-      queryClient.setQueryData<{ chats: ChatConversation[]; total: number }>(
-        conversationKeys.all(wabaId),
-        (old) => {
-          if (!old) return old;
+      markOptimisticMessageAsFailed({
+        convId,
+        errorMessage: err.message,
+        optimisticId: context?.optimisticId,
+        queryClient,
+      });
+    },
+    onSuccess: ({ conversation, message }, { convId, wabaId }, context) => {
+      if (context?.localMediaUrl) {
+        URL.revokeObjectURL(context.localMediaUrl);
+      }
 
-          let found = false;
-          const updatedChats = old.chats.map((chat) => {
-            if (chat.id === convId) {
-              found = true;
-              return {
-                ...chat,
-                lastMessage: message,
-                lastMessageAt: message.timestamp,
-                updatedAt: new Date().toISOString(),
-              };
-            }
-            return chat;
-          });
-
-          if (!found) {
-            const newChat = mapRawConversationToChatConversation({
-              ...conversation,
-              messages: [message],
-            });
-
-            return {
-              ...old,
-              chats: [newChat, ...old.chats],
-              total: old.total + 1,
-            };
-          }
-
-          const sortedChats = [...updatedChats].sort((a, b) => {
-            const timeA = a.lastMessageAt
-              ? new Date(a.lastMessageAt).getTime()
-              : 0;
-            const timeB = b.lastMessageAt
-              ? new Date(b.lastMessageAt).getTime()
-              : 0;
-            return timeB - timeA;
-          });
-
-          return { ...old, chats: sortedChats };
-        },
-      );
+      updateCachesWithConfirmedMessage({
+        conversation,
+        convId,
+        message,
+        optimisticId: context?.optimisticId,
+        queryClient,
+        wabaId,
+      });
     },
   });
 }
