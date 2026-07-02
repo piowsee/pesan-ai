@@ -24,7 +24,7 @@ type BotConversation = NonNullable<
   Awaited<ReturnType<typeof ConversationRepository.findConversationById>>
 >;
 type BotMessageHistory = Awaited<
-  ReturnType<typeof MessageRepository.findConversationTextHistory>
+  ReturnType<typeof MessageRepository.findConversationMessageHistory>
 >;
 function _toBotWebhookMessages(messages: BotMessageHistory) {
   return messages.map((message) => ({
