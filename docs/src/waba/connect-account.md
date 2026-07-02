@@ -36,6 +36,20 @@ Make sure you have:
 
 ![Choose existing or new WhatsApp setup](../Images/07-existing-or-new-waba-choice.png)
 
+## If you are not sure which option to choose
+
+Choose **Use an existing WhatsApp Business App account** if your business already uses WhatsApp Business App and wants to keep using the same number.
+
+Choose **Create a new WhatsApp Business Account** if your business wants to create a new WhatsApp setup through Meta.
+
+If you are not sure, contact the pesan.ai team before continuing.
+
+## If the Meta popup does not open
+
+Allow popups in your browser, check your internet connection, refresh the page, and try **Connect WhatsApp account** again from **WABA Management**.
+
+Facebook Embedded Signup requires an HTTPS page. If the button is disabled or the popup still does not open, contact the pesan.ai team.
+
 ## Expected result
 
 After the setup is completed, return to pesan.ai and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.

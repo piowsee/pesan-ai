@@ -18,6 +18,12 @@ The Customers page allows you to filter customer contacts and export the result.
 
 The exported file can be used for follow-up, reporting, or operational review. The export includes customer name, phone number, and a WhatsApp chat link when available.
 
+## If Export Excel does not download
+
+Check your browser download permission and Downloads folder. If filters are active, the export follows the selected **All WABAs** and **All numbers** filters.
+
+Refresh the page, click **Clear** to remove filters if needed, and try **Export Excel** again. If the issue continues, contact the pesan.ai team.
+
 ## Notes
 
 - If filters are active, the exported data follows the selected filters.

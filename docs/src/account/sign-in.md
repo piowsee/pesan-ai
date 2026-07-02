@@ -28,13 +28,23 @@ Make sure you already have:
 
 If your credentials are correct and your account is active, you will be redirected to the pesan.ai dashboard.
 
+## If you do not have an account yet
+
+You cannot create a pesan.ai account by yourself from the login page.
+
+The pesan.ai team creates your account after consultation, agreement, and payment are completed. If you do not have an account yet, use **Contact us** or **Book a Consultation** first.
+
 ## If you cannot sign in
 
 If you cannot sign in, check that:
 
 - You are using the correct email address.
 - Your password is correct.
-- Your account has already been activated by the pesan.ai team.
+- Your account has already been created and activated by the pesan.ai team.
 - You have accepted the Terms and Privacy notice on the login form.
+
+Refresh the page and try **Login** again after checking the details.
+
+If you forgot your password and your account already exists, click **Forgot password?** on the login page and follow the email reset flow.
 
 If the issue continues, contact the pesan.ai team for help.

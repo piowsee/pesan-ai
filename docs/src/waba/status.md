@@ -25,4 +25,13 @@ Use the number dropdown to review the numbers connected to the account. If neede
 
 ## What to do if an account needs attention
 
-If an account shows **Suspended** or appears under **needs attention**, review the account details and contact the pesan.ai team if you are not sure what action is required.
+If an account shows **Suspended** or appears under **needs attention**, the connected account may require review or action.
+
+Check that:
+
+- Meta onboarding was completed.
+- The correct WhatsApp number was connected.
+- The Meta business asset is still accessible.
+- The WhatsApp Business Account is active.
+
+If you are not sure what action is required, contact the pesan.ai team.

@@ -17,6 +17,17 @@ Customer data is available after WhatsApp accounts are connected and customer in
 
 The visible information may depend on the connected WhatsApp account and the data available in the system.
 
+## If the Customers page is empty
+
+This can happen if:
+
+- No customer has chatted with the connected WhatsApp account yet.
+- The selected WABA filter has no contacts.
+- The selected number filter has no contacts.
+- The WhatsApp Business Account is not connected correctly.
+
+Click **Clear** to remove filters, then check **WABA Management** to confirm the account status.
+
 ## Table columns
 
 The Customers table shows:

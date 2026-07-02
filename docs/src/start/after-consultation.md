@@ -21,6 +21,12 @@ Once the consultation, agreement, and payment process are completed, the pesan.a
 
 After your account is ready, you will receive the sign-in details needed to access the pesan.ai dashboard.
 
+## If you have not been contacted yet
+
+The pesan.ai team will contact you through the WhatsApp number or email address submitted in the consultation form.
+
+If you have not received a message yet, check that the WhatsApp number and email address you submitted are correct, active, and reachable. If the contact information was incorrect, submit the consultation form again from **Contact us** or **Book a Consultation**.
+
 ## Before signing in
 
 Before signing in, make sure you have:

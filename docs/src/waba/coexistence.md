@@ -26,6 +26,8 @@ Make sure:
 
 ![Select business portfolio](../Images/06-business-portfolio-selection.png)
 
+**If this happens:** If you selected the wrong business portfolio and the popup still allows changes, go back and choose the correct one. If not, close the popup and restart from **WABA Management**. Choose the business portfolio that owns or manages the WhatsApp Business account you want to connect.
+
 3. **Choose the existing WhatsApp Business App option.** When asked to choose the WhatsApp Business setup option, select the option to connect an existing WhatsApp Business App account.
 
 This option may appear as **Connect an existing WhatsApp Business App account**, **Hubungkan Aplikasi WhatsApp Business**, or similar wording depending on the language shown by Meta.
@@ -44,11 +46,15 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 
 ![QR code or access code screen](../Images/10-coexistence-qr-or-code.png)
 
+**If this happens:** Follow the instruction shown in the Meta onboarding screen. Keep the WhatsApp Business App open on your phone and continue from there.
+
 7. **Open the Facebook Business message.** In WhatsApp, open the message from **Facebook Business**. Tap the connect button in the message.
 
 ![Facebook Business message in WhatsApp](../Images/11-facebook-business-message.png)
 
 ![Connect button in WhatsApp](../Images/12-connect-button-whatsapp.png)
+
+**If this happens:** If the Facebook Business message does not appear, check that the phone number is correct, active in WhatsApp Business App, connected to the internet, and able to receive messages. If it still does not appear, restart from **WABA Management** or contact the pesan.ai team.
 
 8. **Connect to the Business Platform.** On your phone, tap **Connect to the Business Platform**. Depending on the language shown, this may appear as **Hubungkan** or similar wording.
 
@@ -59,6 +65,8 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 ![Choose not to share chat history](../Images/14-dont-share-chats.png)
 
 **Important:** pesan.ai currently does not support chat history sync. Choose **Don't share chats** during this step.
+
+If you accidentally selected **Share all chats**, contact the pesan.ai team before continuing.
 
 10. **Return to the Meta onboarding popup.** Back in the Meta onboarding popup, confirm or edit your WhatsApp Business account details, such as account name and time zone.
 
