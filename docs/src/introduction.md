@@ -2,10 +2,6 @@
   <img src="Images/pesan-ai-black-logo.png" alt="pesan.ai logo" />
   <p class="pa-eyebrow">User Guide</p>
   <h1>pesan.ai</h1>
-  <p>
-    A managed WhatsApp AI automation service for business teams that want faster,
-    more organized customer communication through WhatsApp Business.
-  </p>
 </div>
 
 # Introduction
