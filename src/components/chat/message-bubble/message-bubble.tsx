@@ -1,0 +1,167 @@
+'use client';
+
+import { MessageStatus } from '@/components/chat/message-status';
+import { Bubble, BubbleContent } from '@/components/ui/bubble';
+import { useMessageMediaDownloadUrl } from '@/hooks/use-message';
+import { formatMessageTimestamp } from '@/lib/chat/chat-format';
+import { cn } from '@/lib/utils';
+import type { ChatMessage } from '@/types/chat';
+import type { ReactElement } from 'react';
+
+import { AudioMessage } from './audio-message';
+import { DocumentMessage } from './document-message';
+import { ImageMessage } from './image-message';
+import { MediaPlaceholder } from './media-placeholder';
+import {
+  getMediaTitle,
+  isMediaMessageType,
+  mediaTypeIcons,
+} from './message-utils';
+import { TextMessage } from './text-message';
+import type { MediaMessageType, MediaRendererProps } from './types';
+import { UnsupportedMessage } from './unsupported-message';
+import { useElementInViewport } from './use-element-in-viewport';
+import { VideoMessage } from './video-message';
+
+type MessageBubbleProps = {
+  message: ChatMessage;
+  wabaId?: string;
+};
+
+const mediaRenderers = {
+  audio: AudioMessage,
+  document: DocumentMessage,
+  image: ImageMessage,
+  video: VideoMessage,
+} satisfies Record<
+  MediaMessageType,
+  (props: MediaRendererProps) => ReactElement
+>;
+
+function getMediaLoadDescription({
+  error,
+  isError,
+  isFetching,
+  isInViewport,
+}: {
+  error: unknown;
+  isError: boolean;
+  isFetching: boolean;
+  isInViewport: boolean;
+}) {
+  if (isError) {
+    return error instanceof Error
+      ? error.message
+      : 'Could not load media preview.';
+  }
+
+  if (isFetching || isInViewport) {
+    return 'Loading media preview...';
+  }
+
+  return 'Media preview will load when visible.';
+}
+
+function MessageBubbleContent({
+  isInViewport,
+  message,
+  wabaId,
+}: {
+  isInViewport: boolean;
+  message: ChatMessage;
+  wabaId?: string;
+}) {
+  const mediaType = isMediaMessageType(message.type) ? message.type : null;
+  const canLoadMedia = Boolean(mediaType && wabaId && message.mediaObjectKey);
+  const { data, error, isError, isFetching } = useMessageMediaDownloadUrl({
+    wabaId,
+    convId: message.conversationId,
+    key: message.mediaObjectKey,
+    enabled: canLoadMedia && isInViewport,
+  });
+
+  if (message.type === 'text') {
+    return <TextMessage message={message} />;
+  }
+
+  if (!mediaType) {
+    return <UnsupportedMessage type={message.type} />;
+  }
+
+  const Renderer = mediaRenderers[mediaType];
+  const title = getMediaTitle(message, `${mediaType} message`);
+  const icon = mediaTypeIcons[mediaType];
+
+  if (!canLoadMedia) {
+    return (
+      <MediaPlaceholder
+        icon={icon}
+        title={title}
+        description="Media file is unavailable."
+      />
+    );
+  }
+
+  if (!data) {
+    return (
+      <MediaPlaceholder
+        icon={icon}
+        title={title}
+        description={getMediaLoadDescription({
+          error,
+          isError,
+          isFetching,
+          isInViewport,
+        })}
+      />
+    );
+  }
+
+  return <Renderer message={message} downloadUrl={data.downloadUrl} />;
+}
+
+function MessageBubble({ message, wabaId }: MessageBubbleProps) {
+  const isOutgoing = message.direction === 'outgoing';
+  const { ref, isInViewport } = useElementInViewport();
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'flex min-w-0 w-full',
+        isOutgoing ? 'justify-end' : 'justify-start',
+      )}
+    >
+      <Bubble
+        align={isOutgoing ? 'end' : 'start'}
+        className="max-w-[85%]"
+        variant={isOutgoing ? 'tinted' : 'muted'}
+      >
+        <BubbleContent
+          className={cn(
+            'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
+            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm',
+          )}
+        >
+          <MessageBubbleContent
+            message={message}
+            wabaId={wabaId}
+            isInViewport={isInViewport}
+          />
+
+          <div
+            className={cn(
+              'mt-1.5 flex items-center justify-end gap-1 text-[11px]',
+              isOutgoing ? 'text-primary/70' : 'text-muted-foreground/70',
+            )}
+          >
+            <span>{formatMessageTimestamp(message.timestamp)}</span>
+            {isOutgoing ? <MessageStatus status={message.status} /> : null}
+          </div>
+        </BubbleContent>
+      </Bubble>
+    </div>
+  );
+}
+
+export { MessageBubble };

@@ -102,18 +102,30 @@ export const CreateS3UploadUrlSchema = z.object({
   contentType: MediaContentTypeSchema,
 });
 
+const S3MediaObjectKeySchema = z
+  .string()
+  .regex(
+    /^[^/]+\/[^/]+\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    'Invalid media object key',
+  );
+
 export const ConfirmS3UploadSchema = z.object({
   wabaId: UploadPathSegmentSchema,
   convId: UploadPathSegmentSchema,
-  key: z
-    .string()
-    .regex(
-      /^[^/]+\/[^/]+\/[^/]+\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-      'Invalid upload key',
-    ),
+  key: S3MediaObjectKeySchema,
   caption: z.string().trim().max(4096).optional(),
+});
+
+export const CreateS3DownloadUrlSchema = z.object({
+  wabaId: UploadPathSegmentSchema,
+  convId: UploadPathSegmentSchema,
+  key: S3MediaObjectKeySchema,
 });
 
 export type CreateS3UploadUrlInput = z.infer<typeof CreateS3UploadUrlSchema>;
 
 export type ConfirmS3UploadInput = z.infer<typeof ConfirmS3UploadSchema>;
+
+export type CreateS3DownloadUrlInput = z.infer<
+  typeof CreateS3DownloadUrlSchema
+>;

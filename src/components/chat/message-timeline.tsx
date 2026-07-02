@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageBubble } from '@/components/chat/message-bubble';
+import { MessageBubble } from '@/components/chat/message-bubble/message-bubble';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,6 +29,7 @@ function MessageTimelineSkeleton() {
 
 export function MessageTimeline({
   conversationId,
+  wabaId,
   messages,
   isLoading,
   hasNextPage,
@@ -37,6 +38,7 @@ export function MessageTimeline({
   localSendScrollSignal,
 }: {
   conversationId?: string;
+  wabaId?: string;
   messages: MessageGroup[];
   isLoading: boolean;
   hasNextPage: boolean;
@@ -200,7 +202,11 @@ export function MessageTimeline({
                     </span>
                   </div>
                   {group.messages.map((message) => (
-                    <MessageBubble key={message.id} message={message} />
+                    <MessageBubble
+                      key={message.id}
+                      message={message}
+                      wabaId={wabaId}
+                    />
                   ))}
                 </div>
               ))

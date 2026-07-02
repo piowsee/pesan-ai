@@ -542,6 +542,7 @@ export function ChatWorkspace() {
           {selectedConversation ? (
             <ChatDetail
               conversation={selectedConversation}
+              wabaId={activeWabaId}
               messages={messages}
               isLoading={isMessagesLoading}
               hasNextPage={hasNextPage}

@@ -42,6 +42,7 @@ function ChatDetailSkeleton() {
 
 export function ChatDetail({
   conversation,
+  wabaId,
   messages,
   isLoading,
   hasNextPage,
@@ -55,6 +56,7 @@ export function ChatDetail({
   onContactAreaClick,
 }: {
   conversation?: ChatConversation;
+  wabaId?: string;
   messages: MessageGroup[];
   isLoading: boolean;
   hasNextPage: boolean;
@@ -100,6 +102,7 @@ export function ChatDetail({
         <div className="absolute inset-0">
           <MessageTimeline
             conversationId={conversation.id}
+            wabaId={wabaId}
             messages={messages}
             isLoading={isLoading}
             hasNextPage={hasNextPage}

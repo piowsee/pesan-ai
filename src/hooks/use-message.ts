@@ -1,10 +1,12 @@
 'use client';
 
+import { extractJSendErrorMessage } from '@/lib/api-helper/error';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import {
   type InfiniteData,
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -20,7 +22,11 @@ import {
 export const messageKeys = {
   root: ['messages'] as const,
   all: (convId: string) => ['messages', convId] as const,
+  mediaDownloadUrl: (wabaId: string, convId: string, key: string) =>
+    ['messages', convId, 'media-download-url', wabaId, key] as const,
 };
+
+const MEDIA_DOWNLOAD_URL_STALE_TIME_MS = 30 * 60 * 1000;
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -34,6 +40,17 @@ interface MessageFetchResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+interface MediaDownloadUrlResponse {
+  downloadUrl: string;
+  expiresIn: number;
+}
+
+interface MediaDownloadUrlParams {
+  wabaId: string;
+  convId: string;
+  key: string;
 }
 
 // ─── API Functions ───────────────────────────────────────────────────
@@ -52,6 +69,25 @@ async function fetchMessages(
     const body = await response.json().catch(() => null);
     const message = body?.data?.message ?? 'Failed to fetch messages';
     throw new Error(message);
+  }
+
+  const json = await response.json();
+  return json.data;
+}
+
+async function fetchMediaDownloadUrl({
+  wabaId,
+  convId,
+  key,
+}: MediaDownloadUrlParams): Promise<MediaDownloadUrlResponse> {
+  const searchParams = new URLSearchParams({ wabaId, convId, key });
+  const response = await fetch(`/api/media/download/url?${searchParams}`);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      extractJSendErrorMessage(body) ?? 'Failed to load media preview',
+    );
   }
 
   const json = await response.json();
@@ -134,6 +170,34 @@ export function useMessages(
     enabled: !!wabaId && !!convId,
     // Keep data fresh, let real-time updates (SSE) handle new messages
     staleTime: Infinity,
+  });
+}
+
+export function useMessageMediaDownloadUrl({
+  wabaId,
+  convId,
+  key,
+  enabled = true,
+}: {
+  wabaId?: string;
+  convId?: string;
+  key?: string | null;
+  enabled?: boolean;
+}) {
+  return useQuery({
+    queryKey: messageKeys.mediaDownloadUrl(
+      wabaId ?? '',
+      convId ?? '',
+      key ?? '',
+    ),
+    queryFn: () =>
+      fetchMediaDownloadUrl({
+        wabaId: wabaId!,
+        convId: convId!,
+        key: key!,
+      }),
+    enabled: enabled && Boolean(wabaId && convId && key),
+    staleTime: MEDIA_DOWNLOAD_URL_STALE_TIME_MS,
   });
 }
 
