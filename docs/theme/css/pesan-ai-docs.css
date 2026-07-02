@@ -162,16 +162,22 @@ body {
 }
 
 .chapter li a {
-  padding-inline-start: 0.55rem;
+  padding-inline: 0.55rem 0.75rem;
+  transition: color 160ms ease;
 }
 
-.chapter li a:hover,
-.chapter li a.active {
+.chapter li a:hover {
   color: #334155;
 }
 
 .chapter li a.active {
+  color: var(--brand-strong);
   font-weight: 700;
+}
+
+.chapter a.current-header {
+  color: var(--brand-strong);
+  font-weight: 800;
 }
 
 .chapter li.part-title {
