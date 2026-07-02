@@ -1,24 +1,204 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { CHAT_MESSAGE_CHARACTER_LIMIT } from '@/lib/chat/chat';
+import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
-import { AlertTriangleIcon, SendHorizontalIcon } from 'lucide-react';
-import { useRef, useState } from 'react';
+import {
+  AlertTriangleIcon,
+  FileTextIcon,
+  ImageIcon,
+  MusicIcon,
+  PlusIcon,
+  SendHorizontalIcon,
+  XIcon,
+} from 'lucide-react';
+import { type ChangeEvent, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
+type MediaPickerType = 'audio' | 'document' | 'photo-video';
+
+type SelectedMedia = {
+  file: File;
+  previewUrl: string;
+};
+
+type SendMediaMessageInput = {
+  file: File;
+  caption?: string;
+};
+
+const documentAccept = [
+  'text/plain',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+].join(',');
+
+const photoVideoAccept = [
+  'image/jpeg',
+  'image/png',
+  'video/3gpp',
+  'video/mp4',
+].join(',');
+
+const audioAccept = [
+  'audio/aac',
+  'audio/amr',
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/ogg',
+].join(',');
+
+const mediaPickerOptions = [
+  {
+    type: 'document' as const,
+    label: 'Document',
+    icon: FileTextIcon,
+  },
+  {
+    type: 'photo-video' as const,
+    label: 'Photos & videos',
+    icon: ImageIcon,
+  },
+  {
+    type: 'audio' as const,
+    label: 'Audio',
+    icon: MusicIcon,
+  },
+];
+
+function formatFileSize(size: number) {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = size;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${value >= 10 || unitIndex === 0 ? value.toFixed(0) : value.toFixed(1)}${units[unitIndex]}`;
+}
+
+function getFileTypeLabel(file: File) {
+  const extension = file.name.split('.').pop()?.trim();
+
+  if (extension && extension !== file.name) {
+    return extension.toUpperCase();
+  }
+
+  if (file.type.startsWith('image/')) return 'IMAGE';
+  if (file.type.startsWith('audio/')) return 'AUDIO';
+  if (file.type.startsWith('video/')) return 'VIDEO';
+
+  return 'FILE';
+}
+
+function MediaPreview({
+  selectedMedia,
+  onRemove,
+}: {
+  selectedMedia: SelectedMedia;
+  onRemove: () => void;
+}) {
+  const { file, previewUrl } = selectedMedia;
+  const description = `${formatFileSize(file.size)} · ${getFileTypeLabel(file)}`;
+
+  return (
+    <div className="mx-4 mb-2 rounded-2xl border border-brand/15 bg-background/95 p-3 shadow-sm backdrop-blur-sm">
+      <div className="flex items-start gap-3">
+        {file.type.startsWith('image/') ? (
+          // eslint-disable-next-line @next/next/no-img-element -- Local object URLs cannot be optimized by next/image.
+          <img
+            src={previewUrl}
+            alt={file.name}
+            className="size-16 rounded-xl object-cover"
+          />
+        ) : file.type.startsWith('video/') ? (
+          <video
+            src={previewUrl}
+            className="size-16 rounded-xl bg-muted object-cover"
+            muted
+          />
+        ) : (
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-muted">
+            {file.type.startsWith('audio/') ? (
+              <MusicIcon className="size-6 text-muted-foreground" />
+            ) : (
+              <FileTextIcon className="size-6 text-muted-foreground" />
+            )}
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1 pt-1">
+          <p className="truncate text-sm font-medium">{file.name}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
+          {file.type.startsWith('audio/') ? (
+            <audio
+              controls
+              preload="metadata"
+              src={previewUrl}
+              className="mt-2 w-full"
+            />
+          ) : null}
+        </div>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onRemove}
+          className="size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+        >
+          <XIcon />
+          <span className="sr-only">Remove attachment</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function MessageComposer({
   conversation,
   isSending,
-  onSend,
+  onSendAction,
+  onSendMediaAction,
 }: {
   conversation: ChatConversation;
   isSending: boolean;
-  onSend: (content: string) => void;
+  onSendAction: (content: string) => void;
+  onSendMediaAction: (input: SendMediaMessageInput) => void;
 }) {
   const [draft, setDraft] = useState('');
+  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(
+    null,
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
+  const photoVideoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (selectedMedia) {
+        URL.revokeObjectURL(selectedMedia.previewUrl);
+      }
+    };
+  }, [selectedMedia]);
 
   const resizeTextarea = (target?: HTMLTextAreaElement | null) => {
     const element = target ?? textareaRef.current;
@@ -42,17 +222,74 @@ export function MessageComposer({
     textareaRef.current.style.overflowY = 'hidden';
   };
 
+  const clearSelectedMedia = () => {
+    setSelectedMedia((current) => {
+      if (current) {
+        URL.revokeObjectURL(current.previewUrl);
+      }
+      return null;
+    });
+  };
+
+  const resetComposer = () => {
+    setDraft('');
+    clearSelectedMedia();
+    resetTextarea();
+  };
+
+  const openFilePicker = (type: MediaPickerType) => {
+    if (type === 'audio') {
+      audioInputRef.current?.click();
+      return;
+    }
+
+    if (type === 'document') {
+      documentInputRef.current?.click();
+      return;
+    }
+
+    photoVideoInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type) {
+      toast.error('This file type is not supported.');
+      return;
+    }
+
+    clearSelectedMedia();
+    setSelectedMedia({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    });
+  };
+
   const trimmedDraft = draft.trim();
-  const canSendMessage = Boolean(trimmedDraft);
+  const canSendMessage = Boolean(trimmedDraft || selectedMedia) && !isSending;
 
   function handleSend() {
     if (!conversation.canSendFreeform || !canSendMessage) {
       return;
     }
 
-    onSend(trimmedDraft);
-    setDraft('');
-    resetTextarea();
+    if (selectedMedia) {
+      onSendMediaAction({
+        file: selectedMedia.file,
+        caption: trimmedDraft || undefined,
+      });
+      resetComposer();
+      return;
+    }
+
+    onSendAction(trimmedDraft);
+    resetComposer();
   }
 
   return (
@@ -72,8 +309,69 @@ export function MessageComposer({
         </div>
       ) : null}
 
+      {selectedMedia ? (
+        <MediaPreview
+          selectedMedia={selectedMedia}
+          onRemove={clearSelectedMedia}
+        />
+      ) : null}
+
+      <input
+        ref={documentInputRef}
+        type="file"
+        accept={documentAccept}
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={photoVideoInputRef}
+        type="file"
+        accept={photoVideoAccept}
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept={audioAccept}
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       <div className="flex items-end gap-2 bg-transparent px-4 py-1">
-        <div className="flex flex-1 items-end rounded-2xl border border-brand/15 bg-brand/5 px-4 py-2 shadow-sm transition-colors focus-within:border-brand/30 focus-within:bg-brand/10">
+        <div className="flex flex-1 items-end rounded-2xl border border-brand/15 bg-brand/5 px-2 py-2 shadow-sm transition-colors focus-within:border-brand/30 focus-within:bg-brand/10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                disabled={!conversation.canSendFreeform || isSending}
+                className="mb-0.5 size-10 shrink-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              >
+                <PlusIcon />
+                <span className="sr-only">Attach media</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="min-w-56">
+              <DropdownMenuGroup>
+                {mediaPickerOptions.map((option) => {
+                  const Icon = option.icon;
+
+                  return (
+                    <DropdownMenuItem
+                      key={option.type}
+                      onSelect={() => openFilePicker(option.type)}
+                    >
+                      <Icon />
+                      {option.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Textarea
             ref={textareaRef}
             value={draft}
@@ -88,10 +386,12 @@ export function MessageComposer({
               }
             }}
             maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
-            disabled={!conversation.canSendFreeform}
+            disabled={!conversation.canSendFreeform || isSending}
             placeholder={
               conversation.canSendFreeform
-                ? `Message...`
+                ? selectedMedia
+                  ? 'Add a caption...'
+                  : 'Message...'
                 : 'Template message required'
             }
             className="min-h-10 max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 text-[15px] leading-relaxed shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:opacity-50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -102,9 +402,14 @@ export function MessageComposer({
             disabled={!conversation.canSendFreeform || !canSendMessage}
             size="icon"
             variant="ghost"
-            className={`mb-0.5 size-10 shrink-0 rounded-full transition-colors cursor-pointer ${canSendMessage ? 'text-primary hover:text-primary hover:bg-primary/10' : 'text-muted-foreground/40 hover:text-muted-foreground/40 hover:bg-transparent'}`}
+            className={cn(
+              'mb-0.5 size-10 shrink-0 cursor-pointer rounded-full transition-colors',
+              canSendMessage
+                ? 'text-primary hover:bg-primary/10 hover:text-primary'
+                : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
+            )}
           >
-            {isSending && !trimmedDraft ? (
+            {isSending ? (
               <Spinner className="size-5" />
             ) : (
               <SendHorizontalIcon className="size-5" />

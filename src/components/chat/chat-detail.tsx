@@ -51,6 +51,7 @@ export function ChatDetail({
   localSendScrollSignal,
   isSending,
   onSend,
+  onSendMedia,
   showBackButton,
   onBack,
   onContactAreaClick,
@@ -65,6 +66,7 @@ export function ChatDetail({
   localSendScrollSignal: number;
   isSending: boolean;
   onSend: (content: string) => void;
+  onSendMedia: (input: { file: File; caption?: string }) => void;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;
@@ -118,7 +120,8 @@ export function ChatDetail({
           key={conversation.id}
           conversation={conversation}
           isSending={isSending}
-          onSend={onSend}
+          onSendAction={onSend}
+          onSendMediaAction={onSendMedia}
         />
       </div>
     </section>

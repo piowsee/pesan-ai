@@ -13,7 +13,11 @@ import {
   useUpdateAdminTakeover,
 } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useMessages, useSendMessage } from '@/hooks/use-message';
+import {
+  useMessages,
+  useSendMediaMessage,
+  useSendMessage,
+} from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
@@ -453,7 +457,10 @@ export function ChatWorkspace() {
     [activeWabaId, updateAdminTakeover],
   );
 
-  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+  const { mutate: sendMessage, isPending: isSendingText } = useSendMessage();
+  const { mutate: sendMediaMessage, isPending: isSendingMedia } =
+    useSendMediaMessage();
+  const isSending = isSendingText || isSendingMedia;
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -467,6 +474,21 @@ export function ChatWorkspace() {
       });
     },
     [activeWabaId, selectedConversationId, sendMessage],
+  );
+
+  const handleSendMediaMessage = useCallback(
+    ({ caption, file }: { file: File; caption?: string }) => {
+      if (!selectedConversationId || !activeWabaId) return;
+
+      setLocalSendScrollSignal((value) => value + 1);
+      sendMediaMessage({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+        file,
+        caption,
+      });
+    },
+    [activeWabaId, selectedConversationId, sendMediaMessage],
   );
 
   const isRestoringPersistedState = shouldRestoreFromStorage && !hasNoWabas;
@@ -551,6 +573,7 @@ export function ChatWorkspace() {
               localSendScrollSignal={localSendScrollSignal}
               isSending={isSending}
               onSend={handleSendMessage}
+              onSendMedia={handleSendMediaMessage}
               showBackButton={showMobileDetail}
               onBack={() => {
                 replaceChatState({

@@ -114,6 +114,7 @@ export const ConfirmS3UploadSchema = z.object({
   convId: UploadPathSegmentSchema,
   key: S3MediaObjectKeySchema,
   caption: z.string().trim().max(4096).optional(),
+  filename: z.string().trim().min(1).max(255).optional(),
 });
 
 export const CreateS3DownloadUrlSchema = z.object({

@@ -1,3 +1,4 @@
+import { Spinner } from '@/components/ui/spinner';
 import { FileTextIcon } from 'lucide-react';
 
 import { MessageCaption } from './message-caption';
@@ -37,6 +38,7 @@ function DocumentMessage({ downloadUrl, message }: MediaRendererProps) {
   const documentType = getDocumentType(message);
   const title = message.mediaFilename || 'Document';
   const description = [size, documentType].filter(Boolean).join(' · ');
+  const isSending = message.status === 'sending';
 
   return (
     <div className="flex flex-col gap-2">
@@ -50,9 +52,12 @@ function DocumentMessage({ downloadUrl, message }: MediaRendererProps) {
         <FileTextIcon className="size-5 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{title}</span>
-          {description ? (
-            <span className="block truncate text-xs text-muted-foreground">
-              {description}
+          {description || isSending ? (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {description ? (
+                <span className="truncate">{description}</span>
+              ) : null}
+              {isSending ? <Spinner className="size-3" /> : null}
             </span>
           ) : null}
         </span>
