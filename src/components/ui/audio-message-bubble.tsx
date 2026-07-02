@@ -12,6 +12,7 @@ interface AudioMessageBubbleProps {
   bubbleColor?: string;
   waveColor?: string;
   className?: string;
+  getFreshAudioSrc?: () => Promise<string>;
 }
 
 type WindowWithWebkitAudioContext = Window & {
@@ -147,6 +148,7 @@ export default function AudioMessageBubble({
   bubbleColor,
   waveColor,
   className,
+  getFreshAudioSrc,
 }: AudioMessageBubbleProps) {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
@@ -241,6 +243,14 @@ export default function AudioMessageBubble({
     if (isPlaying) {
       audio.pause();
       return;
+    }
+
+    if (getFreshAudioSrc) {
+      const freshAudioSrc = await getFreshAudioSrc();
+      if (freshAudioSrc && freshAudioSrc !== audio.src) {
+        audio.src = freshAudioSrc;
+        audio.load();
+      }
     }
 
     await audio.play().catch(() => {

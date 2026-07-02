@@ -71,12 +71,14 @@ function MessageBubbleContent({
 }) {
   const mediaType = isMediaMessageType(message.type) ? message.type : null;
   const canLoadMedia = Boolean(mediaType && wabaId && message.mediaObjectKey);
-  const { data, error, isError } = useMessageMediaDownloadUrl({
-    wabaId,
-    convId: message.conversationId,
-    key: message.mediaObjectKey,
-    enabled: canLoadMedia && isInViewport,
-  });
+  const { data, error, isError, isStale, refetch } = useMessageMediaDownloadUrl(
+    {
+      wabaId,
+      convId: message.conversationId,
+      key: message.mediaObjectKey,
+      enabled: canLoadMedia && isInViewport,
+    },
+  );
 
   if (message.type === 'text') {
     return <TextMessage message={message} />;
@@ -119,7 +121,23 @@ function MessageBubbleContent({
     return <MediaMessageSkeleton type={mediaType} />;
   }
 
-  return <Renderer message={message} downloadUrl={data.downloadUrl} />;
+  const getFreshDownloadUrl = async () => {
+    if (!isStale) {
+      return data.downloadUrl;
+    }
+
+    const result = await refetch();
+    return result.data?.downloadUrl ?? data.downloadUrl;
+  };
+
+  return (
+    <Renderer
+      message={message}
+      downloadUrl={data.downloadUrl}
+      getFreshDownloadUrl={getFreshDownloadUrl}
+      isDownloadUrlStale={isStale}
+    />
+  );
 }
 
 function MessageBubble({ message, wabaId }: MessageBubbleProps) {

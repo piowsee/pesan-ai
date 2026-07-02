@@ -23,7 +23,20 @@ export const messageKeys = {
     ['messages', convId, 'media-download-url', wabaId, key] as const,
 };
 
-const MEDIA_DOWNLOAD_URL_STALE_TIME_MS = 30 * 60 * 1000;
+const MEDIA_DOWNLOAD_URL_EXPIRES_IN_FALLBACK_MS = 30 * 60 * 1000;
+const MEDIA_DOWNLOAD_URL_REFRESH_BUFFER_MS = 60 * 1000;
+const MEDIA_DOWNLOAD_URL_MIN_STALE_TIME_MS = 10 * 1000;
+
+function getMediaDownloadUrlStaleTime(expiresIn?: number) {
+  const expiresInMs = expiresIn
+    ? expiresIn * 1000
+    : MEDIA_DOWNLOAD_URL_EXPIRES_IN_FALLBACK_MS;
+
+  return Math.max(
+    MEDIA_DOWNLOAD_URL_MIN_STALE_TIME_MS,
+    expiresInMs - MEDIA_DOWNLOAD_URL_REFRESH_BUFFER_MS,
+  );
+}
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -566,7 +579,12 @@ export function useMessageMediaDownloadUrl({
         key: key!,
       }),
     enabled: enabled && Boolean(wabaId && convId && key),
-    staleTime: MEDIA_DOWNLOAD_URL_STALE_TIME_MS,
+    staleTime: (query) => {
+      const data = query.state.data as MediaDownloadUrlResponse | undefined;
+      return getMediaDownloadUrlStaleTime(data?.expiresIn);
+    },
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 

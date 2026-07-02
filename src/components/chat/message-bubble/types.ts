@@ -9,4 +9,6 @@ export type MessageRendererProps = {
 
 export type MediaRendererProps = MessageRendererProps & {
   downloadUrl: string;
+  getFreshDownloadUrl?: () => Promise<string>;
+  isDownloadUrlStale?: boolean;
 };

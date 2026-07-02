@@ -1,5 +1,6 @@
 import { Spinner } from '@/components/ui/spinner';
 import { FileTextIcon } from 'lucide-react';
+import type { MouseEvent } from 'react';
 
 import { MessageCaption } from './message-caption';
 import { formatByteSize } from './message-utils';
@@ -33,12 +34,34 @@ function getDocumentType({
   return mimeType ? (documentTypeByMimeType[mimeType] ?? null) : null;
 }
 
-function DocumentMessage({ downloadUrl, message }: MediaRendererProps) {
+function DocumentMessage({
+  downloadUrl,
+  getFreshDownloadUrl,
+  isDownloadUrlStale,
+  message,
+}: MediaRendererProps) {
   const size = formatByteSize(message.mediaSize);
   const documentType = getDocumentType(message);
   const title = message.mediaFilename || 'Document';
   const description = [size, documentType].filter(Boolean).join(' · ');
   const isSending = message.status === 'sending';
+
+  const handleOpenDocument = async (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!isDownloadUrlStale || !getFreshDownloadUrl) {
+      return;
+    }
+
+    event.preventDefault();
+    const targetWindow = window.open('', '_blank', 'noopener,noreferrer');
+    const freshUrl = await getFreshDownloadUrl();
+
+    if (targetWindow) {
+      targetWindow.location.href = freshUrl;
+      return;
+    }
+
+    window.location.href = freshUrl;
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -46,7 +69,7 @@ function DocumentMessage({ downloadUrl, message }: MediaRendererProps) {
         href={downloadUrl}
         target="_blank"
         rel="noreferrer"
-        download={message.mediaFilename || undefined}
+        onClick={handleOpenDocument}
         className="flex min-w-60 items-center gap-3 rounded-xl bg-background/50 p-3 text-sm transition-colors hover:bg-background/70"
       >
         <FileTextIcon className="size-5 shrink-0 text-muted-foreground" />
