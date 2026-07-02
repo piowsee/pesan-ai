@@ -1,5 +1,3 @@
-'use client';
-
 import { extractJSendErrorMessage } from '@/lib/api-helper/error';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import {
@@ -18,8 +16,6 @@ import {
   mapRawConversationToChatConversation,
 } from './use-conversations';
 
-// ─── Query Keys ──────────────────────────────────────────────────────
-
 export const messageKeys = {
   root: ['messages'] as const,
   all: (convId: string) => ['messages', convId] as const,
@@ -36,7 +32,7 @@ export interface MessageGroup {
   messages: ChatMessage[];
 }
 
-interface MessageFetchResponse {
+interface MessagePageCache {
   messages: ChatMessage[];
   total: number;
   page: number;
@@ -79,7 +75,7 @@ async function fetchMessages(
   convId: string,
   page: number,
   limit = 50,
-): Promise<MessageFetchResponse> {
+): Promise<MessagePageCache> {
   const response = await fetch(
     `/api/waba/${wabaId}/conversation/${convId}/message?page=${page}&limit=${limit}`,
   );
@@ -225,17 +221,15 @@ function createLocalMediaMetadata(localMediaUrl: string) {
   return JSON.stringify({ localMediaUrl });
 }
 
-function updateConversationCacheWithMessage({
-  conversation,
-  convId,
-  message,
+function updateConversationListCache({
+  createChat,
   queryClient,
+  updateChat,
   wabaId,
 }: {
-  conversation: RawConversation;
-  convId: string;
-  message: ChatMessage;
+  createChat: () => ChatConversation;
   queryClient: QueryClient;
+  updateChat: (chat: ChatConversation) => ChatConversation;
   wabaId: string;
 }) {
   queryClient.setQueryData<{ chats: ChatConversation[]; total: number }>(
@@ -245,27 +239,15 @@ function updateConversationCacheWithMessage({
 
       let found = false;
       const updatedChats = old.chats.map((chat) => {
-        if (chat.id === convId) {
-          found = true;
-          return {
-            ...chat,
-            lastMessage: message,
-            lastMessageAt: message.timestamp,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return chat;
+        const updatedChat = updateChat(chat);
+        found = found || updatedChat !== chat;
+        return updatedChat;
       });
 
       if (!found) {
-        const newChat = mapRawConversationToChatConversation({
-          ...conversation,
-          messages: [message],
-        });
-
         return {
           ...old,
-          chats: [newChat, ...old.chats],
+          chats: [createChat(), ...old.chats],
           total: old.total + 1,
         };
       }
@@ -281,6 +263,82 @@ function updateConversationCacheWithMessage({
   );
 }
 
+function updateConversationCacheWithMessage({
+  conversation,
+  convId,
+  message,
+  queryClient,
+  wabaId,
+}: {
+  conversation: RawConversation;
+  convId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+  wabaId: string;
+}) {
+  updateConversationListCache({
+    createChat: () =>
+      mapRawConversationToChatConversation({
+        ...conversation,
+        messages: [message],
+      }),
+    queryClient,
+    updateChat: (chat) =>
+      chat.id === convId
+        ? {
+            ...chat,
+            lastMessage: message,
+            lastMessageAt: message.timestamp,
+            updatedAt: new Date().toISOString(),
+          }
+        : chat,
+    wabaId,
+  });
+}
+
+function upsertMessageInFirstPage({
+  convId,
+  message,
+  queryClient,
+}: {
+  convId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+}) {
+  queryClient.setQueryData<InfiniteData<MessagePageCache>>(
+    messageKeys.all(convId),
+    (old) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        pages: old.pages.map((page, index) => {
+          if (index !== 0) return page;
+
+          const existingMessage = page.messages.some(
+            (cachedMessage) => cachedMessage.id === message.id,
+          );
+
+          if (existingMessage) {
+            return {
+              ...page,
+              messages: page.messages.map((cachedMessage) =>
+                cachedMessage.id === message.id ? message : cachedMessage,
+              ),
+            };
+          }
+
+          return {
+            ...page,
+            messages: [message, ...page.messages],
+            total: page.total + 1,
+          };
+        }),
+      };
+    },
+  );
+}
+
 function insertOptimisticMessage({
   convId,
   message,
@@ -290,25 +348,7 @@ function insertOptimisticMessage({
   message: ChatMessage;
   queryClient: QueryClient;
 }) {
-  queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
-    messageKeys.all(convId),
-    (old) => {
-      if (!old) return old;
-
-      return {
-        ...old,
-        pages: old.pages.map((page, index) =>
-          index === 0
-            ? {
-                ...page,
-                messages: [message, ...page.messages],
-                total: page.total + 1,
-              }
-            : page,
-        ),
-      };
-    },
-  );
+  upsertMessageInFirstPage({ convId, message, queryClient });
 }
 
 function markOptimisticMessageAsFailed({
@@ -326,7 +366,7 @@ function markOptimisticMessageAsFailed({
     return;
   }
 
-  queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
+  queryClient.setQueryData<InfiniteData<MessagePageCache>>(
     messageKeys.all(convId),
     (old) => {
       if (!old) return old;
@@ -357,7 +397,7 @@ function replaceOptimisticMessageWithConfirmedMessage({
   optimisticId?: string;
   queryClient: QueryClient;
 }) {
-  queryClient.setQueryData<InfiniteData<MessageFetchResponse>>(
+  queryClient.setQueryData<InfiniteData<MessagePageCache>>(
     messageKeys.all(convId),
     (old) => {
       if (!old) return old;

@@ -9,7 +9,6 @@ import { messageKeys } from '@/hooks/use-message';
 import { CHAT_FREEFORM_WINDOW_MS, isFreeformWindowOpen } from '@/lib/chat/chat';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import {
-  type InfiniteData,
   type QueryClient,
   type QueryKey,
   useQueryClient,
@@ -157,6 +156,72 @@ export function applyConversationUpdateToConversations(
   );
 }
 
+function upsertRealtimeMessageInFirstPage({
+  conversationId,
+  message,
+  queryClient,
+}: {
+  conversationId: string;
+  message: ChatMessage;
+  queryClient: QueryClient;
+}) {
+  queryClient.setQueryData(
+    messageKeys.all(conversationId),
+    (old: { pages: MessagePageCache[] } | undefined) => {
+      if (!old) return old;
+
+      return {
+        ...old,
+        pages: old.pages.map((page, index) =>
+          index === 0 ? applyRealtimeMessageToMessagePage(page, message) : page,
+        ),
+      };
+    },
+  );
+}
+
+function updateRealtimeConversationListCache({
+  createChat,
+  queryClient,
+  updateChat,
+  wabaId,
+}: {
+  createChat: () => ChatConversation;
+  queryClient: QueryClient;
+  updateChat: (chat: ChatConversation) => ChatConversation;
+  wabaId: string;
+}) {
+  queryClient.setQueryData(
+    conversationKeys.all(wabaId),
+    (old: { chats: ChatConversation[]; total: number } | undefined) => {
+      if (!old) return old;
+
+      let found = false;
+      const updatedChats = old.chats.map((chat) => {
+        const updatedChat = updateChat(chat);
+        found = found || updatedChat !== chat;
+        return updatedChat;
+      });
+
+      if (!found) {
+        return {
+          ...old,
+          chats: [createChat(), ...old.chats],
+          total: old.total + 1,
+        };
+      }
+
+      const sortedChats = [...updatedChats].sort((a, b) => {
+        const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+        const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      return { ...old, chats: sortedChats };
+    },
+  );
+}
+
 export async function refetchRealtimeCache(
   queryClient: QueryClient,
   queryKey: QueryKey,
@@ -290,22 +355,11 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       const hasConversationCache =
         queryClient.getQueryData(conversationKeys.all(wabaId)) !== undefined;
 
-      // 1. Update Messages Timeline Cache
-      queryClient.setQueryData(
-        messageKeys.all(conversationId),
-        (old: InfiniteData<MessagePageCache> | undefined) => {
-          if (!old) return old;
-
-          return {
-            ...old,
-            pages: old.pages.map((page, index) =>
-              index === 0
-                ? applyRealtimeMessageToMessagePage(page, realtimeMessage)
-                : page,
-            ),
-          };
-        },
-      );
+      upsertRealtimeMessageInFirstPage({
+        conversationId,
+        message: realtimeMessage,
+        queryClient,
+      });
 
       if (!hasMessageCache) {
         void refetchRealtimeCache(
@@ -315,55 +369,24 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      // 2. Update Conversations Sidebar Cache
-      queryClient.setQueryData(
-        conversationKeys.all(wabaId),
-        (old: { chats: ChatConversation[]; total: number } | undefined) => {
-          if (!old) return old;
-
-          // Read which conversation the user is currently viewing — no stale closure.
-          let found = false;
-
-          const updatedChats = old.chats.map((chat) => {
-            if (chat.id === conversationId) {
-              found = true;
-              return applyRealtimeMessageToConversation({
+      updateRealtimeConversationListCache({
+        createChat: () =>
+          mapRawConversationToChatConversation({
+            ...conversation,
+            messages: [realtimeMessage],
+          }),
+        queryClient,
+        updateChat: (chat) =>
+          chat.id === conversationId
+            ? applyRealtimeMessageToConversation({
                 chat,
                 message: realtimeMessage,
                 adminTakeover: conversation.adminTakeover,
                 isActive,
-              });
-            }
-            return chat;
-          });
-
-          if (!found) {
-            // Instead of invalidating, construct and add the new conversation
-            const newChat = mapRawConversationToChatConversation({
-              ...conversation,
-              messages: [realtimeMessage],
-            });
-
-            return {
-              ...old,
-              chats: [newChat, ...old.chats],
-              total: old.total + 1,
-            };
-          }
-
-          const sortedChats = [...updatedChats].sort((a, b) => {
-            const timeA = a.lastMessageAt
-              ? new Date(a.lastMessageAt).getTime()
-              : 0;
-            const timeB = b.lastMessageAt
-              ? new Date(b.lastMessageAt).getTime()
-              : 0;
-            return timeB - timeA;
-          });
-
-          return { ...old, chats: sortedChats };
-        },
-      );
+              })
+            : chat,
+        wabaId,
+      });
 
       if (!hasConversationCache) {
         void refetchRealtimeCache(
