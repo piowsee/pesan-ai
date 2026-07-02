@@ -256,6 +256,55 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       });
       expect(savedPn?.unreadCount).toBeGreaterThan(0);
     });
+
+    it('preserves the latest message timestamp when incoming messages arrive out of order', async () => {
+      const newerTimestamp = new Date('2026-06-28T12:00:00.000Z');
+      const olderTimestamp = new Date('2026-06-28T11:00:00.000Z');
+      const customerPhone = '999008';
+
+      await ConversationRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.incoming.test.newer',
+          type: 'text',
+          content: 'Newer incoming message',
+          timestamp: newerTimestamp,
+        },
+      });
+
+      const result = await ConversationRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.incoming.test.older',
+          type: 'text',
+          content: 'Older incoming message',
+          timestamp: olderTimestamp,
+        },
+      });
+
+      expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
+      expect(result.conversation.lastCustomerMessageAt).toEqual(newerTimestamp);
+
+      const savedConversation = await prisma.conversation.findUniqueOrThrow({
+        where: {
+          unique_conversation: {
+            phoneNumberId: dbPhoneNumberId,
+            customerPhone,
+          },
+        },
+        include: {
+          messages: { orderBy: { timestamp: 'desc' }, take: 1 },
+        },
+      });
+
+      expect(savedConversation.lastMessageAt).toEqual(newerTimestamp);
+      expect(savedConversation.lastCustomerMessageAt).toEqual(newerTimestamp);
+      expect(savedConversation.messages[0]?.content).toBe(
+        'Newer incoming message',
+      );
+    });
   });
 
   describe('processOutgoingMessageEcho', () => {
