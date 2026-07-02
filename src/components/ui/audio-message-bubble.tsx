@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { PauseIcon, PlayIcon } from 'lucide-react';
 import * as React from 'react';
@@ -155,11 +156,13 @@ export default function AudioMessageBubble({
   );
   const [waveformBars, setWaveformBars] =
     React.useState<number[]>(fallbackWaveformBars);
+  const [isWaveformLoading, setIsWaveformLoading] = React.useState(true);
 
   React.useEffect(() => {
     let isMounted = true;
 
     setWaveformBars(fallbackWaveformBars);
+    setIsWaveformLoading(true);
 
     createWaveformData(audioSrc)
       .then((waveform) => {
@@ -169,10 +172,12 @@ export default function AudioMessageBubble({
 
         setWaveformBars(waveform.bars);
         setResolvedDuration((current) => current ?? waveform.duration);
+        setIsWaveformLoading(false);
       })
       .catch(() => {
         if (isMounted) {
           setWaveformBars(fallbackWaveformBars);
+          setIsWaveformLoading(false);
         }
       });
 
@@ -303,40 +308,52 @@ export default function AudioMessageBubble({
         tabIndex={0}
       >
         <div className="absolute inset-0 flex items-center justify-between gap-0.5 px-0.5">
-          {waveformBars.map((height, index) => {
-            const state = getWaveformBarState({
-              barCount: waveformBars.length,
-              index,
-              progress,
-            });
-            const opacity =
-              state === 'played' ? 0.9 : state === 'current' ? 0.65 : 0.28;
+          {isWaveformLoading
+            ? fallbackWaveformBars.map((height, index) => (
+                <Skeleton
+                  key={index}
+                  className="w-0.5 rounded-sm"
+                  style={{ height }}
+                />
+              ))
+            : waveformBars.map((height, index) => {
+                const state = getWaveformBarState({
+                  barCount: waveformBars.length,
+                  index,
+                  progress,
+                });
+                const opacity =
+                  state === 'played' ? 0.9 : state === 'current' ? 0.65 : 0.28;
 
-            return (
-              <div
-                key={`${height}-${index}`}
-                className={cn(
-                  'w-0.5 rounded-sm transition-colors duration-150',
-                  state === 'played'
-                    ? 'bg-foreground/70'
-                    : state === 'current'
-                      ? 'bg-foreground/50'
-                      : 'bg-muted-foreground/25',
-                )}
-                style={{
-                  height,
-                  backgroundColor: waveColor,
-                  opacity: waveColor ? opacity : undefined,
-                }}
-              />
-            );
-          })}
+                return (
+                  <div
+                    key={`${height}-${index}`}
+                    className={cn(
+                      'w-0.5 rounded-sm transition-colors duration-150',
+                      state === 'played'
+                        ? 'bg-foreground/70'
+                        : state === 'current'
+                          ? 'bg-foreground/50'
+                          : 'bg-muted-foreground/25',
+                    )}
+                    style={{
+                      height,
+                      backgroundColor: waveColor,
+                      opacity: waveColor ? opacity : undefined,
+                    }}
+                  />
+                );
+              })}
         </div>
       </div>
 
-      <span className="shrink-0 font-mono text-xs text-muted-foreground">
-        {formatDuration(resolvedDuration)}
-      </span>
+      {isWaveformLoading && !resolvedDuration ? (
+        <Skeleton className="h-3 w-8 shrink-0" />
+      ) : (
+        <span className="shrink-0 font-mono text-xs text-muted-foreground">
+          {formatDuration(resolvedDuration)}
+        </span>
+      )}
     </div>
   );
 }

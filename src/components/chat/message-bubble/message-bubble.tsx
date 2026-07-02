@@ -12,6 +12,7 @@ import type { ReactElement } from 'react';
 import { AudioMessage } from './audio-message';
 import { DocumentMessage } from './document-message';
 import { ImageMessage } from './image-message';
+import { MediaMessageSkeleton } from './media-message-skeleton';
 import { MediaPlaceholder } from './media-placeholder';
 import {
   getMediaTitle,
@@ -53,28 +54,10 @@ function getLocalMediaUrl(metadata: string | null) {
   }
 }
 
-function getMediaLoadDescription({
-  error,
-  isError,
-  isFetching,
-  isInViewport,
-}: {
-  error: unknown;
-  isError: boolean;
-  isFetching: boolean;
-  isInViewport: boolean;
-}) {
-  if (isError) {
-    return error instanceof Error
-      ? error.message
-      : 'Could not load media preview.';
-  }
-
-  if (isFetching || isInViewport) {
-    return 'Loading media preview...';
-  }
-
-  return 'Media preview will load when visible.';
+function getMediaLoadErrorDescription(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : 'Could not load media preview.';
 }
 
 function MessageBubbleContent({
@@ -88,7 +71,7 @@ function MessageBubbleContent({
 }) {
   const mediaType = isMediaMessageType(message.type) ? message.type : null;
   const canLoadMedia = Boolean(mediaType && wabaId && message.mediaObjectKey);
-  const { data, error, isError, isFetching } = useMessageMediaDownloadUrl({
+  const { data, error, isError } = useMessageMediaDownloadUrl({
     wabaId,
     convId: message.conversationId,
     key: message.mediaObjectKey,
@@ -122,19 +105,18 @@ function MessageBubbleContent({
     );
   }
 
-  if (!data) {
+  if (isError) {
     return (
       <MediaPlaceholder
         icon={icon}
         title={title}
-        description={getMediaLoadDescription({
-          error,
-          isError,
-          isFetching,
-          isInViewport,
-        })}
+        description={getMediaLoadErrorDescription(error)}
       />
     );
+  }
+
+  if (!data) {
+    return <MediaMessageSkeleton type={mediaType} />;
   }
 
   return <Renderer message={message} downloadUrl={data.downloadUrl} />;

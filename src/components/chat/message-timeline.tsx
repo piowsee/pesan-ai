@@ -8,7 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import type { MessageGroup } from '@/hooks/use-message';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 function MessageTimelineSkeleton() {
   return (
@@ -34,7 +40,7 @@ export function MessageTimeline({
   isLoading,
   hasNextPage,
   isFetchingNextPage,
-  onLoadOlder,
+  onLoadOlderAction,
   localSendScrollSignal,
 }: {
   conversationId?: string;
@@ -43,10 +49,11 @@ export function MessageTimeline({
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
-  onLoadOlder: () => void;
+  onLoadOlderAction: () => void;
   localSendScrollSignal: number;
 }) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const previousConversationIdRef = useRef<string | undefined>(undefined);
   const previousMessageCountRef = useRef(0);
   const previousLocalSendScrollSignalRef = useRef(localSendScrollSignal);
@@ -87,12 +94,15 @@ export function MessageTimeline({
       return;
     }
 
-    requestAnimationFrame(() => {
+    const applyScroll = () => {
       viewport.scrollTop = viewport.scrollHeight;
       shouldStickToBottomRef.current = true;
       setIsNearBottom(true);
       setLastSeenBottomMessageId(latestMessageId);
-    });
+    };
+
+    applyScroll();
+    requestAnimationFrame(applyScroll);
   }, [getViewport, latestMessageId]);
 
   useEffect(() => {
@@ -124,10 +134,10 @@ export function MessageTimeline({
     };
   }, [conversationId, getViewport, latestMessageId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const viewport = getViewport();
 
-    if (!viewport) {
+    if (!viewport || isLoading) {
       return;
     }
 
@@ -152,6 +162,7 @@ export function MessageTimeline({
     scrollToBottom();
   }, [
     conversationId,
+    isLoading,
     latestMessageId,
     localSendScrollSignal,
     messageCount,
@@ -159,16 +170,39 @@ export function MessageTimeline({
     scrollToBottom,
   ]);
 
+  useEffect(() => {
+    const content = contentRef.current;
+
+    if (!content || isLoading) {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (shouldStickToBottomRef.current) {
+        scrollToBottom();
+      }
+    });
+
+    resizeObserver.observe(content);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isLoading, scrollToBottom]);
+
   return (
     <div ref={scrollAreaRef} className="relative h-full w-full">
       <ScrollArea className="h-full px-2 lg:px-4">
-        <div className="flex min-h-full flex-col gap-4 px-2 pt-4 pb-40">
+        <div
+          ref={contentRef}
+          className="flex min-h-full flex-col gap-4 px-2 pt-4 pb-40"
+        >
           {hasNextPage ? (
             <div className="flex justify-center">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onLoadOlder}
+                onClick={onLoadOlderAction}
                 disabled={isFetchingNextPage}
               >
                 {isFetchingNextPage ? (
