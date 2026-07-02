@@ -245,16 +245,12 @@ export const ConversationRepository = {
         },
         update: {
           customerName, // Update name if provided
-          lastMessageAt: message.timestamp,
-          lastCustomerMessageAt: message.timestamp,
           unreadCount: { increment: 1 },
         },
         create: {
           phoneNumberId,
           customerPhone,
           customerName,
-          lastMessageAt: message.timestamp,
-          lastCustomerMessageAt: message.timestamp,
           unreadCount: 1,
         },
         include: {
@@ -281,6 +277,29 @@ export const ConversationRepository = {
         },
       });
 
+      const shouldUpdateLastMessageAt =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt;
+      const shouldUpdateLastCustomerMessageAt =
+        !conversation.lastCustomerMessageAt ||
+        message.timestamp > conversation.lastCustomerMessageAt;
+
+      const latestConversation =
+        shouldUpdateLastMessageAt || shouldUpdateLastCustomerMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                ...(shouldUpdateLastMessageAt && {
+                  lastMessageAt: message.timestamp,
+                }),
+                ...(shouldUpdateLastCustomerMessageAt && {
+                  lastCustomerMessageAt: message.timestamp,
+                }),
+              },
+              include: { phoneNumber: true },
+            })
+          : conversation;
+
       // 3. Update parent PhoneNumber unread count
       await tx.phoneNumber.update({
         where: { id: phoneNumberId },
@@ -288,7 +307,7 @@ export const ConversationRepository = {
       });
 
       return {
-        conversation,
+        conversation: latestConversation,
         message: savedMessage,
         userId: phoneNumberOwner.waba.userId,
         wabaId: phoneNumberOwner.wabaId,
@@ -341,27 +360,15 @@ export const ConversationRepository = {
           phoneNumberId,
           customerPhone,
           customerName,
-          lastMessageAt: message.timestamp,
         },
         include: {
           phoneNumber: true,
         },
       });
 
-      // check to make sure last message at doesnt go backward
-      const latestConversation =
-        conversation.lastMessageAt &&
-        conversation.lastMessageAt >= message.timestamp
-          ? conversation
-          : await tx.conversation.update({
-              where: { id: conversation.id },
-              data: { lastMessageAt: message.timestamp },
-              include: { phoneNumber: true },
-            });
-
       const savedMessage = await tx.message.create({
         data: {
-          conversationId: latestConversation.id,
+          conversationId: conversation.id,
           messageId: message.messageId,
           direction: 'outgoing',
           // `whatsapp_app` covers live echoes and all history-sync messages,
@@ -378,6 +385,16 @@ export const ConversationRepository = {
           status: 'sent',
         },
       });
+
+      const latestConversation =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: message.timestamp },
+              include: { phoneNumber: true },
+            })
+          : conversation;
 
       return {
         conversation: latestConversation,
