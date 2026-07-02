@@ -110,25 +110,40 @@ body {
 }
 
 .content h1 {
-  margin-block-start: 0.35rem;
+  margin-block: 0.35rem 0.85rem;
   color: var(--brand-strong);
-  font-size: 2.35rem;
-  line-height: 1.14;
+  font-size: 2.8rem;
+  line-height: 1.08;
   letter-spacing: 0;
 }
 
 .content h2 {
-  margin-block-start: 2.55rem;
+  margin-block: 3.25rem 0.85rem;
   color: var(--brand-strong);
-  font-size: 1.6rem;
+  font-size: 1.95rem;
   line-height: 1.25;
   letter-spacing: 0;
 }
 
 .content h3 {
+  margin-block: 2rem 0.65rem;
   color: var(--brand-strong);
-  font-size: 1.18rem;
+  font-size: 1.45rem;
   line-height: 1.35;
+}
+
+.content h1 + h2,
+.content h2:first-child {
+  margin-block-start: 1.9rem;
+}
+
+.content h1 .header,
+.content h2 .header,
+.content h3 .header,
+.content h4 .header,
+.content h5 .header,
+.content h6 .header {
+  color: inherit;
 }
 
 .content p,
@@ -136,16 +151,91 @@ body {
 .content dd,
 .content dt {
   color: var(--brand);
-  line-height: 1.75;
+  line-height: 1.55;
+}
+
+.content p {
+  margin-block: 0.55rem;
+}
+
+.content ul,
+.content ol {
+  margin-block: 0.55rem;
+}
+
+.content li {
+  padding-inline-start: 0.1rem;
+  margin-block: 0.28rem;
+}
+
+.content li > p {
+  margin-block: 0.28rem;
+}
+
+.content ol {
+  padding-inline-start: 2rem;
+}
+
+.content ul {
+  padding-inline-start: 2rem;
+}
+
+.content li::marker {
+  color: var(--brand-strong);
+  font-weight: 700;
+}
+
+.content ol > li > p:first-child {
+  margin-block-start: 0;
+}
+
+.content li > p:first-child > strong:first-child,
+.content li > strong:first-child {
+  color: var(--brand-strong);
 }
 
 .content a:link,
 .content a:visited,
 #mdbook-searchresults a {
-  color: var(--brand);
+  color: #2563eb;
   font-weight: 600;
-  text-decoration-color: rgba(71, 85, 105, 0.35);
+  text-decoration-color: rgba(37, 99, 235, 0.36);
   text-underline-offset: 0.18em;
+}
+
+.content a:hover,
+#mdbook-searchresults a:hover {
+  color: #1d4ed8;
+  text-decoration-color: currentColor;
+}
+
+.content .header:link,
+.content .header:visited {
+  text-decoration: none;
+}
+
+.content .header::after {
+  display: inline-block;
+  width: 0.72em;
+  height: 0.72em;
+  margin-inline-start: 0.8rem;
+  background: currentColor;
+  content: '';
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0.52;
+  transition: opacity 160ms ease;
+  vertical-align: -0.04em;
+}
+
+.content .header:hover::after {
+  opacity: 0.85;
+}
+
+.content .header[data-copied='true']::after {
+  opacity: 1;
 }
 
 .sidebar {
@@ -200,7 +290,7 @@ body {
   display: block;
   margin-block: 1.35rem 1.75rem;
   margin-inline: auto;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--border-subtle);
   background: var(--surface-raised);
   box-shadow: 0 18px 50px rgba(71, 85, 105, 0.12);
@@ -227,7 +317,19 @@ body {
 
 pre,
 table {
-  border-radius: 8px;
+  border-radius: 2px;
+}
+
+pre {
+  margin-block: 1.2rem 1.6rem;
+  padding: 1rem 1.1rem;
+  line-height: 1.55;
+}
+
+:not(pre) > code {
+  border-radius: 3px;
+  padding: 0.12em 0.32em;
+  border: 1px solid rgba(71, 85, 105, 0.16);
 }
 
 blockquote {
@@ -252,10 +354,11 @@ blockquote p {
 table {
   width: 100%;
   overflow: hidden;
+  margin-block: 1rem 1.55rem;
   border: 1px solid var(--border-subtle);
   border-collapse: separate;
   border-spacing: 0;
-  box-shadow: 0 8px 24px rgba(71, 85, 105, 0.06);
+  box-shadow: none;
 }
 
 table thead th {
@@ -269,7 +372,9 @@ table thead th {
 
 table td,
 table th {
-  padding: 0.85rem 1rem;
+  padding: 0.72rem 0.9rem;
+  line-height: 1.55;
+  vertical-align: top;
 }
 
 table th {
