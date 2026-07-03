@@ -1,19 +1,36 @@
 'use client';
 
+import { useChatNavHref } from '@/hooks/use-chat-nav-href';
 import { cn } from '@/lib/utils';
 import { Home, Layers, MessageSquare, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const mobileNavItems = [
-  { title: 'Home', url: '/dashboard', icon: Home },
-  { title: 'WABA', url: '/dashboard/waba', icon: Layers },
-  { title: 'Chat', url: '/dashboard/chat', icon: MessageSquare },
-  { title: 'Customers', url: '/dashboard/customers', icon: UsersRound },
-];
-
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const chatHref = useChatNavHref();
+
+  const mobileNavItems = [
+    { title: 'Home', url: '/dashboard', icon: Home, matchPath: '/dashboard' },
+    {
+      title: 'WABA',
+      url: '/dashboard/waba',
+      icon: Layers,
+      matchPath: '/dashboard/waba',
+    },
+    {
+      title: 'Chat',
+      url: chatHref,
+      icon: MessageSquare,
+      matchPath: '/dashboard/chat',
+    },
+    {
+      title: 'Customers',
+      url: '/dashboard/customers',
+      icon: UsersRound,
+      matchPath: '/dashboard/customers',
+    },
+  ];
 
   const isDashboardRoot = pathname === '/dashboard';
   const isWabaSection = pathname === '/dashboard/waba';
@@ -40,13 +57,13 @@ export function MobileBottomNav() {
         <div className="grid h-16 grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
           {mobileNavItems.map((item) => {
             const isActive =
-              pathname === item.url ||
-              (item.url !== '/dashboard' &&
-                pathname.startsWith(`${item.url}/`));
+              pathname === item.matchPath ||
+              (item.matchPath !== '/dashboard' &&
+                pathname.startsWith(`${item.matchPath}/`));
 
             return (
               <Link
-                key={item.url}
+                key={item.matchPath}
                 href={item.url}
                 className={cn(
                   'flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-medium transition-colors',
