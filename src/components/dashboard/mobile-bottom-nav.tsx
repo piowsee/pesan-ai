@@ -17,8 +17,14 @@ export function MobileBottomNav() {
 
   const isDashboardRoot = pathname === '/dashboard';
   const isWabaSection = pathname === '/dashboard/waba';
+  const chatSegments = pathname.startsWith('/dashboard/chat')
+    ? pathname.split('/').filter(Boolean) // e.g. ['dashboard', 'chat', 'wabaId', 'convId']
+    : [];
   const isChatSection =
-    pathname === '/dashboard/chat' || pathname.startsWith('/dashboard/chat/');
+    pathname === '/dashboard/chat' ||
+    (chatSegments[0] === 'dashboard' &&
+      chatSegments[1] === 'chat' &&
+      chatSegments.length <= 3); // allows /dashboard/chat/:wabaId, blocks /dashboard/chat/:wabaId/:convId
   const isCustomersSection = pathname === '/dashboard/customers';
   const shouldShowMenu =
     isDashboardRoot || isWabaSection || isChatSection || isCustomersSection;
