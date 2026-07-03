@@ -1,7 +1,7 @@
-import { ChatEmptyState } from '@/components/chat/chat-empty-state';
-import { ChatHeader } from '@/components/chat/chat-header';
-import { MessageComposer } from '@/components/chat/message-composer';
-import { MessageTimeline } from '@/components/chat/message-timeline';
+import { ChatHeader } from '@/components/chat/detail-panel/chat-detail/chat-header';
+import { MessageComposer } from '@/components/chat/detail-panel/chat-detail/message-composer';
+import { MessageTimeline } from '@/components/chat/detail-panel/chat-detail/message-timeline';
+import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MessageGroup } from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';

@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageBubble } from '@/components/chat/message-bubble/message-bubble';
+import { MessageBubble } from '@/components/chat/detail-panel/chat-detail/message-bubble/message-bubble';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
