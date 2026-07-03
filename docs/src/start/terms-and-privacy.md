@@ -6,13 +6,13 @@ These pages explain the rules for using the service and how your information is 
 
 ## Terms of Service
 
-The Terms of Service explain the rules, responsibilities, limitations, and service usage conditions for pesan.ai.
+The <strong><a class="pa-legal-link" href="https://pesan-ai.app/en/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a></strong> explain the rules, responsibilities, limitations, and service usage conditions for pesan.ai.
 
 Read this page to understand what is allowed, what the service covers, and what responsibilities apply when using the platform.
 
 ## Privacy Policy
 
-The Privacy Policy explains how pesan.ai handles information related to your account, business, contacts, and service usage.
+The <strong><a class="pa-legal-link" href="http://pesan-ai.app/en/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a></strong> explains how pesan.ai handles information related to your account, business, contacts, and service usage.
 
 Read this page before using the dashboard or connecting your WhatsApp Business Account.
 

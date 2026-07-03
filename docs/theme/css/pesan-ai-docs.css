@@ -209,6 +209,23 @@ body {
   text-decoration-color: currentColor;
 }
 
+.content a.pa-legal-link:link,
+.content a.pa-legal-link:visited {
+  color: #2563eb;
+  text-decoration-line: underline;
+  text-decoration-color: currentColor;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.content a.pa-legal-link:hover {
+  color: #1d4ed8;
+  text-decoration-color: currentColor;
+  text-decoration-style: solid;
+  text-decoration-thickness: 0.08em;
+}
+
 .content .header:link,
 .content .header:visited {
   text-decoration: none;
