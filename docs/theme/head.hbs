@@ -83,18 +83,12 @@
             });
         }
 
-        const calloutTypes = new Map([
-            ["note:", "note"],
-            ["important:", "important"],
-            ["if this happens:", "help"],
-        ]);
-        const paragraphs = Array.from(document.querySelectorAll(".content main > p"));
-        for (const paragraph of paragraphs) {
-            const label = paragraph.querySelector(":scope > strong:first-child");
-            const labelText = label ? label.textContent.trim().toLowerCase() : "";
-            const calloutType = calloutTypes.get(labelText);
-            if (calloutType) {
-                paragraph.classList.add("pa-callout", `pa-callout-${calloutType}`);
+        const tipTitles = Array.from(document.querySelectorAll(".blockquote-tag-tip > .blockquote-tag-title"));
+        for (const tipTitle of tipTitles) {
+            for (const node of Array.from(tipTitle.childNodes)) {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === "Tip") {
+                    node.textContent = "If this happens";
+                }
             }
         }
     });

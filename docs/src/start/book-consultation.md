@@ -37,4 +37,5 @@ The more context you provide, the easier it is for the pesan.ai team to recommen
 
 5. **Wait for the team to contact you.** After your request is submitted, the pesan.ai team will contact you through WhatsApp or email. The team will discuss your needs, confirm the service details, and guide you through the next steps.
 
-**Note:** Submitting the consultation form does not automatically create pesan.ai dashboard access. After the consultation, agreement, and payment process are completed, the pesan.ai team will invite your email address. Use the registration link in that email to set your password and finish account setup.
+> [!NOTE]
+> Submitting the consultation form does not automatically create pesan.ai dashboard access. After the consultation, agreement, and payment process are completed, the pesan.ai team will invite your email address. Use the registration link in that email to set your password and finish account setup.

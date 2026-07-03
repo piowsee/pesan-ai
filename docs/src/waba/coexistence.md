@@ -81,7 +81,8 @@ Make sure:
 
 ![Select business portfolio](../Images/06-business-portfolio-selection.png)
 
-**If this happens:** If you selected the wrong business portfolio and the popup still allows changes, go back and choose the correct one. If not, close the popup and restart from **WABA Management**. Choose the business portfolio that owns or manages the WhatsApp Business account you want to connect.
+> [!TIP]
+> If you selected the wrong business portfolio and the popup still allows changes, go back and choose the correct one. If not, close the popup and restart from **WABA Management**. Choose the business portfolio that owns or manages the WhatsApp Business account you want to connect.
 
 3. **Choose the existing WhatsApp Business App option.** When asked to choose the WhatsApp Business setup option, select the option to connect an existing WhatsApp Business App account.
 
@@ -101,7 +102,8 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 
 ![QR code or access code screen](../Images/10-coexistence-qr-or-code.png)
 
-**If this happens:** Follow the instruction shown in the Meta onboarding screen. Keep the WhatsApp Business App open on your phone and continue from there.
+> [!TIP]
+> Follow the instruction shown in the Meta onboarding screen. Keep the WhatsApp Business App open on your phone and continue from there.
 
 7. **Open the Facebook Business message.** In WhatsApp, open the message from **Facebook Business**. Tap the connect button in the message.
 
@@ -109,7 +111,8 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 
 ![Connect button in WhatsApp](../Images/12-connect-button-whatsapp.png)
 
-**If this happens:** If the Facebook Business message does not appear, check that the phone number is correct, active in WhatsApp Business App, connected to the internet, and able to receive messages. If it still does not appear, restart from **WABA Management** or contact the pesan.ai team.
+> [!TIP]
+> If the Facebook Business message does not appear, check that the phone number is correct, active in WhatsApp Business App, connected to the internet, and able to receive messages. If it still does not appear, restart from **WABA Management** or contact the pesan.ai team.
 
 8. **Connect to the Business Platform.** On your phone, tap **Connect to the Business Platform**. Depending on the language shown, this may appear as **Hubungkan** or similar wording.
 
@@ -119,9 +122,10 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 
 ![Choose not to share chat history](../Images/14-dont-share-chats.png)
 
-**Important:** pesan.ai currently does not support chat history sync. Choose **Don't share chats** during this step.
-
-If the business taps **Share chats** or turns on **history sync**, the **Connect WhatsApp App** process may fail in pesan.ai. Meta requires chat history to be synced within 24 hours after onboarding is completed. Because pesan.ai does not support **history sync** yet, the business may be automatically **offboarded** within 24 hours and will need to repeat the onboarding flow.
+> [!IMPORTANT]
+> pesan.ai currently does not support chat history sync. Choose **Don't share chats** during this step.
+>
+> If the business taps **Share chats** or turns on **history sync**, the **Connect WhatsApp App** process may fail in pesan.ai. Meta requires chat history to be synced within 24 hours after onboarding is completed. Because pesan.ai does not support **history sync** yet, the business may be automatically **offboarded** within 24 hours and will need to repeat the onboarding flow.
 
 If you accidentally selected **Share all chats**, contact the pesan.ai team before continuing.
 
@@ -139,10 +143,9 @@ If you accidentally selected **Share all chats**, contact the pesan.ai team befo
 
 13. **Check WABA Management.** Return to pesan.ai and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
 
-## Notes
-
-- Keep the WhatsApp phone nearby during the setup process.
-- Make sure the number is the correct business number.
-- The phone must be able to receive WhatsApp messages from Facebook Business.
-- If the popup closes or the connection fails, restart the connection from WABA Management.
-- Use **Don't share chats** because chat history sync is not currently supported. If chat history sharing is enabled, the business may need to be offboarded and repeat onboarding within 24 hours.
+> [!NOTE]
+> - Keep the WhatsApp phone nearby during the setup process.
+> - Make sure the number is the correct business number.
+> - The phone must be able to receive WhatsApp messages from Facebook Business.
+> - If the popup closes or the connection fails, restart the connection from WABA Management.
+> - Use **Don't share chats** because chat history sync is not currently supported. If chat history sharing is enabled, the business may need to be offboarded and repeat onboarding within 24 hours.
