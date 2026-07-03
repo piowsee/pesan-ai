@@ -38,4 +38,5 @@
 
 - [FAQ](help/faq.md)
 - [Troubleshooting](help/troubleshooting.md)
+- [Contact Support](help/contact-support.md)
 - [Glossary](help/glossary.md)
