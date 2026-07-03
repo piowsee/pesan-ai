@@ -8,13 +8,15 @@ The pesan.ai team will contact you through the WhatsApp number or email address 
 
 Check that the WhatsApp number and email address you submitted are correct, active, and reachable. If the contact information was incorrect, submit the consultation form again from **Contact us** or **Book a Consultation**.
 
+You can also contact the pesan.ai team again through the official email address or WhatsApp number you previously used to reach us.
+
 ---
 
 ## I do not have an account
 
 Users cannot create an account by themselves from the login page.
 
-The pesan.ai team creates your account after consultation, agreement, and payment are completed. If you do not have an account, use **Contact us** or **Book a Consultation** first.
+After consultation, agreement, and payment are completed, the pesan.ai team invites your email address. Open the registration link sent to your inbox, verify your email if requested, and create your password. If you do not have access yet, use **Contact us** or **Book a Consultation** first.
 
 ---
 
@@ -24,7 +26,8 @@ Check that:
 
 - You are using the correct email address.
 - Your password is correct.
-- Your account has already been created and activated.
+- You have completed the registration link sent to your email.
+- Your account access has already been activated.
 - You have accepted the Terms and Privacy notice on the login form.
 
 Refresh the page and try **Login** again.

@@ -2,7 +2,7 @@
 
 ## Can I create an account myself?
 
-No. pesan.ai accounts are created by the pesan.ai team after consultation, agreement, and payment.
+No. After consultation, agreement, and payment, the pesan.ai team invites your email address. You finish registration from the email link and create your own password.
 
 ---
 
@@ -32,7 +32,7 @@ No. Choose **Don't share chats** because chat history sync is not currently supp
 
 ## What if I cannot sign in?
 
-Contact the pesan.ai team and confirm that your account has been created and activated.
+Check that you are using the invited email address, have completed the registration link from your inbox, and are using the password you created. If the issue continues, contact the pesan.ai team.
 
 ---
 

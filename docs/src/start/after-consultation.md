@@ -17,9 +17,9 @@ The team may ask about:
 
 ## Account creation
 
-Once the consultation, agreement, and payment process are completed, the pesan.ai team will create your account.
+Once the consultation, agreement, and payment process are completed, the pesan.ai team will create your user invitation.
 
-After your account is ready, you will receive the sign-in details needed to access the pesan.ai dashboard.
+After the invitation is ready, you will receive an email with a registration link. Open the link, verify your email if requested, and set your own password before signing in to the pesan.ai dashboard.
 
 ## If you have not been contacted yet
 
@@ -27,10 +27,13 @@ The pesan.ai team will contact you through the WhatsApp number or email address 
 
 If you have not received a message yet, check that the WhatsApp number and email address you submitted are correct, active, and reachable. If the contact information was incorrect, submit the consultation form again from **Contact us** or **Book a Consultation**.
 
+You can also contact the pesan.ai team again through the official email address or WhatsApp number you previously used to reach us.
+
 ## Before signing in
 
 Before signing in, make sure you have:
 
-- The email address assigned to your pesan.ai account.
-- The password or access details provided by the pesan.ai team.
+- Access to the email address used for your pesan.ai invitation.
+- The registration link sent by email.
+- A password you created from the registration link.
 - Access to the WhatsApp number that will be connected later during WABA setup.

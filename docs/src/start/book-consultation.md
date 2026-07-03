@@ -2,7 +2,7 @@
 
 Before using pesan.ai, you need to request access or book a consultation with the pesan.ai team.
 
-The consultation is free and helps the team understand your business needs before setting up your account.
+The consultation is free and helps the team understand your business needs before inviting you to create account access.
 
 ![Contact Us page](../Images/01-contact-us-page.png)
 
@@ -37,4 +37,4 @@ The more context you provide, the easier it is for the pesan.ai team to recommen
 
 5. **Wait for the team to contact you.** After your request is submitted, the pesan.ai team will contact you through WhatsApp or email. The team will discuss your needs, confirm the service details, and guide you through the next steps.
 
-**Note:** Submitting the consultation form does not automatically create a pesan.ai account. The account will be created by the pesan.ai team after the consultation, agreement, and payment process are completed.
+**Note:** Submitting the consultation form does not automatically create pesan.ai dashboard access. After the consultation, agreement, and payment process are completed, the pesan.ai team will invite your email address. Use the registration link in that email to set your password and finish account setup.
