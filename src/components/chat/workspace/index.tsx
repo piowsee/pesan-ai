@@ -12,8 +12,10 @@ import {
   type ChatStateParamKeys,
   applyChatSearchParamUpdates,
   buildChatHref,
+  clearStoredChatState,
   getChatRouteSelection,
   pickChatSearchParams,
+  writeStoredChatState,
 } from '@/components/chat/workspace/chat-route-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
@@ -41,12 +43,9 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { toast } from 'sonner';
-
-const CHAT_STATE_STORAGE_KEY = 'dashboard-chat-state';
 
 function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
   return value === 'all' || value === 'admin' || value === 'bot';
@@ -144,27 +143,10 @@ export function ChatWorkspace() {
     () => new URLSearchParams(optimisticSearchParamsString),
     [optimisticSearchParamsString],
   );
-  const hasSecondaryStateInUrl = CHAT_DETAIL_PARAM_KEYS.some((key) =>
-    searchParams.has(key),
-  );
-
   useEffect(() => {
     setOptimisticSearchParamsString(searchParamsString);
   }, [searchParamsString]);
 
-  const [initialStoredChatState] = useState(() => {
-    if (typeof window === 'undefined') {
-      return '';
-    }
-
-    return window.localStorage.getItem(CHAT_STATE_STORAGE_KEY) ?? '';
-  });
-
-  const canRestoreFromStorageRef = useRef(!hasSecondaryStateInUrl);
-  const sanitizedInitialStoredChatState = useMemo(
-    () => pickChatSearchParams(initialStoredChatState, CHAT_DETAIL_PARAM_KEYS),
-    [initialStoredChatState],
-  );
   const [localSendScrollSignal, setLocalSendScrollSignal] = useState(0);
   const [
     initialUnreadCountByConversation,
@@ -181,8 +163,6 @@ export function ChatWorkspace() {
   const searchValue = optimisticSearchParams.get('q') ?? '';
   const debouncedSearchValue = useDebounce(searchValue, 400);
   const isContactInfoOpen = optimisticSearchParams.get('panel') === 'contact';
-  const hasStoredChatState =
-    sanitizedInitialStoredChatState.toString().length > 0;
   const hasNoWabas =
     !isWabasLoading && !isWabasError && (data?.total ?? 0) === 0;
   const activeWabaId = selectedWabaId;
@@ -303,47 +283,11 @@ export function ChatWorkspace() {
   ]);
 
   useEffect(() => {
-    const shouldRestoreFromStorage =
-      canRestoreFromStorageRef.current &&
-      !hasSecondaryStateInUrl &&
-      hasStoredChatState;
-
-    if (hasNoWabas || !shouldRestoreFromStorage) {
-      return;
-    }
-
-    canRestoreFromStorageRef.current = false;
-
-    const nextHref = buildChatHref({
-      wabaId: activeWabaId,
-      conversationId: selectedConversationId,
-      searchParams: sanitizedInitialStoredChatState,
-    });
-
-    if (nextHref === currentHref) {
-      return;
-    }
-
-    startTransition(() => {
-      router.replace(nextHref, { scroll: false });
-    });
-  }, [
-    activeWabaId,
-    currentHref,
-    hasNoWabas,
-    hasSecondaryStateInUrl,
-    hasStoredChatState,
-    router,
-    sanitizedInitialStoredChatState,
-    selectedConversationId,
-  ]);
-
-  useEffect(() => {
     if (!hasNoWabas) {
       return;
     }
 
-    window.localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
+    clearStoredChatState();
 
     const nextParams = pickChatSearchParams(
       searchParamsString,
@@ -359,21 +303,27 @@ export function ChatWorkspace() {
   }, [currentHref, hasNoWabas, router, searchParamsString]);
 
   useEffect(() => {
+    // Only persist once a waba is actually selected, so nav entries (e.g. the
+    // sidebar's "Chat" link) can send the user back to the last conversation
+    // they were viewing, similar to how Discord remembers the last channel
+    // open in a server. Skip (rather than clear) when there's no active
+    // waba, so an explicit deep link to the bare `/dashboard/chat` route
+    // doesn't wipe out a previously stored session.
+    if (!activeWabaId) {
+      return;
+    }
+
     const persistedParams = pickChatSearchParams(
       searchParamsString,
       CHAT_DETAIL_PARAM_KEYS,
     );
-    const persistedParamsString = persistedParams.toString();
 
-    if (persistedParamsString) {
-      window.localStorage.setItem(
-        CHAT_STATE_STORAGE_KEY,
-        persistedParamsString,
-      );
-    } else {
-      window.localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
-    }
-  }, [searchParamsString]);
+    writeStoredChatState({
+      wabaId: activeWabaId,
+      convId: selectedConversationId,
+      params: persistedParams.toString(),
+    });
+  }, [activeWabaId, searchParamsString, selectedConversationId]);
 
   const {
     data: convData,
@@ -441,12 +391,7 @@ export function ChatWorkspace() {
   }, [allConversations, selectedConversationId]);
 
   useEffect(() => {
-    const shouldRestoreFromStorage =
-      canRestoreFromStorageRef.current &&
-      !hasSecondaryStateInUrl &&
-      hasStoredChatState;
-
-    if (shouldRestoreFromStorage || isWabasLoading) {
+    if (isWabasLoading) {
       return;
     }
 
@@ -526,8 +471,6 @@ export function ChatWorkspace() {
     selectedConversation,
     selectedConversationId,
     selectedPhoneNumberId,
-    hasSecondaryStateInUrl,
-    hasStoredChatState,
     wabas,
   ]);
 
