@@ -1,5 +1,5 @@
-import { ChatSidebarToolbar } from '@/components/chat/chat-sidebar-toolbar';
-import { ConversationList } from '@/components/chat/conversation-list';
+import { ChatSidebarToolbar } from '@/components/chat/conversation-panel/chat-sidebar/chat-sidebar-toolbar';
+import { ConversationList } from '@/components/chat/conversation-panel/chat-sidebar/conversation-list';
 import { cn } from '@/lib/utils';
 import type { ChatConversation, ChatSidebarFilter } from '@/types/chat';
 
@@ -21,6 +21,8 @@ export function ChatSidebar({
   onSelectConversation,
   onToggleTakeover,
   pendingTakeoverConversationId,
+  emptyTitle,
+  emptyDescription,
 }: {
   className?: string;
   searchValue: string;
@@ -42,6 +44,8 @@ export function ChatSidebar({
     nextAdminTakeover: boolean,
   ) => void;
   pendingTakeoverConversationId?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   return (
     <aside className={cn('flex h-full flex-col bg-background', className)}>
@@ -66,6 +70,8 @@ export function ChatSidebar({
           onSelectConversation={onSelectConversation}
           onToggleTakeover={onToggleTakeover}
           pendingTakeoverConversationId={pendingTakeoverConversationId}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyDescription}
         />
       </div>
     </aside>

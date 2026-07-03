@@ -1,12 +1,14 @@
 'use client';
 
-import { MessageBubble } from '@/components/chat/message-bubble/message-bubble';
+import { MessageBubble } from '@/components/chat/detail-panel/chat-detail/message-bubble/message-bubble';
 import { Badge } from '@/components/ui/badge';
+import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import type { MessageGroup } from '@/hooks/use-message';
+import { cn } from '@/lib/utils';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import {
   useCallback,
@@ -44,18 +46,66 @@ function getUnreadBoundaryMessageId({
   return incomingMessages.at(-unreadCount)?.id ?? incomingMessages[0]?.id;
 }
 
-function MessageTimelineSkeleton() {
+const MESSAGE_BUBBLE_SKELETON_LINES = [
+  { first: 'w-44', second: 'w-60' },
+  { first: 'w-36', second: undefined },
+  { first: 'w-56', second: 'w-48' },
+  { first: 'w-40', second: 'w-52' },
+] as const;
+
+function MessageBubbleSkeleton({ index }: { index: number }) {
+  const isOutgoing = index % 2 === 1;
+  const lines =
+    MESSAGE_BUBBLE_SKELETON_LINES[index % MESSAGE_BUBBLE_SKELETON_LINES.length];
+
   return (
-    <div className="flex flex-col gap-3 px-2 py-3">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          key={index}
-          className={
-            index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
-          }
+    <div
+      className={cn(
+        'flex min-w-0 w-full',
+        isOutgoing ? 'justify-end' : 'justify-start',
+      )}
+    >
+      <Bubble
+        align={isOutgoing ? 'end' : 'start'}
+        className="max-w-[85%]"
+        variant={isOutgoing ? 'tinted' : 'muted'}
+      >
+        <BubbleContent
+          className={cn(
+            'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
+            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm',
+          )}
         >
-          <Skeleton className="h-20 w-[70%] rounded-[22px]" />
-        </div>
+          <div className="flex max-w-full flex-col gap-1.5">
+            <Skeleton className={cn('h-3.5 rounded-full', lines.first)} />
+            {lines.second ? (
+              <Skeleton className={cn('h-3.5 rounded-full', lines.second)} />
+            ) : null}
+          </div>
+
+          <div
+            className={cn(
+              'mt-1.5 flex items-center justify-end gap-1',
+              isOutgoing ? 'text-primary/70' : 'text-muted-foreground/70',
+            )}
+          >
+            <Skeleton className="h-2.5 w-10 rounded-full" />
+            {isOutgoing ? <Skeleton className="size-3 rounded-full" /> : null}
+          </div>
+        </BubbleContent>
+      </Bubble>
+    </div>
+  );
+}
+
+export function MessageTimelineSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div
+      className="flex flex-col gap-4 px-2 py-3"
+      aria-label="Loading messages"
+    >
+      {Array.from({ length: count }).map((_, index) => (
+        <MessageBubbleSkeleton key={index} index={index} />
       ))}
     </div>
   );
@@ -262,7 +312,7 @@ export function MessageTimeline({
       <ScrollArea className="h-full px-2 lg:px-4">
         <div
           ref={contentRef}
-          className="flex min-h-full flex-col gap-4 px-2 pt-4 pb-40"
+          className="flex min-h-full flex-col gap-4 px-2 pt-4 pb-6 lg:pb-8"
         >
           {hasNextPage ? (
             <div className="flex justify-center">
@@ -281,6 +331,8 @@ export function MessageTimeline({
               </Button>
             </div>
           ) : null}
+
+          {isFetchingNextPage ? <MessageTimelineSkeleton count={3} /> : null}
 
           {isLoading ? <MessageTimelineSkeleton /> : null}
 
