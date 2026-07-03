@@ -284,13 +284,29 @@ body {
 
 .chapter a.current-header {
   color: var(--brand-strong);
-  font-weight: 800;
+  font-weight: 700;
+}
+
+.chapter .on-this-page {
+  margin-block: 0.72rem 0.86rem;
+  margin-inline-start: 1.35rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start-width: 2px;
+}
+
+.chapter .on-this-page > ol,
+.chapter ol.section {
+  margin-block: 0;
+}
+
+.chapter ol.section li {
+  margin-block: 0.24rem;
 }
 
 .chapter li.part-title {
-  margin-block-start: 1rem;
+  margin-block-start: 1.35rem;
   margin-inline-start: 0.55rem;
-  padding-block-start: 0.95rem;
+  padding-block-start: 1.25rem;
   border-block-start: 1px solid rgba(71, 85, 105, 0.18);
   font-weight: 700;
   letter-spacing: 0;
