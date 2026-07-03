@@ -1,10 +1,65 @@
 # Use an Existing WhatsApp Business App Account
 
-This guide explains how to connect an existing WhatsApp Business App account to pesan.ai using coexistence mode.
+This guide explains how to connect an existing WhatsApp Business App account to pesan.ai using **coexistence** mode.
 
-Coexistence allows you to keep using your WhatsApp Business App while connecting the same number to the WhatsApp Business Platform for use with pesan.ai.
+**Coexistence** allows you to keep using your WhatsApp Business App while connecting the same number to the WhatsApp Business Platform for use with pesan.ai.
 
 This option is useful if your business already uses WhatsApp Business App and does not want to immediately replace the existing app workflow.
+
+## What is coexistence?
+
+Meta sometimes refers to this feature as **coexistence** in support channels and partner documentation. It lets a business use Embedded Signup to onboard with an existing WhatsApp Business App account and phone number instead of replacing the app setup.
+
+After onboarding, the business can use pesan.ai through the WhatsApp Business Platform for higher-volume messaging. The business can still send personal messages from the WhatsApp Business App, and WhatsApp keeps message history synchronized between the WhatsApp Business App and the connected platform experience.
+
+Source: [Meta - Onboarding Business App Users](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users).
+
+## Requirement
+
+Before using **coexistence**, make sure these requirements are met:
+
+- The business must use WhatsApp Business App version **2.24.17** or later.
+- The number must be an existing WhatsApp Business App number that will be connected through **Embedded Signup**.
+
+## Limitation
+
+Meta lists a few limits for WhatsApp Business App numbers that are connected with **Cloud API**:
+
+- To stay compatible with WhatsApp Business App, the phone number has a fixed throughput of **20 mps**.
+- If the business previously worked with another partner and still shares that partner's credit line, the business may see an error when switching to a new partner.
+- Some WhatsApp Business App features still work in the app but are not available through **Cloud API**. See **feature comparison** below.
+
+## Pricing
+
+After onboarding to **Cloud API**, messages sent directly from WhatsApp Business App remain free. Messages sent through **Cloud API** follow Meta's **Cloud API pricing**.
+
+For common pricing scenarios, Meta also provides the PDF: [Our API Solutions for WhatsApp Business App Users](https://developers.facebook.com/resources/API-solutions-for-WhatsApp-Business-App-users.pdf).
+
+## Customer service window
+
+The **customer service window** opens only when a WhatsApp user sends a message to the business after the business has joined **Cloud API**.
+
+If a WhatsApp user sends a message right before the business joins **Cloud API**, WhatsApp does not open the **customer service window** for that message. In that case, the business can only reply through **Cloud API** with a template message.
+
+The 24-hour **customer service window** rule applies to messages sent through **Cloud API**. Messages sent from WhatsApp Business App are not bound by the Cloud API **customer service window**, and they do not create, extend, or affect Cloud API conversation windows or Cloud API pricing.
+
+## Feature comparison
+
+Meta's **feature comparison** explains what changes after a WhatsApp Business App account is connected to **Cloud API**:
+
+| WhatsApp Business App feature | After onboarding to Cloud API | Cloud API support |
+|---|---|---|
+| Individual chats (1:1) | Edit or cancel message is supported. Messages from the last 6 months can be synced, and sent or received messages are mirrored between WhatsApp Business App and Cloud API. | Supported |
+| Contacts | No change in WhatsApp Business App. Contacts with WhatsApp numbers can be synced. | Supported |
+| Group chats | No change in WhatsApp Business App. Group chats are not synced. | Not supported |
+| Disappearing messages | Disabled for all individual chats (1:1). | Not supported |
+| Live location messages | Disabled for all individual chats (1:1). | Not supported |
+| Broadcast lists | Disabled. Existing broadcast lists become read-only, and the business cannot create new broadcast lists. | Not supported |
+| Voice and video calls | No change in WhatsApp Business App. | Not supported |
+| Business tools, such as catalog, orders, and status | No change in WhatsApp Business App. | Not supported |
+| Messaging tools, such as marketing messages, greeting messages, away messages, quick replies, and labels | No change in WhatsApp Business App. | Not supported |
+| Business profile, such as business name, address, and website | No change in WhatsApp Business App. | Not supported |
+| Channels | No change in WhatsApp Business App. | Not supported |
 
 ## Before you begin
 
@@ -66,6 +121,8 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 
 **Important:** pesan.ai currently does not support chat history sync. Choose **Don't share chats** during this step.
 
+If the business taps **Share chats** or turns on **history sync**, the **Connect WhatsApp App** process may fail in pesan.ai. Meta requires chat history to be synced within 24 hours after onboarding is completed. Because pesan.ai does not support **history sync** yet, the business may be automatically **offboarded** within 24 hours and will need to repeat the onboarding flow.
+
 If you accidentally selected **Share all chats**, contact the pesan.ai team before continuing.
 
 10. **Return to the Meta onboarding popup.** Back in the Meta onboarding popup, confirm or edit your WhatsApp Business account details, such as account name and time zone.
@@ -88,4 +145,4 @@ If you accidentally selected **Share all chats**, contact the pesan.ai team befo
 - Make sure the number is the correct business number.
 - The phone must be able to receive WhatsApp messages from Facebook Business.
 - If the popup closes or the connection fails, restart the connection from WABA Management.
-- Use **Don't share chats** because chat history sync is not currently supported.
+- Use **Don't share chats** because chat history sync is not currently supported. If chat history sharing is enabled, the business may need to be offboarded and repeat onboarding within 24 hours.
