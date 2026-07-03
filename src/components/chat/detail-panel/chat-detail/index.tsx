@@ -1,6 +1,9 @@
 import { ChatHeader } from '@/components/chat/detail-panel/chat-detail/chat-header';
 import { MessageComposer } from '@/components/chat/detail-panel/chat-detail/message-composer';
-import { MessageTimeline } from '@/components/chat/detail-panel/chat-detail/message-timeline';
+import {
+  MessageTimeline,
+  MessageTimelineSkeleton,
+} from '@/components/chat/detail-panel/chat-detail/message-timeline';
 import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MessageGroup } from '@/hooks/use-message';
@@ -9,19 +12,8 @@ import { MessageSquareIcon } from 'lucide-react';
 
 function MessageHistorySkeleton() {
   return (
-    <div className="h-full w-full px-4 py-4 lg:px-6">
-      <div className="flex flex-col gap-4">
-        {Array.from({ length: 7 }).map((_, index) => (
-          <div
-            key={index}
-            className={
-              index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
-            }
-          >
-            <Skeleton className="h-20 w-[min(24rem,70%)] rounded-[22px]" />
-          </div>
-        ))}
-      </div>
+    <div className="h-full w-full px-2 py-4 lg:px-4">
+      <MessageTimelineSkeleton count={7} />
     </div>
   );
 }
@@ -110,22 +102,18 @@ export function ChatDetail({
         style={{ backgroundImage: 'var(--chat-bg, none)' }}
       >
         <div className="absolute inset-0">
-          {isLoading ? (
-            <MessageHistorySkeleton />
-          ) : (
-            <MessageTimeline
-              key={conversation.id}
-              conversationId={conversation.id}
-              wabaId={wabaId}
-              messages={messages}
-              isLoading={false}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onLoadOlderAction={onLoadOlder}
-              localSendScrollSignal={localSendScrollSignal}
-              initialUnreadCount={initialUnreadCount}
-            />
-          )}
+          <MessageTimeline
+            key={conversation.id}
+            conversationId={conversation.id}
+            wabaId={wabaId}
+            messages={messages}
+            isLoading={isLoading}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadOlderAction={onLoadOlder}
+            localSendScrollSignal={localSendScrollSignal}
+            initialUnreadCount={initialUnreadCount}
+          />
         </div>
       </div>
 
