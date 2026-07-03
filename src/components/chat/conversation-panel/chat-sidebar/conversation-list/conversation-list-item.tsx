@@ -1,4 +1,4 @@
-import { ConversationActionsMenu } from '@/components/chat/conversation-actions-menu';
+import { ConversationActionsMenu } from '@/components/chat/conversation-panel/chat-sidebar/conversation-list/conversation-actions-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

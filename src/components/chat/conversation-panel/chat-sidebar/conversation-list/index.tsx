@@ -1,7 +1,5 @@
-'use client';
-
-import { ChatEmptyState } from '@/components/chat/chat-empty-state';
-import { ConversationListItem } from '@/components/chat/conversation-list-item';
+import { ConversationListItem } from '@/components/chat/conversation-panel/chat-sidebar/conversation-list/conversation-list-item';
+import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ChatConversation } from '@/types/chat';
@@ -33,6 +31,8 @@ export function ConversationList({
   onSelectConversation,
   onToggleTakeover,
   pendingTakeoverConversationId,
+  emptyTitle = 'No conversations found',
+  emptyDescription = 'Try another WABA, adjust the filters, or wait for new customer messages.',
 }: {
   conversations: ChatConversation[];
   activeConversationId?: string;
@@ -46,6 +46,8 @@ export function ConversationList({
     nextAdminTakeover: boolean,
   ) => void;
   pendingTakeoverConversationId?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   if (isLoading) {
     return <ConversationListSkeleton />;
@@ -71,8 +73,8 @@ export function ConversationList({
     return (
       <div className="p-2">
         <ChatEmptyState
-          title="No conversations found"
-          description="Try another WABA, adjust the filters, or wait for new customer messages."
+          title={emptyTitle}
+          description={emptyDescription}
           icon={MessageSquareIcon}
         />
       </div>
