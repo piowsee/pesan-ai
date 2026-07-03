@@ -4,7 +4,7 @@
 
 # Getting Started
 
-- [How pesan.ai works](start/how-pesan-ai-works.md)
+- [How Pesan AI works](start/how-pesan-ai-works.md)
 - [Book a Consultation](start/book-consultation.md)
 - [After Consultation](start/after-consultation.md)
 - [Terms of Service and Privacy Policy](start/terms-and-privacy.md)

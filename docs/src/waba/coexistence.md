@@ -1,8 +1,8 @@
 # Use an Existing WhatsApp Business App Account
 
-This guide explains how to connect an existing WhatsApp Business App account to pesan.ai using **coexistence** mode.
+This guide explains how to connect an existing WhatsApp Business App account to Pesan AI using **coexistence** mode.
 
-**Coexistence** allows you to keep using your WhatsApp Business App while connecting the same number to the WhatsApp Business Platform for use with pesan.ai.
+**Coexistence** allows you to keep using your WhatsApp Business App while connecting the same number to the WhatsApp Business Platform for use with Pesan AI.
 
 This option is useful if your business already uses WhatsApp Business App and does not want to immediately replace the existing app workflow.
 
@@ -10,7 +10,7 @@ This option is useful if your business already uses WhatsApp Business App and do
 
 Meta sometimes refers to this feature as **coexistence** in support channels and partner documentation. It lets a business use Embedded Signup to onboard with an existing WhatsApp Business App account and phone number instead of replacing the app setup.
 
-After onboarding, the business can use pesan.ai through the WhatsApp Business Platform for higher-volume messaging. The business can still send personal messages from the WhatsApp Business App, and WhatsApp keeps message history synchronized between the WhatsApp Business App and the connected platform experience.
+After onboarding, the business can use Pesan AI through the WhatsApp Business Platform for higher-volume messaging. The business can still send personal messages from the WhatsApp Business App, and WhatsApp keeps message history synchronized between the WhatsApp Business App and the connected platform experience.
 
 Source: [Meta - Onboarding Business App Users](https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users).
 
@@ -77,7 +77,7 @@ Make sure:
 
 ![Meta onboarding popup](../Images/05-meta-onboarding-popup.png)
 
-2. **Select your business portfolio.** Choose the business portfolio you want to share with pesan.ai. If you already have a business portfolio, select the correct one from the list.
+2. **Select your business portfolio.** Choose the business portfolio you want to share with Pesan AI. If you already have a business portfolio, select the correct one from the list.
 
 ![Select business portfolio](../Images/06-business-portfolio-selection.png)
 
@@ -112,7 +112,7 @@ This option may appear as **Connect an existing WhatsApp Business App account** 
 ![Connect button in WhatsApp](../Images/12-connect-button-whatsapp.png)
 
 > [!TIP]
-> If the Facebook Business message does not appear, check that the phone number is correct, active in WhatsApp Business App, connected to the internet, and able to receive messages. If it still does not appear, restart from **WABA Management** or contact the pesan.ai team.
+> If the Facebook Business message does not appear, check that the phone number is correct, active in WhatsApp Business App, connected to the internet, and able to receive messages. If it still does not appear, restart from **WABA Management** or contact the Pesan AI team.
 
 8. **Connect to the Business Platform.** On your phone, tap **Connect to the Business Platform**.
 
@@ -123,17 +123,17 @@ This option may appear as **Connect an existing WhatsApp Business App account** 
 ![Choose not to share chat history](../Images/14-dont-share-chats.png)
 
 > [!IMPORTANT]
-> pesan.ai currently does not support chat history sync. Choose **Don't share chats** during this step.
+> Pesan AI currently does not support chat history sync. Choose **Don't share chats** during this step.
 >
-> If the business taps **Share chats** or turns on **history sync**, the **Connect WhatsApp App** process may fail in pesan.ai. Meta requires chat history to be synced within 24 hours after onboarding is completed. Because pesan.ai does not support **history sync** yet, the business may be automatically **offboarded** within 24 hours and will need to repeat the onboarding flow.
+> If the business taps **Share chats** or turns on **history sync**, the **Connect WhatsApp App** process may fail in Pesan AI. Meta requires chat history to be synced within 24 hours after onboarding is completed. Because Pesan AI does not support **history sync** yet, the business may be automatically **offboarded** within 24 hours and will need to repeat the onboarding flow.
 
-If you accidentally selected **Share all chats**, contact the pesan.ai team before continuing.
+If you accidentally selected **Share all chats**, contact the Pesan AI team before continuing.
 
 10. **Return to the Meta onboarding popup.** Back in the Meta onboarding popup, confirm or edit your WhatsApp Business account details, such as account name and time zone.
 
 ![Confirm WABA details](../Images/15-confirm-waba-details.png)
 
-11. **Review permissions.** Review what pesan.ai can access and do with the connected WhatsApp Business Account. If everything is correct, click **Confirm**.
+11. **Review permissions.** Review what Pesan AI can access and do with the connected WhatsApp Business Account. If everything is correct, click **Confirm**.
 
 ![Review permissions](../Images/16-review-permissions.png)
 
@@ -141,7 +141,7 @@ If you accidentally selected **Share all chats**, contact the pesan.ai team befo
 
 ![Finish connection](../Images/17-finish-connection.png)
 
-13. **Check WABA Management.** Return to pesan.ai and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
+13. **Check WABA Management.** Return to Pesan AI and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
 
 ![WABA Management account list](../Images/04-waba-management-page.png)
 

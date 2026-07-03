@@ -1,14 +1,14 @@
 # Troubleshooting
 
-This page lists common issues that may happen while using pesan.ai.
+This page lists common issues that may happen while using Pesan AI.
 
 ## I submitted a consultation request but have not been contacted
 
-The pesan.ai team will contact you through the WhatsApp number or email address submitted in the consultation form.
+The Pesan AI team will contact you through the WhatsApp number or email address submitted in the consultation form.
 
 Check that the WhatsApp number and email address you submitted are correct, active, and reachable. If the contact information was incorrect, submit the consultation form again from **Contact us** or **Book a Consultation**.
 
-You can also contact the pesan.ai team again through the official email address or WhatsApp number you previously used to reach us.
+You can also contact the Pesan AI team again through the official email address or WhatsApp number you previously used to reach us.
 
 ---
 
@@ -16,7 +16,7 @@ You can also contact the pesan.ai team again through the official email address 
 
 Users cannot create an account by themselves from the login page.
 
-After consultation, agreement, and payment are completed, the pesan.ai team invites your email address. Open the registration link sent to your inbox, verify your email if requested, and create your password. If you do not have access yet, use **Contact us** or **Book a Consultation** first.
+After consultation, agreement, and payment are completed, the Pesan AI team invites your email address. Open the registration link sent to your inbox, verify your email if requested, and create your password. If you do not have access yet, use **Contact us** or **Book a Consultation** first.
 
 ---
 
@@ -34,7 +34,7 @@ Refresh the page and try **Login** again.
 
 If you forgot your password and your account already exists, click **Forgot password?** on the login page and follow the email reset flow.
 
-If the issue continues, contact the pesan.ai team.
+If the issue continues, contact the Pesan AI team.
 
 ---
 
@@ -46,7 +46,7 @@ Try the following:
 - Check your internet connection.
 - Refresh the page.
 - Try again from WABA Management.
-- Make sure you are opening pesan.ai from an HTTPS URL.
+- Make sure you are opening Pesan AI from an HTTPS URL.
 
 ---
 
@@ -69,15 +69,15 @@ Check that:
 
 Then retry the connection from WABA Management.
 
-If the message still does not appear, contact the pesan.ai team.
+If the message still does not appear, contact the Pesan AI team.
 
 ---
 
 ## I shared chat history by mistake
 
-Contact the pesan.ai team.
+Contact the Pesan AI team.
 
-pesan.ai currently does not support chat history sync, so users should choose **Don't share chats** during the coexistence setup. If you selected **Share all chats**, contact the pesan.ai team before continuing.
+Pesan AI currently does not support chat history sync, so users should choose **Don't share chats** during the coexistence setup. If you selected **Share all chats**, contact the Pesan AI team before continuing.
 
 ---
 
@@ -87,7 +87,7 @@ Open WABA Management and review the account status.
 
 Check whether onboarding was completed, the correct WhatsApp number was connected, the Meta business asset is accessible, and the WhatsApp Business Account is active.
 
-If you are not sure what action is required, contact the pesan.ai team.
+If you are not sure what action is required, contact the Pesan AI team.
 
 ---
 
@@ -110,4 +110,4 @@ Try the following:
 - Refresh the page.
 - Click **Clear** to remove filters if needed.
 - Retry the export.
-- Contact the pesan.ai team if the issue continues.
+- Contact the Pesan AI team if the issue continues.

@@ -1,21 +1,21 @@
 <div class="pa-hero">
-  <img src="Images/pesan-ai-black-logo.png" alt="pesan.ai logo" />
+  <img src="Images/pesan-ai-black-logo.png" alt="Pesan AI logo" />
   <p class="pa-eyebrow">User Guide</p>
-  <h1>pesan.ai</h1>
+  <h1>Pesan AI</h1>
 </div>
 
 # Introduction
 
-pesan.ai helps your business connect WhatsApp Business to a managed dashboard for customer communication. From one workspace, your team can review WhatsApp account status, prepare customer conversations, monitor contacts, and operate AI-assisted message automation based on the service flow agreed with the pesan.ai team.
+Pesan AI helps your business connect WhatsApp Business to a managed dashboard for customer communication. From one workspace, your team can review WhatsApp account status, prepare customer conversations, monitor contacts, and operate AI-assisted message automation based on the service flow agreed with the Pesan AI team.
 
 This guide follows the journey most clients take: request consultation, receive an email invitation, create account access, connect WhatsApp Business, then use the dashboard to monitor conversations and customer contacts.
 
-## What you can do with pesan.ai
+## What you can do with Pesan AI
 
-With pesan.ai, you can:
+With Pesan AI, you can:
 
 - Request a consultation before using the service.
-- Create your password from the email invitation sent by the pesan.ai team, then sign in.
+- Create your password from the email invitation sent by the Pesan AI team, then sign in.
 - View WhatsApp Business account activity from the Home dashboard.
 - Connect and manage WhatsApp Business Accounts through WABA Management.
 - Monitor customer conversations from the Chat page as the workflow is updated.
@@ -24,7 +24,7 @@ With pesan.ai, you can:
 
 ## Human and AI workflow
 
-pesan.ai is designed to support both human teams and AI-assisted automation.
+Pesan AI is designed to support both human teams and AI-assisted automation.
 
 When AI automation is enabled for your service, the AI Agent can help handle repetitive customer messages based on the agreed business flow. Your team can still monitor conversations, review customer context, and continue communication manually when human attention is needed.
 
@@ -32,7 +32,7 @@ When AI automation is enabled for your service, the AI Agent can help handle rep
 
 The guide follows the normal user journey:
 
-1. Learn what pesan.ai is.
+1. Learn what Pesan AI is.
 2. Book a consultation.
 3. Wait for the email invitation after agreement and payment.
 4. Complete registration from the email link and create your password.

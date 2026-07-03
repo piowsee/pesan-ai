@@ -29,4 +29,4 @@ Use the number dropdown to review the numbers connected to the account. If neede
 
 ## What to do if an account needs attention
 
-Because the WABA status feature is still being updated, contact the pesan.ai team directly if you notice any WABA issue, connection problem, missing number, or unexpected account behavior. The team will check the account status for you.
+Because the WABA status feature is still being updated, contact the Pesan AI team directly if you notice any WABA issue, connection problem, missing number, or unexpected account behavior. The team will check the account status for you.

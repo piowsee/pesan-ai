@@ -2,7 +2,7 @@
 
 If you do not want to use an existing WhatsApp Business App account, you can create a new WhatsApp Business Account during the Meta onboarding flow.
 
-This option may be suitable if your business is setting up WhatsApp Business for the first time or wants to use a new account for pesan.ai.
+This option may be suitable if your business is setting up WhatsApp Business for the first time or wants to use a new account for Pesan AI.
 
 ## Before you begin
 
@@ -15,7 +15,7 @@ Make sure you have:
 
 ## Setup flow
 
-1. **Open WABA Management.** From the pesan.ai sidebar, click **WABA Management**.
+1. **Open WABA Management.** From the Pesan AI sidebar, click **WABA Management**.
 
 2. **Click Connect WhatsApp account.** Click **Connect WhatsApp account** to open the Meta onboarding popup.
 
@@ -27,9 +27,9 @@ Make sure you have:
 
 6. **Complete the required business information.** Enter the required details, such as business name, phone number, and time zone.
 
-7. **Review permissions.** Review the permissions requested by pesan.ai and confirm the connection.
+7. **Review permissions.** Review the permissions requested by Pesan AI and confirm the connection.
 
-8. **Finish setup.** After setup is complete, return to pesan.ai and check WABA Management.
+8. **Finish setup.** After setup is complete, return to Pesan AI and check WABA Management.
 
 Your new WhatsApp Business Account should appear in the account list after the connection succeeds.
 

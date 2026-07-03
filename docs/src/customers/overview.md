@@ -13,7 +13,7 @@ From this page, you can:
 
 ## When customer data appears
 
-Customer data is available after WhatsApp accounts are connected and customer interactions are recorded by pesan.ai.
+Customer data is available after WhatsApp accounts are connected and customer interactions are recorded by Pesan AI.
 
 The visible information may depend on the connected WhatsApp account and the data available in the system.
 

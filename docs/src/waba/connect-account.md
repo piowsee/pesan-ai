@@ -1,8 +1,8 @@
 # Connect a WhatsApp Business Account
 
-To use pesan.ai with WhatsApp, you need to connect a WhatsApp Business Account from the WABA Management page.
+To use Pesan AI with WhatsApp, you need to connect a WhatsApp Business Account from the WABA Management page.
 
-This process opens Meta onboarding through Facebook Login for Business. Meta may update the screens from time to time, but the purpose remains the same: to grant pesan.ai access to the correct WhatsApp Business assets.
+This process opens Meta onboarding through Facebook Login for Business. Meta may update the screens from time to time, but the purpose remains the same: to grant Pesan AI access to the correct WhatsApp Business assets.
 
 ## Before you begin
 
@@ -42,16 +42,16 @@ Choose **Use an existing WhatsApp Business App account** if your business alread
 
 Choose **Create a new WhatsApp Business Account** if your business wants to create a new WhatsApp setup through Meta.
 
-If you are not sure, contact the pesan.ai team before continuing.
+If you are not sure, contact the Pesan AI team before continuing.
 
 ## If the Meta popup does not open
 
 Allow popups in your browser, check your internet connection, refresh the page, and try **Connect WhatsApp account** again from **WABA Management**.
 
-Facebook Embedded Signup requires an HTTPS page. If the button is disabled or the popup still does not open, contact the pesan.ai team.
+Facebook Embedded Signup requires an HTTPS page. If the button is disabled or the popup still does not open, contact the Pesan AI team.
 
 ## Expected result
 
-After the setup is completed, return to pesan.ai and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
+After the setup is completed, return to Pesan AI and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
 
 ![WABA Management account list](../Images/04-waba-management-page.png)

@@ -1,10 +1,10 @@
 # Chat Page
 
-The Chat page is where WhatsApp customer conversations are managed inside pesan.ai.
+The Chat page is where WhatsApp customer conversations are managed inside Pesan AI.
 
-This page is intended to help users monitor incoming messages, review customer conversations, and respond from a single dashboard. In the broader pesan.ai workflow, this page can also become the place where human team members review or take over conversations assisted by the AI Agent.
+This page is intended to help users monitor incoming messages, review customer conversations, and respond from a single dashboard. In the broader Pesan AI workflow, this page can also become the place where human team members review or take over conversations assisted by the AI Agent.
 
-**Status:** The Chat workflow is currently being updated. The pesan.ai team will confirm which conversation controls are active for your service.
+**Status:** The Chat workflow is currently being updated. The Pesan AI team will confirm which conversation controls are active for your service.
 
 ## Current role in the workflow
 

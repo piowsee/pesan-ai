@@ -1,6 +1,6 @@
 # Contact Support
 
-Contact the pesan.ai team if you need help with account access, WABA setup, WhatsApp connection issues, chat history sync, customer data, or anything that looks unexpected in the dashboard.
+Contact the Pesan AI team if you need help with account access, WABA setup, WhatsApp connection issues, chat history sync, customer data, or anything that looks unexpected in the dashboard.
 
 ## Support contacts
 
@@ -9,7 +9,7 @@ Contact the pesan.ai team if you need help with account access, WABA setup, What
 
 ## When to contact us
 
-Contact the pesan.ai team directly if:
+Contact the Pesan AI team directly if:
 
 - You cannot sign in or complete registration.
 - A WABA or WhatsApp number does not appear after onboarding.

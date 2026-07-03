@@ -1,6 +1,6 @@
 # Home Overview
 
-The Home page gives you a quick summary of your pesan.ai account and WhatsApp Business activity.
+The Home page gives you a quick summary of your Pesan AI account and WhatsApp Business activity.
 
 ![Home dashboard overview](../Images/03-home-overview.png)
 
@@ -16,7 +16,7 @@ The **Account Status** section shows the current condition of your connected Wha
 
 | Card | Meaning |
 |---|---|
-| WhatsApp Accounts | Total WhatsApp Business Accounts connected to pesan.ai. |
+| WhatsApp Accounts | Total WhatsApp Business Accounts connected to Pesan AI. |
 | Active | Accounts that can process incoming and outgoing messages normally. |
 | Needs attention | Accounts that may be disconnected, suspended, blocked, or need Meta verification. |
 

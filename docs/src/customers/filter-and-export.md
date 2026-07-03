@@ -22,7 +22,7 @@ The exported file can be used for follow-up, reporting, or operational review. T
 
 Check your browser download permission and Downloads folder. If filters are active, the export follows the selected **All WABAs** and **All numbers** filters.
 
-Refresh the page, click **Clear** to remove filters if needed, and try **Export Excel** again. If the issue continues, contact the pesan.ai team.
+Refresh the page, click **Clear** to remove filters if needed, and try **Export Excel** again. If the issue continues, contact the Pesan AI team.
 
 ## Notes
 

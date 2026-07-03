@@ -1,6 +1,6 @@
 # Glossary
 
-## pesan.ai
+## Pesan AI
 
 A managed WhatsApp AI automation platform that connects WhatsApp Business to a web dashboard and supports AI-assisted customer communication.
 

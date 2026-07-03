@@ -1,10 +1,10 @@
 # WABA Management Overview
 
-WABA Management is where you connect and manage WhatsApp Business Accounts used by pesan.ai.
+WABA Management is where you connect and manage WhatsApp Business Accounts used by Pesan AI.
 
 ![WABA Management page](../Images/04-waba-management-page.png)
 
-This step is important because pesan.ai needs a connected WhatsApp Business Account before it can receive WhatsApp conversation data, display account status, manage customer contacts, and support AI-assisted message automation.
+This step is important because Pesan AI needs a connected WhatsApp Business Account before it can receive WhatsApp conversation data, display account status, manage customer contacts, and support AI-assisted message automation.
 
 ## What you can do on this page
 
@@ -22,7 +22,7 @@ At the top of the page, you can see a summary of your WhatsApp Business setup.
 
 | Summary | Meaning |
 |---|---|
-| accounts | Total WhatsApp Business Accounts connected to pesan.ai. |
+| accounts | Total WhatsApp Business Accounts connected to Pesan AI. |
 | active | Connected accounts that are currently active. |
 | needs attention | Accounts that require action or review. |
 
