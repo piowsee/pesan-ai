@@ -53,3 +53,5 @@ Facebook Embedded Signup requires an HTTPS page. If the button is disabled or th
 ## Expected result
 
 After the setup is completed, return to pesan.ai and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
+
+![WABA Management account list](../Images/04-waba-management-page.png)

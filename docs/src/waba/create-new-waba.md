@@ -32,3 +32,5 @@ Make sure you have:
 8. **Finish setup.** After setup is complete, return to pesan.ai and check WABA Management.
 
 Your new WhatsApp Business Account should appear in the account list after the connection succeeds.
+
+![WABA Management account list](../Images/04-waba-management-page.png)

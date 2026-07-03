@@ -143,6 +143,8 @@ If you accidentally selected **Share all chats**, contact the pesan.ai team befo
 
 13. **Check WABA Management.** Return to pesan.ai and open WABA Management. Your connected WhatsApp Business Account should appear in the account list.
 
+![WABA Management account list](../Images/04-waba-management-page.png)
+
 > [!NOTE]
 > - Keep the WhatsApp phone nearby during the setup process.
 > - Make sure the number is the correct business number.

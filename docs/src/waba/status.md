@@ -8,6 +8,8 @@ Open **WABA Management** from the sidebar.
 
 The page shows a summary of total accounts, active accounts, and accounts that need attention.
 
+![WABA Management account list](../Images/04-waba-management-page.png)
+
 ## Status types
 
 | Status | Meaning |
