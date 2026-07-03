@@ -138,9 +138,19 @@ export function ChatWorkspace() {
   } = useWabas(1, 100);
   const wabas = useMemo(() => data?.wabas ?? [], [data?.wabas]);
   const searchParamsString = searchParams.toString();
+  const [optimisticSearchParamsString, setOptimisticSearchParamsString] =
+    useState(searchParamsString);
+  const optimisticSearchParams = useMemo(
+    () => new URLSearchParams(optimisticSearchParamsString),
+    [optimisticSearchParamsString],
+  );
   const hasSecondaryStateInUrl = CHAT_DETAIL_PARAM_KEYS.some((key) =>
     searchParams.has(key),
   );
+
+  useEffect(() => {
+    setOptimisticSearchParamsString(searchParamsString);
+  }, [searchParamsString]);
 
   const [initialStoredChatState] = useState(() => {
     if (typeof window === 'undefined') {
@@ -163,13 +173,14 @@ export function ChatWorkspace() {
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
-  const selectedPhoneNumberId = searchParams.get('phoneNumberId') || undefined;
-  const filter = isChatSidebarFilter(searchParams.get('filter'))
-    ? (searchParams.get('filter') as ChatSidebarFilter)
+  const selectedPhoneNumberId =
+    optimisticSearchParams.get('phoneNumberId') || undefined;
+  const filter = isChatSidebarFilter(optimisticSearchParams.get('filter'))
+    ? (optimisticSearchParams.get('filter') as ChatSidebarFilter)
     : 'all';
-  const searchValue = searchParams.get('q') ?? '';
+  const searchValue = optimisticSearchParams.get('q') ?? '';
   const debouncedSearchValue = useDebounce(searchValue, 400);
-  const isContactInfoOpen = searchParams.get('panel') === 'contact';
+  const isContactInfoOpen = optimisticSearchParams.get('panel') === 'contact';
   const hasStoredChatState =
     sanitizedInitialStoredChatState.toString().length > 0;
   const hasNoWabas =
@@ -186,10 +197,13 @@ export function ChatWorkspace() {
       updates: Partial<Record<ChatStateParamKey, string | undefined>>,
       keys: ChatStateParamKeys,
     ) => {
-      const nextParams = pickChatSearchParams(searchParamsString, keys);
+      const nextParams = pickChatSearchParams(
+        optimisticSearchParamsString,
+        keys,
+      );
       return applyChatSearchParamUpdates(nextParams, updates);
     },
-    [searchParamsString],
+    [optimisticSearchParamsString],
   );
 
   const replaceChatSearchState = useCallback(
@@ -205,6 +219,8 @@ export function ChatWorkspace() {
         conversationId: selectedConversationId,
         searchParams: nextParams,
       });
+
+      setOptimisticSearchParamsString(nextParams.toString());
 
       if (nextHref === currentHref) {
         return;
@@ -241,6 +257,8 @@ export function ChatWorkspace() {
         conversationId,
         searchParams: nextParams,
       });
+
+      setOptimisticSearchParamsString(nextParams.toString());
 
       if (nextHref === currentHref) {
         return;
@@ -360,6 +378,7 @@ export function ChatWorkspace() {
   const {
     data: convData,
     isLoading: isConversationsLoading,
+    isPlaceholderData: isConversationsPlaceholderData,
     isError: isConversationsError,
     error: conversationsError,
     refetch,
@@ -513,6 +532,9 @@ export function ChatWorkspace() {
   ]);
 
   const messages = useMemo(() => groupedMessages ?? [], [groupedMessages]);
+  const shouldShowConversationListSkeleton =
+    Boolean(activeWabaId) &&
+    (isConversationsLoading || isConversationsPlaceholderData);
 
   const selectedContactDraft = selectedConversation
     ? (contactDetailsByConversation[selectedConversation.id] ?? {
@@ -702,7 +724,7 @@ export function ChatWorkspace() {
           }}
           conversations={filteredConversations}
           activeConversationId={selectedConversationId}
-          isLoading={Boolean(activeWabaId) && isConversationsLoading}
+          isLoading={shouldShowConversationListSkeleton}
           isError={Boolean(activeWabaId) && isConversationsError}
           errorMessage={conversationsError?.message}
           onRetry={() => {
