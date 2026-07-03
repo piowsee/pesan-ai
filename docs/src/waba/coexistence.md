@@ -86,7 +86,7 @@ Make sure:
 
 3. **Choose the existing WhatsApp Business App option.** When asked to choose the WhatsApp Business setup option, select the option to connect an existing WhatsApp Business App account.
 
-This option may appear as **Connect an existing WhatsApp Business App account**, **Hubungkan Aplikasi WhatsApp Business**, or similar wording depending on the language shown by Meta.
+This option may appear as **Connect an existing WhatsApp Business App account** or similar wording depending on the language shown by Meta.
 
 ![Choose existing WhatsApp Business App account](../Images/07-existing-or-new-waba-choice.png)
 
@@ -94,7 +94,7 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 
 ![Enter phone number](../Images/08-enter-phone-number.png)
 
-5. **Review the connection information.** Meta will show information about connecting your existing WhatsApp Business App account to the Business Platform. Review the information, then click **Next** or **Berikutnya**.
+5. **Review the connection information.** Meta will show information about connecting your existing WhatsApp Business App account to the Business Platform. Review the information, then click **Next**.
 
 ![Review coexistence information](../Images/09-coexistence-review.png)
 
@@ -114,7 +114,7 @@ This option may appear as **Connect an existing WhatsApp Business App account**,
 > [!TIP]
 > If the Facebook Business message does not appear, check that the phone number is correct, active in WhatsApp Business App, connected to the internet, and able to receive messages. If it still does not appear, restart from **WABA Management** or contact the pesan.ai team.
 
-8. **Connect to the Business Platform.** On your phone, tap **Connect to the Business Platform**. Depending on the language shown, this may appear as **Hubungkan** or similar wording.
+8. **Connect to the Business Platform.** On your phone, tap **Connect to the Business Platform**.
 
 ![Connect to Business Platform](../Images/13-connect-to-business-platform.png)
 
@@ -133,11 +133,11 @@ If you accidentally selected **Share all chats**, contact the pesan.ai team befo
 
 ![Confirm WABA details](../Images/15-confirm-waba-details.png)
 
-11. **Review permissions.** Review what pesan.ai can access and do with the connected WhatsApp Business Account. If everything is correct, click **Confirm** or **Konfirmasi**.
+11. **Review permissions.** Review what pesan.ai can access and do with the connected WhatsApp Business Account. If everything is correct, click **Confirm**.
 
 ![Review permissions](../Images/16-review-permissions.png)
 
-12. **Finish setup.** When the account is connected, click **Done**, **Finish**, or **Selesai**.
+12. **Finish setup.** When the account is connected, click **Done** or **Finish**.
 
 ![Finish connection](../Images/17-finish-connection.png)
 
