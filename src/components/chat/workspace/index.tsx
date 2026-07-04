@@ -1,10 +1,22 @@
 'use client';
 
-import { ChatDetail } from '@/components/chat/chat-detail';
-import { ChatEmptyState } from '@/components/chat/chat-empty-state';
-import { ChatSidebar } from '@/components/chat/chat-sidebar';
-import { ContactInfoPanel } from '@/components/chat/contact-info-panel';
-import { WabaSwitcher } from '@/components/chat/waba-switcher';
+import { ChatContactPanel } from '@/components/chat/contact-panel';
+import { ChatConversationPane } from '@/components/chat/conversation-panel';
+import { ChatDetailPane } from '@/components/chat/detail-panel';
+import { ChatWorkspaceHeader } from '@/components/chat/header-panel';
+import {
+  CHAT_BASE_PARAM_KEYS,
+  CHAT_DETAIL_PARAM_KEYS,
+  CHAT_LIST_PARAM_KEYS,
+  type ChatStateParamKey,
+  type ChatStateParamKeys,
+  applyChatSearchParamUpdates,
+  buildChatHref,
+  clearStoredChatState,
+  getChatRouteSelection,
+  pickChatSearchParams,
+  writeStoredChatState,
+} from '@/components/chat/workspace/chat-route-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import {
@@ -20,8 +32,12 @@ import {
 } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
 import type { ChatSidebarFilter } from '@/types/chat';
-import { InboxIcon } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
 import {
   startTransition,
   useCallback,
@@ -30,18 +46,6 @@ import {
   useState,
 } from 'react';
 import { toast } from 'sonner';
-
-const CHAT_STATE_STORAGE_KEY = 'dashboard-chat-state';
-const CHAT_STATE_PARAM_KEYS = [
-  'wabaId',
-  'conversationId',
-  'filter',
-  'phoneNumberId',
-  'q',
-  'panel',
-] as const;
-
-type ChatStateParamKey = (typeof CHAT_STATE_PARAM_KEYS)[number];
 
 function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
   return value === 'all' || value === 'admin' || value === 'bot';
@@ -120,9 +124,12 @@ export function ChatWorkspaceSkeleton() {
 }
 
 export function ChatWorkspace() {
+  const params = useParams<{ chatSegments?: string[] }>();
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { hasInvalidRouteDepth, selectedConversationId, selectedWabaId } =
+    getChatRouteSelection(params.chatSegments);
   const {
     data,
     isLoading: isWabasLoading,
@@ -130,17 +137,16 @@ export function ChatWorkspace() {
   } = useWabas(1, 100);
   const wabas = useMemo(() => data?.wabas ?? [], [data?.wabas]);
   const searchParamsString = searchParams.toString();
-  const hasPersistedStateInUrl = CHAT_STATE_PARAM_KEYS.some((key) =>
-    searchParams.has(key),
+  const [optimisticSearchParamsString, setOptimisticSearchParamsString] =
+    useState(searchParamsString);
+  const optimisticSearchParams = useMemo(
+    () => new URLSearchParams(optimisticSearchParamsString),
+    [optimisticSearchParamsString],
   );
+  useEffect(() => {
+    setOptimisticSearchParamsString(searchParamsString);
+  }, [searchParamsString]);
 
-  const [initialStoredChatState] = useState(() => {
-    if (typeof window === 'undefined') {
-      return '';
-    }
-
-    return window.localStorage.getItem(CHAT_STATE_STORAGE_KEY) ?? '';
-  });
   const [localSendScrollSignal, setLocalSendScrollSignal] = useState(0);
   const [
     initialUnreadCountByConversation,
@@ -149,72 +155,131 @@ export function ChatWorkspace() {
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
-  const requestedWabaId = searchParams.get('wabaId') || undefined;
-  const selectedConversationId =
-    searchParams.get('conversationId') || undefined;
-  const selectedPhoneNumberId = searchParams.get('phoneNumberId') || undefined;
-  const filter = isChatSidebarFilter(searchParams.get('filter'))
-    ? (searchParams.get('filter') as ChatSidebarFilter)
+  const selectedPhoneNumberId =
+    optimisticSearchParams.get('phoneNumberId') || undefined;
+  const filter = isChatSidebarFilter(optimisticSearchParams.get('filter'))
+    ? (optimisticSearchParams.get('filter') as ChatSidebarFilter)
     : 'all';
-  const searchValue = searchParams.get('q') ?? '';
+  const searchValue = optimisticSearchParams.get('q') ?? '';
   const debouncedSearchValue = useDebounce(searchValue, 400);
-  const isContactInfoOpen = searchParams.get('panel') === 'contact';
-  const shouldRestoreFromStorage =
-    !hasPersistedStateInUrl && Boolean(initialStoredChatState);
+  const isContactInfoOpen = optimisticSearchParams.get('panel') === 'contact';
   const hasNoWabas =
     !isWabasLoading && !isWabasError && (data?.total ?? 0) === 0;
-  const activeWabaId = shouldRestoreFromStorage
-    ? undefined
-    : hasNoWabas
-      ? undefined
-      : (requestedWabaId ?? wabas[0]?.id);
+  const activeWabaId = selectedWabaId;
 
-  const replaceChatState = useCallback(
-    (updates: Partial<Record<ChatStateParamKey, string | undefined>>) => {
-      const nextParams = new URLSearchParams(searchParamsString);
+  const currentHref = useMemo(
+    () => (searchParamsString ? `${pathname}?${searchParamsString}` : pathname),
+    [pathname, searchParamsString],
+  );
 
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value) {
-          nextParams.set(key, value);
-        } else {
-          nextParams.delete(key);
-        }
+  const createUpdatedSearchParams = useCallback(
+    (
+      updates: Partial<Record<ChatStateParamKey, string | undefined>>,
+      keys: ChatStateParamKeys,
+    ) => {
+      const nextParams = pickChatSearchParams(
+        optimisticSearchParamsString,
+        keys,
+      );
+      return applyChatSearchParamUpdates(nextParams, updates);
+    },
+    [optimisticSearchParamsString],
+  );
+
+  const replaceChatSearchState = useCallback(
+    (
+      updates: Partial<Record<ChatStateParamKey, string | undefined>>,
+      keys: ChatStateParamKeys = selectedConversationId
+        ? CHAT_DETAIL_PARAM_KEYS
+        : CHAT_LIST_PARAM_KEYS,
+    ) => {
+      const nextParams = createUpdatedSearchParams(updates, keys);
+      const nextHref = buildChatHref({
+        wabaId: activeWabaId,
+        conversationId: selectedConversationId,
+        searchParams: nextParams,
       });
 
-      const nextQuery = nextParams.toString();
-      const nextHref = nextQuery ? `${pathname}?${nextQuery}` : pathname;
+      setOptimisticSearchParamsString(nextParams.toString());
+
+      if (nextHref === currentHref) {
+        return;
+      }
 
       startTransition(() => {
         router.replace(nextHref, { scroll: false });
       });
     },
-    [pathname, router, searchParamsString],
+    [
+      activeWabaId,
+      createUpdatedSearchParams,
+      currentHref,
+      router,
+      selectedConversationId,
+    ],
+  );
+
+  const pushChatRoute = useCallback(
+    ({
+      conversationId,
+      keys,
+      updates = {},
+      wabaId,
+    }: {
+      wabaId?: string;
+      conversationId?: string;
+      keys: ChatStateParamKeys;
+      updates?: Partial<Record<ChatStateParamKey, string | undefined>>;
+    }) => {
+      const nextParams = createUpdatedSearchParams(updates, keys);
+      const nextHref = buildChatHref({
+        wabaId,
+        conversationId,
+        searchParams: nextParams,
+      });
+
+      setOptimisticSearchParamsString(nextParams.toString());
+
+      if (nextHref === currentHref) {
+        return;
+      }
+
+      startTransition(() => {
+        router.push(nextHref, { scroll: false });
+      });
+    },
+    [createUpdatedSearchParams, currentHref, router],
   );
 
   useEffect(() => {
-    if (hasNoWabas) {
+    if (!hasInvalidRouteDepth) {
       return;
     }
 
-    if (hasPersistedStateInUrl) {
-      return;
-    }
+    const nextParams = pickChatSearchParams(
+      searchParamsString,
+      CHAT_DETAIL_PARAM_KEYS,
+    );
+    const nextHref = buildChatHref({
+      wabaId: selectedWabaId,
+      conversationId: selectedConversationId,
+      searchParams: nextParams,
+    });
 
-    if (!initialStoredChatState) {
+    if (nextHref === currentHref) {
       return;
     }
 
     startTransition(() => {
-      router.replace(`${pathname}?${initialStoredChatState}`, {
-        scroll: false,
-      });
+      router.replace(nextHref, { scroll: false });
     });
   }, [
-    hasNoWabas,
-    hasPersistedStateInUrl,
-    initialStoredChatState,
-    pathname,
+    currentHref,
+    hasInvalidRouteDepth,
     router,
+    searchParamsString,
+    selectedConversationId,
+    selectedWabaId,
   ]);
 
   useEffect(() => {
@@ -222,39 +287,48 @@ export function ChatWorkspace() {
       return;
     }
 
-    window.localStorage.removeItem(CHAT_STATE_STORAGE_KEY);
+    clearStoredChatState();
 
-    if (hasPersistedStateInUrl) {
+    const nextParams = pickChatSearchParams(
+      searchParamsString,
+      CHAT_BASE_PARAM_KEYS,
+    );
+    const nextHref = buildChatHref({ searchParams: nextParams });
+
+    if (nextHref !== currentHref) {
       startTransition(() => {
-        router.replace(pathname, { scroll: false });
+        router.replace(nextHref, { scroll: false });
       });
     }
-  }, [hasNoWabas, hasPersistedStateInUrl, pathname, router]);
+  }, [currentHref, hasNoWabas, router, searchParamsString]);
 
   useEffect(() => {
-    if (!hasPersistedStateInUrl) {
+    // Only persist once a waba is actually selected, so nav entries (e.g. the
+    // sidebar's "Chat" link) can send the user back to the last conversation
+    // they were viewing, similar to how Discord remembers the last channel
+    // open in a server. Skip (rather than clear) when there's no active
+    // waba, so an explicit deep link to the bare `/dashboard/chat` route
+    // doesn't wipe out a previously stored session.
+    if (!activeWabaId) {
       return;
     }
 
-    const persistedParams = new URLSearchParams();
-    const currentSearchParams = new URLSearchParams(searchParamsString);
-
-    CHAT_STATE_PARAM_KEYS.forEach((key) => {
-      const value = currentSearchParams.get(key);
-      if (value) {
-        persistedParams.set(key, value);
-      }
-    });
-
-    window.localStorage.setItem(
-      CHAT_STATE_STORAGE_KEY,
-      persistedParams.toString(),
+    const persistedParams = pickChatSearchParams(
+      searchParamsString,
+      CHAT_DETAIL_PARAM_KEYS,
     );
-  }, [hasPersistedStateInUrl, searchParamsString]);
+
+    writeStoredChatState({
+      wabaId: activeWabaId,
+      convId: selectedConversationId,
+      params: persistedParams.toString(),
+    });
+  }, [activeWabaId, searchParamsString, selectedConversationId]);
 
   const {
     data: convData,
     isLoading: isConversationsLoading,
+    isPlaceholderData: isConversationsPlaceholderData,
     isError: isConversationsError,
     error: conversationsError,
     refetch,
@@ -317,10 +391,40 @@ export function ChatWorkspace() {
   }, [allConversations, selectedConversationId]);
 
   useEffect(() => {
-    // Don't normalize while WABAs are still loading — wabas[] is empty during
-    // the fetch, which causes the requestedWabaId validity check to wrongly
-    // fail and set nextState.wabaId to a value already present in the URL.
-    if (shouldRestoreFromStorage || !activeWabaId || isWabasLoading) {
+    if (isWabasLoading) {
+      return;
+    }
+
+    if (activeWabaId && !wabas.some((waba) => waba.id === activeWabaId)) {
+      const nextParams = pickChatSearchParams(
+        searchParamsString,
+        CHAT_BASE_PARAM_KEYS,
+      );
+      const nextHref = buildChatHref({ searchParams: nextParams });
+
+      if (nextHref !== currentHref) {
+        startTransition(() => {
+          router.replace(nextHref, { scroll: false });
+        });
+      }
+      return;
+    }
+
+    if (selectedConversationId && convData && !selectedConversation) {
+      const nextParams = pickChatSearchParams(
+        searchParamsString,
+        CHAT_LIST_PARAM_KEYS,
+      );
+      const nextHref = buildChatHref({
+        wabaId: activeWabaId,
+        searchParams: nextParams,
+      });
+
+      if (nextHref !== currentHref) {
+        startTransition(() => {
+          router.replace(nextHref, { scroll: false });
+        });
+      }
       return;
     }
 
@@ -328,24 +432,13 @@ export function ChatWorkspace() {
       {};
 
     if (
-      !requestedWabaId ||
-      !wabas.some((waba) => waba.id === requestedWabaId)
-    ) {
-      nextState.wabaId = activeWabaId;
-    }
-
-    if (
       selectedPhoneNumberId &&
-      !phoneNumbers.some(
-        (phoneNumber) => phoneNumber.id === selectedPhoneNumberId,
-      )
+      (!activeWabaId ||
+        !phoneNumbers.some(
+          (phoneNumber) => phoneNumber.id === selectedPhoneNumberId,
+        ))
     ) {
       nextState.phoneNumberId = undefined;
-    }
-
-    if (selectedConversationId && convData && !selectedConversation) {
-      nextState.conversationId = undefined;
-      nextState.panel = undefined;
     }
 
     if (!selectedConversationId && isContactInfoOpen) {
@@ -363,38 +456,28 @@ export function ChatWorkspace() {
       return;
     }
 
-    // Only call router.replace when the resulting URL actually differs from
-    // the current one — router.replace() with an identical href still triggers
-    // a fresh route request in the Next.js App Router.
-    const nextParams = new URLSearchParams(searchParamsString);
-    Object.entries(nextState).forEach(([key, value]) => {
-      if (value) {
-        nextParams.set(key, value);
-      } else {
-        nextParams.delete(key);
-      }
-    });
-    if (nextParams.toString() !== searchParamsString) {
-      replaceChatState(nextState);
-    }
+    replaceChatSearchState(nextState);
   }, [
     activeWabaId,
     convData,
+    currentHref,
     isContactInfoOpen,
     isWabasLoading,
     phoneNumbers,
-    replaceChatState,
-    requestedWabaId,
+    replaceChatSearchState,
+    router,
     searchParams,
     searchParamsString,
     selectedConversation,
     selectedConversationId,
     selectedPhoneNumberId,
-    shouldRestoreFromStorage,
     wabas,
   ]);
 
   const messages = useMemo(() => groupedMessages ?? [], [groupedMessages]);
+  const shouldShowConversationListSkeleton =
+    Boolean(activeWabaId) &&
+    (isConversationsLoading || isConversationsPlaceholderData);
 
   const selectedContactDraft = selectedConversation
     ? (contactDetailsByConversation[selectedConversation.id] ?? {
@@ -436,17 +519,18 @@ export function ChatWorkspace() {
         return next;
       });
 
-      replaceChatState({
+      pushChatRoute({
         wabaId: activeWabaId,
         conversationId,
-        panel: undefined,
+        keys: CHAT_DETAIL_PARAM_KEYS,
+        updates: { panel: undefined },
       });
 
       if (activeWabaId && unreadCount > 0) {
         markAsRead({ wabaId: activeWabaId, convId: conversationId });
       }
     },
-    [activeWabaId, allConversations, markAsRead, replaceChatState],
+    [activeWabaId, allConversations, markAsRead, pushChatRoute],
   );
 
   useEffect(() => {
@@ -540,14 +624,8 @@ export function ChatWorkspace() {
     [activeWabaId, selectedConversationId, sendMediaMessage],
   );
 
-  const isRestoringPersistedState = shouldRestoreFromStorage && !hasNoWabas;
   const isWaitingForInitialWaba = isWabasLoading && !data;
-  const isWaitingForSelectedConversation =
-    Boolean(selectedConversationId) && isConversationsLoading && !convData;
-  const shouldShowWorkspaceSkeleton =
-    isRestoringPersistedState ||
-    isWaitingForInitialWaba ||
-    isWaitingForSelectedConversation;
+  const shouldShowWorkspaceSkeleton = isWaitingForInitialWaba;
 
   if (shouldShowWorkspaceSkeleton) {
     return <ChatWorkspaceSkeleton />;
@@ -555,130 +633,112 @@ export function ChatWorkspace() {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 bg-background z-10 relative border-b border-brand/15">
-        <div className="flex h-15 items-center px-4">
-          <WabaSwitcher
-            wabas={wabas}
-            activeWabaId={activeWaba?.id}
-            onSelectWaba={(wabaId) => {
-              replaceChatState({
-                wabaId,
-                conversationId: undefined,
-                phoneNumberId: undefined,
-                panel: undefined,
-              });
-            }}
-          />
-        </div>
-      </div>
+      <ChatWorkspaceHeader
+        wabas={wabas}
+        activeWabaId={activeWaba?.id}
+        onSelectWaba={(wabaId) => {
+          pushChatRoute({
+            wabaId,
+            keys: CHAT_LIST_PARAM_KEYS,
+            updates: { panel: undefined },
+          });
+        }}
+      />
 
       <div
         className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
         style={{ contain: 'strict' }}
       >
-        <div
-          className={`absolute inset-0 z-10 flex h-full w-full flex-col bg-background transition-transform duration-200 ease-out lg:static lg:w-95 lg:shrink-0 lg:border-r lg:border-brand/10 lg:translate-x-0 ${showMobileDetail ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
-        >
-          <ChatSidebar
-            searchValue={searchValue}
-            onSearchChange={(value) => {
-              replaceChatState({ q: value.trim() ? value : undefined });
-            }}
-            filter={filter}
-            onFilterChange={(value) => {
-              replaceChatState({
-                filter: value === 'all' ? undefined : value,
-              });
-            }}
-            phoneNumbers={phoneNumbers}
-            selectedPhoneNumberId={selectedPhoneNumberId}
-            onPhoneNumberChange={(value) => {
-              replaceChatState({ phoneNumberId: value });
-            }}
-            conversations={filteredConversations}
-            activeConversationId={selectedConversationId}
-            isLoading={isConversationsLoading}
-            isError={isConversationsError}
-            errorMessage={conversationsError?.message}
-            onRetry={() => refetch()}
-            onSelectConversation={handleSelectConversation}
-            onToggleTakeover={handleToggleTakeover}
-            pendingTakeoverConversationId={pendingTakeoverConversationId}
-          />
-        </div>
+        <ChatConversationPane
+          searchValue={searchValue}
+          onSearchChange={(value) => {
+            replaceChatSearchState({ q: value.trim() ? value : undefined });
+          }}
+          filter={filter}
+          onFilterChange={(value) => {
+            replaceChatSearchState({
+              filter: value === 'all' ? undefined : value,
+            });
+          }}
+          phoneNumbers={phoneNumbers}
+          selectedPhoneNumberId={selectedPhoneNumberId}
+          onPhoneNumberChange={(value) => {
+            replaceChatSearchState({ phoneNumberId: value });
+          }}
+          conversations={filteredConversations}
+          activeConversationId={selectedConversationId}
+          isLoading={shouldShowConversationListSkeleton}
+          isError={Boolean(activeWabaId) && isConversationsError}
+          errorMessage={conversationsError?.message}
+          onRetry={() => {
+            if (activeWabaId) {
+              void refetch();
+            }
+          }}
+          onSelectConversation={handleSelectConversation}
+          onToggleTakeover={handleToggleTakeover}
+          pendingTakeoverConversationId={pendingTakeoverConversationId}
+          showMobileDetail={showMobileDetail}
+          emptyTitle={activeWabaId ? 'No conversations found' : 'Select a WABA'}
+          emptyDescription={
+            activeWabaId
+              ? 'Try another WABA, adjust the filters, or wait for new customer messages.'
+              : 'Choose a WhatsApp Business Account to load its conversations.'
+          }
+        />
 
-        <div
-          className={`absolute inset-0 z-20 flex min-w-0 flex-1 flex-col bg-background transition-transform duration-200 ease-out lg:static lg:z-0 lg:translate-x-0 ${!showMobileDetail ? 'translate-x-full pointer-events-none' : isContactInfoOpen ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
-        >
-          {selectedConversation ? (
-            <ChatDetail
-              conversation={selectedConversation}
-              wabaId={activeWabaId}
-              messages={messages}
-              isLoading={isMessagesLoading}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onLoadOlder={() => fetchNextPage()}
-              localSendScrollSignal={localSendScrollSignal}
-              initialUnreadCount={selectedInitialUnreadCount}
-              onSend={handleSendMessage}
-              onSendMedia={handleSendMediaMessage}
-              showBackButton={showMobileDetail}
-              onBack={() => {
-                replaceChatState({
-                  conversationId: undefined,
-                  panel: undefined,
-                });
-              }}
-              onContactAreaClick={() => {
-                replaceChatState({
-                  panel: isContactInfoOpen ? undefined : 'contact',
-                });
-              }}
-            />
-          ) : (
-            <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
-              <ChatEmptyState
-                title="No chat selected"
-                description="Select a conversation from the sidebar to view message history."
-                icon={InboxIcon}
-                className="w-full"
-              />
-            </div>
-          )}
-        </div>
+        <ChatDetailPane
+          selectedConversationId={selectedConversationId}
+          conversation={selectedConversation}
+          activeWabaId={activeWabaId}
+          messages={messages}
+          isLoading={isConversationsLoading || isMessagesLoading}
+          hasNextPage={Boolean(hasNextPage)}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadOlder={() => {
+            if (hasNextPage) {
+              void fetchNextPage();
+            }
+          }}
+          localSendScrollSignal={localSendScrollSignal}
+          initialUnreadCount={selectedInitialUnreadCount}
+          onSend={handleSendMessage}
+          onSendMedia={handleSendMediaMessage}
+          showMobileDetail={showMobileDetail}
+          isContactInfoOpen={isContactInfoOpen}
+          onBack={() => {
+            pushChatRoute({
+              wabaId: activeWabaId,
+              keys: CHAT_LIST_PARAM_KEYS,
+              updates: { panel: undefined },
+            });
+          }}
+          onContactAreaClick={() => {
+            replaceChatSearchState({
+              panel: isContactInfoOpen ? undefined : 'contact',
+            });
+          }}
+        />
 
-        {selectedConversation && isContactInfoOpen ? (
-          <div className="absolute inset-0 z-30 flex flex-col bg-background lg:static lg:z-0 lg:w-95 lg:shrink-0 lg:overflow-hidden lg:border-l lg:border-brand/10">
-            <ContactInfoPanel
-              conversation={selectedConversation}
-              label={selectedContactDraft.label}
-              notes={selectedContactDraft.notes}
-              onLabelChange={(value) => {
-                setContactDetailsByConversation((prev) => ({
-                  ...prev,
-                  [selectedConversation.id]: {
-                    ...selectedContactDraft,
-                    label: value,
-                  },
-                }));
-              }}
-              onNotesChange={(value) => {
-                setContactDetailsByConversation((prev) => ({
-                  ...prev,
-                  [selectedConversation.id]: {
-                    ...selectedContactDraft,
-                    notes: value,
-                  },
-                }));
-              }}
-              onClose={() => {
-                replaceChatState({ panel: undefined });
-              }}
-              showMobileBackButton={showMobileDetail}
-            />
-          </div>
-        ) : null}
+        <ChatContactPanel
+          conversation={selectedConversation}
+          isOpen={isContactInfoOpen}
+          draft={selectedContactDraft}
+          onDraftChange={(draft) => {
+            if (!selectedConversation) {
+              return;
+            }
+
+            setContactDetailsByConversation((prev) => ({
+              ...prev,
+              [selectedConversation.id]: draft,
+            }));
+          }}
+          onClose={() => {
+            replaceChatSearchState({ panel: undefined });
+          }}
+          showMobileBackButton={showMobileDetail}
+        />
       </div>
     </div>
   );

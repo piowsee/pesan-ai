@@ -1,41 +1,44 @@
 'use client';
 
+import { useChatNavHref } from '@/hooks/use-chat-nav-href';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, MessageSquare, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { FaWhatsapp } from 'react-icons/fa6';
 
-const actions = [
-  {
-    eyebrow: 'Inbox',
-    title: 'Reply to customer conversations',
-    href: '/dashboard/chat',
-    icon: MessageSquare,
-    helper:
-      'Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time.',
-    iconColor: 'text-brand/50',
-  },
-  {
-    eyebrow: 'WABA',
-    title: 'Manage WhatsApp Business accounts',
-    href: '/dashboard/waba',
-    icon: FaWhatsapp,
-    helper:
-      'Go to WABA settings to manage number status, Meta verification, and messaging tier limits.',
-    iconColor: 'text-[#25D366]',
-  },
-  {
-    eyebrow: 'Customers',
-    title: 'Review saved customer contacts',
-    href: '/dashboard/customers',
-    icon: UsersRound,
-    helper:
-      'Open the customer list to filter contacts by WABA or WhatsApp number and export them when needed.',
-    iconColor: 'text-brand/50',
-  },
-];
-
 export function QuickActions() {
+  const chatHref = useChatNavHref();
+
+  const actions = [
+    {
+      eyebrow: 'Inbox',
+      title: 'Reply to customer conversations',
+      href: chatHref,
+      icon: MessageSquare,
+      helper:
+        'Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time.',
+      iconColor: 'text-brand/50',
+    },
+    {
+      eyebrow: 'WABA',
+      title: 'Manage WhatsApp Business accounts',
+      href: '/dashboard/waba',
+      icon: FaWhatsapp,
+      helper:
+        'Go to WABA settings to manage number status, Meta verification, and messaging tier limits.',
+      iconColor: 'text-[#25D366]',
+    },
+    {
+      eyebrow: 'Customers',
+      title: 'Review saved customer contacts',
+      href: '/dashboard/customers',
+      icon: UsersRound,
+      helper:
+        'Open the customer list to filter contacts by WABA or WhatsApp number and export them when needed.',
+      iconColor: 'text-brand/50',
+    },
+  ];
+
   return (
     <section className="mb-8">
       {/* Section label */}

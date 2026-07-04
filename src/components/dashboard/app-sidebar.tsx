@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { useChatNavHref } from '@/hooks/use-chat-nav-href';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
 import { Home, MessageSquare, UsersRound } from 'lucide-react';
@@ -22,15 +23,31 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaWhatsapp } from 'react-icons/fa6';
 
-const navItems = [
-  { title: 'Home', url: '/dashboard', icon: Home },
-  { title: 'WABA Management', url: '/dashboard/waba', icon: FaWhatsapp },
-  { title: 'Chat', url: '/dashboard/chat', icon: MessageSquare },
-  { title: 'Customers', url: '/dashboard/customers', icon: UsersRound },
-];
-
 export function AppSidebar({ user }: { user: User | null }) {
   const pathname = usePathname();
+  const chatHref = useChatNavHref();
+
+  const navItems = [
+    { title: 'Home', url: '/dashboard', icon: Home, matchPath: '/dashboard' },
+    {
+      title: 'WABA Management',
+      url: '/dashboard/waba',
+      icon: FaWhatsapp,
+      matchPath: '/dashboard/waba',
+    },
+    {
+      title: 'Chat',
+      url: chatHref,
+      icon: MessageSquare,
+      matchPath: '/dashboard/chat',
+    },
+    {
+      title: 'Customers',
+      url: '/dashboard/customers',
+      icon: UsersRound,
+      matchPath: '/dashboard/customers',
+    },
+  ];
 
   return (
     <Sidebar collapsible="icon">
@@ -57,10 +74,10 @@ export function AppSidebar({ user }: { user: User | null }) {
               </div>
               <SidebarTrigger
                 className={cn(
-                  pathname === '/dashboard/chat'
+                  pathname.startsWith('/dashboard/chat')
                     ? 'bg-transparent text-brand'
                     : 'text-brand',
-                  'absolute top-0 right-0 !size-10 shrink-0 bg-transparent transition-colors hover:bg-transparent active:bg-transparent aria-expanded:bg-transparent [&_svg]:!size-5',
+                  'absolute top-0 right-0 size-10! shrink-0 bg-transparent transition-colors hover:bg-transparent active:bg-transparent aria-expanded:bg-transparent [&_svg]:!size-5',
                 )}
               />
             </div>
@@ -79,7 +96,12 @@ export function AppSidebar({ user }: { user: User | null }) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.url}
+                    isActive={
+                      item.matchPath === '/dashboard'
+                        ? pathname === item.matchPath
+                        : pathname === item.matchPath ||
+                          pathname.startsWith(`${item.matchPath}/`)
+                    }
                     tooltip={item.title}
                     variant="activePrimary"
                     className="h-10 px-0 text-[15px] text-brand hover:text-brand data-active:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 [&_svg]:size-5"

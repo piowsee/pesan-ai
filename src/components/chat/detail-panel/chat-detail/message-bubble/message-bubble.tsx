@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageStatus } from '@/components/chat/message-status';
+import { MessageStatus } from '@/components/chat/detail-panel/chat-detail/message-status';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { useElementInViewport } from '@/hooks/use-element-in-viewport';
 import { useMessageMediaDownloadUrl } from '@/hooks/use-message';
