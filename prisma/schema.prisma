@@ -155,10 +155,24 @@ model BotWebhook {
   @@map("bot_webhook")
 }
 
+model Contact {
+  id               String   @id @default(cuid())
+  bsuid            String?  @unique // WhatsApp Business-scoped user ID (BSUID / user_id), absent on some message echoes
+  customerPhone    String?  @unique
+  customerName     String?
+  customerUsername String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  conversations Conversation[]
+
+  @@index([customerUsername], name: "idx_contact_customer_username")
+  @@map("contact")
+}
+
 model Conversation {
   id                    String    @id @default(cuid())
-  customerPhone         String    // Customer WhatsApp number (not id)
-  customerName          String?
+  contactId             String
   adminTakeover         Boolean   @default(false) // Admin has taken over (bot paused)
   lastMessageAt         DateTime?
   lastCustomerMessageAt DateTime? // For 24h window check
@@ -170,10 +184,13 @@ model Conversation {
   phoneNumberId String
   phoneNumber   PhoneNumber @relation(fields: [phoneNumberId], references: [id])
 
+  contact Contact @relation(fields: [contactId], references: [id])
+
   messages Message[]
 
-  @@unique([phoneNumberId, customerPhone], name: "unique_conversation")
+  @@unique([phoneNumberId, contactId], name: "unique_conversation")
   @@index([lastMessageAt], name: "idx_conversations_last_message")
+  @@index([contactId], name: "idx_conversations_contact_id")
   @@map("conversation")
 }
 
