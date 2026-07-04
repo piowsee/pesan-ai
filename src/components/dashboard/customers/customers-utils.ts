@@ -1,8 +1,8 @@
-import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
+import { type CustomerContact } from '@/hooks/use-customer-contact';
 import { type Waba } from '@/hooks/use-wabas';
 
 export const PAGE_SIZE = 12;
-export const EMPTY_CUSTOMERS: CustomerPhoneNumber[] = [];
+export const EMPTY_CUSTOMERS: CustomerContact[] = [];
 export const EMPTY_WABAS: Waba[] = [];
 
 export type PhoneFilterOption = {
@@ -16,15 +16,15 @@ export function getWabaLabel(waba: Waba) {
   return waba.businessName?.trim() || waba.wabaId;
 }
 
-export function getCustomerName(customer: CustomerPhoneNumber) {
+export function getCustomerName(customer: CustomerContact) {
   return customer.customerName?.trim() || 'No name';
 }
 
-export function getCustomerUsername(customer: CustomerPhoneNumber) {
+export function getCustomerUsername(customer: CustomerContact) {
   return customer.customerUsername?.trim() || 'No username';
 }
 
-export function getCustomerPhone(customer: CustomerPhoneNumber) {
+export function getCustomerPhone(customer: CustomerContact) {
   return customer.customerPhone?.trim() || 'No phone number';
 }
 

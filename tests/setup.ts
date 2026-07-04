@@ -59,8 +59,8 @@ vi.mock('@/repositories/conversation.repository', () => ({
   },
 }));
 
-vi.mock('@/repositories/customer-phone-number.repository', () => ({
-  CustomerPhoneNumberRepository: {
+vi.mock('@/repositories/contact.repository', () => ({
+  ContactRepository: {
     findConversationContacts: vi.fn(),
   },
 }));
@@ -154,9 +154,9 @@ vi.mock('@/services/phone-number.service', () => ({
   },
 }));
 
-vi.mock('@/services/customer-phone-number.service', () => ({
-  CustomerPhoneNumberService: {
-    getCustomerPhoneNumbers: vi.fn(),
+vi.mock('@/services/customer-contact.service', () => ({
+  CustomerContactService: {
+    getCustomerContacts: vi.fn(),
   },
 }));
 

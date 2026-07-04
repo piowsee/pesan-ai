@@ -1,18 +1,16 @@
-import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
-import { CustomerPhoneNumberService } from '@/services/customer-phone-number.service';
+import { ContactRepository } from '@/repositories/contact.repository';
+import { CustomerContactService } from '@/services/customer-contact.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/services/customer-phone-number.service');
+vi.unmock('@/services/customer-contact.service');
 
-describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
+describe('CustomerContactService', { tags: ['backend'] }, () => {
   const USER_ID = 'user-123';
   const DISPLAY_PHONE_NUMBER = '+6281234567890';
 
   beforeEach(() => {
-    vi.mocked(
-      CustomerPhoneNumberRepository.findConversationContacts,
-    ).mockResolvedValue({
-      customerPhoneNumbers: [],
+    vi.mocked(ContactRepository.findConversationContacts).mockResolvedValue({
+      customerContacts: [],
       total: 0,
     });
   });
@@ -21,12 +19,10 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
     vi.restoreAllMocks();
   });
 
-  describe('getCustomerPhoneNumbers', () => {
+  describe('getCustomerContacts', () => {
     it('passes multi-value filters through to the repository', async () => {
-      vi.mocked(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).mockResolvedValue({
-        customerPhoneNumbers: [
+      vi.mocked(ContactRepository.findConversationContacts).mockResolvedValue({
+        customerContacts: [
           {
             customerPhone: '628111',
             customerName: 'Alice',
@@ -41,15 +37,13 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
         total: 2,
       });
 
-      const result = await CustomerPhoneNumberService.getCustomerPhoneNumbers({
+      const result = await CustomerContactService.getCustomerContacts({
         userId: USER_ID,
         wabaIds: ['db-waba-123', 'db-waba-456'],
         phoneNumbers: [DISPLAY_PHONE_NUMBER, '+6289999999999'],
       });
 
-      expect(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).toHaveBeenCalledWith({
+      expect(ContactRepository.findConversationContacts).toHaveBeenCalledWith({
         userId: USER_ID,
         wabaIds: ['db-waba-123', 'db-waba-456'],
         phoneNumbers: [DISPLAY_PHONE_NUMBER, '+6289999999999'],
@@ -57,7 +51,7 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
         limit: undefined,
       });
       expect(result).toEqual({
-        customerPhoneNumbers: [
+        customerContacts: [
           {
             customerPhone: '628111',
             customerName: 'Alice',
@@ -74,10 +68,8 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
     });
 
     it('paginates after deduplicating customer phone numbers', async () => {
-      vi.mocked(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).mockResolvedValue({
-        customerPhoneNumbers: [
+      vi.mocked(ContactRepository.findConversationContacts).mockResolvedValue({
+        customerContacts: [
           {
             customerPhone: '628222',
             customerName: 'Bob',
@@ -87,15 +79,13 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
         total: 3,
       });
 
-      const result = await CustomerPhoneNumberService.getCustomerPhoneNumbers({
+      const result = await CustomerContactService.getCustomerContacts({
         userId: USER_ID,
         page: 2,
         limit: 1,
       });
 
-      expect(
-        CustomerPhoneNumberRepository.findConversationContacts,
-      ).toHaveBeenCalledWith({
+      expect(ContactRepository.findConversationContacts).toHaveBeenCalledWith({
         userId: USER_ID,
         wabaIds: undefined,
         phoneNumbers: undefined,
@@ -103,7 +93,7 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
         limit: 1,
       });
       expect(result).toEqual({
-        customerPhoneNumbers: [
+        customerContacts: [
           {
             customerPhone: '628222',
             customerName: 'Bob',

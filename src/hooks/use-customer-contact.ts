@@ -7,26 +7,26 @@ import {
   useQuery,
 } from '@tanstack/react-query';
 
-export interface CustomerPhoneNumber {
+export interface CustomerContact {
   customerPhone: string | null;
   customerName: string | null;
   customerUsername: string | null;
 }
 
-export interface CustomerPhoneNumberFilters {
+export interface CustomerContactFilters {
   wabaIds?: string[];
   phoneNumbers?: string[];
 }
 
-interface ListCustomerPhoneNumbersResponse {
-  customerPhoneNumbers: CustomerPhoneNumber[];
+interface ListCustomerContactsResponse {
+  customerContacts: CustomerContact[];
   total: number;
 }
 
-type CustomerPhoneNumberQueryFilters = CustomerPhoneNumberFilters | null;
+type CustomerContactQueryFilters = CustomerContactFilters | null;
 
-const EMPTY_CUSTOMER_PHONE_NUMBER_RESPONSE: ListCustomerPhoneNumbersResponse = {
-  customerPhoneNumbers: [],
+const EMPTY_CUSTOMER_CONTACT_RESPONSE: ListCustomerContactsResponse = {
+  customerContacts: [],
   total: 0,
 };
 
@@ -38,9 +38,9 @@ function normalizeFilterValues(values?: string[]) {
   return normalized.length > 0 ? normalized : undefined;
 }
 
-function normalizeCustomerPhoneNumberFilters(
-  filters: CustomerPhoneNumberQueryFilters = {},
-): CustomerPhoneNumberQueryFilters {
+function normalizeCustomerContactFilters(
+  filters: CustomerContactQueryFilters = {},
+): CustomerContactQueryFilters {
   if (filters === null) {
     return null;
   }
@@ -54,31 +54,28 @@ function normalizeCustomerPhoneNumberFilters(
   };
 }
 
-export const customerPhoneNumberKeys = {
-  all: ['customerPhoneNumbers'] as const,
-  lists: () => [...customerPhoneNumberKeys.all, 'list'] as const,
-  list: (filters: CustomerPhoneNumberQueryFilters) =>
-    [
-      ...customerPhoneNumberKeys.lists(),
-      filters ?? { disabled: true },
-    ] as const,
+export const CustomerContactKeys = {
+  all: ['CustomerContacts'] as const,
+  lists: () => [...CustomerContactKeys.all, 'list'] as const,
+  list: (filters: CustomerContactQueryFilters) =>
+    [...CustomerContactKeys.lists(), filters ?? { disabled: true }] as const,
 };
 
-export const customerPhoneNumberQueries = {
-  list: (filters: CustomerPhoneNumberQueryFilters = {}) => {
-    const normalizedFilters = normalizeCustomerPhoneNumberFilters(filters);
+export const CustomerContactQueries = {
+  list: (filters: CustomerContactQueryFilters = {}) => {
+    const normalizedFilters = normalizeCustomerContactFilters(filters);
 
     return queryOptions({
-      queryKey: customerPhoneNumberKeys.list(normalizedFilters),
-      queryFn: () => fetchCustomerPhoneNumbers(normalizedFilters ?? {}),
+      queryKey: CustomerContactKeys.list(normalizedFilters),
+      queryFn: () => fetchCustomerContacts(normalizedFilters ?? {}),
       staleTime: 60 * 1000,
     });
   },
 };
 
-async function fetchCustomerPhoneNumbers(
-  filters: CustomerPhoneNumberFilters = {},
-): Promise<ListCustomerPhoneNumbersResponse> {
+async function fetchCustomerContacts(
+  filters: CustomerContactFilters = {},
+): Promise<ListCustomerContactsResponse> {
   const params = new URLSearchParams();
 
   for (const wabaId of filters.wabaIds ?? []) {
@@ -92,23 +89,22 @@ async function fetchCustomerPhoneNumbers(
   const queryString = params.toString();
   const response = await fetch(
     queryString
-      ? `/api/customer-phone-number?${queryString}`
-      : '/api/customer-phone-number',
+      ? `/api/customer-contact?${queryString}`
+      : '/api/customer-contact',
   );
   const body = await response.json().catch(() => null);
 
   if (!response.ok) {
     throw new Error(
-      extractJSendErrorMessage(body) || 'Failed to fetch customers',
+      extractJSendErrorMessage(body) || 'Failed to fetch customer contacts',
     );
   }
 
   const rows =
-    (body?.data?.customerPhoneNumbers as CustomerPhoneNumber[] | undefined) ??
-    [];
+    (body?.data?.customerContacts as CustomerContact[] | undefined) ?? [];
 
   return {
-    customerPhoneNumbers: rows.map((row) => ({
+    customerContacts: rows.map((row) => ({
       customerPhone: row.customerPhone ?? null,
       customerName: row.customerName ?? null,
       customerUsername: row.customerUsername ?? null,
@@ -117,12 +113,10 @@ async function fetchCustomerPhoneNumbers(
   };
 }
 
-export function useCustomerPhoneNumbers(
-  filters: CustomerPhoneNumberQueryFilters = {},
-) {
+export function useCustomerContacts(filters: CustomerContactQueryFilters = {}) {
   const shouldFetch = filters !== null;
   const query = useQuery({
-    ...customerPhoneNumberQueries.list(filters),
+    ...CustomerContactQueries.list(filters),
     enabled: shouldFetch,
     placeholderData: shouldFetch ? keepPreviousData : undefined,
   });
@@ -130,7 +124,7 @@ export function useCustomerPhoneNumbers(
   return {
     ...query,
     data: shouldFetch
-      ? (query.data ?? EMPTY_CUSTOMER_PHONE_NUMBER_RESPONSE)
-      : EMPTY_CUSTOMER_PHONE_NUMBER_RESPONSE,
+      ? (query.data ?? EMPTY_CUSTOMER_CONTACT_RESPONSE)
+      : EMPTY_CUSTOMER_CONTACT_RESPONSE,
   };
 }

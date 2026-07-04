@@ -1,7 +1,7 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/server/prisma';
 
-export interface CustomerPhoneNumberRow {
+export interface CustomerContactRow {
   customerPhone: string | null;
   customerName: string | null;
   customerUsername: string | null;
@@ -15,7 +15,7 @@ interface FindConversationContactsParams {
   limit?: number;
 }
 
-export const CustomerPhoneNumberRepository = {
+export const ContactRepository = {
   _buildPhoneNumberFilter(params: {
     userId: string;
     wabaIds?: string[];
@@ -65,7 +65,7 @@ export const CustomerPhoneNumberRepository = {
   async findConversationContacts(
     params: FindConversationContactsParams,
   ): Promise<{
-    customerPhoneNumbers: CustomerPhoneNumberRow[];
+    customerContacts: CustomerContactRow[];
     total: number;
   }> {
     const { userId, wabaIds, phoneNumbers, page, limit } = params;
@@ -95,17 +95,16 @@ export const CustomerPhoneNumberRepository = {
 
     if (!pagination) {
       const conversations = await customerContactQuery;
-      const customerPhoneNumbers = conversations.map(
+      const customerContacts = conversations.map(
         (conversation) => conversation.contact,
       );
 
       return {
-        customerPhoneNumbers,
-        total: customerPhoneNumbers.length,
+        customerContacts,
+        total: customerContacts.length,
       };
     }
 
-    // Issue #143
     const [conversations, groupedContacts] = await Promise.all([
       customerContactQuery,
       prisma.conversation.groupBy({
@@ -115,7 +114,7 @@ export const CustomerPhoneNumberRepository = {
     ]);
 
     return {
-      customerPhoneNumbers: conversations.map(
+      customerContacts: conversations.map(
         (conversation) => conversation.contact,
       ),
       total: groupedContacts.length,

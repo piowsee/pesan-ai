@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
+import { type CustomerContact } from '@/hooks/use-customer-contact';
 import { cn } from '@/lib/utils';
 import { RefreshCw, UserRound, UsersRound, X } from 'lucide-react';
 
@@ -115,8 +115,8 @@ export function CustomersTable({
   onClearFilters,
   onRetry,
 }: {
-  customers: CustomerPhoneNumber[];
-  pagedCustomers: CustomerPhoneNumber[];
+  customers: CustomerContact[];
+  pagedCustomers: CustomerContact[];
   page: number;
   isLoading: boolean;
   isError: boolean;

@@ -1,21 +1,21 @@
 import { logger } from '@/lib/server/logger';
-import { CustomerPhoneNumberRepository } from '@/repositories/customer-phone-number.repository';
+import { ContactRepository } from '@/repositories/contact.repository';
 
-export interface CustomerPhoneNumberContact {
+export interface CustomerContact {
   customerPhone: string | null;
   customerName: string | null;
   customerUsername: string | null;
 }
 
-export const CustomerPhoneNumberService = {
-  async getCustomerPhoneNumbers(params: {
+export const CustomerContactService = {
+  async getCustomerContacts(params: {
     userId: string;
     wabaIds?: string[]; // Internal DB WhatsappBusinessAccount.id values.
     phoneNumbers?: string[]; // Business/admin display phone numbers from the PhoneNumber table.
     page?: number;
     limit?: number;
   }): Promise<{
-    customerPhoneNumbers: CustomerPhoneNumberContact[];
+    customerContacts: CustomerContact[];
     total: number;
   }> {
     const { userId, wabaIds, phoneNumbers, page, limit } = params;
@@ -28,8 +28,8 @@ export const CustomerPhoneNumberService = {
       limit,
     });
 
-    const { customerPhoneNumbers, total } =
-      await CustomerPhoneNumberRepository.findConversationContacts({
+    const { customerContacts, total } =
+      await ContactRepository.findConversationContacts({
         userId,
         wabaIds,
         phoneNumbers,
@@ -42,11 +42,11 @@ export const CustomerPhoneNumberService = {
       wabaIds,
       phoneNumbers,
       total,
-      returned: customerPhoneNumbers.length,
+      returned: customerContacts.length,
     });
 
     return {
-      customerPhoneNumbers,
+      customerContacts,
       total,
     };
   },

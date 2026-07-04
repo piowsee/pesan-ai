@@ -1,4 +1,4 @@
-import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
+import { type CustomerContact } from '@/hooks/use-customer-contact';
 import * as XLSX from 'xlsx-js-style';
 
 import {
@@ -82,7 +82,7 @@ function applyTableStyles(worksheet: XLSX.WorkSheet, rowCount: number) {
   }
 }
 
-export function exportCustomersToExcel(customers: CustomerPhoneNumber[]) {
+export function exportCustomersToExcel(customers: CustomerContact[]) {
   const rows: string[][] = [
     [...HEADERS],
     ...customers.map((customer, index) => [
