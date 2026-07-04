@@ -24,7 +24,7 @@ function getQueryValues(searchParams: URLSearchParams, key: string) {
  * @query limit {number} - Optional items per page; enables pagination when present
  * @response { status: 'success', data: { customerPhoneNumbers, total, page?, limit? } }
  * @access Authenticated users
- * @description Returns unique customer phone numbers that have ever chatted with the user's owned WhatsApp numbers.
+ * @description Returns unique customer contacts that have ever chatted with the user's owned WhatsApp numbers.
  */
 export const GET = withApiAuth(async ({ req, user }) => {
   const { searchParams } = new URL(req.url);

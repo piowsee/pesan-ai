@@ -1,9 +1,13 @@
 import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
 import * as XLSX from 'xlsx-js-style';
 
-import { getChatLink, getCustomerName } from './customers-utils';
+import {
+  getCustomerName,
+  getCustomerPhone,
+  getCustomerUsername,
+} from './customers-utils';
 
-const HEADERS = ['No', 'Nama', 'Nomor', 'Chat'] as const;
+const HEADERS = ['No', 'Name', 'Username', 'Phone Number'] as const;
 const CELL_BORDER = {
   top: { style: 'thin', color: { rgb: '000000' } },
   right: { style: 'thin', color: { rgb: '000000' } },
@@ -30,14 +34,6 @@ const BODY_STYLE = {
     vertical: 'center',
   },
 };
-const LINK_STYLE = {
-  ...BODY_STYLE,
-  font: {
-    color: { rgb: '1D4ED8' },
-    underline: true,
-  },
-};
-
 function pad(value: number) {
   return String(value).padStart(2, '0');
 }
@@ -81,7 +77,7 @@ function applyTableStyles(worksheet: XLSX.WorkSheet, rowCount: number) {
         continue;
       }
 
-      cell.s = columnIndex === 3 ? LINK_STYLE : BODY_STYLE;
+      cell.s = BODY_STYLE;
     }
   }
 }
@@ -92,8 +88,8 @@ export function exportCustomersToExcel(customers: CustomerPhoneNumber[]) {
     ...customers.map((customer, index) => [
       String(index + 1),
       getCustomerName(customer),
-      customer.customerPhone,
-      getChatLink(customer.customerPhone),
+      getCustomerUsername(customer),
+      getCustomerPhone(customer),
     ]),
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
@@ -104,18 +100,6 @@ export function exportCustomersToExcel(customers: CustomerPhoneNumber[]) {
   }));
   worksheet['!rows'] = rows.map((_, index) => ({ hpt: index === 0 ? 22 : 20 }));
   applyTableStyles(worksheet, rows.length);
-
-  customers.forEach((customer, index) => {
-    const rowNumber = index + 2;
-    const cell = worksheet[`D${rowNumber}`];
-
-    if (cell) {
-      cell.l = {
-        Target: `https://${getChatLink(customer.customerPhone)}`,
-        Tooltip: 'Open WhatsApp chat',
-      };
-    }
-  });
 
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Customers');
   XLSX.writeFile(workbook, buildExportFilename(), {

@@ -8,8 +8,9 @@ import {
 } from '@tanstack/react-query';
 
 export interface CustomerPhoneNumber {
-  customerPhone: string;
+  customerPhone: string | null;
   customerName: string | null;
+  customerUsername: string | null;
 }
 
 export interface CustomerPhoneNumberFilters {
@@ -98,7 +99,7 @@ async function fetchCustomerPhoneNumbers(
 
   if (!response.ok) {
     throw new Error(
-      extractJSendErrorMessage(body) || 'Failed to fetch customer numbers',
+      extractJSendErrorMessage(body) || 'Failed to fetch customers',
     );
   }
 
@@ -108,8 +109,9 @@ async function fetchCustomerPhoneNumbers(
 
   return {
     customerPhoneNumbers: rows.map((row) => ({
-      customerPhone: row.customerPhone,
+      customerPhone: row.customerPhone ?? null,
       customerName: row.customerName ?? null,
+      customerUsername: row.customerUsername ?? null,
     })),
     total: body?.data?.total ?? rows.length,
   };

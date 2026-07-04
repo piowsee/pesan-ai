@@ -2,8 +2,9 @@ import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/server/prisma';
 
 export interface CustomerPhoneNumberRow {
-  customerPhone: string;
+  customerPhone: string | null;
   customerName: string | null;
+  customerUsername: string | null;
 }
 
 interface FindConversationContactsParams {
@@ -76,19 +77,27 @@ export const CustomerPhoneNumberRepository = {
     const conversationFilter = this._buildConversationFilter(phoneNumberFilter);
     const pagination = this._buildPagination({ page, limit });
 
-    const customerPhoneNumberQuery = prisma.conversation.findMany({
+    const customerContactQuery = prisma.conversation.findMany({
       where: conversationFilter,
       select: {
-        customerPhone: true,
-        customerName: true,
+        contact: {
+          select: {
+            customerPhone: true,
+            customerName: true,
+            customerUsername: true,
+          },
+        },
       },
-      distinct: ['customerPhone'],
-      orderBy: [{ lastMessageAt: 'desc' }, { customerPhone: 'asc' }],
+      distinct: ['contactId'],
+      orderBy: [{ lastMessageAt: 'desc' }, { contactId: 'asc' }],
       ...pagination,
     });
 
     if (!pagination) {
-      const customerPhoneNumbers = await customerPhoneNumberQuery;
+      const conversations = await customerContactQuery;
+      const customerPhoneNumbers = conversations.map(
+        (conversation) => conversation.contact,
+      );
 
       return {
         customerPhoneNumbers,
@@ -97,16 +106,18 @@ export const CustomerPhoneNumberRepository = {
     }
 
     // Issue #143
-    const [customerPhoneNumbers, groupedContacts] = await Promise.all([
-      customerPhoneNumberQuery,
+    const [conversations, groupedContacts] = await Promise.all([
+      customerContactQuery,
       prisma.conversation.groupBy({
-        by: ['customerPhone'],
+        by: ['contactId'],
         where: conversationFilter,
       }),
     ]);
 
     return {
-      customerPhoneNumbers,
+      customerPhoneNumbers: conversations.map(
+        (conversation) => conversation.contact,
+      ),
       total: groupedContacts.length,
     };
   },

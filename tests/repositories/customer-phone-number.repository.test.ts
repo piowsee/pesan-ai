@@ -150,29 +150,58 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
     anotherUserPhoneDbId = anotherUserPhone.id;
 
+    const [
+      sameWabaContact,
+      primaryWabaContact,
+      otherUserContact,
+      secondWabaContact,
+    ] = await Promise.all([
+      prisma.contact.create({
+        data: {
+          customerPhone: sameWabaCustomerPhone,
+          customerName: 'Same WABA Customer',
+          customerUsername: '@samewaba',
+        },
+      }),
+      prisma.contact.create({
+        data: {
+          customerPhone: primaryWabaCustomerPhone,
+          customerName: 'Primary WABA Customer',
+        },
+      }),
+      prisma.contact.create({
+        data: {
+          customerPhone: otherUserCustomerPhone,
+          customerName: 'Other User Customer',
+        },
+      }),
+      prisma.contact.create({
+        data: {
+          customerPhone: secondWabaCustomerPhone,
+          customerName: 'Second WABA Customer',
+        },
+      }),
+    ]);
+
     await prisma.conversation.createMany({
       data: [
         {
-          customerPhone: sameWabaCustomerPhone,
-          customerName: 'Same WABA Customer',
+          contactId: sameWabaContact.id,
           phoneNumberId: secondaryPhoneDbId,
           lastMessageAt: new Date('2026-05-31T09:00:00.000Z'),
         },
         {
-          customerPhone: primaryWabaCustomerPhone,
-          customerName: 'Primary WABA Customer',
+          contactId: primaryWabaContact.id,
           phoneNumberId: primaryPhoneDbId,
           lastMessageAt: new Date('2026-05-31T08:00:00.000Z'),
         },
         {
-          customerPhone: otherUserCustomerPhone,
-          customerName: 'Other User Customer',
+          contactId: otherUserContact.id,
           phoneNumberId: anotherUserPhoneDbId,
           lastMessageAt: new Date('2026-05-31T07:00:00.000Z'),
         },
         {
-          customerPhone: secondWabaCustomerPhone,
-          customerName: 'Second WABA Customer',
+          contactId: secondWabaContact.id,
           phoneNumberId: thirdPhoneDbId,
           lastMessageAt: new Date('2026-05-31T10:00:00.000Z'),
         },
@@ -191,6 +220,18 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
     await prisma.message.deleteMany({
       where: {
         conversation: {
+          contact: {
+            customerPhone: {
+              in: testCustomerPhones,
+            },
+          },
+        },
+      },
+    });
+
+    await prisma.conversation.deleteMany({
+      where: {
+        contact: {
           customerPhone: {
             in: testCustomerPhones,
           },
@@ -198,7 +239,7 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
       },
     });
 
-    await prisma.conversation.deleteMany({
+    await prisma.contact.deleteMany({
       where: {
         customerPhone: {
           in: testCustomerPhones,
@@ -341,6 +382,7 @@ describe('CustomerPhoneNumberRepository Integration', { tags: ['db'] }, () => {
       expect(result.customerPhoneNumbers[0]).toEqual({
         customerPhone: primaryWabaCustomerPhone,
         customerName: 'Primary WABA Customer',
+        customerUsername: null,
       });
     });
   });

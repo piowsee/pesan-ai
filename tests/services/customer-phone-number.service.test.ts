@@ -30,10 +30,12 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
           {
             customerPhone: '628111',
             customerName: 'Alice',
+            customerUsername: '@alice',
           },
           {
             customerPhone: '628222',
             customerName: null,
+            customerUsername: null,
           },
         ],
         total: 2,
@@ -59,10 +61,12 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
           {
             customerPhone: '628111',
             customerName: 'Alice',
+            customerUsername: '@alice',
           },
           {
             customerPhone: '628222',
             customerName: null,
+            customerUsername: null,
           },
         ],
         total: 2,
@@ -77,6 +81,7 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
           {
             customerPhone: '628222',
             customerName: 'Bob',
+            customerUsername: null,
           },
         ],
         total: 3,
@@ -102,6 +107,7 @@ describe('CustomerPhoneNumberService', { tags: ['backend'] }, () => {
           {
             customerPhone: '628222',
             customerName: 'Bob',
+            customerUsername: null,
           },
         ],
         total: 3,

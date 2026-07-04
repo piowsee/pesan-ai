@@ -17,7 +17,15 @@ export function getWabaLabel(waba: Waba) {
 }
 
 export function getCustomerName(customer: CustomerPhoneNumber) {
-  return customer.customerName?.trim() || 'Unnamed customer';
+  return customer.customerName?.trim() || 'No name';
+}
+
+export function getCustomerUsername(customer: CustomerPhoneNumber) {
+  return customer.customerUsername?.trim() || 'No username';
+}
+
+export function getCustomerPhone(customer: CustomerPhoneNumber) {
+  return customer.customerPhone?.trim() || 'No phone number';
 }
 
 export function normalizePhone(value: string) {
