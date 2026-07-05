@@ -1,5 +1,11 @@
 # pesan-ai
 
+## 1.0.0
+
+### Major Changes
+
+- 3fe0899: This is a major release introducing support for WhatsApp's username feature, released on 29 June 2026, which is the source of the breaking changes in this update. A new `Contact` table has been added and linked to the `Conversation` table, allowing conversations to resolve user information such as `phoneNumber`, `BSUID`, and other related fields. The customer contact API has been updated to fetch data through a join between the `conversation` and `contact` tables, along with adjustments to other related queries. The `sendAdminTextMessage` function/service has been changed to prioritize `BSUID` when sending messages, falling back to `phoneNumber` when `BSUID` is unavailable, and the outgoing message payload has been updated accordingly. The `smb_message_echoes` and `incoming_message` processor has also been updated to handle all scenarios for customers who have opted into usernames; however, the message echo flow still does not support `BSUID` and continues to rely on `phoneNumber` only, since the underlying webhook does not yet support `BSUID`. Relevant functions in this flow were refactored so `BSUID` support can be added later once the webhook catches up. Finally, the external webhook request payload was restructured to send a `customerIdentifier` (`BSUID` or `phoneNumber`).
+
 ## 0.3.1
 
 ### Patch Changes
