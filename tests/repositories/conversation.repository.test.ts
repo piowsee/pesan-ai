@@ -96,7 +96,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       expect(conversations?.length).toBeGreaterThanOrEqual(1);
       const seeded = conversations?.find((c) => c.id === dbConvId);
       expect(seeded).toBeDefined();
-      expect(seeded?.customerPhone).toBe(SEED_DATA.CUSTOMER_PHONE);
+      expect(seeded?.contact.customerPhone).toBe(SEED_DATA.CUSTOMER_PHONE);
       // Verify latest message is included
       expect(seeded?.messages).toBeDefined();
       expect(seeded?.messages.length).toBeLessThanOrEqual(1);

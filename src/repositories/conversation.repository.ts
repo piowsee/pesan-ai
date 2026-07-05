@@ -17,7 +17,18 @@ export const ConversationRepository = {
     const conversations = await prisma.conversation.findMany({
       where,
       include: {
-        phoneNumber: true,
+        contact: {
+          select: safeContactSelect,
+        },
+        phoneNumber: {
+          include: {
+            businessProfile: {
+              select: {
+                profilePictureUrl: true,
+              },
+            },
+          },
+        },
         messages: {
           orderBy: { timestamp: 'desc' as const },
           take: 1,

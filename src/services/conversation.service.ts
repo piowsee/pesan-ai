@@ -2,12 +2,38 @@ import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 
-function serializeConversationForTransport<
-  T extends { messages?: Array<{ mediaSize?: bigint | number | null }> },
+export type ContactFields = {
+  customerPhone: string | null;
+  customerName: string | null;
+  customerUsername: string | null;
+};
+
+export type ConversationContact = Partial<ContactFields> | null | undefined;
+
+export function flattenContactObject<
+  T extends { contact?: ConversationContact },
 >(conversation: T) {
+  const { contact, ...conversationWithoutContact } = conversation;
+
   return {
-    ...conversation,
-    messages: conversation.messages?.map((message) => ({
+    ...conversationWithoutContact,
+    customerPhone: contact?.customerPhone ?? null,
+    customerName: contact?.customerName ?? null,
+    customerUsername: contact?.customerUsername ?? null,
+  };
+}
+
+function mapConversationMessages<
+  T extends {
+    contact?: ConversationContact;
+    messages?: Array<{ mediaSize?: bigint | number | null }>;
+  },
+>(conversation: T) {
+  const conversationWithContactFields = flattenContactObject(conversation);
+
+  return {
+    ...conversationWithContactFields,
+    messages: conversationWithContactFields.messages?.map((message) => ({
       ...message,
       mediaSize: message.mediaSize == null ? null : Number(message.mediaSize),
     })),
@@ -33,7 +59,7 @@ export const ConversationService = {
       count: conversations.length,
     });
     return {
-      conversations: conversations.map(serializeConversationForTransport),
+      conversations: conversations.map(mapConversationMessages),
       total: conversations.length,
     };
   },

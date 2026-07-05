@@ -21,8 +21,9 @@ export const conversationKeys = {
 
 export interface RawConversation {
   id: string;
-  customerPhone: string;
+  customerPhone: string | null;
   customerName: string | null;
+  customerUsername: string | null;
   adminTakeover: boolean;
   lastMessageAt: string | Date | null;
   lastCustomerMessageAt: string | Date | null;
@@ -62,11 +63,25 @@ export function mapRawConversationToChatConversation(
   const lastCustomerMessageAt = chat.lastCustomerMessageAt?.toString() || null;
   const unreadCount = Number(chat.unreadCount ?? 0);
 
+  const customerPhone = chat.customerPhone?.trim() || null;
+  const customerUsername = chat.customerUsername?.trim() || null;
+  // customer display name on frontend
+  const displayName =
+    chat.customerName?.trim() ||
+    customerPhone ||
+    customerUsername ||
+    'Customer';
+  // customer identifier that used for contact such as phoneNumber/username
+  const contactIdentifier =
+    customerPhone || `@${customerUsername}` || displayName;
+
   return {
     id: chat.id,
-    customerPhone: chat.customerPhone,
+    customerPhone,
     customerName: chat.customerName,
-    displayName: chat.customerName || chat.customerPhone,
+    customerUsername,
+    displayName,
+    contactIdentifier,
     adminTakeover: chat.adminTakeover,
     lastMessageAt: chat.lastMessageAt?.toString() || null,
     lastCustomerMessageAt,
