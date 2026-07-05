@@ -1,6 +1,5 @@
 import { GET, POST } from '@/app/api/webhooks/meta/route';
-import { MessageService } from '@/services/message.service';
-import crypto from 'crypto';
+import { MetaWebhookHandlerService } from '@/services/meta-webhook-handler.service';
 import { describe, expect, it, vi } from 'vitest';
 
 /**
@@ -45,17 +44,17 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
         object: 'whatsapp_business_account',
         entry: [],
       });
-      const signature = crypto
-        .createHmac('sha256', 'app-secret')
-        .update(body)
-        .digest('hex');
-
-      vi.mocked(MessageService.processMetaWebhookPayload).mockResolvedValue({
+      vi.mocked(MetaWebhookHandlerService.isValidSignature).mockReturnValue(
+        true,
+      );
+      vi.mocked(
+        MetaWebhookHandlerService.processMetaWebhookPayload,
+      ).mockResolvedValue({
         processed: true,
         count: 2,
       });
 
-      const req = createReq(body, signature);
+      const req = createReq(body, 'valid-signature');
       const response = await POST(req as never);
       const data = await response.json();
 
@@ -66,26 +65,38 @@ describe('Meta Webhook Route', { tags: ['backend'] }, () => {
 
     it('rejects invalid signature', async () => {
       const body = JSON.stringify({ test: true });
+      vi.mocked(MetaWebhookHandlerService.isValidSignature).mockReturnValue(
+        false,
+      );
       const req = createReq(body, 'invalid-signature');
 
       const response = await POST(req as never);
 
       expect(response.status).toBe(403);
+      expect(
+        MetaWebhookHandlerService.processMetaWebhookPayload,
+      ).not.toHaveBeenCalled();
     });
 
     it('handles unprocessed webhook graceful exit', async () => {
       const body = JSON.stringify({ object: 'page', entry: [] });
-      const signature = crypto
-        .createHmac('sha256', 'app-secret')
-        .update(body)
-        .digest('hex');
-
-      vi.mocked(MessageService.processMetaWebhookPayload).mockResolvedValue({
+      vi.mocked(MetaWebhookHandlerService.isValidSignature).mockReturnValue(
+        true,
+      );
+      vi.mocked(
+        MetaWebhookHandlerService.processMetaWebhookPayload,
+      ).mockResolvedValue({
         processed: false,
         reason: 'Not a WABA event',
       });
+      vi.mocked(
+        MetaWebhookHandlerService.getUnprocessedWebhookResponse,
+      ).mockReturnValue({
+        body: { error: 'Not a WABA event' },
+        status: 404,
+      });
 
-      const req = createReq(body, signature);
+      const req = createReq(body, 'valid-signature');
       const response = await POST(req as never);
 
       expect(response.status).toBe(404);

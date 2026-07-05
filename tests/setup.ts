@@ -128,6 +128,13 @@ vi.mock('@/services/message.service', () => ({
     getMessagesPaginated: vi.fn(),
     sendAdminTextMessage: vi.fn(),
     confirmUploadedMediaMessage: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/meta-webhook-handler.service', () => ({
+  MetaWebhookHandlerService: {
+    isValidSignature: vi.fn(),
+    getUnprocessedWebhookResponse: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
   },
 }));
