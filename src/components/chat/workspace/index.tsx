@@ -378,7 +378,7 @@ export function ChatWorkspace() {
       result = result.filter(
         (c) =>
           c.displayName.toLowerCase().includes(q) ||
-          c.customerPhone.toLowerCase().includes(q),
+          c.contactIdentifier.toLowerCase().includes(q),
       );
     }
 

@@ -35,6 +35,9 @@ describe('ConversationService', { tags: ['backend'] }, () => {
       expect(result.conversations).toEqual([
         {
           id: 'conv-1',
+          customerName: null,
+          customerPhone: null,
+          customerUsername: null,
           messages: [{ id: 'msg-1', mediaSize: 123 }],
         },
       ]);

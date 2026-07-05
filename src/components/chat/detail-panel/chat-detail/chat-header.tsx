@@ -59,7 +59,7 @@ export function ChatHeader({
               {conversation.displayName}
             </h2>
             <div className="mt-0.5 flex items-center gap-1.5 text-[13px] text-brand/80">
-              <span className="truncate">{conversation.customerPhone}</span>
+              <span className="truncate">{conversation.contactIdentifier}</span>
               <span
                 className="mx-1 size-1 rounded-full bg-brand/45"
                 aria-hidden="true"

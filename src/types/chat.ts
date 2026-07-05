@@ -33,9 +33,11 @@ export interface ChatMessage {
 
 export interface ChatConversation {
   id: string;
-  customerPhone: string;
+  customerPhone: string | null;
   customerName: string | null;
+  customerUsername: string | null;
   displayName: string;
+  contactIdentifier: string;
   adminTakeover: boolean;
   lastMessageAt: string | null;
   lastCustomerMessageAt: string | null;

@@ -68,6 +68,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
           waba: { systemUserToken: 'token' },
         },
         customerPhone: '+123456',
+        contact: { bsuid: 'US.customer-123' },
       } as never);
       vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
         status: 'sent',
@@ -95,7 +96,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
-        to: '+123456',
+        to: 'US.customer-123',
         message: { type: 'text', text: 'Hello Admin' },
       });
       expect(MessageRepository.saveMessage).toHaveBeenCalled();
@@ -123,6 +124,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       ).mockResolvedValue({
         id: 'conv-1',
         customerPhone: '+123456',
+        contact: { bsuid: 'US.media-customer-123' },
         phoneNumber: {
           phoneNumberId: 'pn-1',
           wabaId: 'waba-1',
@@ -181,7 +183,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
-        to: '+123456',
+        to: 'US.media-customer-123',
         message: {
           type: 'image',
           link: 'https://space.example/download?signature=abc',
@@ -298,12 +300,6 @@ describe('MessageService', { tags: ['backend'] }, () => {
                     display_phone_number: '6285195563454',
                     phone_number_id: '1120639457807711',
                   },
-                  contacts: [
-                    {
-                      wa_id: '628116150122',
-                      user_id: 'ID.1728689754990890',
-                    },
-                  ],
                   message_echoes: [
                     {
                       from: '6285195563454',
@@ -328,7 +324,6 @@ describe('MessageService', { tags: ['backend'] }, () => {
       ).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
         customerPhone: '628116150122',
-        customerName: undefined,
         message: {
           messageId: 'wamid.echo-1',
           type: 'text',
@@ -446,7 +441,6 @@ describe('MessageService', { tags: ['backend'] }, () => {
       ).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
         customerPhone: '628116150122',
-        customerName: undefined,
         message: expect.objectContaining({
           messageId: `wamid.echo-${type}-1`,
           type,
@@ -535,6 +529,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
                     {
                       id: `meta-${type}-msg-1`,
                       from: 'customer-1',
+                      from_user_id: 'US.customer-1',
                       type,
                       [type]: mediaPayload,
                       timestamp: '1625097600',
@@ -562,8 +557,8 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.processIncomingMessage,
       ).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        bsuid: 'US.customer-1',
         customerPhone: 'customer-1',
-        customerName: undefined,
         message: expect.objectContaining({
           messageId: `meta-${type}-msg-1`,
           type,
@@ -588,6 +583,146 @@ describe('MessageService', { tags: ['backend'] }, () => {
         conversationId: 'conv-1',
         userId: 'user-1',
         wabaId: 'waba-1',
+      });
+    });
+
+    it('uses contact profile, username, phone, and BSUID for incoming messages', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({ id: 'phone-1' } as never);
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'db-message-1', content: 'hello' },
+        conversation: { id: 'conv-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      } as never);
+
+      const result = await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  contacts: [
+                    {
+                      profile: {
+                        name: 'Test User Name',
+                        username: '@testusername',
+                      },
+                      wa_id: '16315551181',
+                      user_id: 'US.13491208655302741918',
+                    },
+                  ],
+                  messages: [
+                    {
+                      id: 'meta-msg-1',
+                      from: '16315551181',
+                      from_user_id: 'US.13491208655302741918',
+                      type: 'text',
+                      text: { body: 'hello' },
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(
+        ConversationRepository.processIncomingMessage,
+      ).toHaveBeenCalledWith({
+        phoneNumberId: 'phone-1',
+        customerPhone: '16315551181',
+        customerName: 'Test User Name',
+        customerUsername: '@testusername',
+        bsuid: 'US.13491208655302741918',
+        message: expect.objectContaining({
+          messageId: 'meta-msg-1',
+          type: 'text',
+          content: 'hello',
+        }),
+      });
+    });
+
+    it('stores incoming username-only contacts when no phone is supplied', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({ id: 'phone-1' } as never);
+      vi.mocked(
+        ConversationRepository.processIncomingMessage,
+      ).mockResolvedValue({
+        message: { id: 'db-message-1', content: 'hello' },
+        conversation: { id: 'conv-1' },
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      } as never);
+
+      const result = await MessageService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '12345',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  contacts: [
+                    {
+                      profile: {
+                        name: 'Test User Name',
+                        username: '@testusername',
+                      },
+                      user_id: 'US.13491208655302741918',
+                    },
+                  ],
+                  messages: [
+                    {
+                      id: 'meta-msg-1',
+                      from_user_id: 'US.13491208655302741918',
+                      type: 'text',
+                      text: { body: 'hello' },
+                      timestamp: '1625097600',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(
+        ConversationRepository.processIncomingMessage,
+      ).toHaveBeenCalledWith({
+        phoneNumberId: 'phone-1',
+        customerPhone: undefined,
+        customerName: 'Test User Name',
+        customerUsername: '@testusername',
+        bsuid: 'US.13491208655302741918',
+        message: expect.objectContaining({
+          messageId: 'meta-msg-1',
+          type: 'text',
+          content: 'hello',
+        }),
       });
     });
 
@@ -620,7 +755,14 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.processIncomingMessage,
       ).mockResolvedValue({
         message: { id: 'msg-1', content: 'hello' },
-        conversation: { id: 'conv-1' },
+        conversation: {
+          id: 'conv-1',
+          contact: {
+            customerPhone: 'customer-1',
+            customerName: null,
+            customerUsername: null,
+          },
+        },
         userId: testUserId,
         wabaId: 'waba-1',
       } as never);
@@ -643,6 +785,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
                     {
                       id: 'meta-msg-1',
                       from: 'customer-1',
+                      from_user_id: 'US.customer-1',
                       type: 'text',
                       text: { body: 'hello' },
                       timestamp: '1625097600',
@@ -668,7 +811,10 @@ describe('MessageService', { tags: ['backend'] }, () => {
         expect.objectContaining({
           id: 'msg-1',
           content: 'hello',
-          conversation: { id: 'conv-1' },
+          conversation: expect.objectContaining({
+            id: 'conv-1',
+            customerPhone: 'customer-1',
+          }),
           userId: testUserId,
         }),
       );
@@ -717,6 +863,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
                     {
                       id: 'meta-msg-1',
                       from: 'customer-1',
+                      from_user_id: 'US.customer-1',
                       type: 'text',
                       timestamp: '1625097600',
                     },
@@ -746,7 +893,15 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.processIncomingMessage,
       ).mockResolvedValue({
         message: { id: 'msg-1', content: 'manual please' },
-        conversation: { id: 'conv-1', adminTakeover: true },
+        conversation: {
+          id: 'conv-1',
+          adminTakeover: true,
+          contact: {
+            customerPhone: 'customer-1',
+            customerName: null,
+            customerUsername: null,
+          },
+        },
         userId: 'user-123',
       } as never);
 
@@ -768,6 +923,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
                     {
                       id: 'meta-msg-1',
                       from: 'customer-1',
+                      from_user_id: 'US.customer-1',
                       type: 'text',
                       text: { body: 'manual please' },
                       timestamp: '1625097600',
@@ -785,7 +941,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-123'),
         expect.objectContaining({
           id: 'msg-1',
-          conversation: { id: 'conv-1', adminTakeover: true },
+          conversation: expect.objectContaining({
+            id: 'conv-1',
+            adminTakeover: true,
+            customerPhone: 'customer-1',
+          }),
         }),
       );
       expect(handleDebounceIncomingMessage).not.toHaveBeenCalled();

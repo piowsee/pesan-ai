@@ -1,9 +1,10 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/server/prisma';
 
-export interface CustomerPhoneNumberRow {
-  customerPhone: string;
+export interface CustomerContactRow {
+  customerPhone: string | null;
   customerName: string | null;
+  customerUsername: string | null;
 }
 
 interface FindConversationContactsParams {
@@ -14,7 +15,7 @@ interface FindConversationContactsParams {
   limit?: number;
 }
 
-export const CustomerPhoneNumberRepository = {
+export const ContactRepository = {
   _buildPhoneNumberFilter(params: {
     userId: string;
     wabaIds?: string[];
@@ -64,7 +65,7 @@ export const CustomerPhoneNumberRepository = {
   async findConversationContacts(
     params: FindConversationContactsParams,
   ): Promise<{
-    customerPhoneNumbers: CustomerPhoneNumberRow[];
+    customerContacts: CustomerContactRow[];
     total: number;
   }> {
     const { userId, wabaIds, phoneNumbers, page, limit } = params;
@@ -76,37 +77,46 @@ export const CustomerPhoneNumberRepository = {
     const conversationFilter = this._buildConversationFilter(phoneNumberFilter);
     const pagination = this._buildPagination({ page, limit });
 
-    const customerPhoneNumberQuery = prisma.conversation.findMany({
+    const customerContactQuery = prisma.conversation.findMany({
       where: conversationFilter,
       select: {
-        customerPhone: true,
-        customerName: true,
+        contact: {
+          select: {
+            customerPhone: true,
+            customerName: true,
+            customerUsername: true,
+          },
+        },
       },
-      distinct: ['customerPhone'],
-      orderBy: [{ lastMessageAt: 'desc' }, { customerPhone: 'asc' }],
+      distinct: ['contactId'],
+      orderBy: [{ lastMessageAt: 'desc' }, { contactId: 'asc' }],
       ...pagination,
     });
 
     if (!pagination) {
-      const customerPhoneNumbers = await customerPhoneNumberQuery;
+      const conversations = await customerContactQuery;
+      const customerContacts = conversations.map(
+        (conversation) => conversation.contact,
+      );
 
       return {
-        customerPhoneNumbers,
-        total: customerPhoneNumbers.length,
+        customerContacts,
+        total: customerContacts.length,
       };
     }
 
-    // Issue #143
-    const [customerPhoneNumbers, groupedContacts] = await Promise.all([
-      customerPhoneNumberQuery,
+    const [conversations, groupedContacts] = await Promise.all([
+      customerContactQuery,
       prisma.conversation.groupBy({
-        by: ['customerPhone'],
+        by: ['contactId'],
         where: conversationFilter,
       }),
     ]);
 
     return {
-      customerPhoneNumbers,
+      customerContacts: conversations.map(
+        (conversation) => conversation.contact,
+      ),
       total: groupedContacts.length,
     };
   },

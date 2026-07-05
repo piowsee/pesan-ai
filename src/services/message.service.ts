@@ -23,7 +23,28 @@ import {
 } from './meta-fetch.service';
 import { S3Service } from './s3.service';
 
-function serializeMessageForTransport<
+export type ContactFields = {
+  customerPhone: string | null;
+  customerName: string | null;
+  customerUsername: string | null;
+};
+
+export type ConversationContact = Partial<ContactFields> | null | undefined;
+
+export function flattenContactObject<
+  T extends { contact?: ConversationContact },
+>(conversation: T) {
+  const { contact, ...conversationWithoutContact } = conversation;
+
+  return {
+    ...conversationWithoutContact,
+    customerPhone: contact?.customerPhone ?? null,
+    customerName: contact?.customerName ?? null,
+    customerUsername: contact?.customerUsername ?? null,
+  };
+}
+
+function normalizeMessageMediaSize<
   T extends { mediaSize?: bigint | number | null },
 >(message: T) {
   return {
@@ -32,30 +53,37 @@ function serializeMessageForTransport<
   };
 }
 
-function sanitizeConversationForTransport<
+/*
+ * helper to flatten contact object and filter out system user token
+ */
+function flattenContactForEvent<
   T extends {
+    contact?: ConversationContact;
     phoneNumber?: {
       waba?: { systemUserToken?: string | null } | null;
+      [key: string]: unknown;
     } | null;
   },
 >(conversation: T) {
-  const waba = conversation.phoneNumber?.waba;
+  const safeConversation = flattenContactObject(conversation);
+  const waba = safeConversation.phoneNumber?.waba;
 
   if (!waba || !('systemUserToken' in waba)) {
-    return conversation;
+    return safeConversation;
   }
 
+  // remove system user token from payload
   const { systemUserToken, ...safeWaba } = waba;
   void systemUserToken;
 
   return {
-    ...conversation,
-    phoneNumber: conversation.phoneNumber
+    ...safeConversation,
+    phoneNumber: safeConversation.phoneNumber
       ? {
-          ...conversation.phoneNumber,
+          ...safeConversation.phoneNumber,
           waba: safeWaba,
         }
-      : conversation.phoneNumber,
+      : safeConversation.phoneNumber,
   };
 }
 
@@ -78,30 +106,17 @@ function buildOutboundMediaMessage(params: {
   }
 }
 
-type WebhookMediaMessageType = UploadMediaType;
-type WebhookMediaPayload = NonNullable<WebhookMessage[WebhookMediaMessageType]>;
+type WebhookContactDetails = {
+  bsuid?: string;
+  customerPhone?: string;
+  customerName?: string;
+  customerUsername?: string;
+};
 
-function getWebhookMediaPayload(
-  message: WebhookMessage,
-  mediaType: WebhookMediaMessageType,
-): WebhookMediaPayload {
-  const mediaPayload = message[mediaType];
-
-  if (!mediaPayload?.url) {
-    logger.warn('WhatsApp sent type media with no media URL');
-    throw new ApiError('WhatsApp media URL is missing', 400);
-  }
-
-  return mediaPayload;
-}
-
-function getWebhookMediaFilename(mediaPayload: WebhookMediaPayload) {
-  if (!('filename' in mediaPayload)) return null;
-
-  return typeof mediaPayload.filename === 'string'
-    ? mediaPayload.filename
-    : null;
-}
+type WebhookContactLookup = {
+  byPhone: Map<string, WebhookContactDetails>;
+  byBsuid: Map<string, WebhookContactDetails>;
+};
 
 // Route-facing wabaId values here are internal DB WhatsappBusinessAccount.id.
 // Meta API calls use phoneNumber.phoneNumberId, which is the Meta Phone Number ID.
@@ -135,7 +150,7 @@ export const MessageService = {
 
     return {
       ...result,
-      messages: result.messages.map(serializeMessageForTransport),
+      messages: result.messages.map(normalizeMessageMediaSize),
     };
   },
 
@@ -167,8 +182,16 @@ export const MessageService = {
       throw new ApiError('Conversation not found or access denied', 404);
     }
 
-    const { phoneNumber, customerPhone } = conversationMeta;
-    const { phoneNumberId } = phoneNumber; // Meta Phone Number ID.
+    const { phoneNumber, contact } = conversationMeta;
+    const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
+    const recipient = contact?.bsuid ?? contact?.customerPhone ?? null;
+
+    if (!recipient) {
+      throw new ApiError(
+        'Cannot send message because the customer has no WhatsApp phone or BSUID',
+        400,
+      );
+    }
 
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
@@ -189,7 +212,7 @@ export const MessageService = {
     const waResult = await MetaFetchService.sendMessage({
       phoneNumberId,
       token: tokenToUse,
-      to: customerPhone,
+      to: recipient,
       message: { type: 'text', text: content },
     });
 
@@ -205,7 +228,7 @@ export const MessageService = {
       timestamp: new Date(),
     });
 
-    const safeConversation = sanitizeConversationForTransport(conversationMeta);
+    const safeConversation = flattenContactForEvent(conversationMeta);
 
     // Emit real-time event via SSE to the specific user channel
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
@@ -256,7 +279,18 @@ export const MessageService = {
       convId,
       key: uploadedMedia.key,
     });
-    const { phoneNumber, customerPhone } = conversationMeta;
+
+    const { phoneNumber, contact } = conversationMeta;
+    const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
+    const recipient = contact?.bsuid ?? contact?.customerPhone ?? null;
+
+    if (!recipient) {
+      throw new ApiError(
+        'Cannot send message because the customer has no WhatsApp phone or BSUID',
+        400,
+      );
+    }
+
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
     if (!tokenToUse) {
@@ -264,9 +298,9 @@ export const MessageService = {
     }
 
     const waResult = await MetaFetchService.sendMessage({
-      phoneNumberId: phoneNumber.phoneNumberId,
+      phoneNumberId,
       token: tokenToUse,
-      to: customerPhone,
+      to: recipient,
       message: buildOutboundMediaMessage({
         mediaType: uploadedMedia.mediaType,
         link: downloadUrl,
@@ -287,9 +321,9 @@ export const MessageService = {
       mediaFilename: filename ?? null,
       mediaSize: uploadedMedia.mediaSize,
     });
-    const message = serializeMessageForTransport(savedMessage);
+    const message = normalizeMessageMediaSize(savedMessage);
 
-    const safeConversation = sanitizeConversationForTransport(conversationMeta);
+    const safeConversation = flattenContactForEvent(conversationMeta);
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
@@ -370,14 +404,67 @@ export const MessageService = {
 
   // --- Shared webhook helpers ---
 
-  _mapContacts(contacts: Contact[] = []): Record<string, string> {
-    const contactsMap: Record<string, string> = {};
+  _mapContacts(contacts: Contact[] = []): WebhookContactLookup {
+    // lookup either by phone number or by BSUID
+    const lookup: WebhookContactLookup = {
+      byPhone: new Map(),
+      byBsuid: new Map(),
+    };
+
     for (const contact of contacts) {
-      if (contact.wa_id && contact.profile?.name) {
-        contactsMap[contact.wa_id] = contact.profile.name;
+      const details: WebhookContactDetails = {
+        bsuid: contact.user_id,
+        customerPhone: contact.wa_id,
+        customerName: contact.profile?.name,
+        customerUsername: contact.profile?.username,
+      };
+
+      if (
+        !details.bsuid &&
+        !details.customerPhone &&
+        !details.customerUsername
+      ) {
+        continue;
+      }
+
+      if (details.customerPhone) {
+        lookup.byPhone.set(details.customerPhone, details);
+      }
+
+      if (details.bsuid) {
+        lookup.byBsuid.set(details.bsuid, details);
       }
     }
-    return contactsMap;
+
+    return lookup;
+  },
+
+  _getIncomingContactDetails(
+    message: WebhookMessage,
+    contactsLookup: WebhookContactLookup,
+  ): WebhookContactDetails {
+    const byBsuid = message.from_user_id
+      ? contactsLookup.byBsuid.get(message.from_user_id)
+      : undefined;
+    const byPhone = message.from
+      ? contactsLookup.byPhone.get(message.from)
+      : undefined;
+    const contact = byBsuid ?? byPhone;
+
+    return {
+      bsuid: contact?.bsuid ?? message.from_user_id,
+      customerPhone: contact?.customerPhone ?? message.from,
+      customerName: contact?.customerName,
+      customerUsername: contact?.customerUsername,
+    };
+  },
+
+  _getEchoContactDetails(
+    messageEcho: WebhookMessageEcho,
+  ): WebhookContactDetails {
+    return {
+      customerPhone: messageEcho.to,
+    };
   },
 
   // --- Incoming customer message processing ---
@@ -396,20 +483,20 @@ export const MessageService = {
       return 0;
     }
 
-    const contactsMap = this._mapContacts(value.contacts);
+    const contactsLookup = this._mapContacts(value.contacts);
     return this._processMessagesList({
       messages: value.messages,
       internalPhoneId: internalPhoneResult.id,
-      contactsMap,
+      contactsLookup,
     });
   },
 
   async _processMessagesList(params: {
     messages?: WebhookMessage[];
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
+    contactsLookup: WebhookContactLookup;
   }): Promise<number> {
-    const { messages = [], internalPhoneId, contactsMap } = params;
+    const { messages = [], internalPhoneId, contactsLookup } = params;
     let count = 0;
 
     for (const message of messages) {
@@ -417,7 +504,7 @@ export const MessageService = {
         const wasProcessed = await this._processSingleMessage({
           message,
           internalPhoneId,
-          contactsMap,
+          contactsLookup,
         });
         if (wasProcessed) count++;
       } catch (msgErr) {
@@ -434,7 +521,7 @@ export const MessageService = {
   async _processSingleMessage(params: {
     message: WebhookMessage;
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
+    contactsLookup: WebhookContactLookup;
   }): Promise<boolean> {
     const { message } = params;
 
@@ -472,11 +559,13 @@ export const MessageService = {
   async _processIncomingTextMessage(params: {
     message: WebhookMessage;
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
+    contactsLookup: WebhookContactLookup;
   }): Promise<boolean> {
-    const { message: webhookMessage, internalPhoneId, contactsMap } = params;
-    const customerPhone = webhookMessage.from;
-    const customerName = contactsMap[customerPhone];
+    const { message: webhookMessage, internalPhoneId, contactsLookup } = params;
+    const contactDetails = this._getIncomingContactDetails(
+      webhookMessage,
+      contactsLookup,
+    );
     const content = webhookMessage.text?.body;
     const timestamp = new Date(parseInt(webhookMessage.timestamp) * 1000);
 
@@ -487,8 +576,7 @@ export const MessageService = {
       wabaId,
     } = await ConversationRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
-      customerPhone,
-      customerName,
+      ...contactDetails,
       message: {
         messageId: webhookMessage.id,
         type: 'text',
@@ -500,14 +588,16 @@ export const MessageService = {
 
     logger.info('Saved incoming text message to DB successfully', {
       messageId: webhookMessage.id,
-      customerPhone,
+      customerPhone: contactDetails.customerPhone,
+      customerUsername: contactDetails.customerUsername,
     });
 
-    const message = serializeMessageForTransport(savedMessage);
+    const message = normalizeMessageMediaSize(savedMessage);
+    const safeConversation = flattenContactForEvent(conversation);
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
-      conversation,
+      conversation: safeConversation,
       userId,
       wabaId,
     });
@@ -531,24 +621,34 @@ export const MessageService = {
   async _processIncomingMediaMessage(params: {
     message: WebhookMessage;
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
-    mediaType: WebhookMediaMessageType;
+    contactsLookup: WebhookContactLookup;
+    mediaType: UploadMediaType;
   }): Promise<boolean> {
     const {
       message: webhookMessage,
       internalPhoneId,
-      contactsMap,
+      contactsLookup,
       mediaType,
     } = params;
-    const mediaPayload = getWebhookMediaPayload(webhookMessage, mediaType);
-    const customerPhone = webhookMessage.from;
-    const customerName = contactsMap[customerPhone];
+    const mediaPayload = webhookMessage[mediaType];
+
+    if (!mediaPayload?.url) {
+      logger.warn('WhatsApp sent type media with no media URL');
+      throw new ApiError('WhatsApp media URL is missing', 400);
+    }
+    const contactDetails = this._getIncomingContactDetails(
+      webhookMessage,
+      contactsLookup,
+    );
+
+    // we need to atleast convId and wabaId to create S3 Object Key
     const preparedConversation =
       await ConversationRepository.prepareWebhookMessageConversation({
         phoneNumberId: internalPhoneId,
-        customerPhone,
-        customerName,
+        ...contactDetails,
       });
+
+    // system user token is needed to read WhatsApp's Media URL
     const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
 
     if (!tokenToUse) {
@@ -570,8 +670,7 @@ export const MessageService = {
       wabaId,
     } = await ConversationRepository.processIncomingMessage({
       phoneNumberId: internalPhoneId,
-      customerPhone,
-      customerName,
+      ...contactDetails,
       message: {
         messageId: webhookMessage.id,
         type: mediaType,
@@ -580,23 +679,29 @@ export const MessageService = {
         metadata: JSON.stringify(webhookMessage),
         mediaObjectKey: uploadedMedia.key,
         mediaMimeType: uploadedMedia.mediaMimeType,
-        mediaFilename: getWebhookMediaFilename(mediaPayload),
+        mediaFilename:
+          'filename' in mediaPayload &&
+          typeof mediaPayload.filename === 'string'
+            ? mediaPayload.filename
+            : null,
         mediaSize: uploadedMedia.mediaSize,
       },
     });
 
     logger.info('Saved incoming media message to DB successfully', {
       messageId: webhookMessage.id,
-      customerPhone,
+      customerPhone: contactDetails.customerPhone,
+      customerUsername: contactDetails.customerUsername,
       mediaType,
       key: uploadedMedia.key,
     });
 
-    const message = serializeMessageForTransport(savedMessage);
+    const message = normalizeMessageMediaSize(savedMessage);
+    const safeConversation = flattenContactForEvent(conversation);
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
-      conversation,
+      conversation: safeConversation,
       userId,
       wabaId,
     });
@@ -608,6 +713,7 @@ export const MessageService = {
       return true;
     }
 
+    // debounce still called because we might update our agent to support media
     handleDebounceIncomingMessage({
       conversationId: conversation.id,
       userId,
@@ -638,16 +744,14 @@ export const MessageService = {
     return this._processMessageEchoesList({
       messageEchoes: value.message_echoes,
       internalPhoneId: internalPhoneResult.id,
-      contactsMap: this._mapContacts(value.contacts),
     });
   },
 
   async _processMessageEchoesList(params: {
     messageEchoes?: WebhookMessageEcho[];
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
   }): Promise<number> {
-    const { messageEchoes = [], internalPhoneId, contactsMap } = params;
+    const { messageEchoes = [], internalPhoneId } = params;
     let count = 0;
 
     for (const messageEcho of messageEchoes) {
@@ -655,7 +759,6 @@ export const MessageService = {
         const wasProcessed = await this._processSingleMessageEcho({
           messageEcho,
           internalPhoneId,
-          contactsMap,
         });
         if (wasProcessed) count++;
       } catch (error) {
@@ -672,7 +775,6 @@ export const MessageService = {
   async _processSingleMessageEcho(params: {
     messageEcho: WebhookMessageEcho;
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
   }): Promise<boolean> {
     const { messageEcho } = params;
 
@@ -710,10 +812,11 @@ export const MessageService = {
   async _processMessageEchoTextMessage(params: {
     messageEcho: WebhookMessageEcho;
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
   }): Promise<boolean> {
-    const { messageEcho, internalPhoneId, contactsMap } = params;
-    const customerPhone = messageEcho.to;
+    const { messageEcho, internalPhoneId } = params;
+    // we get customer contact from message.to
+    // because smb_message_echoes doesn't have contact field
+    const contactDetails = this._getEchoContactDetails(messageEcho);
     const {
       message: savedMessage,
       conversation,
@@ -721,8 +824,7 @@ export const MessageService = {
       wabaId,
     } = await ConversationRepository.processOutgoingMessageEcho({
       phoneNumberId: internalPhoneId,
-      customerPhone,
-      customerName: contactsMap[customerPhone],
+      ...contactDetails,
       message: {
         messageId: messageEcho.id,
         type: 'text',
@@ -734,14 +836,15 @@ export const MessageService = {
 
     logger.info('Saved outgoing WhatsApp Business App message to DB', {
       messageId: messageEcho.id,
-      customerPhone,
+      customerPhone: contactDetails.customerPhone,
     });
 
-    const message = serializeMessageForTransport(savedMessage);
+    const message = normalizeMessageMediaSize(savedMessage);
+    const safeConversation = flattenContactForEvent(conversation);
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
-      conversation,
+      conversation: safeConversation,
       userId,
       wabaId,
     });
@@ -752,19 +855,25 @@ export const MessageService = {
   async _processMessageEchoMediaMessage(params: {
     messageEcho: WebhookMessageEcho;
     internalPhoneId: string; // Internal DB PhoneNumber.id.
-    contactsMap: Record<string, string>;
-    mediaType: WebhookMediaMessageType;
+    mediaType: UploadMediaType;
   }): Promise<boolean> {
-    const { messageEcho, internalPhoneId, contactsMap, mediaType } = params;
-    const mediaPayload = getWebhookMediaPayload(messageEcho, mediaType);
-    const customerPhone = messageEcho.to;
-    const customerName = contactsMap[customerPhone];
+    const { messageEcho, internalPhoneId, mediaType } = params;
+    const mediaPayload = messageEcho[mediaType];
+
+    if (!mediaPayload?.url) {
+      logger.warn('WhatsApp sent type media with no media URL');
+      throw new ApiError('WhatsApp media URL is missing', 400);
+    }
+    const contactDetails = this._getEchoContactDetails(messageEcho);
+
+    // we need to atleast convId and wabaId to create S3 Object Key
     const preparedConversation =
       await ConversationRepository.prepareWebhookMessageConversation({
         phoneNumberId: internalPhoneId,
-        customerPhone,
-        customerName,
+        ...contactDetails,
       });
+
+    // system user token is needed to read WhatsApp's Media URL
     const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
 
     if (!tokenToUse) {
@@ -786,8 +895,7 @@ export const MessageService = {
       wabaId,
     } = await ConversationRepository.processOutgoingMessageEcho({
       phoneNumberId: internalPhoneId,
-      customerPhone,
-      customerName,
+      ...contactDetails,
       message: {
         messageId: messageEcho.id,
         type: mediaType,
@@ -796,23 +904,28 @@ export const MessageService = {
         metadata: JSON.stringify(messageEcho),
         mediaObjectKey: uploadedMedia.key,
         mediaMimeType: uploadedMedia.mediaMimeType,
-        mediaFilename: getWebhookMediaFilename(mediaPayload),
+        mediaFilename:
+          'filename' in mediaPayload &&
+          typeof mediaPayload.filename === 'string'
+            ? mediaPayload.filename
+            : null,
         mediaSize: uploadedMedia.mediaSize,
       },
     });
 
     logger.info('Saved media message echo to DB successfully', {
       messageId: messageEcho.id,
-      customerPhone,
+      customerPhone: contactDetails.customerPhone,
       mediaType,
       key: uploadedMedia.key,
     });
 
-    const message = serializeMessageForTransport(savedMessage);
+    const message = normalizeMessageMediaSize(savedMessage);
+    const safeConversation = flattenContactForEvent(conversation);
 
     eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
       ...message,
-      conversation,
+      conversation: safeConversation,
       userId,
       wabaId,
     });

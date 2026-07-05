@@ -151,7 +151,7 @@ export function ContactInfoPanel({
                   {conversation.displayName}
                 </p>
                 <p className="truncate text-sm text-brand/80">
-                  {conversation.customerPhone}
+                  {conversation.contactIdentifier}
                 </p>
               </div>
 

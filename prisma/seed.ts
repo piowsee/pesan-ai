@@ -177,24 +177,40 @@ async function main() {
       },
     });
 
-    // 6. Create Conversation
+    // 6. Create Contact and Conversation
+    const customerBSUID = 'US.seeded-budi-santoso';
+    const customerPhone = '628123456789';
+    const customerName = 'Budi Santoso';
+
+    const contact = await tx.contact.upsert({
+      where: { bsuid: customerBSUID },
+      update: {
+        customerPhone,
+        customerName,
+      },
+      create: {
+        bsuid: customerBSUID,
+        customerPhone,
+        customerName,
+      },
+    });
+
     const conversation = await tx.conversation.upsert({
       where: {
         unique_conversation: {
           phoneNumberId: phoneNumber.id,
-          customerPhone: '628123456789',
+          contactId: contact.id,
         },
       },
       update: {},
       create: {
-        customerPhone: '628123456789',
-        customerName: 'Budi Santoso',
+        contactId: contact.id,
         phoneNumberId: phoneNumber.id,
         lastMessageAt: new Date(),
       },
     });
 
-    console.log('Conversation created for:', conversation.customerName);
+    console.log('Conversation created for:', contact.customerName);
 
     // 7. Create Messages
     await tx.message.createMany({
@@ -230,7 +246,8 @@ export const SEED_DATA = {
   REGULAR_USER_EMAIL: '${regularEmail}', // Regular user email
   WABA_META_ID: '${waba.wabaId}',
   PHONE_META_ID: '${phoneNumber.phoneNumberId}',
-  CUSTOMER_PHONE: '${conversation.customerPhone}',
+  CUSTOMER_BSUID: '${contact.bsuid}',
+  CUSTOMER_PHONE: '${contact.customerPhone}',
   WEBHOOK_NAME: '${webhook.name}',
   SYSTEM_USER_TOKEN: 'EAAG...fake_token...',
 };

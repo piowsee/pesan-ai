@@ -8,11 +8,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type CustomerPhoneNumber } from '@/hooks/use-customer-phone-number';
+import { type CustomerContact } from '@/hooks/use-customer-contact';
 import { cn } from '@/lib/utils';
 import { RefreshCw, UserRound, UsersRound, X } from 'lucide-react';
 
-import { PAGE_SIZE, getCustomerName } from './customers-utils';
+import {
+  PAGE_SIZE,
+  getCustomerName,
+  getCustomerPhone,
+  getCustomerUsername,
+} from './customers-utils';
 
 function CustomersTableSkeleton() {
   return (
@@ -27,6 +32,9 @@ function CustomersTableSkeleton() {
               <Skeleton className="size-5 shrink-0" />
               <Skeleton className="h-5 w-48" />
             </div>
+          </TableCell>
+          <TableCell className="min-w-44 py-4">
+            <Skeleton className="h-5 w-36" />
           </TableCell>
           <TableCell className="min-w-44 py-4">
             <Skeleton className="h-5 w-44" />
@@ -54,7 +62,7 @@ function EmptyState({
         <p className="text-sm leading-relaxed text-brand sm:text-base sm:leading-7">
           {hasFilters
             ? 'Try another WABA or number filter to widen the customer list.'
-            : 'Customer numbers will appear here after conversations come in.'}
+            : 'Customers will appear here after conversations come in.'}
         </p>
       </div>
       {hasFilters ? (
@@ -107,8 +115,8 @@ export function CustomersTable({
   onClearFilters,
   onRetry,
 }: {
-  customers: CustomerPhoneNumber[];
-  pagedCustomers: CustomerPhoneNumber[];
+  customers: CustomerContact[];
+  pagedCustomers: CustomerContact[];
   page: number;
   isLoading: boolean;
   isError: boolean;
@@ -120,9 +128,7 @@ export function CustomersTable({
 }) {
   if (isError) {
     const message =
-      error instanceof Error
-        ? error.message
-        : 'Failed to load customer numbers';
+      error instanceof Error ? error.message : 'Failed to load customers';
 
     return <ErrorState message={message} onRetry={onRetry} />;
   }
@@ -141,14 +147,17 @@ export function CustomersTable({
       )}
     >
       <div className="min-h-0 flex-1 overflow-y-auto border-b border-border [scrollbar-gutter:stable]">
-        <Table className="min-w-[640px]">
+        <Table className="min-w-190">
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-16 text-xs font-semibold tracking-[0.12em] text-brand uppercase">
                 No.
               </TableHead>
               <TableHead className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
-                Customer
+                Name
+              </TableHead>
+              <TableHead className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
+                Username
               </TableHead>
               <TableHead className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
                 Phone Number
@@ -164,7 +173,7 @@ export function CustomersTable({
 
                 return (
                   <TableRow
-                    key={customer.customerPhone}
+                    key={`${customer.customerPhone ?? 'no-phone'}-${customer.customerUsername ?? 'no-username'}-${rowNumber}`}
                     className="hover:bg-transparent"
                   >
                     <TableCell className="w-16 py-4 text-sm font-medium text-brand/70">
@@ -179,7 +188,10 @@ export function CustomersTable({
                       </div>
                     </TableCell>
                     <TableCell className="min-w-44 py-4 text-sm font-semibold text-brand">
-                      {customer.customerPhone}
+                      {getCustomerUsername(customer)}
+                    </TableCell>
+                    <TableCell className="min-w-44 py-4 text-sm font-semibold text-brand">
+                      {getCustomerPhone(customer)}
                     </TableCell>
                   </TableRow>
                 );
