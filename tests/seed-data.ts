@@ -4,6 +4,7 @@ export const SEED_DATA = {
   REGULAR_USER_EMAIL: 'user@piowsee.com', // Regular user email
   WABA_META_ID: '123456789012345',
   PHONE_META_ID: '979032335300118',
+  CUSTOMER_BSUID: 'US.seeded-budi-santoso',
   CUSTOMER_PHONE: '628123456789',
   WEBHOOK_NAME: 'Seed Webhook',
   SYSTEM_USER_TOKEN: 'EAAG...fake_token...',

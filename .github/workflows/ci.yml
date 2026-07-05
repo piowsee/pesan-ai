@@ -134,8 +134,3 @@ jobs:
         uses: lycheeverse/lychee-action@v2
         with:
           args: --root-dir "$(pwd)" --verbose --no-progress './docs/book/${{ env.LANGUAGES }}/**/*.html'
-
-      - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./docs/book
