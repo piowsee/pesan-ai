@@ -105,6 +105,16 @@ vi.mock('@/repositories/webhook.repository', () => ({
 
 // --- Mocks for Services ---
 vi.mock('@/services/conversation.service', () => ({
+  flattenContactObject: vi.fn((conversation) => {
+    const { contact, ...conversationWithoutContact } = conversation;
+
+    return {
+      ...conversationWithoutContact,
+      customerPhone: contact?.customerPhone ?? null,
+      customerName: contact?.customerName ?? null,
+      customerUsername: contact?.customerUsername ?? null,
+    };
+  }),
   ConversationService: {
     getAllConversations: vi.fn(),
     getChatDetail: vi.fn(),

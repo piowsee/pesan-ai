@@ -48,10 +48,10 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     }
     dbPhoneNumberId = pn.id;
 
-    const conv = await prisma.conversation.findUnique({
+    const conv = await prisma.conversation.findFirst({
       where: {
-        unique_conversation: {
-          phoneNumberId: dbPhoneNumberId,
+        phoneNumberId: dbPhoneNumberId,
+        contact: {
           customerPhone: SEED_DATA.CUSTOMER_PHONE,
         },
       },
@@ -68,10 +68,17 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     const testCustomerPrefix = '998';
     await prisma.message.deleteMany({
       where: {
-        conversation: { customerPhone: { startsWith: testCustomerPrefix } },
+        conversation: {
+          contact: { customerPhone: { startsWith: testCustomerPrefix } },
+        },
       },
     });
     await prisma.conversation.deleteMany({
+      where: {
+        contact: { customerPhone: { startsWith: testCustomerPrefix } },
+      },
+    });
+    await prisma.contact.deleteMany({
       where: { customerPhone: { startsWith: testCustomerPrefix } },
     });
   });
@@ -111,9 +118,14 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
 
   describe('findConversationMessageHistory', () => {
     it('returns recent messages of any type in chronological order', async () => {
-      const conversation = await prisma.conversation.create({
+      const contact = await prisma.contact.create({
         data: {
           customerPhone: '998006',
+        },
+      });
+      const conversation = await prisma.conversation.create({
+        data: {
+          contactId: contact.id,
           phoneNumberId: dbPhoneNumberId,
         },
       });
@@ -214,9 +226,14 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
 
   describe('saveMessage', () => {
     it('saves a message successfully', async () => {
-      const testConv = await prisma.conversation.create({
+      const contact = await prisma.contact.create({
         data: {
           customerPhone: '998005',
+        },
+      });
+      const testConv = await prisma.conversation.create({
+        data: {
+          contactId: contact.id,
           phoneNumberId: dbPhoneNumberId,
         },
       });

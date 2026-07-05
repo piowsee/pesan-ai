@@ -1,6 +1,94 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/server/prisma';
 
+interface ContactInput {
+  bsuid?: string | null;
+  customerPhone?: string | null;
+  customerName?: string | null;
+  customerUsername?: string | null;
+}
+
+type ContactIdentifier = Pick<
+  ContactInput,
+  'bsuid' | 'customerPhone' | 'customerUsername'
+>;
+
+function normalizeOptionalString(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : undefined;
+}
+
+function buildContactIdentifiers(input: ContactIdentifier) {
+  const identifiers: Prisma.ContactWhereInput[] = [];
+  const bsuid = normalizeOptionalString(input.bsuid);
+  const customerPhone = normalizeOptionalString(input.customerPhone);
+
+  if (bsuid) identifiers.push({ bsuid });
+  if (customerPhone) identifiers.push({ customerPhone });
+
+  return identifiers;
+}
+
+function buildContactWriteData(input: ContactInput): Prisma.ContactUpdateInput {
+  const data: Prisma.ContactUpdateInput = {};
+  const bsuid = normalizeOptionalString(input.bsuid);
+  const customerPhone = normalizeOptionalString(input.customerPhone);
+  const customerName = normalizeOptionalString(input.customerName);
+  const customerUsername = normalizeOptionalString(input.customerUsername);
+
+  if (bsuid) data.bsuid = bsuid;
+  if (customerPhone) data.customerPhone = customerPhone;
+  if (customerName) data.customerName = customerName;
+  if (customerUsername) data.customerUsername = customerUsername;
+
+  return data;
+}
+
+// make sure atleast phoneNumber/BSUID exist since it is needed for sending message
+function assertContactIdentifiable(input: ContactInput) {
+  if (buildContactIdentifiers(input).length === 0) {
+    throw new Error(
+      'Cannot create a conversation without a contact phone or BSUID',
+    );
+  }
+}
+
+async function findOrCreateContact(
+  tx: Prisma.TransactionClient,
+  input: ContactInput,
+) {
+  assertContactIdentifiable(input);
+
+  const data = buildContactWriteData(input);
+
+  // Only Check existing contact via BSUID and customerPhone
+  // because user can change their username periodically according to WhatsApp Cloud API docs
+  const bsuid = normalizeOptionalString(input.bsuid);
+  const customerPhone = normalizeOptionalString(input.customerPhone);
+  const existingContact =
+    (bsuid ? await tx.contact.findUnique({ where: { bsuid } }) : null) ??
+    (customerPhone
+      ? await tx.contact.findUnique({ where: { customerPhone } })
+      : null);
+
+  if (existingContact) {
+    return tx.contact.update({
+      where: { id: existingContact.id },
+      data,
+    });
+  }
+
+  return tx.contact.create({
+    data: data as Prisma.ContactCreateInput,
+  });
+}
+
+const safeContactSelect = {
+  customerPhone: true,
+  customerName: true,
+  customerUsername: true,
+} satisfies Prisma.ContactSelect;
+
 export const ConversationRepository = {
   async findAllByWabaId(params: { wabaId: string; userId: string }) {
     const { wabaId, userId } = params;
@@ -54,7 +142,7 @@ export const ConversationRepository = {
     userId: string;
   }) {
     const { convId, wabaId, userId } = params;
-    return prisma.conversation.findFirst({
+    const conversation = await prisma.conversation.findFirst({
       where: {
         id: convId,
         phoneNumber: {
@@ -65,13 +153,21 @@ export const ConversationRepository = {
         },
       },
       include: {
+        contact: true,
         phoneNumber: {
           include: {
             waba: true,
+            businessProfile: {
+              select: {
+                profilePictureUrl: true,
+              },
+            },
           },
         },
       },
     });
+
+    return conversation;
   },
 
   async markConversationAsRead(params: {
@@ -117,40 +213,59 @@ export const ConversationRepository = {
 
   async prepareWebhookMessageConversation(params: {
     phoneNumberId: string;
-    customerPhone: string;
-    customerName?: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
   }) {
-    const { phoneNumberId, customerPhone, customerName } = params;
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+    } = params;
 
-    const conversation = await prisma.conversation.upsert({
-      where: {
-        unique_conversation: {
-          phoneNumberId,
-          customerPhone,
-        },
-      },
-      update: {
-        customerName,
-      },
-      create: {
-        phoneNumberId,
+    const result = await prisma.$transaction(async (tx) => {
+      const contact = await findOrCreateContact(tx, {
+        bsuid,
         customerPhone,
         customerName,
-      },
-      include: {
-        phoneNumber: {
-          include: {
-            waba: true,
+        customerUsername,
+      });
+
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
           },
         },
-      },
+        update: {},
+        create: {
+          phoneNumberId,
+          contactId: contact.id,
+        },
+        include: {
+          contact: {
+            select: safeContactSelect,
+          },
+          phoneNumber: {
+            include: {
+              waba: true,
+            },
+          },
+        },
+      });
+
+      return conversation;
     });
 
     return {
-      conversation,
-      userId: conversation.phoneNumber.waba.userId,
-      wabaId: conversation.phoneNumber.waba.id,
-      systemUserToken: conversation.phoneNumber.waba.systemUserToken,
+      conversation: result,
+      userId: result.phoneNumber.waba.userId,
+      wabaId: result.phoneNumber.waba.id,
+      systemUserToken: result.phoneNumber.waba.systemUserToken,
     };
   },
 
@@ -160,7 +275,7 @@ export const ConversationRepository = {
     wabaId: string;
   }) {
     const { conversationId, userId, wabaId } = params;
-    return prisma.conversation.findFirst({
+    const conversation = await prisma.conversation.findFirst({
       where: {
         id: conversationId,
         phoneNumber: {
@@ -172,8 +287,7 @@ export const ConversationRepository = {
       },
       select: {
         id: true,
-        customerPhone: true,
-        customerName: true,
+        contact: true,
         adminTakeover: true,
         lastMessageAt: true,
         lastCustomerMessageAt: true,
@@ -187,6 +301,11 @@ export const ConversationRepository = {
             phoneNumberId: true,
             displayPhoneNumber: true,
             wabaId: true,
+            businessProfile: {
+              select: {
+                profilePictureUrl: true,
+              },
+            },
             waba: {
               select: {
                 id: true,
@@ -198,6 +317,8 @@ export const ConversationRepository = {
         },
       },
     });
+
+    return conversation;
   },
 
   async updateAdminTakeoverStatus(params: {
@@ -217,8 +338,10 @@ export const ConversationRepository = {
 
   async processIncomingMessage(params: {
     phoneNumberId: string; // Internal ID
-    customerPhone: string;
-    customerName?: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
     message: {
       messageId: string;
       type: string;
@@ -231,9 +354,17 @@ export const ConversationRepository = {
       mediaSize?: number | null;
     };
   }) {
-    const { phoneNumberId, customerPhone, customerName, message } = params;
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      message,
+    } = params;
 
     return prisma.$transaction(async (tx) => {
+      // we want to find the owner so we can emit SSE
       const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
         where: { id: phoneNumberId },
         select: {
@@ -246,25 +377,33 @@ export const ConversationRepository = {
         },
       });
 
+      const contact = await findOrCreateContact(tx, {
+        bsuid,
+        customerPhone,
+        customerName,
+        customerUsername,
+      });
+
       // 1. Upsert conversation
       const conversation = await tx.conversation.upsert({
         where: {
           unique_conversation: {
             phoneNumberId,
-            customerPhone,
+            contactId: contact.id,
           },
         },
         update: {
-          customerName, // Update name if provided
           unreadCount: { increment: 1 },
         },
         create: {
           phoneNumberId,
-          customerPhone,
-          customerName,
+          contactId: contact.id,
           unreadCount: 1,
         },
         include: {
+          contact: {
+            select: safeContactSelect,
+          },
           phoneNumber: true,
         },
       });
@@ -307,7 +446,12 @@ export const ConversationRepository = {
                   lastCustomerMessageAt: message.timestamp,
                 }),
               },
-              include: { phoneNumber: true },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
             })
           : conversation;
 
@@ -328,8 +472,10 @@ export const ConversationRepository = {
 
   async processOutgoingMessageEcho(params: {
     phoneNumberId: string;
-    customerPhone: string;
-    customerName?: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
     message: {
       messageId: string;
       type: string;
@@ -342,7 +488,14 @@ export const ConversationRepository = {
       mediaSize?: number | null;
     };
   }) {
-    const { phoneNumberId, customerPhone, customerName, message } = params;
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      message,
+    } = params;
 
     return prisma.$transaction(async (tx) => {
       const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
@@ -357,22 +510,29 @@ export const ConversationRepository = {
         },
       });
 
+      const contact = await findOrCreateContact(tx, {
+        bsuid,
+        customerPhone,
+        customerName,
+        customerUsername,
+      });
+
       const conversation = await tx.conversation.upsert({
         where: {
           unique_conversation: {
             phoneNumberId,
-            customerPhone,
+            contactId: contact.id,
           },
         },
-        update: {
-          customerName,
-        },
+        update: {},
         create: {
           phoneNumberId,
-          customerPhone,
-          customerName,
+          contactId: contact.id,
         },
         include: {
+          contact: {
+            select: safeContactSelect,
+          },
           phoneNumber: true,
         },
       });
@@ -403,7 +563,12 @@ export const ConversationRepository = {
           ? await tx.conversation.update({
               where: { id: conversation.id },
               data: { lastMessageAt: message.timestamp },
-              include: { phoneNumber: true },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
             })
           : conversation;
 

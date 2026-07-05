@@ -6,6 +6,7 @@ import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { betterFetch } from '@better-fetch/fetch';
+import { randomUUID } from 'crypto';
 import z from 'zod';
 
 import { MetaFetchService } from './meta-fetch.service';
@@ -88,13 +89,16 @@ export async function redirectMessageToExternalWebhook(params: {
     return;
   }
 
-  const customerPhoneNumber: string = conversation.customerPhone;
+  const customerIdentifier =
+    conversation.contact?.bsuid ??
+    conversation.contact?.customerPhone ??
+    randomUUID();
   let data: BotWebhookOutput;
 
   try {
     data = await _requestBotWebhook({
       conversationId,
-      customerPhoneNumber,
+      customerIdentifier,
       messages,
     });
   } catch (error) {
@@ -119,10 +123,10 @@ export async function redirectMessageToExternalWebhook(params: {
 
 async function _requestBotWebhook(params: {
   conversationId: string;
-  customerPhoneNumber: string;
+  customerIdentifier: string;
   messages: BotWebhookMessageHistory;
 }): Promise<BotWebhookOutput> {
-  const { conversationId, customerPhoneNumber, messages } = params;
+  const { conversationId, customerIdentifier, messages } = params;
   const { url, passphrase } = await _findWebhookData({ conversationId });
   const decryptedPassphrase = decrypt(passphrase);
   const webhookMessages = _toBotWebhookMessages(messages);
@@ -157,7 +161,7 @@ async function _requestBotWebhook(params: {
     },
     // External webhook body:
     // {
-    //   customerPhoneNumber: "6281xxxxxxxx",
+    //   customerIdentifier: "6281xxxxxxxx", // BSUID / Phone Number
     //   messages: [{
     //     sequence: number,  // chronological order, starting at 1
     //     source: string,    // customer | admin | bot
@@ -166,7 +170,7 @@ async function _requestBotWebhook(params: {
     //   }]
     // }
     body: {
-      customerPhoneNumber,
+      customerIdentifier,
       messages: webhookMessages,
     },
     output: botWebhookOutputSchema,
@@ -269,10 +273,22 @@ async function _handlePostRedirectMessage(params: {
     return;
   }
 
+  const recipient =
+    conversation.contact?.bsuid ?? conversation.contact?.customerPhone ?? null;
+
+  if (!recipient) {
+    logError(
+      new Error(
+        `Cannot send bot response for conversation ${conversation.id}: missing customer phone and BSUID`,
+      ),
+    );
+    return;
+  }
+
   const waResult = await MetaFetchService.sendMessage({
     phoneNumberId: conversation.phoneNumber.phoneNumberId, // Meta Phone Number ID.
     token: tokenToUse,
-    to: conversation.customerPhone,
+    to: recipient,
     message: { type: 'text', text: content },
   });
 
@@ -288,14 +304,12 @@ async function _handlePostRedirectMessage(params: {
   });
 
   const userId = conversation.phoneNumber.waba.userId;
-  const eventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
 
+  const eventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
   if (eventBus.listenerCount(eventName) === 0) return;
 
   const {
     phoneNumber,
-    customerPhone,
-    customerName,
     lastMessageAt,
     lastCustomerMessageAt,
     unreadCount,
@@ -303,6 +317,9 @@ async function _handlePostRedirectMessage(params: {
     createdAt,
     updatedAt,
   } = conversation;
+  const customerPhone = conversation.contact?.customerPhone ?? null;
+  const customerName = conversation.contact?.customerName ?? null;
+  const customerUsername = conversation.contact?.customerUsername ?? null;
 
   eventBus.emit(eventName, {
     ...savedMessage,
@@ -310,6 +327,10 @@ async function _handlePostRedirectMessage(params: {
       id: conversation.id,
       customerPhone,
       customerName,
+      customerUsername,
+      contactIdentifier: customerPhone ?? customerUsername ?? 'Customer',
+      displayName:
+        customerName ?? customerPhone ?? customerUsername ?? 'Customer',
       adminTakeover: effectiveAdminTakeover,
       lastMessageAt,
       lastCustomerMessageAt,

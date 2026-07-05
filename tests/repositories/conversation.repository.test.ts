@@ -54,10 +54,10 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     }
     dbPhoneNumberId = pn.id;
 
-    const conv = await prisma.conversation.findUnique({
+    const conv = await prisma.conversation.findFirst({
       where: {
-        unique_conversation: {
-          phoneNumberId: dbPhoneNumberId,
+        phoneNumberId: dbPhoneNumberId,
+        contact: {
           customerPhone: SEED_DATA.CUSTOMER_PHONE,
         },
       },
@@ -74,10 +74,17 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     const testCustomerPrefix = '999';
     await prisma.message.deleteMany({
       where: {
-        conversation: { customerPhone: { startsWith: testCustomerPrefix } },
+        conversation: {
+          contact: { customerPhone: { startsWith: testCustomerPrefix } },
+        },
       },
     });
     await prisma.conversation.deleteMany({
+      where: {
+        contact: { customerPhone: { startsWith: testCustomerPrefix } },
+      },
+    });
+    await prisma.contact.deleteMany({
       where: { customerPhone: { startsWith: testCustomerPrefix } },
     });
   });
@@ -142,8 +149,10 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         systemUserToken,
       });
       expect(result.conversation).toMatchObject({
-        customerPhone: '999006',
-        customerName: 'Webhook Media Customer',
+        contact: {
+          customerPhone: '999006',
+          customerName: 'Webhook Media Customer',
+        },
         phoneNumberId: dbPhoneNumberId,
         unreadCount: 0,
       });
@@ -168,12 +177,14 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         });
 
       expect(second.conversation.id).toBe(first.conversation.id);
-      expect(second.conversation.customerName).toBe('Updated Webhook Customer');
+      expect(second.conversation.contact.customerName).toBe(
+        'Updated Webhook Customer',
+      );
 
       const conversationCount = await prisma.conversation.count({
         where: {
           phoneNumberId: dbPhoneNumberId,
-          customerPhone: '999007',
+          contact: { customerPhone: '999007' },
         },
       });
       expect(conversationCount).toBe(1);
@@ -182,11 +193,16 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
   describe('admin takeover helpers', () => {
     it('finds an owned conversation and updates admin takeover', async () => {
+      const contact = await prisma.contact.create({
+        data: {
+          customerPhone: '999003',
+          customerName: 'Takeover Test Customer',
+        },
+      });
       const conversation = await prisma.conversation.create({
         data: {
           phoneNumberId: dbPhoneNumberId,
-          customerPhone: '999003',
-          customerName: 'Takeover Test Customer',
+          contactId: contact.id,
           lastMessageAt: new Date(),
           lastCustomerMessageAt: new Date(),
         },
@@ -199,7 +215,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       });
 
       expect(found?.id).toBe(conversation.id);
-      expect(found?.customerName).toBe('Takeover Test Customer');
+      expect(found?.contact.customerName).toBe('Takeover Test Customer');
       expect(found?.adminTakeover).toBe(false);
       expect(found?.status).toBe('active');
       expect(found?.createdAt).toBeInstanceOf(Date);
@@ -244,7 +260,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         },
       });
 
-      expect(result.conversation.customerPhone).toBe('999002');
+      expect(result.conversation.contact.customerPhone).toBe('999002');
       expect(result.conversation.phoneNumber).toBeDefined();
       expect(result.conversation.phoneNumber?.id).toBe(dbPhoneNumberId);
       expect(result.message.content).toBe('Hello Test');
@@ -287,12 +303,10 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
       expect(result.conversation.lastCustomerMessageAt).toEqual(newerTimestamp);
 
-      const savedConversation = await prisma.conversation.findUniqueOrThrow({
+      const savedConversation = await prisma.conversation.findFirstOrThrow({
         where: {
-          unique_conversation: {
-            phoneNumberId: dbPhoneNumberId,
-            customerPhone,
-          },
+          phoneNumberId: dbPhoneNumberId,
+          contact: { customerPhone },
         },
         include: {
           messages: { orderBy: { timestamp: 'desc' }, take: 1 },
@@ -325,7 +339,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         },
       });
 
-      expect(result.conversation.customerPhone).toBe('999004');
+      expect(result.conversation.contact.customerPhone).toBe('999004');
       expect(result.conversation.unreadCount).toBe(0);
       expect(result.conversation.lastCustomerMessageAt).toBeNull();
       expect(result.message).toMatchObject({
@@ -372,12 +386,10 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
       expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
 
-      const savedConversation = await prisma.conversation.findUniqueOrThrow({
+      const savedConversation = await prisma.conversation.findFirstOrThrow({
         where: {
-          unique_conversation: {
-            phoneNumberId: dbPhoneNumberId,
-            customerPhone,
-          },
+          phoneNumberId: dbPhoneNumberId,
+          contact: { customerPhone },
         },
         include: {
           messages: { orderBy: { timestamp: 'desc' }, take: 1 },

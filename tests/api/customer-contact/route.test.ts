@@ -12,9 +12,9 @@ describe('GET /api/customer-contact', { tags: ['backend'] }, () => {
     vi.mocked(CustomerContactService.getCustomerContacts).mockResolvedValue({
       customerContacts: [
         {
-          customerUsername: null,
           customerPhone: '628111',
           customerName: 'Alice',
+          customerUsername: 'alice',
         },
       ],
       total: 1,
@@ -49,9 +49,9 @@ describe('GET /api/customer-contact', { tags: ['backend'] }, () => {
     vi.mocked(CustomerContactService.getCustomerContacts).mockResolvedValue({
       customerContacts: [
         {
-          customerUsername: null,
           customerPhone: '628111',
           customerName: 'Alice',
+          customerUsername: 'alice',
         },
       ],
       total: 3,
