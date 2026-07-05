@@ -68,12 +68,18 @@ export type MetaOutboundMessage =
       filename?: string | null;
     };
 
+type MetaMessageRecipient =
+  | { to: string; recipient?: never }
+  | { recipient: string; to?: never };
+
 type MetaMessagePayload = {
   messaging_product: 'whatsapp';
   recipient_type: 'individual';
-  to: string;
   type: MetaOutboundMessage['type'];
-} & Record<string, unknown>;
+} & MetaMessageRecipient &
+  Record<string, unknown>;
+
+export type MetaSendMessageRecipient = MetaMessageRecipient;
 
 function getBearerAuth(token: string): BetterFetchOption['auth'] {
   return {
@@ -111,15 +117,20 @@ function withoutNullishValues<T extends Record<string, unknown>>(value: T) {
   );
 }
 
-function buildMetaMessagePayload(params: {
-  to: string;
-  message: MetaOutboundMessage;
-}): MetaMessagePayload {
-  const { to, message } = params;
+function buildMetaMessagePayload(
+  params: MetaMessageRecipient & {
+    message: MetaOutboundMessage;
+  },
+): MetaMessagePayload {
+  const { message } = params;
+  const recipientPayload: MetaMessageRecipient =
+    params.to !== undefined
+      ? { to: params.to }
+      : { recipient: params.recipient };
   const basePayload = {
     messaging_product: 'whatsapp' as const,
     recipient_type: 'individual' as const,
-    to,
+    ...recipientPayload,
     type: message.type,
   };
 
@@ -544,18 +555,20 @@ export const MetaFetchService = {
     return tokenData.access_token;
   },
 
-  async sendMessage(params: {
-    phoneNumberId: string;
-    token: string;
-    to: string;
-    message: MetaOutboundMessage;
-  }): Promise<{ messageId: string; status: string }> {
-    const { phoneNumberId, token, to, message } = params;
-    const payload = buildMetaMessagePayload({ to, message });
+  async sendMessage(
+    params: {
+      phoneNumberId: string;
+      token: string;
+      message: MetaOutboundMessage;
+    } & MetaSendMessageRecipient,
+  ): Promise<{ messageId: string; status: string }> {
+    const { phoneNumberId, token, message } = params;
+    const payload = buildMetaMessagePayload({ ...params, message });
 
     logger.info('Sending WhatsApp message', {
       phoneNumberId,
-      to,
+      to: 'to' in params ? params.to : undefined,
+      recipient: 'recipient' in params ? params.recipient : undefined,
       type: message.type,
     });
 

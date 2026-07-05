@@ -9,6 +9,7 @@ import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import {
   MetaFetchService,
   type MetaOutboundMessage,
+  type MetaSendMessageRecipient,
 } from './meta-fetch.service';
 import { S3Service } from './s3.service';
 
@@ -74,6 +75,25 @@ function flattenContactForEvent<
         }
       : safeConversation.phoneNumber,
   };
+}
+
+// prioritize bsuid usage
+function getMetaSendMessageRecipient(
+  contact?: {
+    bsuid?: string | null;
+    customerPhone?: string | null;
+  } | null,
+): MetaSendMessageRecipient {
+  const bsuid = contact?.bsuid?.trim();
+  if (bsuid) return { recipient: bsuid };
+
+  const phoneNumber = contact?.customerPhone?.trim();
+  if (phoneNumber) return { to: phoneNumber };
+
+  throw new ApiError(
+    'Cannot send message because the customer has no WhatsApp phone or BSUID',
+    400,
+  );
 }
 
 function buildOutboundMediaMessage(params: {
@@ -161,14 +181,7 @@ export const MessageService = {
 
     const { phoneNumber, contact } = conversationMeta;
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
-    const recipient = contact?.bsuid ?? contact?.customerPhone ?? null;
-
-    if (!recipient) {
-      throw new ApiError(
-        'Cannot send message because the customer has no WhatsApp phone or BSUID',
-        400,
-      );
-    }
+    const recipient = getMetaSendMessageRecipient(contact);
 
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
@@ -189,7 +202,7 @@ export const MessageService = {
     const waResult = await MetaFetchService.sendMessage({
       phoneNumberId,
       token: tokenToUse,
-      to: recipient,
+      ...recipient,
       message: { type: 'text', text: content },
     });
 
@@ -259,14 +272,7 @@ export const MessageService = {
 
     const { phoneNumber, contact } = conversationMeta;
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
-    const recipient = contact?.bsuid ?? contact?.customerPhone ?? null;
-
-    if (!recipient) {
-      throw new ApiError(
-        'Cannot send message because the customer has no WhatsApp phone or BSUID',
-        400,
-      );
-    }
+    const recipient = getMetaSendMessageRecipient(contact);
 
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
@@ -277,7 +283,7 @@ export const MessageService = {
     const waResult = await MetaFetchService.sendMessage({
       phoneNumberId,
       token: tokenToUse,
-      to: recipient,
+      ...recipient,
       message: buildOutboundMediaMessage({
         mediaType: uploadedMedia.mediaType,
         link: downloadUrl,

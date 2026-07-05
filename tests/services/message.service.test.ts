@@ -95,10 +95,42 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
-        to: 'US.customer-123',
+        recipient: 'US.customer-123',
         message: { type: 'text', text: 'Hello Admin' },
       });
       expect(MessageRepository.saveMessage).toHaveBeenCalled();
+    });
+
+    it('uses customer phone as to when BSUID is not available', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          waba: { systemUserToken: 'token' },
+        },
+        contact: { customerPhone: '+123456' },
+      } as never);
+      vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
+        status: 'sent',
+        messageId: 'wa-msg-1',
+      });
+      vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
+        id: 'msg-1',
+      } as never);
+
+      await MessageService.sendAdminTextMessage({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+        content: 'Hello Admin',
+      });
+
+      expect(MetaFetchService.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: '+123456',
+        }),
+      );
     });
 
     it('throws ApiError if chat meta is null', async () => {
@@ -182,7 +214,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
         token: 'token',
-        to: 'US.media-customer-123',
+        recipient: 'US.media-customer-123',
         message: {
           type: 'image',
           link: 'https://space.example/download?signature=abc',
