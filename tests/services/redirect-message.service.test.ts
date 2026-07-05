@@ -36,8 +36,15 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     );
     vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
       id: 'conv-1',
-      customerPhone: '+123456',
-      customerName: 'Test Customer',
+      contact: {
+        id: 'contact-1',
+        bsuid: 'US.redirect-customer-123',
+        customerPhone: '+123456',
+        customerName: 'Test Customer',
+        customerUsername: null,
+        createdAt: new Date('2026-06-23T09:00:00.000Z'),
+        updatedAt: new Date('2026-06-24T09:00:00.000Z'),
+      },
       adminTakeover: false,
       lastMessageAt: new Date('2026-06-24T10:00:00.000Z'),
       lastCustomerMessageAt: new Date('2026-06-24T09:00:00.000Z'),
@@ -50,6 +57,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         phoneNumberId: 'meta-phone-1',
         displayPhoneNumber: '+654321',
         wabaId: 'waba-1',
+        businessProfile: null,
         waba: {
           id: 'waba-1',
           systemUserToken: 'encrypted-token',
@@ -130,7 +138,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         method: 'POST',
         auth: { type: 'Bearer', token: 'signed-webhook-jwt' },
         body: {
-          customerPhoneNumber: '+123456',
+          customerIdentifier: 'US.redirect-customer-123',
           messages: [
             {
               sequence: 1,
@@ -154,7 +162,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
       phoneNumberId: 'meta-phone-1',
       token: 'plain-token',
-      to: '+123456',
+      to: 'US.redirect-customer-123',
       message: { type: 'text', text: 'ok' },
     });
     expect(MessageRepository.saveMessage).toHaveBeenCalledWith(
@@ -346,6 +354,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
           id: 'conv-1',
           customerPhone: '+123456',
           customerName: 'Test Customer',
+          customerUsername: null,
+          contactIdentifier: '+123456',
+          displayName: 'Test Customer',
           adminTakeover: false,
           lastMessageAt: new Date('2026-06-24T10:00:00.000Z'),
           lastCustomerMessageAt: new Date('2026-06-24T09:00:00.000Z'),

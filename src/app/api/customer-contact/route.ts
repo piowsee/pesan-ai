@@ -1,7 +1,7 @@
 import { withApiAuth } from '@/lib/api-helper/api-handler';
 import { jsend } from '@/lib/api-helper/jsend';
 import { getPaginationParams } from '@/lib/api-helper/pagination';
-import { CustomerPhoneNumberService } from '@/services/customer-phone-number.service';
+import { CustomerContactService } from '@/services/customer-contact.service';
 
 function getQueryValues(searchParams: URLSearchParams, key: string) {
   const values = Array.from(
@@ -17,14 +17,14 @@ function getQueryValues(searchParams: URLSearchParams, key: string) {
 }
 
 /**
- * @route GET /api/customer-phone-number
+ * @route GET /api/customer-contact
  * @query wabaId {string[]} - Optional repeated Pesan-AI internal WABA ids (WhatsappBusinessAccount.id), not Meta wabaId
  * @query phoneNumber {string[]} - Optional repeated business/admin phone number filters from the PhoneNumber table
  * @query page {number} - Optional page number; enables pagination when present
  * @query limit {number} - Optional items per page; enables pagination when present
- * @response { status: 'success', data: { customerPhoneNumbers, total, page?, limit? } }
+ * @response { status: 'success', data: { customerContacts, total, page?, limit? } }
  * @access Authenticated users
- * @description Returns unique customer phone numbers that have ever chatted with the user's owned WhatsApp numbers.
+ * @description Returns unique customer contacts that have ever chatted with the user's owned WhatsApp numbers.
  */
 export const GET = withApiAuth(async ({ req, user }) => {
   const { searchParams } = new URL(req.url);
@@ -35,8 +35,8 @@ export const GET = withApiAuth(async ({ req, user }) => {
     ? getPaginationParams(searchParams)
     : undefined;
 
-  const { customerPhoneNumbers, total } =
-    await CustomerPhoneNumberService.getCustomerPhoneNumbers({
+  const { customerContacts, total } =
+    await CustomerContactService.getCustomerContacts({
       userId: user.id,
       wabaIds,
       phoneNumbers,
@@ -45,7 +45,7 @@ export const GET = withApiAuth(async ({ req, user }) => {
     });
 
   return jsend.success({
-    customerPhoneNumbers,
+    customerContacts,
     total,
     ...(pagination
       ? {

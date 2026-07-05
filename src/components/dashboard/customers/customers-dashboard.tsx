@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import {
-  type CustomerPhoneNumberFilters,
-  useCustomerPhoneNumbers,
-} from '@/hooks/use-customer-phone-number';
+  type CustomerContactFilters,
+  useCustomerContacts,
+} from '@/hooks/use-customer-contact';
 import { useWabas } from '@/hooks/use-wabas';
 import { Download } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -60,7 +60,7 @@ export function CustomersDashboard() {
         : phoneOptions.filter((phone) => selectedPhoneIds.includes(phone.id)),
     [phoneOptions, selectedPhoneIds],
   );
-  const queryFilters = useMemo<CustomerPhoneNumberFilters | null>(() => {
+  const queryFilters = useMemo<CustomerContactFilters | null>(() => {
     const isAllWabas =
       selectedWabaIds === null || activeWabaIds.length === totalWabas;
     const isAllPhones =
@@ -75,7 +75,7 @@ export function CustomersDashboard() {
       return null;
     }
 
-    const filters: CustomerPhoneNumberFilters = {};
+    const filters: CustomerContactFilters = {};
 
     if (!isAllWabas) {
       filters.wabaIds = activeWabaIds;
@@ -97,8 +97,8 @@ export function CustomersDashboard() {
     totalWabas,
   ]);
   const { data, isLoading, isError, error, isFetching, refetch } =
-    useCustomerPhoneNumbers(queryFilters);
-  const customers = data?.customerPhoneNumbers ?? EMPTY_CUSTOMERS;
+    useCustomerContacts(queryFilters);
+  const customers = data?.customerContacts ?? EMPTY_CUSTOMERS;
   const totalCustomers = data?.total ?? customers.length;
   const totalPages = Math.max(1, Math.ceil(totalCustomers / PAGE_SIZE));
   const pagedCustomers = customers.slice(

@@ -59,8 +59,8 @@ vi.mock('@/repositories/conversation.repository', () => ({
   },
 }));
 
-vi.mock('@/repositories/customer-phone-number.repository', () => ({
-  CustomerPhoneNumberRepository: {
+vi.mock('@/repositories/contact.repository', () => ({
+  ContactRepository: {
     findConversationContacts: vi.fn(),
   },
 }));
@@ -105,6 +105,16 @@ vi.mock('@/repositories/webhook.repository', () => ({
 
 // --- Mocks for Services ---
 vi.mock('@/services/conversation.service', () => ({
+  flattenContactObject: vi.fn((conversation) => {
+    const { contact, ...conversationWithoutContact } = conversation;
+
+    return {
+      ...conversationWithoutContact,
+      customerPhone: contact?.customerPhone ?? null,
+      customerName: contact?.customerName ?? null,
+      customerUsername: contact?.customerUsername ?? null,
+    };
+  }),
   ConversationService: {
     getAllConversations: vi.fn(),
     getChatDetail: vi.fn(),
@@ -154,9 +164,9 @@ vi.mock('@/services/phone-number.service', () => ({
   },
 }));
 
-vi.mock('@/services/customer-phone-number.service', () => ({
-  CustomerPhoneNumberService: {
-    getCustomerPhoneNumbers: vi.fn(),
+vi.mock('@/services/customer-contact.service', () => ({
+  CustomerContactService: {
+    getCustomerContacts: vi.fn(),
   },
 }));
 

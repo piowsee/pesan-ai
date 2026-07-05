@@ -30,6 +30,11 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
     // Pre-test cleanup for robustness
     await prisma.conversation.deleteMany({
       where: {
+        contact: { customerPhone: { startsWith: '9998' } },
+      },
+    });
+    await prisma.contact.deleteMany({
+      where: {
         customerPhone: { startsWith: '9998' },
       },
     });
@@ -79,6 +84,11 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
   afterEach(async () => {
     // Cleanup only test-specific data to keep seed intact
     await prisma.conversation.deleteMany({
+      where: {
+        contact: { customerPhone: { startsWith: '9998' } },
+      },
+    });
+    await prisma.contact.deleteMany({
       where: {
         customerPhone: { startsWith: '9998' },
       },
@@ -158,11 +168,16 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
           botWebhookId: webhook.id,
         },
       });
+      const contact = await prisma.contact.create({
+        data: {
+          customerPhone: `9998${Date.now()}`,
+          customerName: 'Redirect Customer',
+        },
+      });
       const conversation = await prisma.conversation.create({
         data: {
           phoneNumberId: phoneNumber.id,
-          customerPhone: `9998${Date.now()}`,
-          customerName: 'Redirect Customer',
+          contactId: contact.id,
         },
       });
 

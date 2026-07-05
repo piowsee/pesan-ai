@@ -27,19 +27,20 @@ const DocumentMessageSchema = WebhookMediaAssetSchema.extend({
 // --- Contact payloads ---
 
 const ContactProfileSchema = z.object({
-  name: z.string(),
+  name: z.string().optional(),
+  username: z.string().optional(),
 });
 
 const ContactSchema = z.object({
   profile: ContactProfileSchema.optional(),
-  wa_id: z.string(),
+  wa_id: z.string().optional(),
+  user_id: z.string(),
 });
 
 // --- Message payloads ---
 
-const WebhookMessageSchema = z
+const BaseWebhookMessageSchema = z
   .object({
-    from: z.string(),
     id: z.string(),
     timestamp: z.string(), // Meta sends it as a string
     type: z.string(),
@@ -51,9 +52,15 @@ const WebhookMessageSchema = z
   })
   .passthrough();
 
-const WebhookMessageEchoSchema = WebhookMessageSchema.extend({
+const WebhookMessageSchema = BaseWebhookMessageSchema.extend({
+  from: z.string().optional(),
+  from_user_id: z.string(),
+});
+
+// smb_message_echoes still doesn't support user_id - 05 July 2026
+const WebhookMessageEchoSchema = BaseWebhookMessageSchema.extend({
+  from: z.string(),
   to: z.string(),
-  to_user_id: z.string().optional(),
 });
 
 // --- Webhook value payloads ---
@@ -76,7 +83,6 @@ const WebhookMessageEchoValueSchema = z
   .object({
     messaging_product: z.string(),
     metadata: WebhookMetadataSchema,
-    contacts: z.array(ContactSchema).optional(),
     message_echoes: z.array(WebhookMessageEchoSchema).optional(),
   })
   .passthrough();
