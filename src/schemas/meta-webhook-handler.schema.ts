@@ -34,7 +34,7 @@ const ContactProfileSchema = z.object({
 const ContactSchema = z.object({
   profile: ContactProfileSchema.optional(),
   wa_id: z.string().optional(),
-  user_id: z.string(),
+  user_id: z.string().optional(),
 });
 
 // --- Message payloads ---
@@ -63,6 +63,62 @@ const WebhookMessageEchoSchema = BaseWebhookMessageSchema.extend({
   to: z.string(),
 });
 
+// --- Status payloads ---
+
+const WebhookStatusErrorSchema = z
+  .object({
+    code: z.number().optional(),
+    title: z.string().optional(),
+    message: z.string().optional(),
+    error_data: z
+      .object({
+        details: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
+    href: z.string().optional(),
+  })
+  .passthrough();
+
+const WebhookStatusConversationSchema = z
+  .object({
+    id: z.string().optional(),
+    expiration_timestamp: z.string().optional(),
+    origin: z
+      .object({
+        type: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+const WebhookStatusPricingSchema = z
+  .object({
+    billable: z.boolean().optional(),
+    pricing_model: z.string().optional(),
+    type: z.string().optional(),
+    category: z.string().optional(),
+  })
+  .passthrough();
+
+const WebhookStatusSchema = z
+  .object({
+    id: z.string(),
+    status: z.string(),
+    timestamp: z.string().optional(),
+    recipient_id: z.string().optional(),
+    recipient_user_id: z.string().optional(),
+    recipient_type: z.string().optional(),
+    recipient_participant_id: z.string().optional(),
+    recipient_identity_key_hash: z.string().optional(),
+    biz_opaque_callback_data: z.string().optional(),
+    conversation: WebhookStatusConversationSchema.optional(),
+    pricing: WebhookStatusPricingSchema.optional(),
+    errors: z.array(WebhookStatusErrorSchema).optional(),
+  })
+  .passthrough();
+
 // --- Webhook value payloads ---
 
 const WebhookMetadataSchema = z.object({
@@ -76,6 +132,7 @@ const WebhookValueSchema = z
     metadata: WebhookMetadataSchema,
     contacts: z.array(ContactSchema).optional(),
     messages: z.array(WebhookMessageSchema).optional(),
+    statuses: z.array(WebhookStatusSchema).optional(),
   })
   .passthrough();
 
@@ -116,6 +173,7 @@ export type MetaWebhookPayload = z.infer<typeof MetaWebhookPayloadSchema>;
 export type WebhookEntry = z.infer<typeof WebhookEntrySchema>;
 export type WebhookValue = z.infer<typeof WebhookValueSchema>;
 export type WebhookMessage = z.infer<typeof WebhookMessageSchema>;
+export type WebhookStatus = z.infer<typeof WebhookStatusSchema>;
 export type WebhookMessageEcho = z.infer<typeof WebhookMessageEchoSchema>;
 export type WebhookMessageEchoValue = z.infer<
   typeof WebhookMessageEchoValueSchema
