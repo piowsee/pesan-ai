@@ -33,6 +33,10 @@ export const GET = withApiAuth(async ({ req, user }) => {
         sendEvent(SSE_EVENTS.CONVERSATION_UPDATED, payload);
       };
 
+      const onMessageStatusesUpdated = (payload: unknown) => {
+        sendEvent(SSE_EVENTS.MESSAGE_STATUSES_UPDATED, payload);
+      };
+
       // Subscribe ONLY to this user's messages
       const newMessageEvent = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
       const botWebhookFailedEvent = getUserEvent(
@@ -43,9 +47,14 @@ export const GET = withApiAuth(async ({ req, user }) => {
         SSE_EVENTS.CONVERSATION_UPDATED,
         userId,
       );
+      const messageStatusesUpdatedEvent = getUserEvent(
+        SSE_EVENTS.MESSAGE_STATUSES_UPDATED,
+        userId,
+      );
       eventBus.on(newMessageEvent, onNewMessage);
       eventBus.on(botWebhookFailedEvent, onBotWebhookFailed);
       eventBus.on(conversationUpdatedEvent, onConversationUpdated);
+      eventBus.on(messageStatusesUpdatedEvent, onMessageStatusesUpdated);
 
       // Keep-alive heartbeat every 30 seconds to prevent connection timeout
       const keepAlive = setInterval(() => {
@@ -65,6 +74,7 @@ export const GET = withApiAuth(async ({ req, user }) => {
         eventBus.off(newMessageEvent, onNewMessage);
         eventBus.off(botWebhookFailedEvent, onBotWebhookFailed);
         eventBus.off(conversationUpdatedEvent, onConversationUpdated);
+        eventBus.off(messageStatusesUpdatedEvent, onMessageStatusesUpdated);
 
         try {
           controller.close();

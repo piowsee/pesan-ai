@@ -1,6 +1,8 @@
 import {
   applyBotWebhookFailureToConversations,
   applyConversationUpdateToConversations,
+  applyMessageStatusUpdatesToConversations,
+  applyMessageStatusUpdatesToMessagePage,
   applyRealtimeMessageToConversation,
   applyRealtimeMessageToMessagePage,
   isIncomingCustomerMessage,
@@ -203,6 +205,70 @@ describe('realtime conversation updates', () => {
     expect(result.lastMessage).toBe(latestMessage);
     expect(result.lastMessageAt).toBe(latestTimestamp);
     expect(result.unreadCount).toBe(2);
+  });
+
+  it('updates cached message statuses by Meta message ID', () => {
+    const existingMessage = createMessage({
+      id: 'db-message-1',
+      messageId: 'wamid.message-1',
+      status: 'sent',
+    });
+    const otherMessage = createMessage({
+      id: 'db-message-2',
+      messageId: 'wamid.message-2',
+      status: 'sent',
+    });
+
+    const result = applyMessageStatusUpdatesToMessagePage(
+      {
+        messages: [existingMessage, otherMessage],
+        total: 2,
+        page: 1,
+        limit: 50,
+      },
+      [
+        {
+          messageId: 'wamid.message-1',
+          status: 'read',
+          errorMessage: null,
+          conversationId: 'conversation-1',
+        },
+      ],
+    );
+
+    expect(result.messages[0]).toMatchObject({
+      id: 'db-message-1',
+      status: 'read',
+      errorMessage: null,
+    });
+    expect(result.messages[1]).toBe(otherMessage);
+  });
+
+  it('updates last message statuses in conversation cache', () => {
+    const lastMessage = createMessage({
+      messageId: 'wamid.message-1',
+      status: 'sent',
+    });
+    const conversations = [
+      createConversation({ lastMessage }),
+      createConversation({ id: 'conversation-2' }),
+    ];
+
+    const result = applyMessageStatusUpdatesToConversations(conversations, [
+      {
+        messageId: 'wamid.message-1',
+        status: 'failed',
+        errorMessage: 'Message could not be delivered.',
+        conversationId: 'conversation-1',
+      },
+    ]);
+
+    expect(result[0].lastMessage).toMatchObject({
+      messageId: 'wamid.message-1',
+      status: 'failed',
+      errorMessage: 'Message could not be delivered.',
+    });
+    expect(result[1]).toBe(conversations[1]);
   });
 
   it('updates admin takeover without adding a message from a conversation event', () => {
