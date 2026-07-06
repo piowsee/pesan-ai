@@ -266,7 +266,7 @@ function getOptimisticTimelineTimestamp({
   );
 
   if (latestMessageTime > 0) {
-    return new Date(latestMessageTime).toISOString();
+    return new Date(latestMessageTime + 1).toISOString();
   }
 
   return new Date().toISOString();
