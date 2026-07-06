@@ -3,9 +3,11 @@ import { messageKeys } from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
 import type { QueryClient } from '@tanstack/react-query';
 
+import { refetchRealtimeCache } from './cache';
 import type { MessagePageCache } from './types';
 
 export interface MessageStatusUpdate {
+  id: string;
   messageId: string;
   status: string;
   errorMessage: string | null;
@@ -23,15 +25,13 @@ export function applyMessageStatusUpdatesToMessagePage(
 ): MessagePageCache {
   if (!statusUpdates.length) return page;
 
-  const statusByMessageId = new Map(
-    statusUpdates.map((statusUpdate) => [statusUpdate.messageId, statusUpdate]),
+  const statusById = new Map(
+    statusUpdates.map((statusUpdate) => [statusUpdate.id, statusUpdate]),
   );
   let hasUpdatedMessage = false;
 
   const messages = page.messages.map((message) => {
-    if (!message.messageId) return message;
-
-    const statusUpdate = statusByMessageId.get(message.messageId);
+    const statusUpdate = statusById.get(message.id);
     if (!statusUpdate) return message;
 
     hasUpdatedMessage = true;
@@ -51,14 +51,14 @@ export function applyMessageStatusUpdatesToConversations(
 ): ChatConversation[] {
   if (!statusUpdates.length) return chats;
 
-  const statusByMessageId = new Map(
-    statusUpdates.map((statusUpdate) => [statusUpdate.messageId, statusUpdate]),
+  const statusById = new Map(
+    statusUpdates.map((statusUpdate) => [statusUpdate.id, statusUpdate]),
   );
 
   return chats.map((chat) => {
-    const lastMessageId = chat.lastMessage?.messageId;
+    const lastMessageId = chat.lastMessage?.id;
     const statusUpdate = lastMessageId
-      ? statusByMessageId.get(lastMessageId)
+      ? statusById.get(lastMessageId)
       : undefined;
 
     if (!statusUpdate || !chat.lastMessage) return chat;
@@ -86,19 +86,33 @@ export function updateMessageStatusCaches({
   );
 
   statusUpdatesByConversation.forEach((statusUpdates, conversationId) => {
+    let didUpdateCachedMessage = false;
+
     queryClient.setQueryData(
       messageKeys.all(conversationId),
       (old: { pages: MessagePageCache[] } | undefined) => {
         if (!old) return old;
 
-        return {
-          ...old,
-          pages: old.pages.map((page) =>
-            applyMessageStatusUpdatesToMessagePage(page, statusUpdates),
-          ),
-        };
+        const pages = old.pages.map((page) => {
+          const updatedPage = applyMessageStatusUpdatesToMessagePage(
+            page,
+            statusUpdates,
+          );
+          didUpdateCachedMessage ||= updatedPage !== page;
+          return updatedPage;
+        });
+
+        return { ...old, pages };
       },
     );
+
+    if (!didUpdateCachedMessage) {
+      void refetchRealtimeCache(
+        queryClient,
+        messageKeys.all(conversationId),
+        true,
+      );
+    }
   });
 
   queryClient.setQueryData(

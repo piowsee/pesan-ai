@@ -7,8 +7,10 @@ import {
   applyRealtimeMessageToMessagePage,
   isIncomingCustomerMessage,
   refetchRealtimeCache,
+  updateMessageStatusCaches,
 } from '@/components/realtime-provider';
 import { conversationKeys } from '@/hooks/use-conversations';
+import { messageKeys } from '@/hooks/use-message';
 import type { ChatConversation, ChatMessage } from '@/types/chat';
 import { QueryClient } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -207,7 +209,7 @@ describe('realtime conversation updates', () => {
     expect(result.unreadCount).toBe(2);
   });
 
-  it('updates cached message statuses by Meta message ID', () => {
+  it('updates cached message statuses by internal message ID', () => {
     const existingMessage = createMessage({
       id: 'db-message-1',
       messageId: 'wamid.message-1',
@@ -228,6 +230,7 @@ describe('realtime conversation updates', () => {
       },
       [
         {
+          id: 'db-message-1',
           messageId: 'wamid.message-1',
           status: 'read',
           errorMessage: null,
@@ -244,6 +247,57 @@ describe('realtime conversation updates', () => {
     expect(result.messages[1]).toBe(otherMessage);
   });
 
+  it('refetches conversation messages when a status arrives before the confirmed message is cached', async () => {
+    const queryClient = new QueryClient();
+    const cancelQueries = vi
+      .spyOn(queryClient, 'cancelQueries')
+      .mockResolvedValue();
+    const invalidateQueries = vi
+      .spyOn(queryClient, 'invalidateQueries')
+      .mockResolvedValue();
+    queryClient.setQueryData(messageKeys.all('conversation-1'), {
+      pages: [
+        {
+          messages: [
+            createMessage({
+              id: 'optimistic-1',
+              messageId: null,
+              status: 'sending',
+            }),
+          ],
+          total: 1,
+          page: 1,
+          limit: 50,
+        },
+      ],
+      pageParams: [1],
+    });
+
+    updateMessageStatusCaches({
+      queryClient,
+      payload: {
+        wabaId: 'waba-1',
+        statuses: [
+          {
+            id: 'db-confirmed-message-1',
+            messageId: 'wamid.confirmed-message-1',
+            status: 'delivered',
+            errorMessage: null,
+            conversationId: 'conversation-1',
+          },
+        ],
+      },
+    });
+    await Promise.resolve();
+
+    const filters = {
+      queryKey: messageKeys.all('conversation-1'),
+      exact: true,
+    };
+    expect(cancelQueries).toHaveBeenCalledWith(filters);
+    expect(invalidateQueries).toHaveBeenCalledWith(filters);
+  });
+
   it('updates last message statuses in conversation cache', () => {
     const lastMessage = createMessage({
       messageId: 'wamid.message-1',
@@ -256,6 +310,7 @@ describe('realtime conversation updates', () => {
 
     const result = applyMessageStatusUpdatesToConversations(conversations, [
       {
+        id: 'message-1',
         messageId: 'wamid.message-1',
         status: 'failed',
         errorMessage: 'Message could not be delivered.',

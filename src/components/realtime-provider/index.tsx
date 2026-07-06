@@ -35,6 +35,7 @@ export { applyConversationUpdateToConversations } from './conversation-updated';
 export {
   applyMessageStatusUpdatesToConversations,
   applyMessageStatusUpdatesToMessagePage,
+  updateMessageStatusCaches,
 } from './message-statuses-updated';
 export {
   applyRealtimeMessageToConversation,
