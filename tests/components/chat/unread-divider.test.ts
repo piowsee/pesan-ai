@@ -1,6 +1,5 @@
 import {
   type UnreadDividerSnapshotMap,
-  type UnreadDividerSnapshotMap,
   captureUnreadDividerSnapshot,
   clearUnreadDividerSnapshot,
   getUnreadBoundaryMessageId,

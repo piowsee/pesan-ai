@@ -234,6 +234,44 @@ function createLocalMediaMetadata(localMediaUrl: string) {
   return JSON.stringify({ localMediaUrl });
 }
 
+function getCachedMessages({
+  convId,
+  queryClient,
+}: {
+  convId: string;
+  queryClient: QueryClient;
+}) {
+  return (
+    queryClient
+      .getQueryData<InfiniteData<MessagePageCache>>(messageKeys.all(convId))
+      ?.pages.flatMap((page) => page.messages) ?? []
+  );
+}
+
+function getOptimisticTimelineTimestamp({
+  convId,
+  queryClient,
+}: {
+  convId: string;
+  queryClient: QueryClient;
+}) {
+  const latestMessageTime = getCachedMessages({ convId, queryClient }).reduce(
+    (latestTime, message) => {
+      const messageTime = new Date(message.timestamp).getTime();
+      return Number.isFinite(messageTime)
+        ? Math.max(latestTime, messageTime)
+        : latestTime;
+    },
+    0,
+  );
+
+  if (latestMessageTime > 0) {
+    return new Date(latestMessageTime).toISOString();
+  }
+
+  return new Date().toISOString();
+}
+
 function updateConversationListCache({
   createChat,
   queryClient,
@@ -634,6 +672,10 @@ export function useSendMessage() {
       await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
 
       const optimisticId = `optimistic-${Date.now()}`;
+      const timelineTimestamp = getOptimisticTimelineTimestamp({
+        convId,
+        queryClient,
+      });
       const optimisticMessage: ChatMessage = {
         id: optimisticId,
         messageId: null,
@@ -649,8 +691,8 @@ export function useSendMessage() {
         status: 'sending',
         errorMessage: null,
         metadata: null,
-        timestamp: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
+        timestamp: timelineTimestamp,
+        createdAt: timelineTimestamp,
       };
 
       insertOptimisticMessage({
@@ -695,7 +737,10 @@ export function useSendMediaMessage() {
 
       const optimisticId = `optimistic-media-${Date.now()}`;
       const localMediaUrl = URL.createObjectURL(file);
-      const now = new Date().toISOString();
+      const timelineTimestamp = getOptimisticTimelineTimestamp({
+        convId,
+        queryClient,
+      });
       const optimisticMessage: ChatMessage = {
         id: optimisticId,
         messageId: null,
@@ -711,8 +756,8 @@ export function useSendMediaMessage() {
         status: 'sending',
         errorMessage: null,
         metadata: createLocalMediaMetadata(localMediaUrl),
-        timestamp: now,
-        createdAt: now,
+        timestamp: timelineTimestamp,
+        createdAt: timelineTimestamp,
       };
 
       insertOptimisticMessage({
