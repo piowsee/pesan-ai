@@ -76,6 +76,7 @@ vi.mock('@/repositories/message.repository', () => ({
     findConversationMessageHistory: vi.fn(),
     findMessagesPaginated: vi.fn(),
     saveMessage: vi.fn(),
+    updateStatusesByMetaMessageIds: vi.fn(),
   },
 }));
 

@@ -88,6 +88,7 @@ function emitMessageStatusesUpdatedEvents(
       userId: string;
       wabaId: string;
       statuses: Array<{
+        id: string;
         messageId: string;
         status: string;
         errorMessage: string | null;
@@ -100,6 +101,7 @@ function emitMessageStatusesUpdatedEvents(
     const key = `${message.userId}:${message.wabaId}`;
     const existing = updatesByUserAndWaba.get(key);
     const statusUpdate = {
+      id: message.id,
       messageId: message.messageId,
       status: message.status,
       errorMessage: message.errorMessage,

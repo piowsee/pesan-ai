@@ -152,6 +152,7 @@ describe('SSE Route', () => {
       wabaId: 'waba-1',
       statuses: [
         {
+          id: 'db-message-1',
           messageId: 'wamid.message-1',
           status: 'read',
           errorMessage: null,

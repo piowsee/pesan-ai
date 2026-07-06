@@ -1,6 +1,7 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { ConversationRepository } from '@/repositories/conversation.repository';
+import { MessageRepository } from '@/repositories/message.repository';
 import { MetaWebhookHandlerService } from '@/services/meta-webhook-handler.service';
 import { S3Service } from '@/services/s3.service';
 import crypto from 'crypto';
@@ -9,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.unmock('@/services/meta-webhook-handler.service');
 vi.unmock('@/services/meta-webhook-handler.service/messages');
 vi.unmock('@/services/meta-webhook-handler.service/messages/incoming-message');
+vi.unmock('@/services/meta-webhook-handler.service/messages/status-message');
 vi.unmock('@/services/meta-webhook-handler.service/smb_message_echoes');
 
 describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
@@ -107,6 +109,126 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
         await MetaWebhookHandlerService.processMetaWebhookPayload(payload);
       expect(result.processed).toBe(true);
       expect(result.count).toBe(0);
+    });
+
+    it('updates outbound message statuses and emits one bulk SSE event', async () => {
+      vi.mocked(
+        ConversationRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({ id: 'phone-1' } as never);
+      vi.mocked(
+        MessageRepository.updateStatusesByMetaMessageIds,
+      ).mockResolvedValue([
+        {
+          id: 'db-message-1',
+          messageId: 'wamid.message-1',
+          status: 'delivered',
+          errorMessage: null,
+          conversationId: 'conversation-1',
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        },
+        {
+          id: 'db-message-2',
+          messageId: 'wamid.message-2',
+          status: 'failed',
+          errorMessage: 'Message could not be delivered.',
+          conversationId: 'conversation-2',
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        },
+      ] as never);
+
+      const result = await MetaWebhookHandlerService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: 'entry-1',
+            changes: [
+              {
+                field: 'messages',
+                value: {
+                  messaging_product: 'whatsapp',
+                  metadata: {
+                    display_phone_number: '16505551111',
+                    phone_number_id: 'meta-phone-1',
+                  },
+                  contacts: [
+                    {
+                      profile: { name: 'Test User Name' },
+                      user_id: 'US.13491208655302741918',
+                    },
+                  ],
+                  statuses: [
+                    {
+                      id: 'wamid.message-1',
+                      status: 'delivered',
+                      timestamp: '1750030073',
+                      recipient_user_id: 'US.13491208655302741918',
+                    },
+                    {
+                      id: 'wamid.message-2',
+                      status: 'failed',
+                      timestamp: '1751142888',
+                      recipient_id: '16315551181',
+                      errors: [
+                        {
+                          code: 131049,
+                          title: 'Failed',
+                          message: 'This message was not delivered.',
+                          error_data: {
+                            details: 'Message could not be delivered.',
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 2 });
+      expect(
+        ConversationRepository.processIncomingMessage,
+      ).not.toHaveBeenCalled();
+      expect(
+        MessageRepository.updateStatusesByMetaMessageIds,
+      ).toHaveBeenCalledWith([
+        {
+          messageId: 'wamid.message-1',
+          status: 'delivered',
+          errorMessage: null,
+        },
+        {
+          messageId: 'wamid.message-2',
+          status: 'failed',
+          errorMessage: 'Message could not be delivered.',
+        },
+      ]);
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.MESSAGE_STATUSES_UPDATED, 'user-1'),
+        {
+          wabaId: 'waba-1',
+          statuses: [
+            {
+              id: 'db-message-1',
+              messageId: 'wamid.message-1',
+              status: 'delivered',
+              errorMessage: null,
+              conversationId: 'conversation-1',
+            },
+            {
+              id: 'db-message-2',
+              messageId: 'wamid.message-2',
+              status: 'failed',
+              errorMessage: 'Message could not be delivered.',
+              conversationId: 'conversation-2',
+            },
+          ],
+        },
+      );
     });
 
     it('stores WhatsApp Business App message echoes with a distinct source', async () => {

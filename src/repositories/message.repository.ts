@@ -2,6 +2,91 @@ import prisma from '@/lib/server/prisma';
 import type { ChatMessageSource } from '@/types/chat';
 
 export const MessageRepository = {
+  async updateStatusesByMetaMessageIds(
+    statuses: Array<{
+      messageId: string;
+      status: string;
+      errorMessage?: string | null;
+    }>,
+  ) {
+    const latestStatusByMessageId = new Map<
+      string,
+      { status: string; errorMessage: string | null }
+    >();
+
+    for (const status of statuses) {
+      latestStatusByMessageId.set(status.messageId, {
+        status: status.status,
+        errorMessage: status.errorMessage ?? null,
+      });
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const updatedMessages = await Promise.all(
+        Array.from(latestStatusByMessageId.entries()).map(
+          async ([messageId, statusUpdate]) => {
+            const existingMessage = await tx.message.findFirst({
+              where: {
+                messageId,
+                direction: 'outgoing',
+              },
+              select: { id: true, status: true },
+            });
+
+            if (!existingMessage || existingMessage?.status === 'read') {
+              return null;
+            }
+
+            const updatedMessage = await tx.message.update({
+              where: { id: existingMessage.id },
+              data: {
+                status: statusUpdate.status,
+                errorMessage: statusUpdate.errorMessage,
+              },
+              select: {
+                id: true,
+                messageId: true,
+                status: true,
+                errorMessage: true,
+                conversationId: true,
+                conversation: {
+                  select: {
+                    phoneNumber: {
+                      select: {
+                        waba: {
+                          select: {
+                            id: true,
+                            userId: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            });
+
+            if (!updatedMessage.messageId) {
+              return null;
+            }
+
+            return {
+              id: updatedMessage.id,
+              messageId: updatedMessage.messageId,
+              status: updatedMessage.status,
+              errorMessage: updatedMessage.errorMessage,
+              conversationId: updatedMessage.conversationId,
+              userId: updatedMessage.conversation.phoneNumber.waba.userId,
+              wabaId: updatedMessage.conversation.phoneNumber.waba.id,
+            };
+          },
+        ),
+      );
+
+      return updatedMessages.filter((message) => message !== null);
+    });
+  },
+
   async findConversationMessageHistory(params: {
     conversationId: string;
     since: Date;

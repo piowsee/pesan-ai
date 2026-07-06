@@ -10,6 +10,7 @@ import {
   type WebhookContactLookup,
 } from '../shared';
 import { IncomingMessageHandler } from './incoming-message';
+import { StatusMessageHandler } from './status-message';
 
 export const MessagesWebhookHandler = {
   async processChange(value: WebhookValue): Promise<number> {
@@ -26,11 +27,17 @@ export const MessagesWebhookHandler = {
       return 0;
     }
 
-    return IncomingMessageHandler.processMessages({
-      messages: value.messages,
-      internalPhoneId: internalPhoneResult.id,
-      contactsLookup: mapContacts(value.contacts),
+    const incomingMessagesProcessed =
+      await IncomingMessageHandler.processMessages({
+        messages: value.messages,
+        internalPhoneId: internalPhoneResult.id,
+        contactsLookup: mapContacts(value.contacts),
+      });
+    const statusesProcessed = await StatusMessageHandler.processStatuses({
+      statuses: value.statuses,
     });
+
+    return incomingMessagesProcessed + statusesProcessed;
   },
 };
 
