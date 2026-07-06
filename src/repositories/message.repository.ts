@@ -21,28 +21,45 @@ export const MessageRepository = {
       });
     }
 
+    const OVERWRITABLE_FROM: Record<string, string[]> = {
+      sent: [],
+      delivered: ['sent'], // delivered can only overwrite "sent"
+      read: ['sent', 'delivered'], // read can overwrite sent or delivered
+      failed: ['sent', 'delivered'],
+    };
+
     return prisma.$transaction(async (tx) => {
       const updatedMessages = await Promise.all(
         Array.from(latestStatusByMessageId.entries()).map(
           async ([messageId, statusUpdate]) => {
-            const existingMessage = await tx.message.findFirst({
-              where: {
-                messageId,
-                direction: 'outgoing',
-              },
-              select: { id: true, status: true },
-            });
+            const allowedFromStatuses =
+              OVERWRITABLE_FROM[statusUpdate.status] ?? [];
 
-            if (!existingMessage || existingMessage?.status === 'read') {
+            if (allowedFromStatuses.length === 0) {
               return null;
             }
 
-            const updatedMessage = await tx.message.update({
-              where: { id: existingMessage.id },
+            // update directly to avoid race condition
+            const updateResult = await tx.message.updateMany({
+              where: {
+                messageId,
+                direction: 'outgoing',
+                status: { in: allowedFromStatuses },
+              },
               data: {
                 status: statusUpdate.status,
                 errorMessage: statusUpdate.errorMessage,
               },
+            });
+
+            if (updateResult.count === 0) {
+              // Either message not found, or its current status wasn't eligible
+              // to be overwritten by this incoming status.
+              return null;
+            }
+
+            const updatedMessage = await tx.message.findFirst({
+              where: { messageId, direction: 'outgoing' },
               select: {
                 id: true,
                 messageId: true,
@@ -53,12 +70,7 @@ export const MessageRepository = {
                   select: {
                     phoneNumber: {
                       select: {
-                        waba: {
-                          select: {
-                            id: true,
-                            userId: true,
-                          },
-                        },
+                        waba: { select: { id: true, userId: true } },
                       },
                     },
                   },
@@ -66,7 +78,7 @@ export const MessageRepository = {
               },
             });
 
-            if (!updatedMessage.messageId) {
+            if (!updatedMessage || !updatedMessage.messageId) {
               return null;
             }
 
