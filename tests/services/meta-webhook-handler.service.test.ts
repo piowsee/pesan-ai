@@ -11,7 +11,7 @@ vi.unmock('@/services/meta-webhook-handler.service');
 vi.unmock('@/services/meta-webhook-handler.service/messages');
 vi.unmock('@/services/meta-webhook-handler.service/messages/incoming-message');
 vi.unmock('@/services/meta-webhook-handler.service/messages/status-message');
-vi.unmock('@/services/meta-webhook-handler.service/smb_message_echoes');
+vi.unmock('@/services/meta-webhook-handler.service/smb-message-echoes');
 
 describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
   beforeEach(() => {

@@ -7,7 +7,7 @@ import {
 import crypto from 'crypto';
 
 import { MessagesWebhookHandler } from './messages';
-import { SmbMessageEchoesWebhookHandler } from './smb_message_echoes';
+import { SmbMessageEchoesWebhookHandler } from './smb-message-echoes';
 
 export const MetaWebhookHandlerService = {
   isValidSignature(rawBody: string, signatureHeader: string | null): boolean {
