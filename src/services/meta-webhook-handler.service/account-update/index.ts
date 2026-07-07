@@ -1,5 +1,5 @@
 import { logger } from '@/lib/server/logger';
-import type { AccountUpdateValue } from '@/schemas/meta-webhook-handler.schema';
+import type { AccountUpdateValue } from '@/schemas/meta-webhook-handler.schema/account-update';
 
 import { handleAccountOffboarded } from './account-offboarded';
 import { handleAccountReconnected } from './account-reconnected';

@@ -1,4 +1,4 @@
-import type { AccountUpdateValue } from '@/schemas/meta-webhook-handler.schema';
+import type { AccountUpdateValue } from '@/schemas/meta-webhook-handler.schema/account-update';
 
 export type AccountUpdateHandlerParams = {
   metaWabaId: string;

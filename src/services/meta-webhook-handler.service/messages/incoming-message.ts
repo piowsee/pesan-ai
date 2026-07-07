@@ -3,7 +3,7 @@ import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-man
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
-import type { WebhookMessage } from '@/schemas/meta-webhook-handler.schema';
+import type { WebhookMessage } from '@/schemas/meta-webhook-handler.schema/messages';
 import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import { S3Service } from '@/services/s3.service';
 

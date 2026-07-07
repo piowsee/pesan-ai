@@ -1,7 +1,7 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { logError, logger } from '@/lib/server/logger';
 import { MessageRepository } from '@/repositories/message.repository';
-import type { WebhookStatus } from '@/schemas/meta-webhook-handler.schema';
+import type { WebhookStatus } from '@/schemas/meta-webhook-handler.schema/messages';
 
 const SUPPORTED_MESSAGE_STATUSES = new Set([
   'sent',
