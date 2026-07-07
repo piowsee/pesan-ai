@@ -133,6 +133,30 @@ describe('MessageService', { tags: ['backend'] }, () => {
       );
     });
 
+    it('pauses sending when the WABA is disconnected', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          waba: { systemUserToken: 'token', status: 'disconnected' },
+        },
+        contact: { customerPhone: '+123456' },
+      } as never);
+
+      await expect(
+        MessageService.sendAdminTextMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          content: 'Hello Admin',
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+
+      expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+    });
+
     it('throws ApiError if chat meta is null', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,

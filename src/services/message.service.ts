@@ -96,6 +96,19 @@ function getMetaSendMessageRecipient(
   );
 }
 
+function assertCloudApiMessagingAvailable(
+  waba?: { status?: string | null } | null,
+) {
+  if (waba?.status?.toLowerCase() !== 'disconnected') {
+    return;
+  }
+
+  throw new ApiError(
+    "WhatsApp Cloud API messaging is unavailable because this account's WABA is currently disconnected.",
+    409,
+  );
+}
+
 function buildOutboundMediaMessage(params: {
   mediaType: UploadMediaType;
   link: string;
@@ -180,6 +193,8 @@ export const MessageService = {
     }
 
     const { phoneNumber, contact } = conversationMeta;
+    assertCloudApiMessagingAvailable(phoneNumber.waba);
+
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
     const recipient = getMetaSendMessageRecipient(contact);
 
@@ -271,6 +286,8 @@ export const MessageService = {
     });
 
     const { phoneNumber, contact } = conversationMeta;
+    assertCloudApiMessagingAvailable(phoneNumber.waba);
+
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
     const recipient = getMetaSendMessageRecipient(contact);
 

@@ -2,12 +2,20 @@ import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaWebhookHandlerService } from '@/services/meta-webhook-handler.service';
 import { S3Service } from '@/services/s3.service';
 import crypto from 'crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/meta-webhook-handler.service');
+vi.unmock('@/services/meta-webhook-handler.service/account-update');
+vi.unmock(
+  '@/services/meta-webhook-handler.service/account-update/account-offboarded',
+);
+vi.unmock(
+  '@/services/meta-webhook-handler.service/account-update/account-reconnected',
+);
 vi.unmock('@/services/meta-webhook-handler.service/messages');
 vi.unmock('@/services/meta-webhook-handler.service/messages/incoming-message');
 vi.unmock('@/services/meta-webhook-handler.service/messages/status-message');
@@ -109,6 +117,104 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
         await MetaWebhookHandlerService.processMetaWebhookPayload(payload);
       expect(result.processed).toBe(true);
       expect(result.count).toBe(0);
+    });
+
+    it('marks an offboarded WABA as disconnected', async () => {
+      vi.mocked(WabaRepository.updateStatusByMetaWabaId).mockResolvedValue({
+        count: 1,
+      } as never);
+
+      const result = await MetaWebhookHandlerService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '102290129340398',
+            time: 1743451903,
+            changes: [
+              {
+                field: 'account_update',
+                value: {
+                  event: 'ACCOUNT_OFFBOARDED',
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(WabaRepository.updateStatusByMetaWabaId).toHaveBeenCalledWith({
+        wabaId: '102290129340398',
+        status: 'disconnected',
+      });
+    });
+
+    it('marks a reconnected WABA as active', async () => {
+      vi.mocked(WabaRepository.updateStatusByMetaWabaId).mockResolvedValue({
+        count: 1,
+      } as never);
+
+      const result = await MetaWebhookHandlerService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '102290129340398',
+            time: 1743451903,
+            changes: [
+              {
+                field: 'account_update',
+                value: {
+                  event: 'ACCOUNT_RECONNECTED',
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 1 });
+      expect(WabaRepository.updateStatusByMetaWabaId).toHaveBeenCalledWith({
+        wabaId: '102290129340398',
+        status: 'active',
+      });
+    });
+
+    it('accepts currently unimplemented account_update payload shapes', async () => {
+      const result = await MetaWebhookHandlerService.processMetaWebhookPayload({
+        object: 'whatsapp_business_account',
+        entry: [
+          {
+            id: '2949482758682047',
+            time: 1748477359,
+            changes: [
+              {
+                field: 'account_update',
+                value: {
+                  event: 'PARTNER_REMOVED',
+                  waba_info: {
+                    waba_id: '980198427658004',
+                    owner_business_id: '2329417887457253',
+                  },
+                  disconnection_info: {
+                    reason: 'PRIMARY_INACTIVITY',
+                    initiated_by: 'SYSTEM',
+                  },
+                },
+              },
+              {
+                field: 'account_update',
+                value: {
+                  event: 'VERIFIED_ACCOUNT',
+                  phone_number: '16505551111',
+                },
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual({ processed: true, count: 0 });
+      expect(WabaRepository.updateStatusByMetaWabaId).not.toHaveBeenCalled();
     });
 
     it('updates outbound message statuses and emits one bulk SSE event', async () => {

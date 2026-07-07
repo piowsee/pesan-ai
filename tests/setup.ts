@@ -88,6 +88,7 @@ vi.mock('@/repositories/waba.repository', () => ({
     getTotalUnreadListByUserId: vi.fn(),
     findById: vi.fn(),
     findByMetaWabaId: vi.fn(),
+    updateStatusByMetaWabaId: vi.fn(),
     findPhoneNumbersByMetaIds: vi.fn(),
     updateWabaWebhook: vi.fn(),
     upsertWaba: vi.fn(),
