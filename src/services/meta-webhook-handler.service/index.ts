@@ -6,8 +6,9 @@ import {
 } from '@/schemas/meta-webhook-handler.schema';
 import crypto from 'crypto';
 
+import { AccountUpdateWebhookHandler } from './account-update';
 import { MessagesWebhookHandler } from './messages';
-import { SmbMessageEchoesWebhookHandler } from './smb_message_echoes';
+import { SmbMessageEchoesWebhookHandler } from './smb-message-echoes';
 
 export const MetaWebhookHandlerService = {
   isValidSignature(rawBody: string, signatureHeader: string | null): boolean {
@@ -118,6 +119,15 @@ async function processEntries(entries: WebhookEntry[]): Promise<number> {
           processedCount += await SmbMessageEchoesWebhookHandler.processChange(
             change.value,
           );
+          continue;
+        }
+
+        if (change.field === 'account_update') {
+          processedCount += await AccountUpdateWebhookHandler.processChange({
+            metaWabaId: entry.id,
+            eventTime: entry.time,
+            value: change.value,
+          });
         }
       } catch (error) {
         logError(error, {

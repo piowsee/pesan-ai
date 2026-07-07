@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-helper/error';
+import { CHAT_FREEFORM_WINDOW_MS } from '@/lib/chat/chat';
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
@@ -96,6 +97,31 @@ function getMetaSendMessageRecipient(
   );
 }
 
+function assertWabaActive(waba?: { status?: string | null } | null) {
+  if (waba?.status?.toLowerCase() === 'active') {
+    return;
+  }
+
+  throw new ApiError(
+    'Cannot send message because this WhatsApp Business account (WABA) is not active.',
+    409,
+  );
+}
+
+function assertFreeformWindowOpen(lastCustomerMessageAt?: Date | null) {
+  if (
+    lastCustomerMessageAt &&
+    Date.now() - lastCustomerMessageAt.getTime() <= CHAT_FREEFORM_WINDOW_MS
+  ) {
+    return;
+  }
+
+  throw new ApiError(
+    'Cannot send message because the 24-hour customer service window is closed.',
+    409,
+  );
+}
+
 function buildOutboundMediaMessage(params: {
   mediaType: UploadMediaType;
   link: string;
@@ -180,6 +206,9 @@ export const MessageService = {
     }
 
     const { phoneNumber, contact } = conversationMeta;
+    assertWabaActive(phoneNumber.waba);
+    assertFreeformWindowOpen(conversationMeta.lastCustomerMessageAt);
+
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
     const recipient = getMetaSendMessageRecipient(contact);
 
@@ -257,6 +286,10 @@ export const MessageService = {
       throw new ApiError('Conversation not found or access denied', 404);
     }
 
+    const { phoneNumber, contact } = conversationMeta;
+    assertWabaActive(phoneNumber.waba);
+    assertFreeformWindowOpen(conversationMeta.lastCustomerMessageAt);
+
     const uploadedMedia = await S3Service.verifyUploadedMedia({
       userId,
       wabaId,
@@ -270,7 +303,6 @@ export const MessageService = {
       key: uploadedMedia.key,
     });
 
-    const { phoneNumber, contact } = conversationMeta;
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
     const recipient = getMetaSendMessageRecipient(contact);
 

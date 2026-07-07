@@ -62,9 +62,10 @@ describe('MessageService', { tags: ['backend'] }, () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
       ).mockResolvedValue({
+        lastCustomerMessageAt: new Date(),
         phoneNumber: {
           phoneNumberId: 'pn-1',
-          waba: { systemUserToken: 'token' },
+          waba: { systemUserToken: 'token', status: 'active' },
         },
         customerPhone: '+123456',
         contact: { bsuid: 'US.customer-123' },
@@ -105,9 +106,10 @@ describe('MessageService', { tags: ['backend'] }, () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
       ).mockResolvedValue({
+        lastCustomerMessageAt: new Date(),
         phoneNumber: {
           phoneNumberId: 'pn-1',
-          waba: { systemUserToken: 'token' },
+          waba: { systemUserToken: 'token', status: 'active' },
         },
         contact: { customerPhone: '+123456' },
       } as never);
@@ -133,6 +135,60 @@ describe('MessageService', { tags: ['backend'] }, () => {
       );
     });
 
+    it('pauses sending when the WABA is disconnected', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        lastCustomerMessageAt: new Date(),
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          waba: { systemUserToken: 'token', status: 'disconnected' },
+        },
+        contact: { customerPhone: '+123456' },
+      } as never);
+
+      await expect(
+        MessageService.sendAdminTextMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          content: 'Hello Admin',
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+
+      expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+    });
+
+    it('pauses sending when the 24-hour customer service window is closed', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        lastCustomerMessageAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          waba: { systemUserToken: 'token', status: 'active' },
+        },
+        contact: { customerPhone: '+123456' },
+      } as never);
+
+      await expect(
+        MessageService.sendAdminTextMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          content: 'Hello Admin',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'Cannot send message because the 24-hour customer service window is closed.',
+      });
+
+      expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+    });
+
     it('throws ApiError if chat meta is null', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
@@ -154,12 +210,13 @@ describe('MessageService', { tags: ['backend'] }, () => {
         ConversationRepository.getConversationMetaForSending,
       ).mockResolvedValue({
         id: 'conv-1',
+        lastCustomerMessageAt: new Date(),
         customerPhone: '+123456',
         contact: { bsuid: 'US.media-customer-123' },
         phoneNumber: {
           phoneNumberId: 'pn-1',
           wabaId: 'waba-1',
-          waba: { systemUserToken: 'token' },
+          waba: { systemUserToken: 'token', status: 'active' },
         },
       } as never);
       vi.mocked(S3Service.verifyUploadedMedia).mockResolvedValue({
@@ -267,6 +324,70 @@ describe('MessageService', { tags: ['backend'] }, () => {
       expect(
         vi.mocked(MessageRepository.saveMessage).mock.invocationCallOrder[0],
       ).toBeLessThan(vi.mocked(eventBus.emit).mock.invocationCallOrder[0]);
+    });
+
+    it('rejects uploaded media confirmation when the WABA is not active', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: new Date(),
+        contact: { bsuid: 'US.media-customer-123' },
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          wabaId: 'waba-1',
+          waba: { systemUserToken: 'token', status: 'suspended' },
+        },
+      } as never);
+
+      await expect(
+        MessageService.confirmUploadedMediaMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'Cannot send message because this WhatsApp Business account (WABA) is not active.',
+      });
+
+      expect(S3Service.verifyUploadedMedia).not.toHaveBeenCalled();
+      expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects uploaded media confirmation when the 24-hour customer service window is closed', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+        contact: { bsuid: 'US.media-customer-123' },
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          wabaId: 'waba-1',
+          waba: { systemUserToken: 'token', status: 'active' },
+        },
+      } as never);
+
+      await expect(
+        MessageService.confirmUploadedMediaMessage({
+          convId: 'conv-1',
+          wabaId: 'waba-1',
+          userId: 'user-1',
+          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'Cannot send message because the 24-hour customer service window is closed.',
+      });
+
+      expect(S3Service.verifyUploadedMedia).not.toHaveBeenCalled();
+      expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+      expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
     });
 
     it('throws ApiError when the conversation is not owned by the user', async () => {

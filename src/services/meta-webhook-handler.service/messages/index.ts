@@ -1,9 +1,7 @@
 import { logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
-import type {
-  Contact,
-  WebhookValue,
-} from '@/schemas/meta-webhook-handler.schema';
+import type { WebhookValue } from '@/schemas/meta-webhook-handler.schema/messages';
+import type { Contact } from '@/schemas/meta-webhook-handler.schema/shared';
 
 import {
   type WebhookContactDetails,

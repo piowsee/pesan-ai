@@ -5,7 +5,7 @@ import { ConversationRepository } from '@/repositories/conversation.repository';
 import type {
   WebhookMessageEcho,
   WebhookMessageEchoValue,
-} from '@/schemas/meta-webhook-handler.schema';
+} from '@/schemas/meta-webhook-handler.schema/smb-message-echoes';
 import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import { S3Service } from '@/services/s3.service';
 

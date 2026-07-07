@@ -44,10 +44,12 @@ function StatusBadge({ status }: { status: string }) {
     );
   }
 
-  if (normalized === 'suspended') {
+  if (['disconnected', 'suspended'].includes(normalized)) {
+    const label = normalized === 'disconnected' ? 'Disconnected' : 'Suspended';
+
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-destructive">
-        Suspended
+        {label}
         <CircleAlert className="size-4 shrink-0" />
       </span>
     );
@@ -247,11 +249,11 @@ function EmptyState() {
 function StatusSummary({
   total,
   active,
-  suspended,
+  attention,
 }: {
   total: number;
   active: number;
-  suspended: number;
+  attention: number;
 }) {
   const items = [
     {
@@ -270,7 +272,7 @@ function StatusSummary({
     },
     {
       label: 'needs attention',
-      value: suspended,
+      value: attention,
       icon: CircleAlert,
       iconColor: 'text-destructive',
       tone: 'text-destructive',
@@ -335,8 +337,8 @@ export function WabaDashboardManager() {
   const activeWabas = overviewWabas.filter(
     (waba) => waba.status.toLowerCase() === 'active',
   ).length;
-  const suspendedWabas = overviewWabas.filter(
-    (waba) => waba.status.toLowerCase() === 'suspended',
+  const attentionWabas = overviewWabas.filter((waba) =>
+    ['disconnected', 'suspended'].includes(waba.status.toLowerCase()),
   ).length;
 
   function renderList() {
@@ -377,7 +379,7 @@ export function WabaDashboardManager() {
           <StatusSummary
             total={overviewTotal}
             active={activeWabas}
-            suspended={suspendedWabas}
+            attention={attentionWabas}
           />
           {!isEmpty ? (
             <WabaEmbeddedSignupButton

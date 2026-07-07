@@ -127,6 +127,14 @@ export const WabaRepository = {
     });
   },
 
+  async updateStatusByMetaWabaId(params: { wabaId: string; status: string }) {
+    const { wabaId, status } = params;
+    return prisma.whatsappBusinessAccount.updateMany({
+      where: { wabaId },
+      data: { status },
+    });
+  },
+
   async findPhoneNumbersByMetaIds(params: { phoneNumberIds: string[] }) {
     const { phoneNumberIds } = params;
     if (phoneNumberIds.length === 0) {

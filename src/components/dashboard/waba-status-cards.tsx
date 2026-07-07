@@ -46,8 +46,8 @@ export function WabaStatusCards() {
   const activeWabas = wabas.filter(
     (w) => w.status.toLowerCase() === 'active',
   ).length;
-  const suspendedWabas = wabas.filter(
-    (w) => w.status.toLowerCase() === 'suspended',
+  const attentionWabas = wabas.filter((w) =>
+    ['disconnected', 'suspended'].includes(w.status.toLowerCase()),
   ).length;
 
   const stats = [
@@ -69,7 +69,7 @@ export function WabaStatusCards() {
     },
     {
       label: 'Needs attention',
-      value: suspendedWabas,
+      value: attentionWabas,
       icon: AlertTriangle,
       helper:
         'Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption.',
