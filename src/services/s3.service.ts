@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-helper/error';
+import { CHAT_FREEFORM_WINDOW_MS } from '@/lib/chat/chat';
 import { logger } from '@/lib/server/logger';
 import { s3BucketName, s3Client } from '@/lib/server/s3-client';
 import { ConversationRepository } from '@/repositories/conversation.repository';
@@ -41,6 +42,30 @@ function assertUserOwnsKey(params: {
   return objectKey;
 }
 
+function assertWabaActive(waba?: { status?: string | null } | null) {
+  if (waba?.status?.toLowerCase() === 'active') {
+    return;
+  }
+
+  throw new ApiError(
+    'Cannot upload media because this WhatsApp Business account (WABA) is not active.',
+    409,
+  );
+}
+
+function assertFreeformWindowOpen(lastCustomerMessageAt?: Date | null) {
+  if (
+    lastCustomerMessageAt &&
+    Date.now() - lastCustomerMessageAt.getTime() <= CHAT_FREEFORM_WINDOW_MS
+  ) {
+    return;
+  }
+
+  throw new ApiError(
+    'Cannot upload media because the 24-hour customer service window is closed.',
+    409,
+  );
+}
 export const S3Service = {
   async createPresignedUploadUrl(params: {
     userId: string;
@@ -64,6 +89,9 @@ export const S3Service = {
     if (!conversationMeta) {
       throw new ApiError('Conversation not found or access denied', 404);
     }
+
+    assertWabaActive(conversationMeta.phoneNumber.waba);
+    assertFreeformWindowOpen(conversationMeta.lastCustomerMessageAt);
 
     const objectKey = createObjectKey(params);
 
