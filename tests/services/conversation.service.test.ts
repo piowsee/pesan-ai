@@ -1,7 +1,8 @@
 import { ApiError } from '@/lib/api-helper/error';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { ConversationService } from '@/services/conversation.service';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/conversation.service');
 
@@ -14,6 +15,9 @@ vi.unmock('@/services/conversation.service');
 describe('ConversationService', { tags: ['backend'] }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+  afterEach(() => {
+    eventBus.removeAllListeners();
   });
 
   describe('getAllConversations', () => {
@@ -106,6 +110,14 @@ describe('ConversationService', { tags: ['backend'] }, () => {
         conversationId: 'conv-1',
         adminTakeover: true,
       });
+      expect(eventBus.emit).toHaveBeenCalledWith(
+        getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, 'user-1'),
+        {
+          conversationId: 'conv-1',
+          wabaId: 'waba-1',
+          adminTakeover: true,
+        },
+      );
     });
 
     it('throws ApiError when conversation is not owned by the user and WABA', async () => {
