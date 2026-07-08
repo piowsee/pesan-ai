@@ -16,21 +16,26 @@ import {
 } from '@/hooks/use-phone-number';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Controller, useForm } from 'react-hook-form';
 import { FaWhatsapp } from 'react-icons/fa6';
 import { isValidPhoneNumber, parsePhoneNumber } from 'react-phone-number-input';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const addPhoneNumberSchema = z.object({
-  fullPhoneNumber: z
-    .string()
-    .min(1, 'WhatsApp number is required')
-    .refine(isValidPhoneNumber, { message: 'Invalid number format' }),
-  name: z.string().min(1, 'Display name is required'),
-});
+const addPhoneNumberSchema = (t: ReturnType<typeof useTranslations>) =>
+  z.object({
+    fullPhoneNumber: z
+      .string()
+      .min(1, t('validation.numberRequired'))
+      .refine(isValidPhoneNumber, { message: t('validation.invalidNumber') }),
+    name: z.string().min(1, t('validation.nameRequired')),
+  });
 
-type AddPhoneNumberFormValues = z.infer<typeof addPhoneNumberSchema>;
+type AddPhoneNumberFormValues = {
+  fullPhoneNumber: string;
+  name: string;
+};
 
 interface PhoneNumberInputStepProps {
   wabaId: string;
@@ -47,9 +52,10 @@ export function PhoneNumberInputStep({
 }: PhoneNumberInputStepProps) {
   const createMutation = useCreatePhoneNumber();
   const requestMutation = useRequestVerificationCode();
+  const t = useTranslations('Waba.addNumber.input');
 
   const form = useForm<AddPhoneNumberFormValues>({
-    resolver: zodResolver(addPhoneNumberSchema),
+    resolver: zodResolver(addPhoneNumberSchema(t)),
     defaultValues: {
       fullPhoneNumber: '',
       name: businessName || '',
@@ -80,10 +86,9 @@ export function PhoneNumberInputStep({
 
       // Notify parent of success
       onSuccess(newPhoneNumberId);
-      toast.success('Verification code sent via SMS.');
+      toast.success(t('successToast'));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to add number';
+      const message = error instanceof Error ? error.message : t('errorToast');
       toast.error(message);
     }
   }
@@ -97,12 +102,12 @@ export function PhoneNumberInputStep({
           <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
           <div className="min-w-0">
             <DialogTitle className="text-base font-semibold text-brand">
-              Add WhatsApp Number
+              {t('title')}
             </DialogTitle>
             <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
-              Connect a new number for{' '}
+              {t('descriptionPrefix')}
               <span className="font-semibold">
-                {businessName || 'this WhatsApp Business account'}
+                {businessName || t('descriptionFallback')}
               </span>
               .
             </DialogDescription>
@@ -120,7 +125,7 @@ export function PhoneNumberInputStep({
       >
         <div className="flex flex-col gap-2">
           <Label htmlFor={`phone-input-${wabaId}`} className="text-brand">
-            WhatsApp Number
+            {t('labelNumber')}
           </Label>
           <Controller
             name="fullPhoneNumber"
@@ -128,7 +133,7 @@ export function PhoneNumberInputStep({
             render={({ field }) => (
               <PhoneInput
                 id={`phone-input-${wabaId}`}
-                placeholder="Enter WhatsApp number"
+                placeholder={t('placeholderNumber')}
                 defaultCountry="ID"
                 value={field.value}
                 onChange={field.onChange}
@@ -145,17 +150,16 @@ export function PhoneNumberInputStep({
 
         <div className="flex flex-col gap-2">
           <Label htmlFor={`display-name-${wabaId}`} className="text-brand">
-            Display name
+            {t('labelName')}
           </Label>
           <Input
             id={`display-name-${wabaId}`}
-            placeholder="Example: Customer Support"
+            placeholder={t('placeholderName')}
             {...form.register('name')}
             disabled={isSubmitting}
           />
           <p className="text-xs leading-relaxed text-brand">
-            This name will be visible to customers on WhatsApp until they save
-            your contact.
+            {t('nameHelper')}
           </p>
           {form.formState.errors.name ? (
             <p className="text-xs font-medium text-destructive">
@@ -172,16 +176,16 @@ export function PhoneNumberInputStep({
             onClick={onCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('cancel')}
           </Button>
           <Button type="submit" variant="brand" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" data-icon="inline-start" />
-                Sending code...
+                {t('submitting')}
               </>
             ) : (
-              'Send code'
+              t('submit')
             )}
           </Button>
         </DialogFooter>

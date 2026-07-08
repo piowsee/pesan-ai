@@ -7,6 +7,7 @@ import {
 } from '@/hooks/use-customer-contact';
 import { useWabas } from '@/hooks/use-wabas';
 import { Download } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -23,6 +24,8 @@ import {
 } from './customers-utils';
 
 export function CustomersDashboard() {
+  const t = useTranslations('Customers');
+  const tPagination = useTranslations('Waba.pagination');
   const [selectedWabaIds, setSelectedWabaIds] = useState<string[] | null>(null);
   const [selectedPhoneIds, setSelectedPhoneIds] = useState<string[] | null>(
     null,
@@ -111,18 +114,18 @@ export function CustomersDashboard() {
   const wabaLabel = selectionLabel({
     total: totalWabas,
     selectedCount: selectedWabaCount,
-    allLabel: 'All WABAs',
-    emptyLabel: 'No WABA',
-    singularLabel: 'WABA',
-    pluralLabel: 'WABAs',
+    allLabel: t('filters.allWabas'),
+    emptyLabel: t('filters.noWaba'),
+    singularLabel: t('filters.wabaSingular'),
+    pluralLabel: t('filters.wabaPlural'),
   });
   const numberLabel = selectionLabel({
     total: phoneOptions.length,
     selectedCount: activePhoneOptions.length,
-    allLabel: 'All numbers',
-    emptyLabel: 'No number',
-    singularLabel: 'number',
-    pluralLabel: 'numbers',
+    allLabel: t('filters.allNumbers'),
+    emptyLabel: t('filters.noNumber'),
+    singularLabel: t('filters.numberSingular'),
+    pluralLabel: t('filters.numberPlural'),
   });
 
   function clearFilters() {
@@ -170,12 +173,25 @@ export function CustomersDashboard() {
 
   function handleExport() {
     if (customers.length === 0) {
-      toast.error('There are no customer rows to export.');
+      toast.error(t('export.emptyError'));
       return;
     }
 
-    exportCustomersToExcel(customers);
-    toast.success('Customer table exported.');
+    exportCustomersToExcel(
+      customers,
+      [
+        t('table.colNo'),
+        t('table.colName'),
+        t('table.colUsername'),
+        t('table.colPhone'),
+      ],
+      {
+        noName: t('table.noName'),
+        noUsername: t('table.noUsername'),
+        noPhone: t('table.noPhone'),
+      },
+    );
+    toast.success(t('export.success'));
   }
 
   return (
@@ -183,11 +199,10 @@ export function CustomersDashboard() {
       <section>
         <div className="max-w-2xl">
           <h1 className="text-2xl leading-snug font-semibold tracking-tight text-brand sm:text-3xl">
-            Customers
+            {t('header.title')}
           </h1>
           <p className="mt-1 text-[0.9rem] leading-relaxed text-brand">
-            Review customer numbers that have chatted with your connected
-            WhatsApp accounts.
+            {t('header.description')}
           </p>
         </div>
       </section>
@@ -218,7 +233,7 @@ export function CustomersDashboard() {
           onClick={handleExport}
         >
           <Download data-icon="inline-start" />
-          Export Excel
+          {t('action.export')}
         </Button>
       </section>
 
@@ -238,9 +253,11 @@ export function CustomersDashboard() {
       {customers.length > 0 ? (
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-brand">
-            Showing {(page - 1) * PAGE_SIZE + 1}-
-            {Math.min(page * PAGE_SIZE, totalCustomers)} of {totalCustomers}{' '}
-            customers
+            {t('pagination.showing', {
+              start: (page - 1) * PAGE_SIZE + 1,
+              end: Math.min(page * PAGE_SIZE, totalCustomers),
+              total: totalCustomers,
+            })}
           </p>
 
           <div className="flex items-center gap-2">
@@ -251,12 +268,12 @@ export function CustomersDashboard() {
                 className="text-brand hover:bg-muted hover:text-brand"
                 onClick={() => setPage((prev) => prev - 1)}
               >
-                Previous
+                {tPagination('previous')}
               </Button>
             ) : null}
 
             <span className="px-2 text-sm font-medium text-brand">
-              Page {page} of {totalPages}
+              {tPagination('page', { current: page, total: totalPages })}
             </span>
 
             {canGoNext ? (
@@ -266,7 +283,7 @@ export function CustomersDashboard() {
                 className="text-brand hover:bg-muted hover:text-brand"
                 onClick={() => setPage((prev) => prev + 1)}
               >
-                Next
+                {tPagination('next')}
               </Button>
             ) : null}
           </div>

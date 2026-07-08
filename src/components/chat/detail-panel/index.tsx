@@ -3,6 +3,7 @@ import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
 import type { MessageGroup } from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ChatDetailPaneProps {
   activeWabaId?: string;
@@ -48,6 +49,7 @@ export function ChatDetailPane({
   onToggleTakeover,
   pendingTakeoverConversationId,
 }: ChatDetailPaneProps) {
+  const t = useTranslations('Chat.detail');
   return (
     <div
       className={`absolute inset-0 z-20 flex min-w-0 flex-1 flex-col bg-background transition-transform duration-200 ease-out lg:static lg:z-0 lg:translate-x-0 ${!showMobileDetail ? 'translate-x-full pointer-events-none' : isContactInfoOpen ? '-translate-x-full pointer-events-none lg:pointer-events-auto' : 'translate-x-0'}`}
@@ -74,8 +76,8 @@ export function ChatDetailPane({
       ) : (
         <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
           <ChatEmptyState
-            title="No chat selected"
-            description="Select a conversation from the sidebar to view message history."
+            title={t('emptyTitle')}
+            description={t('emptyDesc')}
             icon={InboxIcon}
             className="w-full"
           />

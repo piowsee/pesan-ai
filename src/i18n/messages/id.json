@@ -345,5 +345,301 @@
     "title": "Ups, halaman yang kamu cari tidak tersedia.",
     "description": "Link mungkin dipindahkan atau tidak pernah ada.",
     "home": "Kembali ke Beranda"
+  },
+  "Sidebar": {
+    "home": "Beranda",
+    "wabaManagement": "Manajemen WABA",
+    "chat": "Obrolan",
+    "customers": "Pelanggan",
+    "navigation": "Navigasi",
+    "waba": "WABA"
+  },
+  "ProfileMenu": {
+    "openProfile": "Buka profil",
+    "profile": "Profil",
+    "settings": "Pengaturan",
+    "logout": "Keluar"
+  },
+  "DashboardHome": {
+    "greeting": {
+      "morning": "Selamat pagi",
+      "afternoon": "Selamat siang",
+      "evening": "Selamat malam"
+    },
+    "title": "Ringkasan Aktivitas Akun",
+    "description": "Tinjau status operasional WABA dan kendalikan lalu lintas pesan masuk dari satu panel kontrol.",
+    "status": {
+      "error": "Ringkasan akun WhatsApp tidak dapat dimuat.",
+      "sectionTitle": "Status Akun",
+      "accounts": "Akun WhatsApp",
+      "accountsHelper": "Total akun WhatsApp Business (WABA) yang terintegrasi di ruang kerja ini.",
+      "active": "Aktif",
+      "activeHelper": "Jumlah akun aktif yang dapat digunakan untuk memproses pesan masuk dan keluar secara normal.",
+      "needsAttention": "Perlu perhatian",
+      "needsAttentionHelper": "Akun yang mengalami kendala (terputus, diblokir, atau butuh verifikasi Meta). Periksa segera untuk menghindari gangguan operasional."
+    },
+    "quickActions": {
+      "sectionTitle": "Tindakan Cepat",
+      "inbox": {
+        "eyebrow": "Kotak Masuk",
+        "title": "Balas percakapan pelanggan",
+        "helper": "Buka panel Kotak Masuk untuk memantau antrean percakapan, menugaskan agen, dan merespons pesan secara waktu nyata."
+      },
+      "waba": {
+        "eyebrow": "WABA",
+        "title": "Kelola akun WhatsApp Business",
+        "helper": "Buka pengaturan WABA untuk mengelola status nomor, verifikasi Meta, dan batas tier pesan."
+      },
+      "customers": {
+        "eyebrow": "Pelanggan",
+        "title": "Tinjau kontak pelanggan yang tersimpan",
+        "helper": "Buka daftar pelanggan untuk memfilter kontak berdasarkan WABA atau nomor WhatsApp dan mengekspornya bila diperlukan."
+      }
+    }
+  },
+  "Waba": {
+    "status": {
+      "active": "Aktif",
+      "disconnected": "Terputus",
+      "suspended": "Ditangguhkan"
+    },
+    "numbers": {
+      "one": "1 nomor",
+      "multiple": "{count} nomor",
+      "manage": "Kelola nomor WhatsApp",
+      "whatsappNumber": "Nomor WhatsApp",
+      "connected": "{label} terhubung",
+      "none": "Belum ada nomor yang terhubung.",
+      "add": "Tambah nomor"
+    },
+    "id": {
+      "copied": "ID WABA disalin."
+    },
+    "row": {
+      "unnamed": "Bisnis tanpa nama",
+      "idPrefix": "ID WABA: ",
+      "status": "Status",
+      "connectedOn": "Terhubung pada"
+    },
+    "empty": {
+      "title": "Belum ada akun WhatsApp",
+      "description": "Hubungkan akun WhatsApp Business pertama Anda agar pesan-ai dapat mulai menerima dan mengelola percakapan."
+    },
+    "action": {
+      "connect": "Hubungkan akun WhatsApp",
+      "connecting": "Menghubungkan akun..."
+    },
+    "summary": {
+      "accounts": "akun",
+      "active": "aktif",
+      "needsAttention": "perlu perhatian"
+    },
+    "error": {
+      "load": "Gagal memuat daftar WABA",
+      "retry": "Coba lagi"
+    },
+    "header": {
+      "title": "Akun WhatsApp Business",
+      "description": "Kelola akun dan nomor WhatsApp yang terhubung ke pesan-ai."
+    },
+    "table": {
+      "business": "Bisnis"
+    },
+    "pagination": {
+      "showing": "Menampilkan {start}-{end} dari {total} akun",
+      "empty": "Belum ada akun",
+      "previous": "Sebelumnya",
+      "page": "Halaman {current} dari {total}",
+      "next": "Selanjutnya"
+    },
+    "addNumber": {
+      "trigger": "Tambah nomor",
+      "input": {
+        "title": "Tambah Nomor WhatsApp",
+        "descriptionPrefix": "Hubungkan nomor baru untuk ",
+        "descriptionFallback": "akun WhatsApp Business ini",
+        "labelNumber": "Nomor WhatsApp",
+        "placeholderNumber": "Masukkan nomor WhatsApp",
+        "labelName": "Nama tampilan",
+        "placeholderName": "Contoh: Customer Support",
+        "nameHelper": "Nama ini akan terlihat oleh pelanggan di WhatsApp sampai mereka menyimpan kontak Anda.",
+        "cancel": "Batal",
+        "submit": "Kirim kode",
+        "submitting": "Mengirim kode...",
+        "successToast": "Kode verifikasi dikirim melalui SMS.",
+        "errorToast": "Gagal menambahkan nomor",
+        "validation": {
+          "numberRequired": "Nomor WhatsApp wajib diisi",
+          "invalidNumber": "Format nomor tidak valid",
+          "nameRequired": "Nama tampilan wajib diisi"
+        }
+      },
+      "otp": {
+        "title": "Verifikasi Nomor",
+        "description": "Masukkan 6 digit kode yang dikirim melalui SMS.",
+        "changeNumber": "Ganti nomor",
+        "resend": "Kirim ulang kode",
+        "resendIn": "Kirim ulang dalam {count}d",
+        "cancel": "Batal",
+        "confirm": "Konfirmasi",
+        "verifying": "Memverifikasi...",
+        "resendSuccess": "Kode verifikasi dikirim ulang.",
+        "resendError": "Gagal mengirim ulang kode",
+        "verifySuccess": "Nomor WhatsApp berhasil diverifikasi.",
+        "verifyError": "Verifikasi gagal"
+      }
+    },
+    "signup": {
+      "noCodeError": "Login Facebook selesai tanpa kode otorisasi. Silakan coba lagi.",
+      "waitingDetails": "Kode otorisasi diterima. Menunggu detail WABA dari alur pendaftaran tersemat.",
+      "success": "WABA berhasil dihubungkan.",
+      "alreadyConnected": "Akun WhatsApp Business ini sudah terhubung ke pengguna lain",
+      "generalError": "Gagal menyelesaikan pendaftaran WhatsApp. Silakan coba lagi.",
+      "requireHttps": "Facebook Embedded Signup memerlukan HTTPS. Buka halaman ini dari URL HTTPS sebelum melanjutkan.",
+      "sdkNotReady": "Facebook SDK belum siap. Silakan coba lagi sebentar lagi."
+    }
+  },
+  "Customers": {
+    "filters": {
+      "allWabas": "Semua WABA",
+      "noWaba": "Tidak ada WABA",
+      "wabaSingular": "WABA",
+      "wabaPlural": "WABA",
+      "allNumbers": "Semua nomor",
+      "noNumber": "Tidak ada nomor",
+      "numberSingular": "nomor",
+      "numberPlural": "nomor",
+      "wabaTitle": "Filter WABA",
+      "selectAll": "Pilih semua",
+      "wabaEmpty": "WABA tidak tersedia.",
+      "numberTitle": "Filter Nomor",
+      "numberEmpty": "Tidak ada nomor yang tersedia untuk WABA yang dipilih.",
+      "clear": "Hapus"
+    },
+    "export": {
+      "emptyError": "Tidak ada baris pelanggan untuk diekspor.",
+      "success": "Tabel pelanggan diekspor."
+    },
+    "header": {
+      "title": "Pelanggan",
+      "description": "Tinjau nomor pelanggan yang telah mengobrol dengan akun WhatsApp Anda yang terhubung."
+    },
+    "action": {
+      "export": "Ekspor Excel"
+    },
+    "pagination": {
+      "showing": "Menampilkan {start}-{end} dari {total} pelanggan"
+    },
+    "table": {
+      "noMatch": "Tidak ada pelanggan yang cocok",
+      "noMatchDescription": "Coba filter WABA atau nomor lain untuk memperluas daftar pelanggan.",
+      "empty": "Belum ada pelanggan",
+      "emptyDescription": "Pelanggan akan muncul di sini setelah percakapan masuk.",
+      "clearFilters": "Hapus filter",
+      "errorLoad": "Gagal memuat pelanggan",
+      "retry": "Coba lagi",
+      "colNo": "No.",
+      "colName": "Nama",
+      "colUsername": "Nama Pengguna",
+      "colPhone": "Nomor Telepon",
+      "noName": "Nama tidak diketahui",
+      "noUsername": "Username tidak diketahui",
+      "noPhone": "Nomor tidak diketahui"
+    }
+  },
+  "Chat": {
+    "takeover": {
+      "enabled": "Pengambilalihan admin diaktifkan",
+      "disabled": "Percakapan dikembalikan ke bot",
+      "error": "Gagal memperbarui status pengambilalihan"
+    },
+    "empty": {
+      "noConversations": "Tidak ada percakapan yang ditemukan",
+      "selectWaba": "Pilih WABA",
+      "noConversationsDesc": "Coba WABA lain, sesuaikan filter, atau tunggu pesan pelanggan baru.",
+      "selectWabaDesc": "Pilih Akun WhatsApp Business untuk memuat percakapannya."
+    },
+    "sidebar": {
+      "search": "Cari nomor atau nama",
+      "filterAll": "Semua",
+      "filterAdmin": "Admin",
+      "filterBot": "Bot",
+      "allPhones": "Semua Telepon"
+    },
+    "header": {
+      "back": "Kembali ke percakapan"
+    },
+    "detail": {
+      "emptyTitle": "Pilih percakapan",
+      "emptyDesc": "Pilih utas pelanggan dari kotak masuk untuk meninjau riwayat pesan dan melanjutkan percakapan.",
+      "takeoverPrompt": "Selesai membantu pelanggan ini? Tutup percakapan agar bot dapat mengambil alih.",
+      "closeConversation": "Tutup percakapan",
+      "closeDialogTitle": "Tutup percakapan ini?",
+      "closeDialogDesc": "Bot akan melanjutkan penanganan pesan baru dari {name}.",
+      "cancel": "Batal"
+    },
+    "composer": {
+      "document": "Dokumen",
+      "media": "Foto & video",
+      "audio": "Audio",
+      "removeMedia": "Hapus lampiran",
+      "unsupportedFile": "Tipe file ini tidak didukung.",
+      "templateRequired": "Penggunaan pesan templat diwajibkan",
+      "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
+      "attach": "Lampirkan media",
+      "placeholderMedia": "Tambahkan keterangan...",
+      "placeholder": "Pesan...",
+      "placeholderTemplate": "Pesan templat diwajibkan",
+      "send": "Kirim"
+    },
+    "timeline": {
+      "loading": "Memuat pesan",
+      "loadOlder": "Muat pesan lebih lama",
+      "empty": "Belum ada pesan untuk percakapan ini."
+    },
+    "status": {
+      "sending": "Mengirim",
+      "read": "Dibaca",
+      "delivered": "Terkirim",
+      "failed": "Gagal",
+      "sent": "Terkirim"
+    },
+    "bubble": {
+      "errorLoad": "Tidak dapat memuat pratinjau media.",
+      "errorUnavailable": "File media tidak tersedia.",
+      "unsupported": "Pesan {type} tidak didukung"
+    },
+    "list": {
+      "errorTitle": "Tidak dapat memuat obrolan",
+      "errorDesc": "Kotak masuk tidak dapat dimuat saat ini.",
+      "retry": "Coba lagi"
+    },
+    "contact": {
+      "label": {
+        "newCustomer": "Pelanggan Baru",
+        "vip": "Pelanggan VIP",
+        "followUp": "Perlu Tindak Lanjut",
+        "completed": "Selesai"
+      },
+      "close": "Tutup",
+      "back": "Kembali ke percakapan",
+      "title": "Info kontak",
+      "takeover": "Pengambilalihan",
+      "lastActivity": "Aktivitas terakhir",
+      "connectedVia": "Terhubung via admin",
+      "customerLabel": "Label pelanggan",
+      "selectLabel": "Pilih label pelanggan...",
+      "customLabel": "Label kustom...",
+      "typeLabel": "Ketik nama label...",
+      "internalNotes": "Catatan internal",
+      "addNote": "Tambahkan catatan singkat untuk tim admin",
+      "noteWarning": "Data label dan catatan saat ini disimpan sementara di tampilan obrolan."
+    },
+    "wabaSwitcher": {
+      "select": "Pilih WABA",
+      "search": "Cari WABA atau nomor telepon",
+      "noMatch": "Tidak ada WABA yang cocok dengan pencarian ini.",
+      "noNumbers": "Tidak ada nomor yang terhubung"
+    }
   }
 }

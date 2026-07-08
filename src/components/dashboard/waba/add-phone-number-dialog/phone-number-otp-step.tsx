@@ -14,6 +14,7 @@ import {
   useVerifyAndRegisterPhoneNumber,
 } from '@/hooks/use-phone-number';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa6';
 import { toast } from 'sonner';
@@ -41,6 +42,7 @@ export function PhoneNumberOtpStep({
 
   const requestMutation = useRequestVerificationCode();
   const verifyMutation = useVerifyAndRegisterPhoneNumber();
+  const t = useTranslations('Waba.addNumber.otp');
 
   // Start countdown on mount
   useEffect(() => {
@@ -54,12 +56,11 @@ export function PhoneNumberOtpStep({
         wabaId,
         codeMethod: 'SMS',
       });
-      toast.success('Verification code resent.');
+      toast.success(t('resendSuccess'));
       resetCountdown();
       startCountdown();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to resend code';
+      const message = error instanceof Error ? error.message : t('resendError');
       toast.error(message);
     }
   }
@@ -76,11 +77,10 @@ export function PhoneNumberOtpStep({
       });
 
       // Step 4: Success
-      toast.success('WhatsApp number verified successfully.');
+      toast.success(t('verifySuccess'));
       onSuccess();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Verification failed';
+      const message = error instanceof Error ? error.message : t('verifyError');
       toast.error(message);
     }
   }
@@ -99,10 +99,10 @@ export function PhoneNumberOtpStep({
           <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
           <div className="min-w-0">
             <DialogTitle className="text-base font-semibold text-brand">
-              Verify Number
+              {t('title')}
             </DialogTitle>
             <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
-              Enter the 6-digit code sent via SMS.
+              {t('description')}
             </DialogDescription>
           </div>
         </div>
@@ -139,7 +139,7 @@ export function PhoneNumberOtpStep({
             disabled={isVerifying}
             className="text-brand hover:bg-primary/5 hover:text-brand"
           >
-            Change number
+            {t('changeNumber')}
           </Button>
           <Button
             variant="ghost"
@@ -148,7 +148,7 @@ export function PhoneNumberOtpStep({
             disabled={isVerifying || requestMutation.isPending || !canResend}
             className="text-brand hover:bg-primary/5 hover:text-brand"
           >
-            {canResend ? 'Resend code' : `Resend in ${count}s`}
+            {canResend ? t('resend') : t('resendIn', { count })}
           </Button>
         </div>
       </div>
@@ -161,7 +161,7 @@ export function PhoneNumberOtpStep({
           onClick={onCancel}
           disabled={isVerifying}
         >
-          Cancel
+          {t('cancel')}
         </Button>
         <Button
           variant="brand"
@@ -171,10 +171,10 @@ export function PhoneNumberOtpStep({
           {isVerifying ? (
             <>
               <Loader2 className="animate-spin" data-icon="inline-start" />
-              Verifying...
+              {t('verifying')}
             </>
           ) : (
-            'Confirm'
+            t('confirm')
           )}
         </Button>
       </DialogFooter>

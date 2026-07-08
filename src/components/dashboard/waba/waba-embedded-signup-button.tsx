@@ -6,6 +6,7 @@ import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { WabaSignupError, useWabaSignup } from '@/hooks/use-waba-signup';
 import { cn } from '@/lib/utils';
 import { Link2, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   type ComponentProps,
   useCallback,
@@ -107,6 +108,7 @@ export function WabaEmbeddedSignupButton({
   const isHttpsPage = useIsHttpsPage();
   const session = useEmbeddedSignupSession();
   const signupMutation = useWabaSignup();
+  const t = useTranslations('Waba.signup');
 
   const [isLaunching, setIsLaunching] = useState(false);
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
@@ -126,9 +128,7 @@ export function WabaEmbeddedSignupButton({
 
       const code = response.authResponse?.code;
       if (!code) {
-        toast.error(
-          'Facebook login finished without an authorization code. Please try again.',
-        );
+        toast.error(t('noCodeError'));
         return;
       }
 
@@ -136,12 +136,10 @@ export function WabaEmbeddedSignupButton({
       setAuthorizationCode(code);
 
       if (!sessionRef.current?.wabaId) {
-        toast.message(
-          'Authorization code received. Waiting for WABA details from the embedded signup flow.',
-        );
+        toast.message(t('waitingDetails'));
       }
     },
-    [],
+    [t],
   );
 
   useEffect(() => {
@@ -172,42 +170,31 @@ export function WabaEmbeddedSignupButton({
         if (message) {
           toast.warning(message);
         } else {
-          toast.success('WABA connected successfully.');
+          toast.success(t('success'));
         }
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
         if (error instanceof WabaSignupError) {
-          toast.warning(
-            error.message ||
-              'This WhatsApp Business Account is already connected to another user',
-          );
+          toast.warning(error.message || t('alreadyConnected'));
           return;
         }
 
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : 'Failed to complete WhatsApp signup. Please try again.',
-        );
+        toast.error(error instanceof Error ? error.message : t('generalError'));
       }
     };
 
     void submitData();
-  }, [authorizationCode, onSuccess, session, signupMutation]);
+  }, [authorizationCode, onSuccess, session, signupMutation, t]);
 
   const launchWhatsAppSignup = useCallback(() => {
     if (!isHttpsPage) {
-      toast.error(
-        'Facebook Embedded Signup requires HTTPS. Open this page from an HTTPS URL before continuing.',
-      );
+      toast.error(t('requireHttps'));
       return;
     }
 
     if (!window.FB) {
-      toast.error(
-        'Facebook SDK is not ready yet. Please try again in a moment.',
-      );
+      toast.error(t('sdkNotReady'));
       return;
     }
 
@@ -218,7 +205,7 @@ export function WabaEmbeddedSignupButton({
       override_default_response_type: true,
       extras: SIGNUP_EXTRAS,
     });
-  }, [handleFbLoginResponse, isHttpsPage]);
+  }, [handleFbLoginResponse, isHttpsPage, t]);
 
   const isBusy = isLaunching || signupMutation.isPending;
 

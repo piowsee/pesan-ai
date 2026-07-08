@@ -24,6 +24,7 @@ import {
   LoaderCircleIcon,
   MessageSquareIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 function MessageHistorySkeleton() {
@@ -94,6 +95,7 @@ export function ChatDetail({
   ) => void;
   pendingTakeoverConversationId?: string;
 }) {
+  const t = useTranslations('Chat.detail');
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
 
   if (isLoading && !conversation) {
@@ -103,8 +105,8 @@ export function ChatDetail({
   if (!conversation) {
     return (
       <ChatEmptyState
-        title="Select a conversation"
-        description="Choose a customer thread from the inbox to review message history and continue the conversation."
+        title={t('emptyTitle')}
+        description={t('emptyDesc')}
         icon={MessageSquareIcon}
         className="h-full"
       />
@@ -146,8 +148,7 @@ export function ChatDetail({
         {conversation.adminTakeover && (
           <div className="bg-brand/10 p-3 mx-4 lg:mx-6 mb-2 rounded-md flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center justify-between border border-brand/20 shadow-sm text-sm">
             <span className="text-foreground/80 font-medium">
-              Finished assisting this customer? Close the conversation to let
-              the bot take over.
+              {t('takeoverPrompt')}
             </span>
             <Button
               variant="outline"
@@ -161,7 +162,7 @@ export function ChatDetail({
               ) : (
                 <CheckCircleIcon className="size-4 mr-2" />
               )}
-              Close conversation
+              {t('closeConversation')}
             </Button>
             {isCloseDialogOpen && (
               <AlertDialog
@@ -170,23 +171,20 @@ export function ChatDetail({
               >
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Close this conversation?
-                    </AlertDialogTitle>
+                    <AlertDialogTitle>{t('closeDialogTitle')}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      The bot will resume handling new messages from{' '}
-                      {conversation.displayName}.
+                      {t('closeDialogDesc', { name: conversation.displayName })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
                         onToggleTakeover(conversation.id, false);
                         setIsCloseDialogOpen(false);
                       }}
                     >
-                      Close conversation
+                      {t('closeConversation')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

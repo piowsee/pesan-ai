@@ -38,13 +38,10 @@ import {
   useSendMessage,
 } from '@/hooks/use-message';
 import { useWabas } from '@/hooks/use-wabas';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import type { ChatSidebarFilter } from '@/types/chat';
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useParams, useSearchParams } from 'next/navigation';
 import {
   startTransition,
   useCallback,
@@ -131,6 +128,7 @@ export function ChatWorkspaceSkeleton() {
 }
 
 export function ChatWorkspace() {
+  const t = useTranslations('Chat');
   const params = useParams<{ chatSegments?: string[] }>();
   const pathname = usePathname();
   const router = useRouter();
@@ -588,17 +586,17 @@ export function ChatWorkspace() {
           onSuccess: () => {
             toast.success(
               nextAdminTakeover
-                ? 'Admin takeover enabled'
-                : 'Conversation returned to bot',
+                ? t('takeover.enabled')
+                : t('takeover.disabled'),
             );
           },
           onError: (error) => {
-            toast.error(error.message || 'Failed to update takeover status');
+            toast.error(error.message || t('takeover.error'));
           },
         },
       );
     },
-    [activeWabaId, updateAdminTakeover],
+    [activeWabaId, updateAdminTakeover, t],
   );
 
   const { mutate: sendMessage } = useSendMessage();
@@ -700,11 +698,13 @@ export function ChatWorkspace() {
           onToggleTakeover={handleToggleTakeover}
           pendingTakeoverConversationId={pendingTakeoverConversationId}
           showMobileDetail={showMobileDetail}
-          emptyTitle={activeWabaId ? 'No conversations found' : 'Select a WABA'}
+          emptyTitle={
+            activeWabaId ? t('empty.noConversations') : t('empty.selectWaba')
+          }
           emptyDescription={
             activeWabaId
-              ? 'Try another WABA, adjust the filters, or wait for new customer messages.'
-              : 'Choose a WhatsApp Business Account to load its conversations.'
+              ? t('empty.noConversationsDesc')
+              : t('empty.selectWabaDesc')
           }
         />
 

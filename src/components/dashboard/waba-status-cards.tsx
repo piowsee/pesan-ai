@@ -10,10 +10,12 @@ import {
 import { useWabas } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, CheckCircle2, CircleAlert } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { FaWhatsapp } from 'react-icons/fa6';
 
 export function WabaStatusCards() {
   const { data, isLoading, isError } = useWabas(1, 100);
+  const t = useTranslations('DashboardHome.status');
 
   if (isLoading) {
     return (
@@ -35,7 +37,7 @@ export function WabaStatusCards() {
     return (
       <section className="mb-8">
         <div className="rounded-lg border border-destructive/20 px-5 py-4 text-sm text-destructive">
-          WhatsApp account summary could not be loaded.
+          {t('error')}
         </div>
       </section>
     );
@@ -52,27 +54,24 @@ export function WabaStatusCards() {
 
   const stats = [
     {
-      label: 'WhatsApp Accounts',
+      label: t('accounts'),
       value: totalWabas,
       icon: FaWhatsapp,
-      helper:
-        'Total WhatsApp Business accounts (WABA) integrated in this workspace.',
+      helper: t('accountsHelper'),
       iconColor: 'text-[#25D366]',
     },
     {
-      label: 'Active',
+      label: t('active'),
       value: activeWabas,
       icon: CheckCircle2,
-      helper:
-        'Number of active accounts that can be used to process incoming and outgoing messages normally.',
+      helper: t('activeHelper'),
       iconColor: 'text-[oklch(0.52_0.12_190)]',
     },
     {
-      label: 'Needs attention',
+      label: t('needsAttention'),
       value: attentionWabas,
       icon: AlertTriangle,
-      helper:
-        'Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption.',
+      helper: t('needsAttentionHelper'),
       iconColor: 'text-[oklch(0.55_0.12_30)]',
     },
   ];
@@ -81,7 +80,9 @@ export function WabaStatusCards() {
     <section className="mb-10">
       {/* Section label */}
       <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-brand/80">Account Status</h2>
+        <h2 className="text-sm font-semibold text-brand/80">
+          {t('sectionTitle')}
+        </h2>
       </div>
 
       {/* Stat tiles */}

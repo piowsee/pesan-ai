@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/popover';
 import { type Waba } from '@/hooks/use-wabas';
 import { ChevronDown, Phone, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { type ReactNode } from 'react';
 import { FaWhatsapp } from 'react-icons/fa6';
 
@@ -115,22 +116,23 @@ export function CustomersFilters({
   onToggleNumber: (phoneId: string, checked: boolean) => void;
   onClearFilters: () => void;
 }) {
+  const t = useTranslations('Customers.filters');
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       <FilterPopover
-        title="Filter WABA"
+        title={t('wabaTitle')}
         triggerLabel={wabaLabel}
         icon={<FaWhatsapp data-icon="inline-start" />}
         disabled={isWabaLoading && wabas.length === 0}
       >
         <CheckboxRow
           checked={selectedWabaIds === null}
-          label="Select all"
+          label={t('selectAll')}
           onCheckedChange={onToggleAllWabas}
         />
         <div className="my-1 h-px bg-border" />
         {wabas.length === 0 ? (
-          <p className="px-2 py-3 text-sm text-brand/70">No WABA available.</p>
+          <p className="px-2 py-3 text-sm text-brand/70">{t('wabaEmpty')}</p>
         ) : (
           wabas.map((waba) => (
             <CheckboxRow
@@ -145,21 +147,19 @@ export function CustomersFilters({
       </FilterPopover>
 
       <FilterPopover
-        title="Filter Number"
+        title={t('numberTitle')}
         triggerLabel={numberLabel}
         icon={<Phone data-icon="inline-start" />}
         disabled={phoneOptions.length === 0}
       >
         <CheckboxRow
           checked={selectedPhoneIds === null}
-          label="Select all"
+          label={t('selectAll')}
           onCheckedChange={onToggleAllNumbers}
         />
         <div className="my-1 h-px bg-border" />
         {phoneOptions.length === 0 ? (
-          <p className="px-2 py-3 text-sm text-brand/70">
-            No number available for the selected WABA.
-          </p>
+          <p className="px-2 py-3 text-sm text-brand/70">{t('numberEmpty')}</p>
         ) : (
           phoneOptions.map((phone) => (
             <CheckboxRow
@@ -183,7 +183,7 @@ export function CustomersFilters({
         onClick={onClearFilters}
       >
         <X data-icon="inline-start" />
-        Clear
+        {t('clear')}
       </Button>
     </div>
   );

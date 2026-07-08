@@ -6,6 +6,7 @@ import {
   CheckIcon,
   Loader2Icon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function MessageStatus({
   status,
@@ -14,11 +15,12 @@ export function MessageStatus({
   status: ChatMessage['status'] | 'sending';
   className?: string;
 }) {
+  const t = useTranslations('Chat.status');
   if (status === 'sending') {
     return (
       <Loader2Icon
         className={cn('size-3.5 animate-spin text-muted-foreground', className)}
-        aria-label="Sending"
+        aria-label={t('sending')}
       />
     );
   }
@@ -27,7 +29,7 @@ export function MessageStatus({
     return (
       <CheckCheckIcon
         className={cn('size-3.5 text-sky-500', className)}
-        aria-label="Read"
+        aria-label={t('read')}
       />
     );
   }
@@ -36,7 +38,7 @@ export function MessageStatus({
     return (
       <CheckCheckIcon
         className={cn('size-3.5 text-muted-foreground', className)}
-        aria-label="Delivered"
+        aria-label={t('delivered')}
       />
     );
   }
@@ -45,7 +47,7 @@ export function MessageStatus({
     return (
       <AlertCircleIcon
         className={cn('size-3.5 text-destructive', className)}
-        aria-label="Failed"
+        aria-label={t('failed')}
       />
     );
   }
@@ -53,7 +55,7 @@ export function MessageStatus({
   return (
     <CheckIcon
       className={cn('size-3.5 text-muted-foreground', className)}
-      aria-label="Sent"
+      aria-label={t('sent')}
     />
   );
 }

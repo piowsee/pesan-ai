@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { SearchIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function ChatSidebarToolbar({
   searchValue,
@@ -28,6 +29,7 @@ export function ChatSidebarToolbar({
   selectedPhoneNumberId?: string;
   onPhoneNumberChange: (value?: string) => void;
 }) {
+  const t = useTranslations('Chat.sidebar');
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       <div className="relative">
@@ -35,7 +37,7 @@ export function ChatSidebarToolbar({
         <Input
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search number or name"
+          placeholder={t('search')}
           className="h-9 border border-brand/20 bg-brand/5 pl-9 placeholder:text-brand/60"
         />
       </div>
@@ -51,7 +53,7 @@ export function ChatSidebarToolbar({
           }
           onClick={() => onFilterChange('all')}
         >
-          All
+          {t('filterAll')}
         </Button>
         <Button
           variant={filter === 'admin' ? 'secondary' : 'ghost'}
@@ -63,7 +65,7 @@ export function ChatSidebarToolbar({
           }
           onClick={() => onFilterChange('admin')}
         >
-          Admin
+          {t('filterAdmin')}
         </Button>
         <Button
           variant={filter === 'bot' ? 'secondary' : 'ghost'}
@@ -75,7 +77,7 @@ export function ChatSidebarToolbar({
           }
           onClick={() => onFilterChange('bot')}
         >
-          Bot
+          {t('filterBot')}
         </Button>
 
         <Select
@@ -85,11 +87,11 @@ export function ChatSidebarToolbar({
           }
         >
           <SelectTrigger className="ml-auto h-8 w-42.5 cursor-pointer gap-2 rounded-full border border-brand/20 bg-brand/5 px-3 text-brand transition-colors hover:bg-brand/10 [&>span]:block [&>span]:truncate">
-            <SelectValue placeholder="All Phones" />
+            <SelectValue placeholder={t('allPhones')} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="all">All Phones</SelectItem>
+              <SelectItem value="all">{t('allPhones')}</SelectItem>
               {phoneNumbers.map((phoneNumber) => (
                 <SelectItem key={phoneNumber.id} value={phoneNumber.id}>
                   {phoneNumber.displayPhoneNumber}

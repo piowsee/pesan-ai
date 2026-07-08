@@ -345,5 +345,301 @@
     "title": "We couldn't find the page you were looking for.",
     "description": "The link may have moved or never existed.",
     "home": "Back to Home"
+  },
+  "Sidebar": {
+    "home": "Home",
+    "wabaManagement": "WABA Management",
+    "chat": "Chat",
+    "customers": "Customers",
+    "navigation": "Navigation",
+    "waba": "WABA"
+  },
+  "ProfileMenu": {
+    "openProfile": "Open profile",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "DashboardHome": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "title": "Account Activity Summary",
+    "description": "Review WABA operational status and control incoming message traffic from a single control panel.",
+    "status": {
+      "error": "WhatsApp account summary could not be loaded.",
+      "sectionTitle": "Account Status",
+      "accounts": "WhatsApp Accounts",
+      "accountsHelper": "Total WhatsApp Business accounts (WABA) integrated in this workspace.",
+      "active": "Active",
+      "activeHelper": "Number of active accounts that can be used to process incoming and outgoing messages normally.",
+      "needsAttention": "Needs attention",
+      "needsAttentionHelper": "Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption."
+    },
+    "quickActions": {
+      "sectionTitle": "Quick Actions",
+      "inbox": {
+        "eyebrow": "Inbox",
+        "title": "Reply to customer conversations",
+        "helper": "Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time."
+      },
+      "waba": {
+        "eyebrow": "WABA",
+        "title": "Manage WhatsApp Business accounts",
+        "helper": "Go to WABA settings to manage number status, Meta verification, and messaging tier limits."
+      },
+      "customers": {
+        "eyebrow": "Customers",
+        "title": "Review saved customer contacts",
+        "helper": "Open the customer list to filter contacts by WABA or WhatsApp number and export them when needed."
+      }
+    }
+  },
+  "Waba": {
+    "status": {
+      "active": "Active",
+      "disconnected": "Disconnected",
+      "suspended": "Suspended"
+    },
+    "numbers": {
+      "one": "1 number",
+      "multiple": "{count} numbers",
+      "manage": "Manage WhatsApp numbers",
+      "whatsappNumber": "WhatsApp Number",
+      "connected": "{label} connected",
+      "none": "No numbers connected yet.",
+      "add": "Add number"
+    },
+    "id": {
+      "copied": "WABA ID copied."
+    },
+    "row": {
+      "unnamed": "Unnamed business",
+      "idPrefix": "WABA ID: ",
+      "status": "Status",
+      "connectedOn": "Connected on"
+    },
+    "empty": {
+      "title": "No WhatsApp accounts yet",
+      "description": "Connect your first WhatsApp Business account so pesan-ai can start receiving and managing conversations."
+    },
+    "action": {
+      "connect": "Connect WhatsApp account",
+      "connecting": "Connecting account..."
+    },
+    "summary": {
+      "accounts": "accounts",
+      "active": "active",
+      "needsAttention": "needs attention"
+    },
+    "error": {
+      "load": "Failed to load WABA list",
+      "retry": "Try again"
+    },
+    "header": {
+      "title": "WhatsApp Business Accounts",
+      "description": "Manage WhatsApp accounts and numbers connected to pesan-ai."
+    },
+    "table": {
+      "business": "Business"
+    },
+    "pagination": {
+      "showing": "Showing {start}-{end} of {total} accounts",
+      "empty": "No accounts yet",
+      "previous": "Previous",
+      "page": "Page {current} of {total}",
+      "next": "Next"
+    },
+    "addNumber": {
+      "trigger": "Add number",
+      "input": {
+        "title": "Add WhatsApp Number",
+        "descriptionPrefix": "Connect a new number for ",
+        "descriptionFallback": "this WhatsApp Business account",
+        "labelNumber": "WhatsApp Number",
+        "placeholderNumber": "Enter WhatsApp number",
+        "labelName": "Display name",
+        "placeholderName": "Example: Customer Support",
+        "nameHelper": "This name will be visible to customers on WhatsApp until they save your contact.",
+        "cancel": "Cancel",
+        "submit": "Send code",
+        "submitting": "Sending code...",
+        "successToast": "Verification code sent via SMS.",
+        "errorToast": "Failed to add number",
+        "validation": {
+          "numberRequired": "WhatsApp number is required",
+          "invalidNumber": "Invalid number format",
+          "nameRequired": "Display name is required"
+        }
+      },
+      "otp": {
+        "title": "Verify Number",
+        "description": "Enter the 6-digit code sent via SMS.",
+        "changeNumber": "Change number",
+        "resend": "Resend code",
+        "resendIn": "Resend in {count}s",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "verifying": "Verifying...",
+        "resendSuccess": "Verification code resent.",
+        "resendError": "Failed to resend code",
+        "verifySuccess": "WhatsApp number verified successfully.",
+        "verifyError": "Verification failed"
+      }
+    },
+    "signup": {
+      "noCodeError": "Facebook login finished without an authorization code. Please try again.",
+      "waitingDetails": "Authorization code received. Waiting for WABA details from the embedded signup flow.",
+      "success": "WABA connected successfully.",
+      "alreadyConnected": "This WhatsApp Business Account is already connected to another user",
+      "generalError": "Failed to complete WhatsApp signup. Please try again.",
+      "requireHttps": "Facebook Embedded Signup requires HTTPS. Open this page from an HTTPS URL before continuing.",
+      "sdkNotReady": "Facebook SDK is not ready yet. Please try again in a moment."
+    }
+  },
+  "Customers": {
+    "filters": {
+      "allWabas": "All WABAs",
+      "noWaba": "No WABA",
+      "wabaSingular": "WABA",
+      "wabaPlural": "WABAs",
+      "allNumbers": "All numbers",
+      "noNumber": "No number",
+      "numberSingular": "number",
+      "numberPlural": "numbers",
+      "wabaTitle": "Filter WABA",
+      "selectAll": "Select all",
+      "wabaEmpty": "No WABA available.",
+      "numberTitle": "Filter Number",
+      "numberEmpty": "No number available for the selected WABA.",
+      "clear": "Clear"
+    },
+    "export": {
+      "emptyError": "There are no customer rows to export.",
+      "success": "Customer table exported."
+    },
+    "header": {
+      "title": "Customers",
+      "description": "Review customer numbers that have chatted with your connected WhatsApp accounts."
+    },
+    "action": {
+      "export": "Export Excel"
+    },
+    "pagination": {
+      "showing": "Showing {start}-{end} of {total} customers"
+    },
+    "table": {
+      "noMatch": "No matching customers",
+      "noMatchDescription": "Try another WABA or number filter to widen the customer list.",
+      "empty": "No customers yet",
+      "emptyDescription": "Customers will appear here after conversations come in.",
+      "clearFilters": "Clear filters",
+      "errorLoad": "Failed to load customers",
+      "retry": "Try again",
+      "colNo": "No.",
+      "colName": "Name",
+      "colUsername": "Username",
+      "colPhone": "Phone Number",
+      "noName": "Unknown name",
+      "noUsername": "Unknown username",
+      "noPhone": "Unknown phone"
+    }
+  },
+  "Chat": {
+    "takeover": {
+      "enabled": "Admin takeover enabled",
+      "disabled": "Conversation returned to bot",
+      "error": "Failed to update takeover status"
+    },
+    "empty": {
+      "noConversations": "No conversations found",
+      "selectWaba": "Select a WABA",
+      "noConversationsDesc": "Try another WABA, adjust the filters, or wait for new customer messages.",
+      "selectWabaDesc": "Choose a WhatsApp Business Account to load its conversations."
+    },
+    "sidebar": {
+      "search": "Search number or name",
+      "filterAll": "All",
+      "filterAdmin": "Admin",
+      "filterBot": "Bot",
+      "allPhones": "All Phones"
+    },
+    "header": {
+      "back": "Back to conversations"
+    },
+    "detail": {
+      "emptyTitle": "Select a conversation",
+      "emptyDesc": "Choose a customer thread from the inbox to review message history and continue the conversation.",
+      "takeoverPrompt": "Finished assisting this customer? Close the conversation to let the bot take over.",
+      "closeConversation": "Close conversation",
+      "closeDialogTitle": "Close this conversation?",
+      "closeDialogDesc": "The bot will resume handling new messages from {name}.",
+      "cancel": "Cancel"
+    },
+    "composer": {
+      "document": "Document",
+      "media": "Photos & videos",
+      "audio": "Audio",
+      "removeMedia": "Remove attachment",
+      "unsupportedFile": "This file type is not supported.",
+      "templateRequired": "Use template message required",
+      "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
+      "attach": "Attach media",
+      "placeholderMedia": "Add a caption...",
+      "placeholder": "Message...",
+      "placeholderTemplate": "Template message required",
+      "send": "Send"
+    },
+    "timeline": {
+      "loading": "Loading messages",
+      "loadOlder": "Load older messages",
+      "empty": "No messages yet for this conversation."
+    },
+    "status": {
+      "sending": "Sending",
+      "read": "Read",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "sent": "Sent"
+    },
+    "bubble": {
+      "errorLoad": "Could not load media preview.",
+      "errorUnavailable": "Media file is unavailable.",
+      "unsupported": "Unsupported {type} message"
+    },
+    "list": {
+      "errorTitle": "Unable to load chats",
+      "errorDesc": "The inbox could not be loaded right now.",
+      "retry": "Retry"
+    },
+    "contact": {
+      "label": {
+        "newCustomer": "New Customer",
+        "vip": "VIP Customer",
+        "followUp": "Needs Follow Up",
+        "completed": "Completed"
+      },
+      "close": "Close",
+      "back": "Back to conversation",
+      "title": "Contact info",
+      "takeover": "Takeover",
+      "lastActivity": "Last activity",
+      "connectedVia": "Connected via admin",
+      "customerLabel": "Customer label",
+      "selectLabel": "Select customer label...",
+      "customLabel": "Custom label...",
+      "typeLabel": "Type label name...",
+      "internalNotes": "Internal notes",
+      "addNote": "Add a brief note for the admin team",
+      "noteWarning": "Label and notes data are currently saved temporarily in the chat view."
+    },
+    "wabaSwitcher": {
+      "select": "Select a WABA",
+      "search": "Search WABA or phone number",
+      "noMatch": "No WABA matches this search.",
+      "noNumbers": "No connected numbers"
+    }
   }
 }
