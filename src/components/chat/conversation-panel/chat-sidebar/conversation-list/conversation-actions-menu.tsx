@@ -56,7 +56,7 @@ export function ConversationActionsMenu({
   const [actionAwaitingConfirmation, setActionAwaitingConfirmation] =
     useState<ConversationMenuAction | null>(null);
   const takeoverActionLabel = conversation.adminTakeover
-    ? 'Return to bot'
+    ? 'Close conversation'
     : 'Take over';
   const actions: ConversationMenuAction[] = [
     {
@@ -71,11 +71,11 @@ export function ConversationActionsMenu({
       disabled: isTakeoverPending,
       confirmation: {
         title: conversation.adminTakeover
-          ? 'Return this conversation to the bot?'
+          ? 'Close this conversation?'
           : 'Take over this conversation?',
         description: conversation.adminTakeover
           ? `The bot will resume handling new messages from ${conversation.displayName}.`
-          : `The bot will stop replying to ${conversation.displayName} until an admin returns this conversation to the bot.`,
+          : `The bot will stop replying to ${conversation.displayName} until an admin closes this conversation.`,
         actionLabel: takeoverActionLabel,
       },
       execute: () => onToggleTakeover(!conversation.adminTakeover),
