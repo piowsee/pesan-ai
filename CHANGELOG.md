@@ -1,5 +1,17 @@
 # pesan-ai
 
+## 1.1.0
+
+### Minor Changes
+
+- d9cf82b: Implement auto close conversation feature(return to bot) after 24 hours
+- 28e2653: Implement account_update webhook handler for offboard and reconnect event. Also add waba status check on send Text/Media message service
+- 0b82e49: Implement Message Status Webhook Handler
+
+### Patch Changes
+
+- 984ff34: Fix missmatch field on Meta WhatsApp Send Message API and reorganize some code
+
 ## 1.0.0
 
 ### Major Changes
