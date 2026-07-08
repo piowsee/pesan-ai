@@ -340,6 +340,31 @@
     "lawHeading": "6. Governing Law",
     "lawText": "These Terms shall be governed and construed in accordance with the laws of Indonesia. Any dispute arising from these services or these Terms shall be resolved exclusively within the jurisdiction of Indonesian courts."
   },
+  "ProfileSettingsDialog": {
+    "labels": {
+      "title": "Edit profile",
+      "description": "Update your account name and email address.",
+      "name": "Name",
+      "email": "Email",
+      "warning": "Changing your email will send confirmation links to both your current and new email addresses.",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "errors": {
+      "nameRequired": "Name is required",
+      "nameLength": "Name must be at most 80 characters",
+      "emailRequired": "Email is required",
+      "invalidEmail": "Enter a valid email address",
+      "emailLength": "Email must be at most 255 characters",
+      "failedSaveName": "Failed to save name",
+      "failedChangeEmail": "Failed to change email",
+      "failedSave": "Failed to save changes"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully",
+      "emailChangeSuccess": "Check your inboxes, confirm the change from {currentEmail}. Then verify with the link sent to {newEmail}."
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "We couldn't find the page you were looking for.",

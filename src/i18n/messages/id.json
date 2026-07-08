@@ -340,6 +340,31 @@
     "lawHeading": "6. Hukum yang Berlaku",
     "lawText": "Syarat ini diatur dan ditafsirkan sesuai hukum yang berlaku di Indonesia. Setiap perselisihan yang timbul dari layanan ini atau Syarat Layanan ini akan diselesaikan secara eksklusif dalam yurisdiksi pengadilan di Indonesia."
   },
+  "ProfileSettingsDialog": {
+    "labels": {
+      "title": "Edit profil",
+      "description": "Perbarui nama dan alamat email akun Anda.",
+      "name": "Nama",
+      "email": "Email",
+      "warning": "Mengubah email Anda akan mengirimkan tautan konfirmasi ke alamat email lama dan baru Anda.",
+      "save": "Simpan",
+      "saving": "Menyimpan..."
+    },
+    "errors": {
+      "nameRequired": "Nama wajib diisi",
+      "nameLength": "Nama maksimal 80 karakter",
+      "emailRequired": "Email wajib diisi",
+      "invalidEmail": "Masukkan alamat email yang valid",
+      "emailLength": "Email maksimal 255 karakter",
+      "failedSaveName": "Gagal menyimpan nama",
+      "failedChangeEmail": "Gagal mengubah email",
+      "failedSave": "Gagal menyimpan perubahan"
+    },
+    "messages": {
+      "profileUpdated": "Profil berhasil diperbarui",
+      "emailChangeSuccess": "Cek kotak masuk Anda, konfirmasi perubahan dari {currentEmail}. Lalu verifikasi dengan tautan yang dikirim ke {newEmail}."
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "Ups, halaman yang kamu cari tidak tersedia.",

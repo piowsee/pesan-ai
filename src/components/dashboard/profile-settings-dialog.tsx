@@ -17,26 +17,53 @@ import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Mail, Save } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const profileSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Name is required')
-    .max(80, 'Name must be at most 80 characters'),
-  email: z
-    .string()
-    .trim()
-    .min(1, 'Email is required')
-    .email('Enter a valid email address')
-    .max(255, 'Email must be at most 255 characters'),
-});
+type ProfileSettingsLabels = {
+  title: string;
+  description: string;
+  name: string;
+  email: string;
+  warning: string;
+  save: string;
+  saving: string;
+};
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileSettingsErrors = {
+  nameRequired: string;
+  nameLength: string;
+  emailRequired: string;
+  invalidEmail: string;
+  emailLength: string;
+  failedSaveName: string;
+  failedChangeEmail: string;
+  failedSave: string;
+};
+
+function createProfileSchema(errors: ProfileSettingsErrors) {
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, errors.nameRequired)
+      .max(80, errors.nameLength),
+    email: z
+      .string()
+      .trim()
+      .min(1, errors.emailRequired)
+      .email(errors.invalidEmail)
+      .max(255, errors.emailLength),
+  });
+}
+
+type ProfileFormValues = {
+  name: string;
+  email: string;
+};
 
 type ProfileSettingsDialogProps = {
   open: boolean;
@@ -50,13 +77,19 @@ export function ProfileSettingsDialog({
   user,
 }: ProfileSettingsDialogProps) {
   const router = useRouter();
+  const t = useTranslations('ProfileSettingsDialog');
+  const labels = t.raw('labels') as ProfileSettingsLabels;
+  const errors = t.raw('errors') as ProfileSettingsErrors;
+
+  const schema = useMemo(() => createProfileSchema(errors), [errors]);
+
   const wasOpenRef = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const [currentName, setCurrentName] = useState(user.name);
   const [currentEmail, setCurrentEmail] = useState(user.email);
 
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       name: user.name,
       email: user.email,
@@ -109,7 +142,7 @@ export function ProfileSettingsDialog({
         const nameResult = await authClient.updateUser({ name });
 
         if (nameResult?.error) {
-          toast.error(nameResult.error.message || 'Failed to save name');
+          toast.error(nameResult.error.message || errors.failedSaveName);
           return;
         }
 
@@ -124,25 +157,28 @@ export function ProfileSettingsDialog({
         });
 
         if (emailResult?.error) {
-          toast.error(emailResult.error.message || 'Failed to change email');
+          toast.error(emailResult.error.message || errors.failedChangeEmail);
           return;
         }
 
         toast.success(
-          `Check your inboxes, confirm the change from ${currentEmail}. Then verify with the link sent to ${email}.`,
+          t('messages.emailChangeSuccess', {
+            currentEmail,
+            newEmail: email,
+          }),
           {
             icon: <Mail className="size-4" />,
             duration: 8000,
           },
         );
       } else {
-        toast.success('Profile updated successfully');
+        toast.success(t('messages.profileUpdated'));
       }
 
       form.reset({ name, email });
       router.refresh();
     } catch {
-      toast.error('Failed to save changes');
+      toast.error(errors.failedSave);
     } finally {
       setIsSaving(false);
     }
@@ -152,10 +188,8 @@ export function ProfileSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-6 [&_[data-slot=dialog-close]]:top-[18px] [&_[data-slot=dialog-close]]:right-6 sm:w-[460px] sm:max-w-[460px] sm:p-7 sm:[&_[data-slot=dialog-close]]:top-[22px] sm:[&_[data-slot=dialog-close]]:right-7">
         <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
-          <DialogDescription>
-            Update your account name and email address.
-          </DialogDescription>
+          <DialogTitle>{labels.title}</DialogTitle>
+          <DialogDescription>{labels.description}</DialogDescription>
         </DialogHeader>
 
         <div className="mt-3 flex flex-col gap-7">
@@ -180,7 +214,7 @@ export function ProfileSettingsDialog({
             className="flex flex-col gap-5"
           >
             <div className="flex flex-col gap-2">
-              <Label htmlFor="profile-name">Name</Label>
+              <Label htmlFor="profile-name">{labels.name}</Label>
               <Input
                 id="profile-name"
                 autoComplete="name"
@@ -199,7 +233,7 @@ export function ProfileSettingsDialog({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="profile-email">Email</Label>
+              <Label htmlFor="profile-email">{labels.email}</Label>
               <Input
                 id="profile-email"
                 type="email"
@@ -219,10 +253,7 @@ export function ProfileSettingsDialog({
             </div>
 
             <div className="flex items-center justify-between gap-4">
-              <p className="text-xs text-muted-foreground">
-                Changing your email will send confirmation links to both your
-                current and new email addresses.
-              </p>
+              <p className="text-xs text-muted-foreground">{labels.warning}</p>
               <Button
                 type="submit"
                 size="lg"
@@ -234,7 +265,7 @@ export function ProfileSettingsDialog({
                 ) : (
                   <Save data-icon="inline-start" />
                 )}
-                Save
+                {isSaving ? labels.saving : labels.save}
               </Button>
             </div>
           </form>

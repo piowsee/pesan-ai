@@ -23,13 +23,19 @@ import { isValidPhoneNumber, parsePhoneNumber } from 'react-phone-number-input';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const addPhoneNumberSchema = (t: ReturnType<typeof useTranslations>) =>
+type PhoneNumberInputValidation = {
+  numberRequired: string;
+  invalidNumber: string;
+  nameRequired: string;
+};
+
+const addPhoneNumberSchema = (errors: PhoneNumberInputValidation) =>
   z.object({
     fullPhoneNumber: z
       .string()
-      .min(1, t('validation.numberRequired'))
-      .refine(isValidPhoneNumber, { message: t('validation.invalidNumber') }),
-    name: z.string().min(1, t('validation.nameRequired')),
+      .min(1, errors.numberRequired)
+      .refine(isValidPhoneNumber, { message: errors.invalidNumber }),
+    name: z.string().min(1, errors.nameRequired),
   });
 
 type AddPhoneNumberFormValues = {
@@ -53,9 +59,10 @@ export function PhoneNumberInputStep({
   const createMutation = useCreatePhoneNumber();
   const requestMutation = useRequestVerificationCode();
   const t = useTranslations('Waba.addNumber.input');
+  const validationErrors = t.raw('validation') as PhoneNumberInputValidation;
 
   const form = useForm<AddPhoneNumberFormValues>({
-    resolver: zodResolver(addPhoneNumberSchema(t)),
+    resolver: zodResolver(addPhoneNumberSchema(validationErrors)),
     defaultValues: {
       fullPhoneNumber: '',
       name: businessName || '',
