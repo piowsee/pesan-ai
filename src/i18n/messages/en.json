@@ -641,5 +641,258 @@
       "noMatch": "No WABA matches this search.",
       "noNumbers": "No connected numbers"
     }
+  },
+  "Admin": {
+    "user": {
+      "page": {
+        "title": "User Management",
+        "description": "Add and manage user accounts for the platform."
+      }
+    },
+    "waba": {
+      "page": {
+        "title": "WABA Management",
+        "description": "View all WhatsApp Business Accounts and assign webhooks to them."
+      }
+    },
+    "webhook": {
+      "page": {
+        "title": "Webhook Management",
+        "description": "Add and manage webhook endpoints for the platform."
+      }
+    },
+    "AdminDashboardCard": {
+      "title": "Admin Dashboard",
+      "description": "Select a menu below to manage the system.",
+      "navigation": {
+        "user": {
+          "label": "Manage User Account",
+          "description": "Add and manage user accounts."
+        },
+        "webhook": {
+          "label": "Manage Webhook",
+          "description": "Configure and monitor active webhooks."
+        },
+        "waba": {
+          "label": "Manage User WABA",
+          "description": "Assign Webhook to WABA"
+        }
+      }
+    },
+    "Header": {
+      "logoAlt": "pesan.ai logo",
+      "brandName": "pesan-ai"
+    },
+    "CreateUserDialog": {
+      "trigger": "Create User",
+      "title": "Create New User",
+      "description": "Fill out the form to add a new user account.",
+      "labels": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role"
+      },
+      "placeholders": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "Select a role"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Create User"
+      },
+      "messages": {
+        "success": "User created and verification email sent",
+        "errorFallback": "Failed to create user"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidEmail": "Enter a valid email address",
+        "roleRequired": "Select a role"
+      }
+    },
+    "UserTable": {
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "resendInvite": "Resend Invite",
+        "sending": "Sending..."
+      },
+      "messages": {
+        "resendSuccess": "Onboarding email resent successfully",
+        "resendError": "Failed to resend onboarding email",
+        "errorFallback": "An error occurred"
+      },
+      "empty": {
+        "description": "No users found."
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} users",
+        "empty": "No users",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    },
+    "AssignWebhookDialog": {
+      "trigger": "Assign Webhook",
+      "title": "Assign Webhook to WABA",
+      "description": "Select a webhook to handle messages for <strong>{name}</strong>. Choosing \"None / Remove\" will remove the current assignment.",
+      "placeholder": "Select a webhook",
+      "noneOption": "None / Remove",
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "messages": {
+        "success": "Webhook assigned successfully",
+        "errorFallback": "Failed to assign webhook"
+      }
+    },
+    "WabaTable": {
+      "columns": {
+        "namePhone": "Name / Phone Number",
+        "associatedUser": "Associated User",
+        "assignedWebhook": "Assigned Webhook",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "badges": {
+        "none": "None"
+      },
+      "row": {
+        "unknownUser": "Unknown",
+        "noPhoneNumbers": "No phone numbers",
+        "none": "None"
+      },
+      "empty": {
+        "description": "No WABAs found."
+      },
+      "error": {
+        "fallback": "An error occurred",
+        "retry": "Retry"
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} WABAs",
+        "empty": "No WABAs",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    },
+    "CreateWebhookDialog": {
+      "trigger": "Add Webhook",
+      "title": "Add New Webhook",
+      "description": "Enter the webhook details below. The URL will be validated before saving.",
+      "labels": {
+        "name": "Name",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Passphrase"
+      },
+      "placeholders": {
+        "name": "My Webhook",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Shared secret for JWT signing"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Add Webhook"
+      },
+      "messages": {
+        "success": "Webhook created successfully",
+        "errorFallback": "Failed to create webhook"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidUrl": "Enter a valid URL",
+        "passphraseRequired": "Passphrase is required"
+      }
+    },
+    "DeleteWebhookDialog": {
+      "trigger": "Delete",
+      "title": "Delete Webhook",
+      "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "actions": {
+        "cancel": "Cancel",
+        "deleting": "Deleting...",
+        "delete": "Delete"
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" deleted successfully",
+        "errorFallback": "Failed to delete webhook"
+      }
+    },
+    "WebhookDocsDialog": {
+      "trigger": "API Docs",
+      "title": "Webhook API Documentation",
+      "description": "How your webhook endpoint should handle incoming requests from pesan-ai.",
+      "sections": {
+        "auth": {
+          "title": "Authentication",
+          "p1": "Every request includes a bearer token in the <authCode>Authorization</authCode> header. The token is a short-lived JWT signed with the <strongAuth>HS256</strongAuth> algorithm using your configured <strongPassphrase>passphrase</strongPassphrase> as the shared secret.",
+          "p2": "If your webhook tool asks for JWT credentials, configure the key type as <strongType>passphrase</strongType>, choose <strongAlgo>HS256</strongAlgo> as the algorithm, and use the exact passphrase entered when creating the webhook in pesan-ai."
+        },
+        "validation": {
+          "title": "Validation Request",
+          "p1": "When you register a webhook, pesan-ai sends a <strongGet>GET</strongGet> request to your URL to verify it is reachable and can authenticate. Your endpoint must validate the JWT token and return a <codeOk>200 OK</codeOk> response to confirm the webhook is valid."
+        },
+        "message": {
+          "title": "Message Request",
+          "p1": "When a new message is received, pesan-ai forwards it to your webhook via a <strongPost>POST</strongPost> request. Your endpoint should verify the JWT bearer token using your configured passphrase, process the message history, and return a bot response.",
+          "p2": "The <codePhone>customerPhoneNumber</codePhone> field identifies the customer, and the <codeMessages>messages</codeMessages> array contains text messages in chronological order.",
+          "list": {
+            "phone": "<codeField>customerPhoneNumber</codeField>: customer WhatsApp phone number in international format.",
+            "sequence": "<codeField>sequence</codeField>: number, chronological order starting at 1.",
+            "source": "<codeField>source</codeField>: one of <codeSource>customer</codeSource>, <codeSource>admin</codeSource>, or <codeSource>bot</codeSource>.",
+            "timestamp": "<codeField>timestamp</codeField>: ISO-8601 timestamp string.",
+            "content": "<codeField>content</codeField>: text message content."
+          },
+          "p3": "The <codeBot>botResponse</codeBot> field is optional and will be sent to the customer as a bot message. <codeAdmin>adminTakeover</codeAdmin> is optional and defaults to <codeFalse>false</codeFalse>; when set to <codeTrue>true</codeTrue>, pesan-ai marks the conversation for admin takeover before sending the bot response.",
+          "p4": "Return a non-2xx status only when pesan-ai should treat the webhook call as failed. Client errors are not retried, except <code429>429</code429>. Rate limits and server errors are retried up to 3 times with a 1 second linear delay."
+        }
+      }
+    },
+    "WebhookTable": {
+      "columns": {
+        "name": "Name",
+        "url": "URL",
+        "status": "Status",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "empty": {
+        "description": "No webhooks found."
+      },
+      "error": {
+        "fallback": "An error occurred",
+        "retry": "Retry"
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} webhooks",
+        "empty": "No webhooks",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    }
   }
 }

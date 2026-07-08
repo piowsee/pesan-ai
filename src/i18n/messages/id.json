@@ -641,5 +641,258 @@
       "noMatch": "Tidak ada WABA yang cocok dengan pencarian ini.",
       "noNumbers": "Tidak ada nomor yang terhubung"
     }
+  },
+  "Admin": {
+    "user": {
+      "page": {
+        "title": "Manajemen Pengguna",
+        "description": "Tambah dan kelola akun pengguna untuk platform."
+      }
+    },
+    "waba": {
+      "page": {
+        "title": "Manajemen WABA",
+        "description": "Lihat semua Akun WhatsApp Business dan pasangkan webhook kepada mereka."
+      }
+    },
+    "webhook": {
+      "page": {
+        "title": "Manajemen Webhook",
+        "description": "Tambah dan kelola endpoint webhook untuk platform."
+      }
+    },
+    "AdminDashboardCard": {
+      "title": "Dashboard Admin",
+      "description": "Pilih menu di bawah untuk mengelola sistem.",
+      "navigation": {
+        "user": {
+          "label": "Kelola Akun Pengguna",
+          "description": "Tambah dan kelola akun pengguna."
+        },
+        "webhook": {
+          "label": "Kelola Webhook",
+          "description": "Konfigurasi dan pantau webhook yang aktif."
+        },
+        "waba": {
+          "label": "Kelola WABA Pengguna",
+          "description": "Pasangkan Webhook ke WABA"
+        }
+      }
+    },
+    "Header": {
+      "logoAlt": "pesan.ai logo",
+      "brandName": "pesan-ai"
+    },
+    "CreateUserDialog": {
+      "trigger": "Buat Pengguna",
+      "title": "Buat Pengguna Baru",
+      "description": "Isi formulir untuk menambahkan akun pengguna baru.",
+      "labels": {
+        "name": "Nama",
+        "email": "Email",
+        "role": "Peran"
+      },
+      "placeholders": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "Pilih peran"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "creating": "Membuat...",
+        "submit": "Buat Pengguna"
+      },
+      "messages": {
+        "success": "Pengguna dibuat dan email verifikasi dikirim",
+        "errorFallback": "Gagal membuat pengguna"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidEmail": "Masukkan alamat email yang valid",
+        "roleRequired": "Pilih peran"
+      }
+    },
+    "UserTable": {
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "columns": {
+        "name": "Nama",
+        "email": "Email",
+        "role": "Peran",
+        "createdAt": "Dibuat Pada",
+        "actions": "Aksi"
+      },
+      "actions": {
+        "resendInvite": "Kirim Ulang Undangan",
+        "sending": "Mengirim..."
+      },
+      "messages": {
+        "resendSuccess": "Email onboarding berhasil dikirim ulang",
+        "resendError": "Gagal mengirim ulang email onboarding",
+        "errorFallback": "Terjadi kesalahan"
+      },
+      "empty": {
+        "description": "Tidak ada pengguna."
+      },
+      "pagination": {
+        "showing": "Menampilkan {start}-{end} dari {total} pengguna",
+        "empty": "Tidak ada pengguna",
+        "previous": "Sebelumnya",
+        "page": "Halaman {current} dari {total}",
+        "next": "Selanjutnya"
+      }
+    },
+    "AssignWebhookDialog": {
+      "trigger": "Pasangkan Webhook",
+      "title": "Pasangkan Webhook ke WABA",
+      "description": "Pilih webhook untuk menangani pesan dari <strong>{name}</strong>. Memilih \"None / Remove\" akan menghapus webhook yang dipasangkan saat ini.",
+      "placeholder": "Pilih webhook",
+      "noneOption": "None / Remove",
+      "actions": {
+        "cancel": "Batal",
+        "save": "Simpan"
+      },
+      "messages": {
+        "success": "Webhook berhasil dipasangkan",
+        "errorFallback": "Gagal memasangkan webhook"
+      }
+    },
+    "WabaTable": {
+      "columns": {
+        "namePhone": "Nama / Nomor Telepon",
+        "associatedUser": "Pengguna Terkait",
+        "assignedWebhook": "Webhook Dipasangkan",
+        "createdAt": "Dibuat Pada",
+        "actions": "Aksi"
+      },
+      "badges": {
+        "none": "None"
+      },
+      "row": {
+        "unknownUser": "Tidak Diketahui",
+        "noPhoneNumbers": "Tidak ada nomor telepon",
+        "none": "None"
+      },
+      "empty": {
+        "description": "Tidak ada WABA."
+      },
+      "error": {
+        "fallback": "Terjadi kesalahan",
+        "retry": "Coba lagi"
+      },
+      "pagination": {
+        "showing": "Menampilkan {start}-{end} dari {total} WABA",
+        "empty": "Tidak ada WABA",
+        "previous": "Sebelumnya",
+        "page": "Halaman {current} dari {total}",
+        "next": "Selanjutnya"
+      }
+    },
+    "CreateWebhookDialog": {
+      "trigger": "Tambah Webhook",
+      "title": "Tambah Webhook Baru",
+      "description": "Masukkan detail webhook di bawah ini. URL akan divalidasi sebelum disimpan.",
+      "labels": {
+        "name": "Nama",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Frasa Sandi"
+      },
+      "placeholders": {
+        "name": "Webhook Saya",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Rahasia bersama untuk JWT"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "creating": "Membuat...",
+        "submit": "Tambah Webhook"
+      },
+      "messages": {
+        "success": "Webhook berhasil dibuat",
+        "errorFallback": "Gagal membuat webhook"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidUrl": "Masukkan URL yang valid",
+        "passphraseRequired": "Frasa sandi wajib diisi"
+      }
+    },
+    "DeleteWebhookDialog": {
+      "trigger": "Hapus",
+      "title": "Hapus Webhook",
+      "description": "Apakah Anda yakin ingin menghapus \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
+      "actions": {
+        "cancel": "Batal",
+        "deleting": "Menghapus...",
+        "delete": "Hapus"
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" berhasil dihapus",
+        "errorFallback": "Gagal menghapus webhook"
+      }
+    },
+    "WebhookDocsDialog": {
+      "trigger": "Dokumentasi API",
+      "title": "Dokumentasi API Webhook",
+      "description": "Bagaimana endpoint webhook Anda harus menangani permintaan dari pesan-ai.",
+      "sections": {
+        "auth": {
+          "title": "Autentikasi",
+          "p1": "Setiap permintaan menyertakan token bearer di header <authCode>Authorization</authCode>. Token ini adalah JWT berumur pendek yang ditandatangani dengan algoritma <strongAuth>HS256</strongAuth> menggunakan <strongPassphrase>frasa sandi</strongPassphrase> yang Anda konfigurasikan sebagai rahasia bersama.",
+          "p2": "Jika webhook tool Anda meminta kredensial JWT, konfigurasi tipe key sebagai <strongType>passphrase</strongType>, pilih <strongAlgo>HS256</strongAlgo> sebagai algoritma, dan gunakan frasa sandi yang sama persis saat membuat webhook di pesan-ai."
+        },
+        "validation": {
+          "title": "Permintaan Validasi",
+          "p1": "Saat Anda mendaftarkan webhook, pesan-ai mengirim permintaan <strongGet>GET</strongGet> ke URL Anda untuk memverifikasi apakah URL tersebut dapat dijangkau dan diautentikasi. Endpoint Anda harus memvalidasi token JWT dan mengembalikan respons <codeOk>200 OK</codeOk> untuk mengonfirmasi validitas webhook."
+        },
+        "message": {
+          "title": "Permintaan Pesan",
+          "p1": "Saat pesan baru diterima, pesan-ai meneruskannya ke webhook Anda melalui permintaan <strongPost>POST</strongPost>. Endpoint Anda harus memverifikasi token bearer JWT menggunakan frasa sandi yang dikonfigurasikan, memproses riwayat pesan, dan mengembalikan respons bot.",
+          "p2": "Kolom <codePhone>customerPhoneNumber</codePhone> mengidentifikasi pelanggan, dan array <codeMessages>messages</codeMessages> berisi pesan teks secara kronologis.",
+          "list": {
+            "phone": "<codeField>customerPhoneNumber</codeField>: nomor telepon WhatsApp pelanggan dalam format internasional.",
+            "sequence": "<codeField>sequence</codeField>: angka, urutan kronologis mulai dari 1.",
+            "source": "<codeField>source</codeField>: salah satu dari <codeSource>customer</codeSource>, <codeSource>admin</codeSource>, atau <codeSource>bot</codeSource>.",
+            "timestamp": "<codeField>timestamp</codeField>: string timestamp ISO-8601.",
+            "content": "<codeField>content</codeField>: konten teks pesan."
+          },
+          "p3": "Kolom <codeBot>botResponse</codeBot> bersifat opsional dan akan dikirim ke pelanggan sebagai pesan bot. <codeAdmin>adminTakeover</codeAdmin> bersifat opsional dan default ke <codeFalse>false</codeFalse>; saat diatur ke <codeTrue>true</codeTrue>, pesan-ai menandai percakapan untuk pengambilalihan admin sebelum mengirim pesan bot.",
+          "p4": "Kembalikan status non-2xx hanya ketika pesan-ai harus menganggap panggilan webhook gagal. Kesalahan klien tidak dicoba ulang, kecuali <code429>429</code429>. Batas rate dan kesalahan server dicoba ulang hingga 3 kali dengan jeda linear 1 detik."
+        }
+      }
+    },
+    "WebhookTable": {
+      "columns": {
+        "name": "Nama",
+        "url": "URL",
+        "status": "Status",
+        "createdAt": "Dibuat Pada",
+        "actions": "Aksi"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Tidak Aktif"
+      },
+      "empty": {
+        "description": "Tidak ada webhook."
+      },
+      "error": {
+        "fallback": "Terjadi kesalahan",
+        "retry": "Coba lagi"
+      },
+      "pagination": {
+        "showing": "Menampilkan {start}-{end} dari {total} webhook",
+        "empty": "Tidak ada webhook",
+        "previous": "Sebelumnya",
+        "page": "Halaman {current} dari {total}",
+        "next": "Selanjutnya"
+      }
+    }
   }
 }

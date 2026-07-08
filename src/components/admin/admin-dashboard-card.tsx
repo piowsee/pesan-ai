@@ -1,37 +1,40 @@
 import { Button } from '@/components/ui/button';
+import { Link } from '@/i18n/navigation';
 import { CircleUser, UserPlus, Webhook } from 'lucide-react';
-import Link from 'next/link';
-
-const ADMIN_NAVIGATION = [
-  {
-    href: '/admin/user',
-    label: 'Manage User Account',
-    description: 'Add and manage user accounts.',
-    icon: UserPlus,
-  },
-  {
-    href: '/admin/webhook',
-    label: 'Manage Webhook',
-    description: 'Configure and monitor active webhooks.',
-    icon: Webhook,
-  },
-  {
-    href: '/admin/waba',
-    label: 'Manage User WABA',
-    description: 'Assign Webhook to WABA',
-    icon: CircleUser,
-  },
-] as const;
+import { useTranslations } from 'next-intl';
 
 export function AdminDashboardCard() {
+  const t = useTranslations('Admin.AdminDashboardCard');
+
+  const ADMIN_NAVIGATION = [
+    {
+      href: '/admin/user',
+      label: t('navigation.user.label'),
+      description: t('navigation.user.description'),
+      icon: UserPlus,
+    },
+    {
+      href: '/admin/webhook',
+      label: t('navigation.webhook.label'),
+      description: t('navigation.webhook.description'),
+      icon: Webhook,
+    },
+    {
+      href: '/admin/waba',
+      label: t('navigation.waba.label'),
+      description: t('navigation.waba.description'),
+      icon: CircleUser,
+    },
+  ] as const;
+
   return (
     <div className="w-full max-w-lg">
       <div className="mb-10 flex flex-col gap-2 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Admin Dashboard
+          {t('title')}
         </h1>
         <p className="text-sm leading-6 text-muted-foreground">
-          Select a menu below to manage the system.
+          {t('description')}
         </p>
       </div>
 

@@ -19,129 +19,133 @@ import {
   MessageSquare,
   RefreshCw,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { AssignWebhookDialog } from './assign-webhook-dialog';
 
 const PAGE_SIZE = 10;
-const TABLE_COLUMNS = [
-  'Name / Phone Number',
-  'Associated User',
-  'Assigned Webhook',
-  'Created At',
-  'Actions',
-];
-
-// ─── Sub-components ──────────────────────────────────────────────────
-
-function WebhookBadge({ webhook }: { webhook: Waba['assignedWebhook'] }) {
-  if (!webhook) {
-    return <Badge variant="secondary">None</Badge>;
-  }
-  return <Badge variant="default">{webhook.name}</Badge>;
-}
-
-function WabaRow({ waba }: { waba: Waba }) {
-  const formattedDate = new Date(waba.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-
-  const phonesDisplay =
-    waba.phoneNumbers.length > 0
-      ? waba.phoneNumbers.map((pn) => pn.displayPhoneNumber).join(', ')
-      : 'No phone numbers';
-
-  return (
-    <TableRow>
-      <TableCell className="font-medium">
-        <div className="flex flex-col gap-1">
-          <span>{waba.businessName || waba.wabaId}</span>
-          <span className="text-xs text-muted-foreground">{phonesDisplay}</span>
-        </div>
-      </TableCell>
-      <TableCell>
-        {waba.user ? (
-          <div className="flex flex-col">
-            <span>{waba.user.name || 'Unknown'}</span>
-            <span className="text-xs text-muted-foreground">
-              {waba.user.email}
-            </span>
-          </div>
-        ) : (
-          <span className="text-muted-foreground italic">None</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <WebhookBadge webhook={waba.assignedWebhook} />
-      </TableCell>
-      <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
-      <TableCell>
-        <AssignWebhookDialog
-          wabaId={waba.id}
-          wabaName={waba.businessName || waba.wabaId}
-          currentWebhookId={waba.assignedWebhook?.id || null}
-        />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <TableRow key={index}>
-          {TABLE_COLUMNS.map((col) => (
-            <TableCell key={col}>
-              <Skeleton className="h-4 w-24" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
-function EmptyState() {
-  return (
-    <TableRow>
-      <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <MessageSquare className="size-8 opacity-50" />
-          <p className="text-sm">No WABAs found.</p>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  return (
-    <TableRow>
-      <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
-        <div className="flex flex-col items-center gap-3 text-destructive">
-          <p className="text-sm">{message}</p>
-          <Button variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCw data-icon="inline-start" />
-            Retry
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// ─── Main Component ──────────────────────────────────────────────────
 
 export function WabaTable() {
+  const t = useTranslations('Admin.WabaTable');
+
+  const TABLE_COLUMNS = [
+    t('columns.namePhone'),
+    t('columns.associatedUser'),
+    t('columns.assignedWebhook'),
+    t('columns.createdAt'),
+    t('columns.actions'),
+  ];
+
+  function WebhookBadge({ webhook }: { webhook: Waba['assignedWebhook'] }) {
+    if (!webhook) {
+      return <Badge variant="secondary">{t('badges.none')}</Badge>;
+    }
+    return <Badge variant="default">{webhook.name}</Badge>;
+  }
+
+  function WabaRow({ waba }: { waba: Waba }) {
+    const formattedDate = new Date(waba.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    const phonesDisplay =
+      waba.phoneNumbers.length > 0
+        ? waba.phoneNumbers.map((pn) => pn.displayPhoneNumber).join(', ')
+        : t('row.noPhoneNumbers');
+
+    return (
+      <TableRow>
+        <TableCell className="font-medium">
+          <div className="flex flex-col gap-1">
+            <span>{waba.businessName || waba.wabaId}</span>
+            <span className="text-xs text-muted-foreground">
+              {phonesDisplay}
+            </span>
+          </div>
+        </TableCell>
+        <TableCell>
+          {waba.user ? (
+            <div className="flex flex-col">
+              <span>{waba.user.name || t('row.unknownUser')}</span>
+              <span className="text-xs text-muted-foreground">
+                {waba.user.email}
+              </span>
+            </div>
+          ) : (
+            <span className="text-muted-foreground italic">
+              {t('row.none')}
+            </span>
+          )}
+        </TableCell>
+        <TableCell>
+          <WebhookBadge webhook={waba.assignedWebhook} />
+        </TableCell>
+        <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
+        <TableCell>
+          <AssignWebhookDialog
+            wabaId={waba.id}
+            wabaName={waba.businessName || waba.wabaId}
+            currentWebhookId={waba.assignedWebhook?.id || null}
+          />
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  function TableSkeleton() {
+    return (
+      <>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <TableRow key={index}>
+            {TABLE_COLUMNS.map((col) => (
+              <TableCell key={col}>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </>
+    );
+  }
+
+  function EmptyState() {
+    return (
+      <TableRow>
+        <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <MessageSquare className="size-8 opacity-50" />
+            <p className="text-sm">{t('empty.description')}</p>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  function ErrorState({
+    message,
+    onRetry,
+  }: {
+    message: string;
+    onRetry: () => void;
+  }) {
+    return (
+      <TableRow>
+        <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
+          <div className="flex flex-col items-center gap-3 text-destructive">
+            <p className="text-sm">{message}</p>
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              <RefreshCw data-icon="inline-start" />
+              {t('error.retry')}
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, isPlaceholderData, refetch } =
     useWabas(page, PAGE_SIZE);
@@ -157,7 +161,7 @@ export function WabaTable() {
     if (isLoading) return <TableSkeleton />;
     if (isError) {
       const message =
-        error instanceof Error ? error.message : 'An error occurred';
+        error instanceof Error ? error.message : t('error.fallback');
       return <ErrorState message={message} onRetry={() => refetch()} />;
     }
     if (wabas.length === 0) return <EmptyState />;
@@ -189,8 +193,12 @@ export function WabaTable() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {total > 0
-            ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${total} WABAs`
-            : 'No WABAs'}
+            ? t('pagination.showing', {
+                start: (page - 1) * PAGE_SIZE + 1,
+                end: Math.min(page * PAGE_SIZE, total),
+                total: total,
+              })
+            : t('pagination.empty')}
         </p>
 
         <div className="flex items-center gap-2">
@@ -201,11 +209,11 @@ export function WabaTable() {
             onClick={() => setPage((prev) => prev - 1)}
           >
             <ChevronLeft data-icon="inline-start" />
-            Previous
+            {t('pagination.previous')}
           </Button>
 
           <span className="px-2 text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t('pagination.page', { current: page, total: totalPages })}
           </span>
 
           <Button
@@ -214,7 +222,7 @@ export function WabaTable() {
             disabled={!canGoNext}
             onClick={() => setPage((prev) => prev + 1)}
           >
-            Next
+            {t('pagination.next')}
             <ChevronRight data-icon="inline-end" />
           </Button>
         </div>
