@@ -5,6 +5,16 @@ import {
   MessageTimelineSkeleton,
 } from '@/components/chat/detail-panel/chat-detail/message-timeline';
 import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MessageGroup } from '@/hooks/use-message';
@@ -14,6 +24,7 @@ import {
   LoaderCircleIcon,
   MessageSquareIcon,
 } from 'lucide-react';
+import { useState } from 'react';
 
 function MessageHistorySkeleton() {
   return (
@@ -83,6 +94,8 @@ export function ChatDetail({
   ) => void;
   pendingTakeoverConversationId?: string;
 }) {
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+
   if (isLoading && !conversation) {
     return <ChatDetailSkeleton />;
   }
@@ -139,7 +152,7 @@ export function ChatDetail({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onToggleTakeover(conversation.id, false)}
+              onClick={() => setIsCloseDialogOpen(true)}
               disabled={pendingTakeoverConversationId === conversation.id}
               className="shrink-0 bg-background"
             >
@@ -150,6 +163,35 @@ export function ChatDetail({
               )}
               Close conversation
             </Button>
+            {isCloseDialogOpen && (
+              <AlertDialog
+                open={isCloseDialogOpen}
+                onOpenChange={setIsCloseDialogOpen}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Close this conversation?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The bot will resume handling new messages from{' '}
+                      {conversation.displayName}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onToggleTakeover(conversation.id, false);
+                        setIsCloseDialogOpen(false);
+                      }}
+                    >
+                      Close conversation
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         )}
         <MessageComposer
