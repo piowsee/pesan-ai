@@ -1,8 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export function SignOutButton() {

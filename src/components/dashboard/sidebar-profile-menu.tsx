@@ -15,11 +15,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
 import { LogOut, Settings, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export function SidebarProfileMenu({ user }: { user: User }) {

@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Mail, Save } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
