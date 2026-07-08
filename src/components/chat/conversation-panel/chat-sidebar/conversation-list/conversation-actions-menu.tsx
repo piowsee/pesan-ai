@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { ChatConversation } from '@/types/chat';
 import {
-  BotIcon,
+  CheckCircleIcon,
   LoaderCircleIcon,
   type LucideIcon,
   MoreHorizontalIcon,
@@ -65,7 +65,7 @@ export function ConversationActionsMenu({
       icon: isTakeoverPending
         ? LoaderCircleIcon
         : conversation.adminTakeover
-          ? BotIcon
+          ? CheckCircleIcon
           : UserRoundCheckIcon,
       iconClassName: isTakeoverPending ? 'animate-spin' : undefined,
       disabled: isTakeoverPending,
