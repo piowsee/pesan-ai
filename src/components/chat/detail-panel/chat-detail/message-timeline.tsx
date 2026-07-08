@@ -1,6 +1,11 @@
 'use client';
 
 import { MessageBubble } from '@/components/chat/detail-panel/chat-detail/message-bubble/message-bubble';
+import {
+  UnreadMessagesDivider,
+  getUnreadBoundaryMessageId,
+  shouldRenderUnreadDivider,
+} from '@/components/chat/shared/unread-divider';
 import { Badge } from '@/components/ui/badge';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { Button } from '@/components/ui/button';
@@ -26,24 +31,6 @@ function getMessagesBelowViewportCount(viewport: HTMLDivElement) {
     const messageRect = element.getBoundingClientRect();
     return messageRect.top >= viewportRect.bottom - 1;
   }).length;
-}
-
-function getUnreadBoundaryMessageId({
-  messages,
-  unreadCount,
-}: {
-  messages: MessageGroup[];
-  unreadCount: number;
-}) {
-  if (unreadCount <= 0) {
-    return undefined;
-  }
-
-  const incomingMessages = messages
-    .flatMap((group) => group.messages)
-    .filter((message) => message.direction === 'incoming');
-
-  return incomingMessages.at(-unreadCount)?.id ?? incomingMessages[0]?.id;
 }
 
 const MESSAGE_BUBBLE_SKELETON_LINES = [
@@ -107,18 +94,6 @@ export function MessageTimelineSkeleton({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, index) => (
         <MessageBubbleSkeleton key={index} index={index} />
       ))}
-    </div>
-  );
-}
-
-function UnreadMessagesDivider() {
-  return (
-    <div className="flex items-center gap-3 py-1" aria-label="Unread messages">
-      <div className="h-px flex-1 bg-brand/20" />
-      <span className="rounded-full border border-brand/20 bg-background/95 px-3 py-1 text-[11px] font-semibold text-brand shadow-sm backdrop-blur-sm">
-        Unread messages
-      </span>
-      <div className="h-px flex-1 bg-brand/20" />
     </div>
   );
 }
@@ -360,7 +335,10 @@ export function MessageTimeline({
                       data-message-id={message.id}
                       className="flex flex-col gap-4"
                     >
-                      {message.id === unreadBoundaryMessageId ? (
+                      {shouldRenderUnreadDivider({
+                        messageId: message.id,
+                        unreadBoundaryMessageId,
+                      }) ? (
                         <div ref={unreadDividerRef}>
                           <UnreadMessagesDivider />
                         </div>

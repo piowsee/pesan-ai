@@ -36,7 +36,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
     it('generates a presigned POST form for an image with the image size limit', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
-      ).mockResolvedValue({ id: 'conv-1' } as never);
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: new Date(),
+        phoneNumber: { waba: { status: 'active' } },
+      } as never);
       vi.mocked(createPresignedPost).mockResolvedValue({
         url: 'https://space.example/upload',
         fields: {
@@ -92,7 +96,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
     it('uses the document size limit for supported document uploads', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
-      ).mockResolvedValue({ id: 'conv-1' } as never);
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: new Date(),
+        phoneNumber: { waba: { status: 'active' } },
+      } as never);
       vi.mocked(createPresignedPost).mockResolvedValue({
         url: 'https://space.example/upload',
         fields: {
@@ -118,6 +126,78 @@ describe('S3Service', { tags: ['backend'] }, () => {
         ],
         Expires: 1800,
       });
+    });
+
+    it('rejects upload URL creation when the WABA is not active', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: new Date(),
+        phoneNumber: { waba: { status: 'disconnected' } },
+      } as never);
+
+      await expect(
+        S3Service.createPresignedUploadUrl({
+          userId: 'user-1',
+          wabaId: 'waba-1',
+          convId: 'conv-1',
+          contentType: 'image/png',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'Cannot upload media because this WhatsApp Business account (WABA) is not active.',
+      });
+      expect(createPresignedPost).not.toHaveBeenCalled();
+    });
+
+    it('rejects upload URL creation outside the 24-hour customer service window', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+        phoneNumber: { waba: { status: 'active' } },
+      } as never);
+
+      await expect(
+        S3Service.createPresignedUploadUrl({
+          userId: 'user-1',
+          wabaId: 'waba-1',
+          convId: 'conv-1',
+          contentType: 'image/png',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'Cannot upload media because the 24-hour customer service window is closed.',
+      });
+      expect(createPresignedPost).not.toHaveBeenCalled();
+    });
+
+    it('rejects upload URL creation when the conversation has no customer message window', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        id: 'conv-1',
+        lastCustomerMessageAt: null,
+        phoneNumber: { waba: { status: 'active' } },
+      } as never);
+
+      await expect(
+        S3Service.createPresignedUploadUrl({
+          userId: 'user-1',
+          wabaId: 'waba-1',
+          convId: 'conv-1',
+          contentType: 'image/png',
+        }),
+      ).rejects.toMatchObject({
+        status: 409,
+        message:
+          'Cannot upload media because the 24-hour customer service window is closed.',
+      });
+      expect(createPresignedPost).not.toHaveBeenCalled();
     });
 
     it('rejects upload URL creation when the conversation is not owned by the user', async () => {

@@ -61,5 +61,35 @@
                 if (li) li.style.display = "none";
             });
         }
+
+        const headerLinks = Array.from(document.querySelectorAll(".content .header"));
+        for (const headerLink of headerLinks) {
+            headerLink.title = "Copy link";
+            headerLink.setAttribute("aria-label", `Copy link to ${headerLink.textContent.trim()}`);
+            headerLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+                const url = new URL(headerLink.getAttribute("href"), window.location.href);
+                window.history.replaceState(null, "", url.hash);
+
+                try {
+                    await navigator.clipboard.writeText(url.href);
+                    headerLink.dataset.copied = "true";
+                    window.setTimeout(() => {
+                        delete headerLink.dataset.copied;
+                    }, 1200);
+                } catch (_) {
+                    window.location.href = url.href;
+                }
+            });
+        }
+
+        const tipTitles = Array.from(document.querySelectorAll(".blockquote-tag-tip > .blockquote-tag-title"));
+        for (const tipTitle of tipTitles) {
+            for (const node of Array.from(tipTitle.childNodes)) {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === "Tip") {
+                    node.textContent = "If this happens";
+                }
+            }
+        }
     });
 </script>

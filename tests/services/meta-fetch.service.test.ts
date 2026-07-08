@@ -861,6 +861,42 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
       });
     });
 
+    it('sends BSUID messages with the recipient field', async () => {
+      vi.mocked(global.fetch).mockImplementation(async (input) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        if (url.includes('/messages')) {
+          return {
+            ok: true,
+            json: async () => ({
+              messages: [{ id: 'wamid.bsuid' }],
+            }),
+          } as Response;
+        }
+        return { ok: true, json: async () => ({}) } as Response;
+      });
+
+      await MetaFetchService.sendMessage({
+        phoneNumberId: PHONE_NUMBER_ID,
+        token: 'sys-user-token-xyz',
+        recipient: 'US.customer-123',
+        message: { type: 'text', text: 'Hello by BSUID' },
+      });
+
+      const sendCall = vi
+        .mocked(global.fetch)
+        .mock.calls.find(([url]) => String(url).includes('/messages'));
+      expect(JSON.parse(sendCall?.[1]?.body as string)).toEqual({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        recipient: 'US.customer-123',
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: 'Hello by BSUID',
+        },
+      });
+    });
+
     it.each([
       {
         label: 'image',

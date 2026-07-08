@@ -72,8 +72,7 @@ export function mapRawConversationToChatConversation(
     customerUsername ||
     'Customer';
   // customer identifier that used for contact such as phoneNumber/username
-  const contactIdentifier =
-    customerPhone || `@${customerUsername}` || displayName;
+  const contactIdentifier = customerPhone || customerUsername || displayName;
 
   return {
     id: chat.id,

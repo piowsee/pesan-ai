@@ -5,10 +5,26 @@ import {
   MessageTimelineSkeleton,
 } from '@/components/chat/detail-panel/chat-detail/message-timeline';
 import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MessageGroup } from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
-import { MessageSquareIcon } from 'lucide-react';
+import {
+  CheckCircleIcon,
+  LoaderCircleIcon,
+  MessageSquareIcon,
+} from 'lucide-react';
+import { useState } from 'react';
 
 function MessageHistorySkeleton() {
   return (
@@ -55,6 +71,8 @@ export function ChatDetail({
   showBackButton,
   onBack,
   onContactAreaClick,
+  onToggleTakeover,
+  pendingTakeoverConversationId,
 }: {
   conversation?: ChatConversation;
   wabaId?: string;
@@ -70,7 +88,14 @@ export function ChatDetail({
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;
+  onToggleTakeover: (
+    conversationId: string,
+    nextAdminTakeover: boolean,
+  ) => void;
+  pendingTakeoverConversationId?: string;
 }) {
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+
   if (isLoading && !conversation) {
     return <ChatDetailSkeleton />;
   }
@@ -117,7 +142,58 @@ export function ChatDetail({
         </div>
       </div>
 
-      <div className="z-10 shrink-0 bg-transparent">
+      <div className="z-10 shrink-0 bg-transparent flex flex-col">
+        {conversation.adminTakeover && (
+          <div className="bg-brand/10 p-3 mx-4 lg:mx-6 mb-2 rounded-md flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center justify-between border border-brand/20 shadow-sm text-sm">
+            <span className="text-foreground/80 font-medium">
+              Finished assisting this customer? Close the conversation to let
+              the bot take over.
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCloseDialogOpen(true)}
+              disabled={pendingTakeoverConversationId === conversation.id}
+              className="shrink-0 bg-background"
+            >
+              {pendingTakeoverConversationId === conversation.id ? (
+                <LoaderCircleIcon className="size-4 animate-spin mr-2" />
+              ) : (
+                <CheckCircleIcon className="size-4 mr-2" />
+              )}
+              Close conversation
+            </Button>
+            {isCloseDialogOpen && (
+              <AlertDialog
+                open={isCloseDialogOpen}
+                onOpenChange={setIsCloseDialogOpen}
+              >
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Close this conversation?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      The bot will resume handling new messages from{' '}
+                      {conversation.displayName}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onToggleTakeover(conversation.id, false);
+                        setIsCloseDialogOpen(false);
+                      }}
+                    >
+                      Close conversation
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        )}
         <MessageComposer
           key={conversation.id}
           conversation={conversation}

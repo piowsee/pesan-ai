@@ -1,7 +1,8 @@
 [book]
-title = "pesan-ai-guide-docs"
+title = "Pesan AI User Guide"
 authors = [
   "Wilson Angelie Tan <wilsonangelietann@gmail.com>",
+  "Lukas Austin <lukasaustin16@gmail.com>",
 ]
 language = "en"
 
@@ -10,6 +11,7 @@ after = ["links"]
 
 [output.html]
 additional-css = [
+  "./theme/css/pesan-ai-docs.css",
   "./theme/css/language-picker.css",
 ]
 

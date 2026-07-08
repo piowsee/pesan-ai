@@ -21,6 +21,11 @@ interface ChatDetailPaneProps {
   isContactInfoOpen: boolean;
   onBack: () => void;
   onContactAreaClick: () => void;
+  onToggleTakeover: (
+    conversationId: string,
+    nextAdminTakeover: boolean,
+  ) => void;
+  pendingTakeoverConversationId?: string;
 }
 
 export function ChatDetailPane({
@@ -40,6 +45,8 @@ export function ChatDetailPane({
   onSendMedia,
   selectedConversationId,
   showMobileDetail,
+  onToggleTakeover,
+  pendingTakeoverConversationId,
 }: ChatDetailPaneProps) {
   return (
     <div
@@ -61,6 +68,8 @@ export function ChatDetailPane({
           showBackButton={showMobileDetail}
           onBack={onBack}
           onContactAreaClick={onContactAreaClick}
+          onToggleTakeover={onToggleTakeover}
+          pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
       ) : (
         <div className="flex h-full flex-1 items-center justify-center bg-brand/5">

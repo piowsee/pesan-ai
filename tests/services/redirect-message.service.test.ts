@@ -162,7 +162,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
       phoneNumberId: 'meta-phone-1',
       token: 'plain-token',
-      to: 'US.redirect-customer-123',
+      recipient: 'US.redirect-customer-123',
       message: { type: 'text', text: 'ok' },
     });
     expect(MessageRepository.saveMessage).toHaveBeenCalledWith(

@@ -194,10 +194,33 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  // --- Upsert Operations (Embedded Signup) ---
-
   const TEST_WABA_ID = 'test-upsert-waba-999';
   const TEST_PHONE_ID = 'test-upsert-phone-999';
+
+  describe('updateStatusByMetaWabaId', () => {
+    it('updates WABA status by Meta WABA id', async () => {
+      await WabaRepository.upsertWaba({
+        wabaId: TEST_WABA_ID,
+        userId,
+        systemUserToken: 'enc:mock-token',
+        businessName: 'Test-Waba-Status',
+      });
+
+      const result = await WabaRepository.updateStatusByMetaWabaId({
+        wabaId: TEST_WABA_ID,
+        status: 'disconnected',
+      });
+
+      expect(result.count).toBe(1);
+
+      const updated = await prisma.whatsappBusinessAccount.findUnique({
+        where: { wabaId: TEST_WABA_ID },
+      });
+      expect(updated?.status).toBe('disconnected');
+    });
+  });
+
+  // --- Upsert Operations (Embedded Signup) ---
 
   describe('upsertWaba', () => {
     it('creates a new WhatsappBusinessAccount on first call', async () => {

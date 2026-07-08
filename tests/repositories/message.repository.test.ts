@@ -224,6 +224,105 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('updateStatusesByMetaMessageIds', () => {
+    it('updates outgoing messages by Meta message ID and returns routing data', async () => {
+      const contact = await prisma.contact.create({
+        data: {
+          customerPhone: '998007',
+        },
+      });
+      const conversation = await prisma.conversation.create({
+        data: {
+          contactId: contact.id,
+          phoneNumberId: dbPhoneNumberId,
+        },
+      });
+      const message = await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          messageId: 'status-update-message-1',
+          direction: 'outgoing',
+          source: 'admin',
+          type: 'text',
+          content: 'status me',
+          status: 'sent',
+          timestamp: new Date('2026-07-05T10:00:00.000Z'),
+        },
+      });
+
+      const result = await MessageRepository.updateStatusesByMetaMessageIds([
+        {
+          messageId: 'status-update-message-1',
+          status: 'read',
+          errorMessage: null,
+        },
+      ]);
+
+      expect(result).toEqual([
+        {
+          id: message.id,
+          messageId: 'status-update-message-1',
+          status: 'read',
+          errorMessage: null,
+          conversationId: conversation.id,
+          userId,
+          wabaId: dbWabaId,
+        },
+      ]);
+
+      const updatedMessage = await prisma.message.findUnique({
+        where: { messageId: 'status-update-message-1' },
+      });
+      expect(updatedMessage?.status).toBe('read');
+    });
+
+    it('ignores incoming messages and unknown Meta message IDs', async () => {
+      const contact = await prisma.contact.create({
+        data: {
+          customerPhone: '998008',
+        },
+      });
+      const conversation = await prisma.conversation.create({
+        data: {
+          contactId: contact.id,
+          phoneNumberId: dbPhoneNumberId,
+        },
+      });
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          messageId: 'incoming-status-ignored',
+          direction: 'incoming',
+          source: 'customer',
+          type: 'text',
+          content: 'customer message',
+          status: 'delivered',
+          timestamp: new Date('2026-07-05T10:00:00.000Z'),
+        },
+      });
+
+      const result = await MessageRepository.updateStatusesByMetaMessageIds([
+        {
+          messageId: 'incoming-status-ignored',
+          status: 'read',
+          errorMessage: null,
+        },
+        {
+          messageId: 'missing-status-message',
+          status: 'read',
+          errorMessage: null,
+        },
+      ]);
+
+      expect(result).toEqual([]);
+
+      const incomingMessage = await prisma.message.findUnique({
+        where: { messageId: 'incoming-status-ignored' },
+      });
+      expect(incomingMessage?.status).toBe('delivered');
+    });
+  });
+
   describe('saveMessage', () => {
     it('saves a message successfully', async () => {
       const contact = await prisma.contact.create({

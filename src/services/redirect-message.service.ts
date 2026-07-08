@@ -9,7 +9,10 @@ import { betterFetch } from '@better-fetch/fetch';
 import { randomUUID } from 'crypto';
 import z from 'zod';
 
-import { MetaFetchService } from './meta-fetch.service';
+import {
+  MetaFetchService,
+  type MetaSendMessageRecipient,
+} from './meta-fetch.service';
 import { WebhookService } from './webhook.service';
 
 const botWebhookOutputSchema = z.object({
@@ -28,6 +31,21 @@ type BotMessageHistory = Awaited<
   ReturnType<typeof MessageRepository.findConversationMessageHistory>
 >;
 type BotWebhookMessageHistory = Array<Omit<BotMessageHistory[number], 'type'>>;
+
+function getMetaSendMessageRecipient(
+  contact?: {
+    bsuid?: string | null;
+    customerPhone?: string | null;
+  } | null,
+): MetaSendMessageRecipient | null {
+  const bsuid = contact?.bsuid?.trim();
+  if (bsuid) return { recipient: bsuid };
+
+  const phoneNumber = contact?.customerPhone?.trim();
+  if (phoneNumber) return { to: phoneNumber };
+
+  return null;
+}
 
 function _toBotWebhookMessages(messages: BotWebhookMessageHistory) {
   return messages.map((message) => ({
@@ -273,8 +291,7 @@ async function _handlePostRedirectMessage(params: {
     return;
   }
 
-  const recipient =
-    conversation.contact?.bsuid ?? conversation.contact?.customerPhone ?? null;
+  const recipient = getMetaSendMessageRecipient(conversation.contact);
 
   if (!recipient) {
     logError(
@@ -288,7 +305,7 @@ async function _handlePostRedirectMessage(params: {
   const waResult = await MetaFetchService.sendMessage({
     phoneNumberId: conversation.phoneNumber.phoneNumberId, // Meta Phone Number ID.
     token: tokenToUse,
-    to: recipient,
+    ...recipient,
     message: { type: 'text', text: content },
   });
 

@@ -76,6 +76,7 @@ vi.mock('@/repositories/message.repository', () => ({
     findConversationMessageHistory: vi.fn(),
     findMessagesPaginated: vi.fn(),
     saveMessage: vi.fn(),
+    updateStatusesByMetaMessageIds: vi.fn(),
   },
 }));
 
@@ -87,6 +88,7 @@ vi.mock('@/repositories/waba.repository', () => ({
     getTotalUnreadListByUserId: vi.fn(),
     findById: vi.fn(),
     findByMetaWabaId: vi.fn(),
+    updateStatusByMetaWabaId: vi.fn(),
     findPhoneNumbersByMetaIds: vi.fn(),
     updateWabaWebhook: vi.fn(),
     upsertWaba: vi.fn(),
@@ -128,6 +130,13 @@ vi.mock('@/services/message.service', () => ({
     getMessagesPaginated: vi.fn(),
     sendAdminTextMessage: vi.fn(),
     confirmUploadedMediaMessage: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/meta-webhook-handler.service', () => ({
+  MetaWebhookHandlerService: {
+    isValidSignature: vi.fn(),
+    getUnprocessedWebhookResponse: vi.fn(),
     processMetaWebhookPayload: vi.fn(),
   },
 }));
@@ -237,8 +246,11 @@ vi.mock('@/lib/auth/auth', () => ({
   createResetPasswordCallbackUrl: vi.fn(),
 }));
 
-vi.mock('@/lib/server/debounce-message-manager', () => ({
-  handleDebounceIncomingMessage: vi.fn(),
+vi.mock('@/services/debouncer.service', () => ({
+  DebouncerService: {
+    handleDebounceIncomingMessage: vi.fn(),
+    handleDebounceAutoCloseConversation: vi.fn(),
+  },
 }));
 
 // --- Mocks for Libraries ---

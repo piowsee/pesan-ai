@@ -5,6 +5,13 @@ import { ChatConversationPane } from '@/components/chat/conversation-panel';
 import { ChatDetailPane } from '@/components/chat/detail-panel';
 import { ChatWorkspaceHeader } from '@/components/chat/header-panel';
 import {
+  type UnreadDividerSnapshotMap,
+  captureUnreadDividerSnapshot,
+  clearUnreadDividerSnapshot,
+  getUnreadDividerInitialCount,
+  hasUnreadDividerSnapshot,
+} from '@/components/chat/shared/unread-divider';
+import {
   CHAT_BASE_PARAM_KEYS,
   CHAT_DETAIL_PARAM_KEYS,
   CHAT_LIST_PARAM_KEYS,
@@ -151,7 +158,7 @@ export function ChatWorkspace() {
   const [
     initialUnreadCountByConversation,
     setInitialUnreadCountByConversation,
-  ] = useState<Record<string, number>>({});
+  ] = useState<UnreadDividerSnapshotMap>({});
   const [contactDetailsByConversation, setContactDetailsByConversation] =
     useState<Record<string, { label: string; notes: string }>>({});
 
@@ -485,11 +492,15 @@ export function ChatWorkspace() {
         notes: '',
       })
     : { label: '', notes: '' };
-  const selectedInitialUnreadCount = selectedConversationId
-    ? (initialUnreadCountByConversation[selectedConversationId] ??
-      selectedConversation?.unreadCount ??
-      0)
-    : 0;
+  const hasSelectedUnreadDividerSnapshot = hasUnreadDividerSnapshot({
+    conversationId: selectedConversationId,
+    snapshotByConversation: initialUnreadCountByConversation,
+  });
+  const selectedInitialUnreadCount = getUnreadDividerInitialCount({
+    conversationId: selectedConversationId,
+    conversationUnreadCount: selectedConversation?.unreadCount,
+    snapshotByConversation: initialUnreadCountByConversation,
+  });
 
   const showMobileDetail = Boolean(selectedConversationId);
   const { mutate: markAsRead } = useMarkAsRead();
@@ -509,15 +520,13 @@ export function ChatWorkspace() {
       );
       const unreadCount = Number(conversation?.unreadCount ?? 0);
 
-      setInitialUnreadCountByConversation((current) => {
-        if (unreadCount > 0) {
-          return { ...current, [conversationId]: unreadCount };
-        }
-
-        const next = { ...current };
-        delete next[conversationId];
-        return next;
-      });
+      setInitialUnreadCountByConversation((current) =>
+        captureUnreadDividerSnapshot({
+          conversationId,
+          snapshotByConversation: current,
+          unreadCount,
+        }),
+      );
 
       pushChatRoute({
         wabaId: activeWabaId,
@@ -537,7 +546,7 @@ export function ChatWorkspace() {
     if (
       !activeWabaId ||
       !selectedConversation ||
-      selectedInitialUnreadCount > 0
+      hasSelectedUnreadDividerSnapshot
     ) {
       return;
     }
@@ -561,8 +570,8 @@ export function ChatWorkspace() {
   }, [
     activeWabaId,
     markAsRead,
+    hasSelectedUnreadDividerSnapshot,
     selectedConversation,
-    selectedInitialUnreadCount,
   ]);
 
   const handleToggleTakeover = useCallback(
@@ -599,6 +608,12 @@ export function ChatWorkspace() {
     (content: string) => {
       if (!selectedConversationId || !activeWabaId) return;
 
+      setInitialUnreadCountByConversation((current) =>
+        clearUnreadDividerSnapshot({
+          conversationId: selectedConversationId,
+          snapshotByConversation: current,
+        }),
+      );
       setLocalSendScrollSignal((value) => value + 1);
       sendMessage({
         wabaId: activeWabaId,
@@ -613,6 +628,12 @@ export function ChatWorkspace() {
     ({ caption, file }: { file: File; caption?: string }) => {
       if (!selectedConversationId || !activeWabaId) return;
 
+      setInitialUnreadCountByConversation((current) =>
+        clearUnreadDividerSnapshot({
+          conversationId: selectedConversationId,
+          snapshotByConversation: current,
+        }),
+      );
       setLocalSendScrollSignal((value) => value + 1);
       sendMediaMessage({
         wabaId: activeWabaId,
@@ -718,6 +739,8 @@ export function ChatWorkspace() {
               panel: isContactInfoOpen ? undefined : 'contact',
             });
           }}
+          onToggleTakeover={handleToggleTakeover}
+          pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
 
         <ChatContactPanel

@@ -40,6 +40,10 @@ describe('SSE Route', () => {
       getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, mockUser.id),
       expect.any(Function),
     );
+    expect(eventBus.on).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.MESSAGE_STATUSES_UPDATED, mockUser.id),
+      expect.any(Function),
+    );
   });
 
   it('unsubscribes and clears heartbeat when connection is aborted', async () => {
@@ -72,6 +76,10 @@ describe('SSE Route', () => {
     );
     expect(eventBus.off).toHaveBeenCalledWith(
       getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, mockUser.id),
+      expect.any(Function),
+    );
+    expect(eventBus.off).toHaveBeenCalledWith(
+      getUserEvent(SSE_EVENTS.MESSAGE_STATUSES_UPDATED, mockUser.id),
       expect.any(Function),
     );
 
@@ -124,6 +132,42 @@ describe('SSE Route', () => {
     const decoded = new TextDecoder().decode(value);
 
     expect(decoded).toContain(`event: ${SSE_EVENTS.BOT_WEBHOOK_FAILED}`);
+    expect(decoded).toContain(`data: ${JSON.stringify(testPayload)}`);
+
+    await reader?.cancel();
+  });
+
+  it('streams message status update events', async () => {
+    const req = new Request('http://localhost/api/sse');
+    const response = await GET(req, { params: Promise.resolve({}) });
+    const reader = response.body?.getReader();
+    const eventName = getUserEvent(
+      SSE_EVENTS.MESSAGE_STATUSES_UPDATED,
+      mockUser.id,
+    );
+    const onMessageStatusesUpdated = vi
+      .mocked(eventBus.on)
+      .mock.calls.find(([name]) => name === eventName)?.[1];
+    const testPayload = {
+      wabaId: 'waba-1',
+      statuses: [
+        {
+          id: 'db-message-1',
+          messageId: 'wamid.message-1',
+          status: 'read',
+          errorMessage: null,
+          conversationId: 'conv-1',
+        },
+      ],
+    };
+
+    const readPromise = reader!.read();
+    onMessageStatusesUpdated!(testPayload);
+
+    const { value } = await readPromise;
+    const decoded = new TextDecoder().decode(value);
+
+    expect(decoded).toContain(`event: ${SSE_EVENTS.MESSAGE_STATUSES_UPDATED}`);
     expect(decoded).toContain(`data: ${JSON.stringify(testPayload)}`);
 
     await reader?.cancel();
