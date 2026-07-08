@@ -218,3 +218,70 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     });
   });
 });
+
+describe('handleDebounceAutoCloseConversation', { tags: ['backend'] }, () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-24T12:00:00.000Z'));
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('updates admin takeover to false after 24 hours', async () => {
+    DebouncerService.handleDebounceAutoCloseConversation({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+
+    await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000);
+    expect(
+      ConversationService.updateAdminTakeoverStatus,
+    ).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000 + 1000);
+    await flushDebouncedProcessing();
+
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+      adminTakeover: false,
+    });
+  });
+
+  it('resets the timer if called again within the timeout', async () => {
+    DebouncerService.handleDebounceAutoCloseConversation({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+
+    await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000);
+
+    DebouncerService.handleDebounceAutoCloseConversation({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+
+    await vi.advanceTimersByTimeAsync(18 * 60 * 60 * 1000);
+    expect(
+      ConversationService.updateAdminTakeoverStatus,
+    ).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(6 * 60 * 60 * 1000 + 1000);
+    await flushDebouncedProcessing();
+
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledTimes(
+      1,
+    );
+  });
+});

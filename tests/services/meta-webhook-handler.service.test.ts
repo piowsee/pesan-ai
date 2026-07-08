@@ -407,6 +407,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       expect(
         DebouncerService.handleDebounceIncomingMessage,
       ).not.toHaveBeenCalled();
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).not.toHaveBeenCalled();
       expect(eventBus.emit).toHaveBeenCalledWith(
         getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
         expect.objectContaining({
@@ -657,6 +660,13 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
         userId: 'user-1',
         wabaId: 'waba-1',
       });
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      });
     });
 
     it('uses contact profile, username, phone, and BSUID for incoming messages', async () => {
@@ -899,6 +909,13 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
         userId: testUserId,
         wabaId: 'waba-1',
       });
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: testUserId,
+        wabaId: 'waba-1',
+      });
 
       // Clean up the listener
       eventBus.off(userEventName, mockSseListener);
@@ -952,6 +969,13 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
       expect(
         DebouncerService.handleDebounceIncomingMessage,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-123',
+        wabaId: 'waba-1',
+      });
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
       ).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         userId: 'user-123',
@@ -1027,6 +1051,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       );
       expect(
         DebouncerService.handleDebounceIncomingMessage,
+      ).not.toHaveBeenCalled();
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
       ).not.toHaveBeenCalled();
     });
   });

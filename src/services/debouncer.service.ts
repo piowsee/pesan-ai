@@ -10,6 +10,10 @@ import { redirectMessageToExternalWebhook } from '@/services/redirect-message.se
 const incoming_message_timers = new Map<string, NodeJS.Timeout>();
 const REDIRECT_INCOMING_MESSAGE_TIMEOUT_MS = 15 * 1000; // 15 seconds
 
+// Timer for auto close conversation
+const close_conversation_timers = new Map<string, NodeJS.Timeout>();
+const AUTO_CLOSE_CONVERSATION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 1 day - free chat window is 1 day
+
 const BOT_HISTORY_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 type BotMessageHistory = Awaited<
@@ -44,6 +48,31 @@ export const DebouncerService = {
           void processDebouncedIncomingMessage(context);
         },
         REDIRECT_INCOMING_MESSAGE_TIMEOUT_MS,
+        params,
+      ),
+    );
+  },
+
+  handleDebounceAutoCloseConversation(params: DebouncerContext) {
+    const { conversationId } = params;
+
+    logger.info('Schedule auto close conversation', {
+      conversationId,
+    });
+
+    if (close_conversation_timers.has(conversationId)) {
+      clearTimeout(close_conversation_timers.get(conversationId));
+    }
+
+    close_conversation_timers.set(
+      conversationId,
+      setTimeout(
+        (context: DebouncerContext) => {
+          close_conversation_timers.delete(context.conversationId);
+          // fire and forget
+          void ProcessDebouncedAutoCloseConversation(context);
+        },
+        AUTO_CLOSE_CONVERSATION_TIMEOUT_MS,
         params,
       ),
     );
@@ -110,4 +139,18 @@ function removeMessageTypes(
       content,
     }),
   );
+}
+
+// Helper for Debounce Auto Close Conversation
+// -------------------------------------------
+async function ProcessDebouncedAutoCloseConversation(params: DebouncerContext) {
+  const { conversationId, userId, wabaId } = params;
+
+  await ConversationService.updateAdminTakeoverStatus({
+    conversationId,
+    userId,
+    wabaId,
+    adminTakeover: false,
+  });
+  return;
 }

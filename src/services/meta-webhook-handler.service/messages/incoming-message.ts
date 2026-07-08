@@ -141,6 +141,12 @@ async function processIncomingTextMessage(params: {
     wabaId,
   });
 
+  DebouncerService.handleDebounceAutoCloseConversation({
+    conversationId: conversation.id,
+    userId,
+    wabaId,
+  });
+
   return true;
 }
 
@@ -229,6 +235,12 @@ async function processIncomingMediaMessage(params: {
   }
 
   DebouncerService.handleDebounceIncomingMessage({
+    conversationId: conversation.id,
+    userId,
+    wabaId,
+  });
+
+  DebouncerService.handleDebounceAutoCloseConversation({
     conversationId: conversation.id,
     userId,
     wabaId,

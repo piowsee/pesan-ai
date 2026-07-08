@@ -249,6 +249,7 @@ vi.mock('@/lib/auth/auth', () => ({
 vi.mock('@/services/debouncer.service', () => ({
   DebouncerService: {
     handleDebounceIncomingMessage: vi.fn(),
+    handleDebounceAutoCloseConversation: vi.fn(),
   },
 }));
 
