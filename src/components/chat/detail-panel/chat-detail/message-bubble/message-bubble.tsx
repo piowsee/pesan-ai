@@ -7,6 +7,7 @@ import { useMessageMediaDownloadUrl } from '@/hooks/use-message';
 import { formatMessageTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/chat';
+import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 
 import { AudioMessage } from './audio-message';
@@ -54,10 +55,8 @@ function getLocalMediaUrl(metadata: string | null) {
   }
 }
 
-function getMediaLoadErrorDescription(error: unknown) {
-  return error instanceof Error
-    ? error.message
-    : 'Could not load media preview.';
+function getMediaLoadErrorDescription(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function MessageBubbleContent({
@@ -69,6 +68,7 @@ function MessageBubbleContent({
   message: ChatMessage;
   wabaId?: string;
 }) {
+  const t = useTranslations('Chat.bubble');
   const mediaType = isMediaMessageType(message.type) ? message.type : null;
   const canLoadMedia = Boolean(mediaType && wabaId && message.mediaObjectKey);
   const { data, error, isError, isStale, refetch } = useMessageMediaDownloadUrl(
@@ -102,7 +102,7 @@ function MessageBubbleContent({
       <MediaPlaceholder
         icon={icon}
         title={title}
-        description="Media file is unavailable."
+        description={t('errorUnavailable')}
       />
     );
   }
@@ -112,7 +112,7 @@ function MessageBubbleContent({
       <MediaPlaceholder
         icon={icon}
         title={title}
-        description={getMediaLoadErrorDescription(error)}
+        description={getMediaLoadErrorDescription(error, t('errorLoad'))}
       />
     );
   }

@@ -15,6 +15,7 @@ import { Spinner } from '@/components/ui/spinner';
 import type { MessageGroup } from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   useCallback,
   useEffect,
@@ -86,11 +87,9 @@ function MessageBubbleSkeleton({ index }: { index: number }) {
 }
 
 export function MessageTimelineSkeleton({ count = 6 }: { count?: number }) {
+  const t = useTranslations('Chat.timeline');
   return (
-    <div
-      className="flex flex-col gap-4 px-2 py-3"
-      aria-label="Loading messages"
-    >
+    <div className="flex flex-col gap-4 px-2 py-3" aria-label={t('loading')}>
       {Array.from({ length: count }).map((_, index) => (
         <MessageBubbleSkeleton key={index} index={index} />
       ))}
@@ -119,6 +118,7 @@ export function MessageTimeline({
   localSendScrollSignal: number;
   initialUnreadCount?: number;
 }) {
+  const t = useTranslations('Chat.timeline');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const unreadDividerRef = useRef<HTMLDivElement>(null);
@@ -302,7 +302,7 @@ export function MessageTimeline({
                 ) : (
                   <ChevronUpIcon data-icon="inline-start" />
                 )}
-                Load older messages
+                {t('loadOlder')}
               </Button>
             </div>
           ) : null}
@@ -313,7 +313,7 @@ export function MessageTimeline({
 
           {!isLoading && messages.length === 0 ? (
             <div className="flex flex-1 items-center justify-center px-6 py-12 text-sm text-muted-foreground">
-              No messages yet for this conversation.
+              {t('empty')}
             </div>
           ) : null}
 

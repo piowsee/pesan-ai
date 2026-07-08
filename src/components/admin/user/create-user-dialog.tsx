@@ -22,28 +22,28 @@ import {
 import { useCreateUser } from '@/hooks/use-users';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserPlus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-// ─── Schema ──────────────────────────────────────────────────────────
-
-const createUserSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Enter a valid email address'),
-  role: z.enum(['user', 'admin'], {
-    message: 'Select a role',
-  }),
-});
-
-type CreateUserFormValues = z.infer<typeof createUserSchema>;
-
 // ─── Component ───────────────────────────────────────────────────────
 
 export function CreateUserDialog() {
+  const t = useTranslations('Admin.CreateUserDialog');
   const [isOpen, setIsOpen] = useState(false);
   const createUser = useCreateUser();
+
+  const createUserSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')),
+    email: z.string().email(t('validation.invalidEmail')),
+    role: z.enum(['user', 'admin'], {
+      message: t('validation.roleRequired'),
+    }),
+  });
+
+  type CreateUserFormValues = z.infer<typeof createUserSchema>;
 
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
@@ -57,15 +57,13 @@ export function CreateUserDialog() {
   async function onSubmit(values: CreateUserFormValues) {
     createUser.mutate(values, {
       onSuccess: (result) => {
-        toast.success(
-          result.message ?? 'User created and verification email sent',
-        );
+        toast.success(result.message ?? t('messages.success'));
         form.reset();
         setIsOpen(false);
       },
       onError: (err) => {
         const message =
-          err instanceof Error ? err.message : 'Failed to create user';
+          err instanceof Error ? err.message : t('messages.errorFallback');
         toast.error(message);
       },
     });
@@ -84,16 +82,14 @@ export function CreateUserDialog() {
       <DialogTrigger asChild>
         <Button>
           <UserPlus data-icon="inline-start" />
-          Create User
+          {t('trigger')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create New User</DialogTitle>
-          <DialogDescription>
-            Fill out the form to add a new user account.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form
@@ -102,10 +98,10 @@ export function CreateUserDialog() {
         >
           {/* Name Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t('labels.name')}</Label>
             <Input
               id="name"
-              placeholder="John Doe"
+              placeholder={t('placeholders.name')}
               {...form.register('name')}
               aria-invalid={!!form.formState.errors.name}
             />
@@ -118,11 +114,11 @@ export function CreateUserDialog() {
 
           {/* Email Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('labels.email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="john@example.com"
+              placeholder={t('placeholders.email')}
               {...form.register('email')}
               aria-invalid={!!form.formState.errors.email}
             />
@@ -135,18 +131,18 @@ export function CreateUserDialog() {
 
           {/* Role Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role">{t('labels.role')}</Label>
             <Controller
               control={form.control}
               name="role"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger id="role" className="w-full">
-                    <SelectValue placeholder="Select a role" />
+                    <SelectValue placeholder={t('placeholders.role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">{t('roles.user')}</SelectItem>
+                    <SelectItem value="admin">{t('roles.admin')}</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -163,7 +159,7 @@ export function CreateUserDialog() {
             <p className="text-sm text-destructive">
               {createUser.error instanceof Error
                 ? createUser.error.message
-                : 'Failed to create user'}
+                : t('messages.errorFallback')}
             </p>
           )}
 
@@ -173,10 +169,12 @@ export function CreateUserDialog() {
               variant="outline"
               onClick={() => handleOpenChange(false)}
             >
-              Cancel
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={createUser.isPending}>
-              {createUser.isPending ? 'Creating...' : 'Create User'}
+              {createUser.isPending
+                ? t('actions.creating')
+                : t('actions.submit')}
             </Button>
           </DialogFooter>
         </form>

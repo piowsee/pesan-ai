@@ -29,7 +29,9 @@ export const AuthPageHelper = {
     const user = await this.requireUser();
 
     if (user.role !== 'admin') {
-      redirect('/dashboard');
+      const requestHeaders = await headers();
+      const locale = getLocaleFromHeaders(requestHeaders);
+      redirect(`/${locale}/dashboard`);
     }
 
     return user;

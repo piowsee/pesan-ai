@@ -18,6 +18,7 @@ import {
 import { type Waba } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
 import { CheckIcon, ChevronDownIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 function getWabaLabel(waba: Waba) {
@@ -33,6 +34,7 @@ export function WabaSwitcher({
   activeWabaId?: string;
   onSelectWaba: (wabaId: string) => void;
 }) {
+  const t = useTranslations('Chat.wabaSwitcher');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -61,7 +63,7 @@ export function WabaSwitcher({
           <div className="flex items-center gap-2 min-w-0">
             <div className="min-w-0">
               <div className="truncate text-xs font-semibold">
-                {activeWaba ? getWabaLabel(activeWaba) : 'Select a WABA'}
+                {activeWaba ? getWabaLabel(activeWaba) : t('select')}
               </div>
             </div>
           </div>
@@ -76,11 +78,11 @@ export function WabaSwitcher({
           <CommandInput
             value={query}
             onValueChange={setQuery}
-            placeholder="Search WABA or phone number"
+            placeholder={t('search')}
           />
           <CommandList>
             {filteredWabas.length === 0 ? (
-              <CommandEmpty>No WABA matches this search.</CommandEmpty>
+              <CommandEmpty>{t('noMatch')}</CommandEmpty>
             ) : (
               <CommandGroup className="p-1">
                 {filteredWabas.map((waba, index) => (
@@ -105,7 +107,7 @@ export function WabaSwitcher({
                             .map(
                               (phoneNumber) => phoneNumber.displayPhoneNumber,
                             )
-                            .join(', ') || 'No connected numbers'}
+                            .join(', ') || t('noNumbers')}
                         </div>
                       </div>
                       <CheckIcon

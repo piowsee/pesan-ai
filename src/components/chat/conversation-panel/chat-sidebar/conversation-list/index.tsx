@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ChatConversation } from '@/types/chat';
 import { MessageSquareIcon, RefreshCwIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 function ConversationListSkeleton() {
   return (
@@ -49,6 +50,8 @@ export function ConversationList({
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
+  const t = useTranslations('Chat.list');
+
   if (isLoading) {
     return <ConversationListSkeleton />;
   }
@@ -57,12 +60,10 @@ export function ConversationList({
     return (
       <div className="p-2">
         <ChatEmptyState
-          title="Unable to load chats"
-          description={
-            errorMessage ?? 'The inbox could not be loaded right now.'
-          }
+          title={t('errorTitle')}
+          description={errorMessage ?? t('errorDesc')}
           icon={RefreshCwIcon}
-          actionLabel="Retry"
+          actionLabel={t('retry')}
           onAction={onRetry}
         />
       </div>

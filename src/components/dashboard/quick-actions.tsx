@@ -1,40 +1,39 @@
 'use client';
 
 import { useChatNavHref } from '@/hooks/use-chat-nav-href';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, MessageSquare, UsersRound } from 'lucide-react';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { FaWhatsapp } from 'react-icons/fa6';
 
 export function QuickActions() {
   const chatHref = useChatNavHref();
+  const t = useTranslations('DashboardHome.quickActions');
 
   const actions = [
     {
-      eyebrow: 'Inbox',
-      title: 'Reply to customer conversations',
+      eyebrow: t('inbox.eyebrow'),
+      title: t('inbox.title'),
       href: chatHref,
       icon: MessageSquare,
-      helper:
-        'Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time.',
+      helper: t('inbox.helper'),
       iconColor: 'text-brand/50',
     },
     {
-      eyebrow: 'WABA',
-      title: 'Manage WhatsApp Business accounts',
+      eyebrow: t('waba.eyebrow'),
+      title: t('waba.title'),
       href: '/dashboard/waba',
       icon: FaWhatsapp,
-      helper:
-        'Go to WABA settings to manage number status, Meta verification, and messaging tier limits.',
+      helper: t('waba.helper'),
       iconColor: 'text-[#25D366]',
     },
     {
-      eyebrow: 'Customers',
-      title: 'Review saved customer contacts',
+      eyebrow: t('customers.eyebrow'),
+      title: t('customers.title'),
       href: '/dashboard/customers',
       icon: UsersRound,
-      helper:
-        'Open the customer list to filter contacts by WABA or WhatsApp number and export them when needed.',
+      helper: t('customers.helper'),
       iconColor: 'text-brand/50',
     },
   ];
@@ -43,7 +42,9 @@ export function QuickActions() {
     <section className="mb-8">
       {/* Section label */}
       <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-brand/80">Quick Actions</h2>
+        <h2 className="text-sm font-semibold text-brand/80">
+          {t('sectionTitle')}
+        </h2>
       </div>
 
       {/* Action tiles */}

@@ -18,136 +18,146 @@ import {
 } from '@/hooks/use-users';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Mail, Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 10;
-const TABLE_COLUMNS = ['Name', 'Email', 'Role', 'Created At', 'Actions'];
 
-function RoleBadge({ role }: { role: string }) {
-  const isAdmin = role === 'admin';
+export function UserTable() {
+  const t = useTranslations('Admin.UserTable');
 
-  return (
-    <Badge variant={isAdmin ? 'default' : 'secondary'}>
-      {isAdmin ? 'Admin' : 'User'}
-    </Badge>
-  );
-}
+  const TABLE_COLUMNS = [
+    t('columns.name'),
+    t('columns.email'),
+    t('columns.role'),
+    t('columns.createdAt'),
+    t('columns.actions'),
+  ];
 
-function ResendOnboardingButton({
-  email,
-  isDisabled,
-}: {
-  email: string;
-  isDisabled: boolean;
-}) {
-  const resendOnboarding = useResendUserOnboarding();
+  function RoleBadge({ role }: { role: string }) {
+    const isAdmin = role === 'admin';
 
-  if (isDisabled) {
-    return null;
-  }
-
-  function handleResend() {
-    resendOnboarding.mutate(
-      { email, action: 'resend-onboarding' },
-      {
-        onSuccess: (result) => {
-          toast.success(
-            result.message ?? 'Onboarding email resent successfully',
-          );
-        },
-        onError: (error) => {
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : 'Failed to resend onboarding email',
-          );
-        },
-      },
+    return (
+      <Badge variant={isAdmin ? 'default' : 'secondary'}>
+        {isAdmin ? t('roles.admin') : t('roles.user')}
+      </Badge>
     );
   }
 
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleResend}
-      disabled={resendOnboarding.isPending}
-    >
-      <Mail data-icon="inline-start" />
-      {resendOnboarding.isPending ? 'Sending...' : 'Resend Invite'}
-    </Button>
-  );
-}
+  function ResendOnboardingButton({
+    email,
+    isDisabled,
+  }: {
+    email: string;
+    isDisabled: boolean;
+  }) {
+    const resendOnboarding = useResendUserOnboarding();
 
-function UserRow({ user }: { user: User }) {
-  const formattedDate = new Date(user.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+    if (isDisabled) {
+      return null;
+    }
 
-  return (
-    <TableRow>
-      <TableCell className="font-medium">{user.name}</TableCell>
-      <TableCell>{user.email}</TableCell>
-      <TableCell>
-        <RoleBadge role={user.role} />
-      </TableCell>
-      <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
-      <TableCell>
-        <ResendOnboardingButton
-          email={user.email}
-          isDisabled={user.emailVerified}
-        />
-      </TableCell>
-    </TableRow>
-  );
-}
+    function handleResend() {
+      resendOnboarding.mutate(
+        { email, action: 'resend-onboarding' },
+        {
+          onSuccess: (result) => {
+            toast.success(result.message ?? t('messages.resendSuccess'));
+          },
+          onError: (error) => {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : t('messages.resendError'),
+            );
+          },
+        },
+      );
+    }
 
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <TableRow key={index}>
-          {TABLE_COLUMNS.map((column) => (
-            <TableCell key={column}>
-              <Skeleton className="h-4 w-24" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
-function EmptyState() {
-  return (
-    <TableRow>
-      <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <Users className="size-8 opacity-50" />
-          <p className="text-sm">No users found.</p>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function ErrorState({ message }: { message: string }) {
-  return (
-    <TableRow>
-      <TableCell
-        colSpan={TABLE_COLUMNS.length}
-        className="h-40 text-center text-destructive"
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleResend}
+        disabled={resendOnboarding.isPending}
       >
-        {message}
-      </TableCell>
-    </TableRow>
-  );
-}
+        <Mail data-icon="inline-start" />
+        {resendOnboarding.isPending
+          ? t('actions.sending')
+          : t('actions.resendInvite')}
+      </Button>
+    );
+  }
 
-export function UserTable() {
+  function UserRow({ user }: { user: User }) {
+    const formattedDate = new Date(user.createdAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    return (
+      <TableRow>
+        <TableCell className="font-medium">{user.name}</TableCell>
+        <TableCell>{user.email}</TableCell>
+        <TableCell>
+          <RoleBadge role={user.role} />
+        </TableCell>
+        <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
+        <TableCell>
+          <ResendOnboardingButton
+            email={user.email}
+            isDisabled={user.emailVerified}
+          />
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  function TableSkeleton() {
+    return (
+      <>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <TableRow key={index}>
+            {TABLE_COLUMNS.map((column) => (
+              <TableCell key={column}>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </>
+    );
+  }
+
+  function EmptyState() {
+    return (
+      <TableRow>
+        <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <Users className="size-8 opacity-50" />
+            <p className="text-sm">{t('empty.description')}</p>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  function ErrorState({ message }: { message: string }) {
+    return (
+      <TableRow>
+        <TableCell
+          colSpan={TABLE_COLUMNS.length}
+          className="h-40 text-center text-destructive"
+        >
+          {message}
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, isPlaceholderData } = useUsers(
     page,
@@ -167,7 +177,7 @@ export function UserTable() {
 
     if (isError) {
       const message =
-        error instanceof Error ? error.message : 'An error occurred';
+        error instanceof Error ? error.message : t('messages.errorFallback');
       return <ErrorState message={message} />;
     }
 
@@ -201,8 +211,12 @@ export function UserTable() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {total > 0
-            ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${total} users`
-            : 'No users'}
+            ? t('pagination.showing', {
+                start: (page - 1) * PAGE_SIZE + 1,
+                end: Math.min(page * PAGE_SIZE, total),
+                total: total,
+              })
+            : t('pagination.empty')}
         </p>
 
         <div className="flex items-center gap-2">
@@ -213,11 +227,11 @@ export function UserTable() {
             onClick={() => setPage((previousPage) => previousPage - 1)}
           >
             <ChevronLeft data-icon="inline-start" />
-            Previous
+            {t('pagination.previous')}
           </Button>
 
           <span className="px-2 text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t('pagination.page', { current: page, total: totalPages })}
           </span>
 
           <Button
@@ -226,7 +240,7 @@ export function UserTable() {
             disabled={!canGoNext}
             onClick={() => setPage((previousPage) => previousPage + 1)}
           >
-            Next
+            {t('pagination.next')}
             <ChevronRight data-icon="inline-end" />
           </Button>
         </div>

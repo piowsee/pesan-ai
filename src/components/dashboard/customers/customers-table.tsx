@@ -11,6 +11,7 @@ import {
 import { type CustomerContact } from '@/hooks/use-customer-contact';
 import { cn } from '@/lib/utils';
 import { RefreshCw, UserRound, UsersRound, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import {
   PAGE_SIZE,
@@ -52,17 +53,16 @@ function EmptyState({
   hasFilters: boolean;
   onClearFilters: () => void;
 }) {
+  const t = useTranslations('Customers.empty');
   return (
     <div className="flex min-h-72 flex-col items-center justify-start gap-5 px-6 pt-8 pb-10 text-center">
       <UsersRound className="size-12 text-brand" />
       <div className="flex max-w-lg flex-col gap-2">
         <p className="text-xl font-semibold tracking-tight text-brand sm:text-2xl">
-          {hasFilters ? 'No matching customers' : 'No customers yet'}
+          {hasFilters ? t('filteredTitle') : t('title')}
         </p>
         <p className="text-sm leading-relaxed text-brand sm:text-base sm:leading-7">
-          {hasFilters
-            ? 'Try another WABA or number filter to widen the customer list.'
-            : 'Customers will appear here after conversations come in.'}
+          {hasFilters ? t('filteredDescription') : t('description')}
         </p>
       </div>
       {hasFilters ? (
@@ -73,7 +73,7 @@ function EmptyState({
           onClick={onClearFilters}
         >
           <X data-icon="inline-start" />
-          Clear filters
+          {t('clearAction')}
         </Button>
       ) : null}
     </div>
@@ -87,6 +87,7 @@ function ErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useTranslations('Waba.error');
   return (
     <div className="flex min-h-44 flex-col items-center justify-center gap-3 px-6 py-10 text-center text-destructive">
       <p className="text-sm">{message}</p>
@@ -97,7 +98,7 @@ function ErrorState({
         onClick={onRetry}
       >
         <RefreshCw data-icon="inline-start" />
-        Try again
+        {t('retry')}
       </Button>
     </div>
   );
@@ -126,9 +127,10 @@ export function CustomersTable({
   onClearFilters: () => void;
   onRetry: () => void;
 }) {
+  const t = useTranslations('Customers.table');
+  const tError = useTranslations('Waba.error');
   if (isError) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to load customers';
+    const message = error instanceof Error ? error.message : tError('load');
 
     return <ErrorState message={message} onRetry={onRetry} />;
   }
@@ -151,16 +153,16 @@ export function CustomersTable({
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-16 text-xs font-semibold tracking-[0.12em] text-brand uppercase">
-                No.
+                {t('colNo')}
               </TableHead>
               <TableHead className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
-                Name
+                {t('colName')}
               </TableHead>
               <TableHead className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
-                Username
+                {t('colUsername')}
               </TableHead>
               <TableHead className="text-xs font-semibold tracking-[0.12em] text-brand uppercase">
-                Phone Number
+                {t('colPhone')}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -183,15 +185,15 @@ export function CustomersTable({
                       <div className="flex min-w-0 items-center gap-3">
                         <UserRound className="size-5 shrink-0 text-brand" />
                         <p className="truncate text-sm font-semibold text-brand">
-                          {getCustomerName(customer)}
+                          {getCustomerName(customer, t('noName'))}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell className="min-w-44 py-4 text-sm font-semibold text-brand">
-                      {getCustomerUsername(customer)}
+                      {getCustomerUsername(customer, t('noUsername'))}
                     </TableCell>
                     <TableCell className="min-w-44 py-4 text-sm font-semibold text-brand">
-                      {getCustomerPhone(customer)}
+                      {getCustomerPhone(customer, t('noPhone'))}
                     </TableCell>
                   </TableRow>
                 );

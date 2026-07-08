@@ -4,6 +4,7 @@ import { formatLastSeen } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import { ArrowLeftIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function ChatHeader({
   conversation,
@@ -16,6 +17,7 @@ export function ChatHeader({
   onBack?: () => void;
   onContactAreaClick?: () => void;
 }) {
+  const t = useTranslations('Chat.header');
   return (
     <div className="flex h-15 w-full shrink-0 items-center bg-background px-4">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -27,7 +29,7 @@ export function ChatHeader({
             className="lg:hidden shrink-0 -ml-2 cursor-pointer"
           >
             <ArrowLeftIcon className="size-5" />
-            <span className="sr-only">Back to conversations</span>
+            <span className="sr-only">{t('back')}</span>
           </Button>
         ) : null}
 

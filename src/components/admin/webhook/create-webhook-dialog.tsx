@@ -15,26 +15,26 @@ import { Label } from '@/components/ui/label';
 import { useCreateWebhook } from '@/hooks/use-webhooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-// ─── Schema ──────────────────────────────────────────────────────────
-
-const createWebhookSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100),
-  webhookUrl: z.url('Enter a valid URL'),
-  passphrase: z.string().min(1, 'Passphrase is required'),
-});
-
-type CreateWebhookFormValues = z.infer<typeof createWebhookSchema>;
-
 // ─── Component ───────────────────────────────────────────────────────
 
 export function CreateWebhookDialog() {
+  const t = useTranslations('Admin.CreateWebhookDialog');
   const [isOpen, setIsOpen] = useState(false);
   const createWebhook = useCreateWebhook();
+
+  const createWebhookSchema = z.object({
+    name: z.string().min(1, t('validation.nameRequired')).max(100),
+    webhookUrl: z.url(t('validation.invalidUrl')),
+    passphrase: z.string().min(1, t('validation.passphraseRequired')),
+  });
+
+  type CreateWebhookFormValues = z.infer<typeof createWebhookSchema>;
 
   const form = useForm<CreateWebhookFormValues>({
     resolver: zodResolver(createWebhookSchema),
@@ -48,13 +48,13 @@ export function CreateWebhookDialog() {
   async function onSubmit(values: CreateWebhookFormValues) {
     createWebhook.mutate(values, {
       onSuccess: () => {
-        toast.success('Webhook created successfully');
+        toast.success(t('messages.success'));
         form.reset();
         setIsOpen(false);
       },
       onError: (err) => {
         const message =
-          err instanceof Error ? err.message : 'Failed to create webhook';
+          err instanceof Error ? err.message : t('messages.errorFallback');
         toast.error(message);
       },
     });
@@ -73,17 +73,14 @@ export function CreateWebhookDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus data-icon="inline-start" />
-          Add Webhook
+          {t('trigger')}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Webhook</DialogTitle>
-          <DialogDescription>
-            Enter the webhook details below. The URL will be validated before
-            saving.
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form
@@ -92,10 +89,10 @@ export function CreateWebhookDialog() {
         >
           {/* Name Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-name">Name</Label>
+            <Label htmlFor="webhook-name">{t('labels.name')}</Label>
             <Input
               id="webhook-name"
-              placeholder="My Webhook"
+              placeholder={t('placeholders.name')}
               {...form.register('name')}
               aria-invalid={!!form.formState.errors.name}
             />
@@ -108,11 +105,11 @@ export function CreateWebhookDialog() {
 
           {/* URL Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-url">Webhook URL</Label>
+            <Label htmlFor="webhook-url">{t('labels.webhookUrl')}</Label>
             <Input
               id="webhook-url"
               type="url"
-              placeholder="https://example.com/webhook"
+              placeholder={t('placeholders.webhookUrl')}
               {...form.register('webhookUrl')}
               aria-invalid={!!form.formState.errors.webhookUrl}
             />
@@ -125,11 +122,11 @@ export function CreateWebhookDialog() {
 
           {/* Passphrase Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-passphrase">Passphrase</Label>
+            <Label htmlFor="webhook-passphrase">{t('labels.passphrase')}</Label>
             <Input
               id="webhook-passphrase"
               type="password"
-              placeholder="Shared secret for JWT signing"
+              placeholder={t('placeholders.passphrase')}
               {...form.register('passphrase')}
               aria-invalid={!!form.formState.errors.passphrase}
             />
@@ -145,7 +142,7 @@ export function CreateWebhookDialog() {
             <p className="text-sm text-destructive">
               {createWebhook.error instanceof Error
                 ? createWebhook.error.message
-                : 'Failed to create webhook'}
+                : t('messages.errorFallback')}
             </p>
           )}
 
@@ -155,10 +152,12 @@ export function CreateWebhookDialog() {
               variant="outline"
               onClick={() => handleOpenChange(false)}
             >
-              Cancel
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={createWebhook.isPending}>
-              {createWebhook.isPending ? 'Creating...' : 'Add Webhook'}
+              {createWebhook.isPending
+                ? t('actions.creating')
+                : t('actions.submit')}
             </Button>
           </DialogFooter>
         </form>

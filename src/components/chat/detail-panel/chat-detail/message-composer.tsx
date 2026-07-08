@@ -21,6 +21,7 @@ import {
   SendHorizontalIcon,
   XIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -110,9 +111,11 @@ function getFileTypeLabel(file: File) {
 function MediaPreview({
   selectedMedia,
   onRemove,
+  removeAriaLabel,
 }: {
   selectedMedia: SelectedMedia;
   onRemove: () => void;
+  removeAriaLabel: string;
 }) {
   const { file, previewUrl } = selectedMedia;
   const description = `${formatFileSize(file.size)} · ${getFileTypeLabel(file)}`;
@@ -164,7 +167,7 @@ function MediaPreview({
           className="size-8 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
         >
           <XIcon />
-          <span className="sr-only">Remove attachment</span>
+          <span className="sr-only">{removeAriaLabel}</span>
         </Button>
       </div>
     </div>
@@ -180,6 +183,7 @@ export function MessageComposer({
   onSendAction: (content: string) => void;
   onSendMediaAction: (input: SendMediaMessageInput) => void;
 }) {
+  const t = useTranslations('Chat.composer');
   const [draft, setDraft] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(
     null,
@@ -261,7 +265,7 @@ export function MessageComposer({
     }
 
     if (!file.type) {
-      toast.error('This file type is not supported.');
+      toast.error(t('unsupportedFile'));
       return;
     }
 
@@ -300,11 +304,10 @@ export function MessageComposer({
           <AlertTriangleIcon className="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-              Use template message required
+              {t('templateRequired')}
             </p>
             <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
-              Free-form replies expire 24 hours after the latest customer
-              message. Send a template message to reopen the conversation.
+              {t('templateDesc')}
             </p>
           </div>
         </div>
@@ -314,6 +317,7 @@ export function MessageComposer({
         <MediaPreview
           selectedMedia={selectedMedia}
           onRemove={clearSelectedMedia}
+          removeAriaLabel={t('removeMedia')}
         />
       ) : null}
 
@@ -351,7 +355,7 @@ export function MessageComposer({
                 className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
               >
                 <PlusIcon />
-                <span className="sr-only">Attach media</span>
+                <span className="sr-only">{t('attach')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start" className="min-w-56">
@@ -365,7 +369,13 @@ export function MessageComposer({
                       onSelect={() => openFilePicker(option.type)}
                     >
                       <Icon />
-                      {option.label}
+                      {t(
+                        option.type === 'document'
+                          ? 'document'
+                          : option.type === 'photo-video'
+                            ? 'media'
+                            : 'audio',
+                      )}
                     </DropdownMenuItem>
                   );
                 })}
@@ -392,9 +402,9 @@ export function MessageComposer({
             placeholder={
               conversation.canSendFreeform
                 ? selectedMedia
-                  ? 'Add a caption...'
-                  : 'Message...'
-                : 'Template message required'
+                  ? t('placeholderMedia')
+                  : t('placeholder')
+                : t('placeholderTemplate')
             }
             className="h-10 min-h-10! max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 text-[15px] leading-tight shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:opacity-50 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           />
@@ -412,7 +422,7 @@ export function MessageComposer({
             )}
           >
             <SendHorizontalIcon className="size-5" />
-            <span className="sr-only">Send</span>
+            <span className="sr-only">{t('send')}</span>
           </Button>
         </div>
       </div>

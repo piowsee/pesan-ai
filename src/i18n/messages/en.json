@@ -340,10 +340,584 @@
     "lawHeading": "6. Governing Law",
     "lawText": "These Terms shall be governed and construed in accordance with the laws of Indonesia. Any dispute arising from these services or these Terms shall be resolved exclusively within the jurisdiction of Indonesian courts."
   },
+  "ProfileSettingsDialog": {
+    "labels": {
+      "title": "Edit profile",
+      "description": "Update your account name and email address.",
+      "name": "Name",
+      "email": "Email",
+      "warning": "Changing your email will send confirmation links to both your current and new email addresses.",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "errors": {
+      "nameRequired": "Name is required",
+      "nameLength": "Name must be at most 80 characters",
+      "emailRequired": "Email is required",
+      "invalidEmail": "Enter a valid email address",
+      "emailLength": "Email must be at most 255 characters",
+      "failedSaveName": "Failed to save name",
+      "failedChangeEmail": "Failed to change email",
+      "failedSave": "Failed to save changes"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully",
+      "emailChangeSuccess": "Check your inboxes, confirm the change from {currentEmail}. Then verify with the link sent to {newEmail}."
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "We couldn't find the page you were looking for.",
     "description": "The link may have moved or never existed.",
     "home": "Back to Home"
+  },
+  "Sidebar": {
+    "home": "Home",
+    "wabaManagement": "WABA Management",
+    "chat": "Chat",
+    "customers": "Customers",
+    "navigation": "Navigation",
+    "waba": "WABA"
+  },
+  "ProfileMenu": {
+    "openProfile": "Open profile",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "DashboardHome": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "title": "Account Activity Summary",
+    "description": "Review WABA operational status and control incoming message traffic from a single control panel.",
+    "status": {
+      "error": "WhatsApp account summary could not be loaded.",
+      "sectionTitle": "Account Status",
+      "accounts": "WhatsApp Accounts",
+      "accountsHelper": "Total WhatsApp Business accounts (WABA) integrated in this workspace.",
+      "active": "Active",
+      "activeHelper": "Number of active accounts that can be used to process incoming and outgoing messages normally.",
+      "needsAttention": "Needs attention",
+      "needsAttentionHelper": "Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption."
+    },
+    "quickActions": {
+      "sectionTitle": "Quick Actions",
+      "inbox": {
+        "eyebrow": "Inbox",
+        "title": "Reply to customer conversations",
+        "helper": "Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time."
+      },
+      "waba": {
+        "eyebrow": "WABA",
+        "title": "Manage WhatsApp Business accounts",
+        "helper": "Go to WABA settings to manage number status, Meta verification, and messaging tier limits."
+      },
+      "customers": {
+        "eyebrow": "Customers",
+        "title": "Review saved customer contacts",
+        "helper": "Open the customer list to filter contacts by WABA or WhatsApp number and export them when needed."
+      }
+    }
+  },
+  "Waba": {
+    "status": {
+      "active": "Active",
+      "disconnected": "Disconnected",
+      "suspended": "Suspended"
+    },
+    "numbers": {
+      "one": "1 number",
+      "multiple": "{count} numbers",
+      "manage": "Manage WhatsApp numbers",
+      "whatsappNumber": "WhatsApp Number",
+      "connected": "{label} connected",
+      "none": "No numbers connected yet.",
+      "add": "Add number"
+    },
+    "id": {
+      "copied": "WABA ID copied."
+    },
+    "row": {
+      "unnamed": "Unnamed business",
+      "idPrefix": "WABA ID: ",
+      "status": "Status",
+      "connectedOn": "Connected on"
+    },
+    "empty": {
+      "title": "No WhatsApp accounts yet",
+      "description": "Connect your first WhatsApp Business account so pesan-ai can start receiving and managing conversations."
+    },
+    "action": {
+      "connect": "Connect WhatsApp account",
+      "connecting": "Connecting account..."
+    },
+    "summary": {
+      "accounts": "accounts",
+      "active": "active",
+      "needsAttention": "needs attention"
+    },
+    "error": {
+      "load": "Failed to load WABA list",
+      "retry": "Try again"
+    },
+    "header": {
+      "title": "WhatsApp Business Accounts",
+      "description": "Manage WhatsApp accounts and numbers connected to pesan-ai."
+    },
+    "table": {
+      "business": "Business"
+    },
+    "pagination": {
+      "showing": "Showing {start}-{end} of {total} accounts",
+      "empty": "No accounts yet",
+      "previous": "Previous",
+      "page": "Page {current} of {total}",
+      "next": "Next"
+    },
+    "addNumber": {
+      "trigger": "Add number",
+      "input": {
+        "title": "Add WhatsApp Number",
+        "descriptionPrefix": "Connect a new number for ",
+        "descriptionFallback": "this WhatsApp Business account",
+        "labelNumber": "WhatsApp Number",
+        "placeholderNumber": "Enter WhatsApp number",
+        "labelName": "Display name",
+        "placeholderName": "Example: Customer Support",
+        "nameHelper": "This name will be visible to customers on WhatsApp until they save your contact.",
+        "cancel": "Cancel",
+        "submit": "Send code",
+        "submitting": "Sending code...",
+        "successToast": "Verification code sent via SMS.",
+        "errorToast": "Failed to add number",
+        "validation": {
+          "numberRequired": "WhatsApp number is required",
+          "invalidNumber": "Invalid number format",
+          "nameRequired": "Display name is required"
+        }
+      },
+      "otp": {
+        "title": "Verify Number",
+        "description": "Enter the 6-digit code sent via SMS.",
+        "changeNumber": "Change number",
+        "resend": "Resend code",
+        "resendIn": "Resend in {count}s",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "verifying": "Verifying...",
+        "resendSuccess": "Verification code resent.",
+        "resendError": "Failed to resend code",
+        "verifySuccess": "WhatsApp number verified successfully.",
+        "verifyError": "Verification failed"
+      }
+    },
+    "signup": {
+      "noCodeError": "Facebook login finished without an authorization code. Please try again.",
+      "waitingDetails": "Authorization code received. Waiting for WABA details from the embedded signup flow.",
+      "success": "WABA connected successfully.",
+      "alreadyConnected": "This WhatsApp Business Account is already connected to another user",
+      "generalError": "Failed to complete WhatsApp signup. Please try again.",
+      "requireHttps": "Facebook Embedded Signup requires HTTPS. Open this page from an HTTPS URL before continuing.",
+      "sdkNotReady": "Facebook SDK is not ready yet. Please try again in a moment."
+    }
+  },
+  "Customers": {
+    "filters": {
+      "allWabas": "All WABAs",
+      "noWaba": "No WABA",
+      "wabaSingular": "WABA",
+      "wabaPlural": "WABAs",
+      "allNumbers": "All numbers",
+      "noNumber": "No number",
+      "numberSingular": "number",
+      "numberPlural": "numbers",
+      "wabaTitle": "Filter WABA",
+      "selectAll": "Select all",
+      "wabaEmpty": "No WABA available.",
+      "numberTitle": "Filter Number",
+      "numberEmpty": "No number available for the selected WABA.",
+      "clear": "Clear"
+    },
+    "export": {
+      "emptyError": "There are no customer rows to export.",
+      "success": "Customer table exported."
+    },
+    "header": {
+      "title": "Customers",
+      "description": "Review customer numbers that have chatted with your connected WhatsApp accounts."
+    },
+    "action": {
+      "export": "Export Excel"
+    },
+    "pagination": {
+      "showing": "Showing {start}-{end} of {total} customers"
+    },
+    "table": {
+      "noMatch": "No matching customers",
+      "noMatchDescription": "Try another WABA or number filter to widen the customer list.",
+      "empty": "No customers yet",
+      "emptyDescription": "Customers will appear here after conversations come in.",
+      "clearFilters": "Clear filters",
+      "errorLoad": "Failed to load customers",
+      "retry": "Try again",
+      "colNo": "No.",
+      "colName": "Name",
+      "colUsername": "Username",
+      "colPhone": "Phone Number",
+      "noName": "Unknown name",
+      "noUsername": "Unknown username",
+      "noPhone": "Unknown phone"
+    }
+  },
+  "Chat": {
+    "takeover": {
+      "enabled": "Admin takeover enabled",
+      "disabled": "Conversation returned to bot",
+      "error": "Failed to update takeover status"
+    },
+    "empty": {
+      "noConversations": "No conversations found",
+      "selectWaba": "Select a WABA",
+      "noConversationsDesc": "Try another WABA, adjust the filters, or wait for new customer messages.",
+      "selectWabaDesc": "Choose a WhatsApp Business Account to load its conversations."
+    },
+    "sidebar": {
+      "search": "Search number or name",
+      "filterAll": "All",
+      "filterAdmin": "Admin",
+      "filterBot": "Bot",
+      "allPhones": "All Phones"
+    },
+    "header": {
+      "back": "Back to conversations"
+    },
+    "detail": {
+      "emptyTitle": "Select a conversation",
+      "emptyDesc": "Choose a customer thread from the inbox to review message history and continue the conversation.",
+      "takeoverPrompt": "Finished assisting this customer? Close the conversation to let the bot take over.",
+      "closeConversation": "Close conversation",
+      "closeDialogTitle": "Close this conversation?",
+      "closeDialogDesc": "The bot will resume handling new messages from {name}.",
+      "cancel": "Cancel"
+    },
+    "composer": {
+      "document": "Document",
+      "media": "Photos & videos",
+      "audio": "Audio",
+      "removeMedia": "Remove attachment",
+      "unsupportedFile": "This file type is not supported.",
+      "templateRequired": "Use template message required",
+      "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
+      "attach": "Attach media",
+      "placeholderMedia": "Add a caption...",
+      "placeholder": "Message...",
+      "placeholderTemplate": "Template message required",
+      "send": "Send"
+    },
+    "timeline": {
+      "loading": "Loading messages",
+      "loadOlder": "Load older messages",
+      "empty": "No messages yet for this conversation."
+    },
+    "status": {
+      "sending": "Sending",
+      "read": "Read",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "sent": "Sent"
+    },
+    "bubble": {
+      "errorLoad": "Could not load media preview.",
+      "errorUnavailable": "Media file is unavailable.",
+      "unsupported": "Unsupported {type} message"
+    },
+    "list": {
+      "errorTitle": "Unable to load chats",
+      "errorDesc": "The inbox could not be loaded right now.",
+      "retry": "Retry"
+    },
+    "contact": {
+      "label": {
+        "newCustomer": "New Customer",
+        "vip": "VIP Customer",
+        "followUp": "Needs Follow Up",
+        "completed": "Completed"
+      },
+      "close": "Close",
+      "back": "Back to conversation",
+      "title": "Contact info",
+      "takeover": "Takeover",
+      "lastActivity": "Last activity",
+      "connectedVia": "Connected via admin",
+      "customerLabel": "Customer label",
+      "selectLabel": "Select customer label...",
+      "customLabel": "Custom label...",
+      "typeLabel": "Type label name...",
+      "internalNotes": "Internal notes",
+      "addNote": "Add a brief note for the admin team",
+      "noteWarning": "Label and notes data are currently saved temporarily in the chat view."
+    },
+    "wabaSwitcher": {
+      "select": "Select a WABA",
+      "search": "Search WABA or phone number",
+      "noMatch": "No WABA matches this search.",
+      "noNumbers": "No connected numbers"
+    }
+  },
+  "Admin": {
+    "user": {
+      "page": {
+        "title": "User Management",
+        "description": "Add and manage user accounts for the platform."
+      }
+    },
+    "waba": {
+      "page": {
+        "title": "WABA Management",
+        "description": "View all WhatsApp Business Accounts and assign webhooks to them."
+      }
+    },
+    "webhook": {
+      "page": {
+        "title": "Webhook Management",
+        "description": "Add and manage webhook endpoints for the platform."
+      }
+    },
+    "AdminDashboardCard": {
+      "title": "Admin Dashboard",
+      "description": "Select a menu below to manage the system.",
+      "navigation": {
+        "user": {
+          "label": "Manage User Account",
+          "description": "Add and manage user accounts."
+        },
+        "webhook": {
+          "label": "Manage Webhook",
+          "description": "Configure and monitor active webhooks."
+        },
+        "waba": {
+          "label": "Manage User WABA",
+          "description": "Assign Webhook to WABA"
+        }
+      }
+    },
+    "Header": {
+      "logoAlt": "pesan.ai logo",
+      "brandName": "pesan-ai"
+    },
+    "CreateUserDialog": {
+      "trigger": "Create User",
+      "title": "Create New User",
+      "description": "Fill out the form to add a new user account.",
+      "labels": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role"
+      },
+      "placeholders": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "Select a role"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Create User"
+      },
+      "messages": {
+        "success": "User created and verification email sent",
+        "errorFallback": "Failed to create user"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidEmail": "Enter a valid email address",
+        "roleRequired": "Select a role"
+      }
+    },
+    "UserTable": {
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "resendInvite": "Resend Invite",
+        "sending": "Sending..."
+      },
+      "messages": {
+        "resendSuccess": "Onboarding email resent successfully",
+        "resendError": "Failed to resend onboarding email",
+        "errorFallback": "An error occurred"
+      },
+      "empty": {
+        "description": "No users found."
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} users",
+        "empty": "No users",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    },
+    "AssignWebhookDialog": {
+      "trigger": "Assign Webhook",
+      "title": "Assign Webhook to WABA",
+      "description": "Select a webhook to handle messages for <strong>{name}</strong>. Choosing \"None / Remove\" will remove the current assignment.",
+      "placeholder": "Select a webhook",
+      "noneOption": "None / Remove",
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "messages": {
+        "success": "Webhook assigned successfully",
+        "errorFallback": "Failed to assign webhook"
+      }
+    },
+    "WabaTable": {
+      "columns": {
+        "namePhone": "Name / Phone Number",
+        "associatedUser": "Associated User",
+        "assignedWebhook": "Assigned Webhook",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "badges": {
+        "none": "None"
+      },
+      "row": {
+        "unknownUser": "Unknown",
+        "noPhoneNumbers": "No phone numbers",
+        "none": "None"
+      },
+      "empty": {
+        "description": "No WABAs found."
+      },
+      "error": {
+        "fallback": "An error occurred",
+        "retry": "Retry"
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} WABAs",
+        "empty": "No WABAs",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    },
+    "CreateWebhookDialog": {
+      "trigger": "Add Webhook",
+      "title": "Add New Webhook",
+      "description": "Enter the webhook details below. The URL will be validated before saving.",
+      "labels": {
+        "name": "Name",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Passphrase"
+      },
+      "placeholders": {
+        "name": "My Webhook",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Shared secret for JWT signing"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Add Webhook"
+      },
+      "messages": {
+        "success": "Webhook created successfully",
+        "errorFallback": "Failed to create webhook"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidUrl": "Enter a valid URL",
+        "passphraseRequired": "Passphrase is required"
+      }
+    },
+    "DeleteWebhookDialog": {
+      "trigger": "Delete",
+      "title": "Delete Webhook",
+      "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "actions": {
+        "cancel": "Cancel",
+        "deleting": "Deleting...",
+        "delete": "Delete"
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" deleted successfully",
+        "errorFallback": "Failed to delete webhook"
+      }
+    },
+    "WebhookDocsDialog": {
+      "trigger": "API Docs",
+      "title": "Webhook API Documentation",
+      "description": "How your webhook endpoint should handle incoming requests from pesan-ai.",
+      "sections": {
+        "auth": {
+          "title": "Authentication",
+          "p1": "Every request includes a bearer token in the <authCode>Authorization</authCode> header. The token is a short-lived JWT signed with the <strongAuth>HS256</strongAuth> algorithm using your configured <strongPassphrase>passphrase</strongPassphrase> as the shared secret.",
+          "p2": "If your webhook tool asks for JWT credentials, configure the key type as <strongType>passphrase</strongType>, choose <strongAlgo>HS256</strongAlgo> as the algorithm, and use the exact passphrase entered when creating the webhook in pesan-ai."
+        },
+        "validation": {
+          "title": "Validation Request",
+          "p1": "When you register a webhook, pesan-ai sends a <strongGet>GET</strongGet> request to your URL to verify it is reachable and can authenticate. Your endpoint must validate the JWT token and return a <codeOk>200 OK</codeOk> response to confirm the webhook is valid."
+        },
+        "message": {
+          "title": "Message Request",
+          "p1": "When a new message is received, pesan-ai forwards it to your webhook via a <strongPost>POST</strongPost> request. Your endpoint should verify the JWT bearer token using your configured passphrase, process the message history, and return a bot response.",
+          "p2": "The <codePhone>customerPhoneNumber</codePhone> field identifies the customer, and the <codeMessages>messages</codeMessages> array contains text messages in chronological order.",
+          "list": {
+            "phone": "<codeField>customerPhoneNumber</codeField>: customer WhatsApp phone number in international format.",
+            "sequence": "<codeField>sequence</codeField>: number, chronological order starting at 1.",
+            "source": "<codeField>source</codeField>: one of <codeSource>customer</codeSource>, <codeSource>admin</codeSource>, or <codeSource>bot</codeSource>.",
+            "timestamp": "<codeField>timestamp</codeField>: ISO-8601 timestamp string.",
+            "content": "<codeField>content</codeField>: text message content."
+          },
+          "p3": "The <codeBot>botResponse</codeBot> field is optional and will be sent to the customer as a bot message. <codeAdmin>adminTakeover</codeAdmin> is optional and defaults to <codeFalse>false</codeFalse>; when set to <codeTrue>true</codeTrue>, pesan-ai marks the conversation for admin takeover before sending the bot response.",
+          "p4": "Return a non-2xx status only when pesan-ai should treat the webhook call as failed. Client errors are not retried, except <code429>429</code429>. Rate limits and server errors are retried up to 3 times with a 1 second linear delay."
+        }
+      }
+    },
+    "WebhookTable": {
+      "columns": {
+        "name": "Name",
+        "url": "URL",
+        "status": "Status",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "empty": {
+        "description": "No webhooks found."
+      },
+      "error": {
+        "fallback": "An error occurred",
+        "retry": "Retry"
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} webhooks",
+        "empty": "No webhooks",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    }
   }
 }
