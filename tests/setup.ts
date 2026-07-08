@@ -246,8 +246,10 @@ vi.mock('@/lib/auth/auth', () => ({
   createResetPasswordCallbackUrl: vi.fn(),
 }));
 
-vi.mock('@/lib/server/debounce-message-manager', () => ({
-  handleDebounceIncomingMessage: vi.fn(),
+vi.mock('@/services/debouncer.service', () => ({
+  DebouncerService: {
+    handleDebounceIncomingMessage: vi.fn(),
+  },
 }));
 
 // --- Mocks for Libraries ---

@@ -1,10 +1,10 @@
 import { ApiError } from '@/lib/api-helper/error';
-import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import type { WebhookMessage } from '@/schemas/meta-webhook-handler.schema/messages';
 import type { UploadMediaType } from '@/schemas/s3-upload.schema';
+import { DebouncerService } from '@/services/debouncer.service';
 import { S3Service } from '@/services/s3.service';
 
 import {
@@ -135,7 +135,7 @@ async function processIncomingTextMessage(params: {
     return true;
   }
 
-  handleDebounceIncomingMessage({
+  DebouncerService.handleDebounceIncomingMessage({
     conversationId: conversation.id,
     userId,
     wabaId,
@@ -228,7 +228,7 @@ async function processIncomingMediaMessage(params: {
     return true;
   }
 
-  handleDebounceIncomingMessage({
+  DebouncerService.handleDebounceIncomingMessage({
     conversationId: conversation.id,
     userId,
     wabaId,

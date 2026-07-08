@@ -1,57 +1,60 @@
 // TODO: consider migrate to MQ/DB based queue worker
 // NOTE: current implementation uses direct memory from nextjs instance.
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
+//       if the server crashes or restarts, it might lose the context.
 import { logError, logger } from '@/lib/server/logger';
-import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import { ConversationService } from '@/services/conversation.service';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
 
-const timers = new Map<string, NodeJS.Timeout>();
-const BOT_HISTORY_WINDOW_MS = 60 * 60 * 1000;
+// Timer for incoming message
+const incoming_message_timers = new Map<string, NodeJS.Timeout>();
+const REDIRECT_INCOMING_MESSAGE_TIMEOUT_MS = 15 * 1000; // 15 seconds
+
+const BOT_HISTORY_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 type BotMessageHistory = Awaited<
   ReturnType<typeof MessageRepository.findConversationMessageHistory>
 >;
 type RedirectableBotMessage = Omit<BotMessageHistory[number], 'type'>;
 
-type DebouncedConversationContext = {
+type DebouncerContext = {
   conversationId: string;
   userId: string;
   wabaId: string;
 };
 
-export function handleDebounceIncomingMessage(
-  params: DebouncedConversationContext,
-) {
-  const { conversationId } = params;
+export const DebouncerService = {
+  handleDebounceIncomingMessage(params: DebouncerContext) {
+    const { conversationId } = params;
 
-  logger.info('Schedule conversation for bot webhook', {
-    conversationId,
-  });
+    logger.info('Schedule conversation for bot webhook', {
+      conversationId,
+    });
 
-  if (timers.has(conversationId)) {
-    clearTimeout(timers.get(conversationId));
-  }
+    if (incoming_message_timers.has(conversationId)) {
+      clearTimeout(incoming_message_timers.get(conversationId));
+    }
 
-  timers.set(
-    conversationId,
-    setTimeout(
-      (context: DebouncedConversationContext) => {
-        // fire and forget
-        void processDebouncedConversation(context);
-      },
-      15_000,
-      params,
-    ),
-  );
-}
+    incoming_message_timers.set(
+      conversationId,
+      setTimeout(
+        (context: DebouncerContext) => {
+          incoming_message_timers.delete(context.conversationId);
+          // fire and forget
+          void processDebouncedIncomingMessage(context);
+        },
+        REDIRECT_INCOMING_MESSAGE_TIMEOUT_MS,
+        params,
+      ),
+    );
+  },
+};
 
-async function processDebouncedConversation(
-  params: DebouncedConversationContext,
-) {
+// Helper for Debounce Incoming Message
+// -------------------------------------
+async function processDebouncedIncomingMessage(params: DebouncerContext) {
   const { conversationId, userId, wabaId } = params;
   const expiredAt = new Date();
-  timers.delete(conversationId);
 
   try {
     const messages = await MessageRepository.findConversationMessageHistory({
@@ -65,12 +68,13 @@ async function processDebouncedConversation(
     );
 
     // if history has message type other than text
-    // system will update conversation to AdminTakeover
+    // system will update conversation to AdminTakeover True
     if (hasNonTextMessage) {
-      await triggerAdminTakeoverForNonTextHistory({
+      await ConversationService.updateAdminTakeoverStatus({
         conversationId,
         userId,
         wabaId,
+        adminTakeover: true,
       });
       return;
     }
@@ -106,34 +110,4 @@ function removeMessageTypes(
       content,
     }),
   );
-}
-
-async function triggerAdminTakeoverForNonTextHistory(
-  params: DebouncedConversationContext,
-) {
-  const { conversationId, userId, wabaId } = params;
-  const conversation = await ConversationRepository.findConversationById({
-    conversationId,
-    userId,
-    wabaId,
-  });
-
-  if (!conversation) {
-    throw new Error(`Conversation ${conversationId} does not exist`);
-  }
-
-  await ConversationRepository.updateAdminTakeoverStatus({
-    conversationId,
-    adminTakeover: true,
-  });
-
-  logger.info('Non-text message detected — enabling admin takeover', {
-    conversationId,
-  });
-
-  eventBus.emit(getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, userId), {
-    conversationId,
-    wabaId,
-    adminTakeover: true,
-  });
 }
