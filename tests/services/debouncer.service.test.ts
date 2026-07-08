@@ -1,11 +1,11 @@
-import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
-import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import { ConversationService } from '@/services/conversation.service';
+import { DebouncerService } from '@/services/debouncer.service';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.unmock('@/lib/server/debounce-message-manager');
+vi.unmock('@/services/debouncer.service');
 
 async function flushDebouncedProcessing() {
   await Promise.resolve();
@@ -55,19 +55,18 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
 
   afterEach(() => {
     vi.clearAllTimers();
-    eventBus.removeAllListeners();
     vi.useRealTimers();
   });
 
   it('resets the timer and sends persisted history after the debounce window', async () => {
-    handleDebounceIncomingMessage({
+    DebouncerService.handleDebounceIncomingMessage({
       conversationId: 'conv-1',
       userId: 'user-1',
       wabaId: 'waba-1',
     });
 
     await vi.advanceTimersByTimeAsync(10_000);
-    handleDebounceIncomingMessage({
+    DebouncerService.handleDebounceIncomingMessage({
       conversationId: 'conv-1',
       userId: 'user-1',
       wabaId: 'waba-1',
@@ -135,7 +134,7 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
       },
     ]);
 
-    handleDebounceIncomingMessage({
+    DebouncerService.handleDebounceIncomingMessage({
       conversationId: 'conv-1',
       userId: 'user-1',
       wabaId: 'waba-1',
@@ -145,25 +144,12 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
     await flushDebouncedProcessing();
 
     expect(redirectMessageToExternalWebhook).not.toHaveBeenCalled();
-    expect(ConversationRepository.findConversationById).toHaveBeenCalledWith({
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledWith({
       conversationId: 'conv-1',
       userId: 'user-1',
       wabaId: 'waba-1',
-    });
-    expect(
-      ConversationRepository.updateAdminTakeoverStatus,
-    ).toHaveBeenCalledWith({
-      conversationId: 'conv-1',
       adminTakeover: true,
     });
-    expect(eventBus.emit).toHaveBeenCalledWith(
-      getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, 'user-1'),
-      {
-        conversationId: 'conv-1',
-        wabaId: 'waba-1',
-        adminTakeover: true,
-      },
-    );
   });
 
   it('keeps separate debounce timers per conversation', async () => {
@@ -188,12 +174,12 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
           content: 'second history',
         },
       ]);
-    handleDebounceIncomingMessage({
+    DebouncerService.handleDebounceIncomingMessage({
       conversationId: 'conv-1',
       userId: 'user-1',
       wabaId: 'waba-1',
     });
-    handleDebounceIncomingMessage({
+    DebouncerService.handleDebounceIncomingMessage({
       conversationId: 'conv-2',
       userId: 'user-2',
       wabaId: 'waba-2',
@@ -230,5 +216,72 @@ describe('handleDebounceIncomingMessage', { tags: ['backend'] }, () => {
         },
       ],
     });
+  });
+});
+
+describe('handleDebounceAutoCloseConversation', { tags: ['backend'] }, () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-24T12:00:00.000Z'));
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('updates admin takeover to false after 24 hours', async () => {
+    DebouncerService.handleDebounceAutoCloseConversation({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+
+    await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000);
+    expect(
+      ConversationService.updateAdminTakeoverStatus,
+    ).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000 + 1000);
+    await flushDebouncedProcessing();
+
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledTimes(
+      1,
+    );
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledWith({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+      adminTakeover: false,
+    });
+  });
+
+  it('resets the timer if called again within the timeout', async () => {
+    DebouncerService.handleDebounceAutoCloseConversation({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+
+    await vi.advanceTimersByTimeAsync(12 * 60 * 60 * 1000);
+
+    DebouncerService.handleDebounceAutoCloseConversation({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+    });
+
+    await vi.advanceTimersByTimeAsync(18 * 60 * 60 * 1000);
+    expect(
+      ConversationService.updateAdminTakeoverStatus,
+    ).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(6 * 60 * 60 * 1000 + 1000);
+    await flushDebouncedProcessing();
+
+    expect(ConversationService.updateAdminTakeoverStatus).toHaveBeenCalledTimes(
+      1,
+    );
   });
 });

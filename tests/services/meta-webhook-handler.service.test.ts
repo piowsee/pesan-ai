@@ -1,8 +1,8 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
-import { handleDebounceIncomingMessage } from '@/lib/server/debounce-message-manager';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
+import { DebouncerService } from '@/services/debouncer.service';
 import { MetaWebhookHandlerService } from '@/services/meta-webhook-handler.service';
 import { S3Service } from '@/services/s3.service';
 import crypto from 'crypto';
@@ -404,7 +404,12 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       expect(
         ConversationRepository.processIncomingMessage,
       ).not.toHaveBeenCalled();
-      expect(handleDebounceIncomingMessage).not.toHaveBeenCalled();
+      expect(
+        DebouncerService.handleDebounceIncomingMessage,
+      ).not.toHaveBeenCalled();
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).not.toHaveBeenCalled();
       expect(eventBus.emit).toHaveBeenCalledWith(
         getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
         expect.objectContaining({
@@ -648,7 +653,16 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
           wabaId: 'waba-1',
         }),
       );
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+      expect(
+        DebouncerService.handleDebounceIncomingMessage,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-1',
+        wabaId: 'waba-1',
+      });
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         userId: 'user-1',
         wabaId: 'waba-1',
@@ -888,7 +902,16 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
         }),
       );
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+      expect(
+        DebouncerService.handleDebounceIncomingMessage,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: testUserId,
+        wabaId: 'waba-1',
+      });
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         userId: testUserId,
         wabaId: 'waba-1',
@@ -944,7 +967,16 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
         ],
       });
 
-      expect(handleDebounceIncomingMessage).toHaveBeenCalledWith({
+      expect(
+        DebouncerService.handleDebounceIncomingMessage,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        userId: 'user-123',
+        wabaId: 'waba-1',
+      });
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).toHaveBeenCalledWith({
         conversationId: 'conv-1',
         userId: 'user-123',
         wabaId: 'waba-1',
@@ -1017,7 +1049,12 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
           }),
         }),
       );
-      expect(handleDebounceIncomingMessage).not.toHaveBeenCalled();
+      expect(
+        DebouncerService.handleDebounceIncomingMessage,
+      ).not.toHaveBeenCalled();
+      expect(
+        DebouncerService.handleDebounceAutoCloseConversation,
+      ).not.toHaveBeenCalled();
     });
   });
 });

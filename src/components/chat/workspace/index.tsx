@@ -739,6 +739,8 @@ export function ChatWorkspace() {
               panel: isContactInfoOpen ? undefined : 'contact',
             });
           }}
+          onToggleTakeover={handleToggleTakeover}
+          pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
 
         <ChatContactPanel

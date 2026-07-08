@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-helper/error';
+import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 
@@ -116,6 +117,12 @@ export const ConversationService = {
       userId,
       wabaId,
       adminTakeover: updated.adminTakeover,
+    });
+
+    eventBus.emit(getUserEvent(SSE_EVENTS.CONVERSATION_UPDATED, userId), {
+      conversationId,
+      wabaId,
+      adminTakeover,
     });
 
     return {
