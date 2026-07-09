@@ -1,5 +1,5 @@
-import prisma from '@/lib/server/prisma';
 import { MessageRepository } from '@/repositories/message.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { HistoryWebhookHandler } from '@/services/meta-webhook-handler.service/history';
 import { describe, expect, it, vi } from 'vitest';
@@ -20,7 +20,7 @@ describe('HistoryWebhookHandler', () => {
   const phoneNumberId = 'phone-123';
 
   it('processes text messages from history correctly (incoming and outgoing)', async () => {
-    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue({
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
     vi.mocked(
@@ -88,7 +88,7 @@ describe('HistoryWebhookHandler', () => {
   });
 
   it('handles media follow-up webhooks', async () => {
-    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue({
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
 
@@ -119,7 +119,7 @@ describe('HistoryWebhookHandler', () => {
   });
 
   it('handles history sharing declined error', async () => {
-    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue({
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
     vi.mocked(

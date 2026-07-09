@@ -1,5 +1,5 @@
-import prisma from '@/lib/server/prisma';
 import { ContactRepository } from '@/repositories/contact.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SmbAppStateSyncWebhookHandler } from '@/services/meta-webhook-handler.service/smb-app-state-sync';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +16,7 @@ describe('SmbAppStateSyncWebhookHandler', () => {
   const phoneNumberId = 'phone-123';
 
   it('processes add action contacts correctly', async () => {
-    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue({
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
 
@@ -46,7 +46,7 @@ describe('SmbAppStateSyncWebhookHandler', () => {
   });
 
   it('processes remove action contacts correctly', async () => {
-    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue({
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
 
@@ -93,7 +93,9 @@ describe('SmbAppStateSyncWebhookHandler', () => {
   });
 
   it('skips unknown phone numbers', async () => {
-    vi.mocked(prisma.phoneNumber.findUnique).mockResolvedValue(null);
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue(
+      null,
+    );
 
     const result = await SmbAppStateSyncWebhookHandler.processChange({
       metaWabaId,

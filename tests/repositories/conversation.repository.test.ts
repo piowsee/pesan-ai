@@ -73,20 +73,20 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
   afterEach(async () => {
     const testCustomerPrefix = '999';
+    const contacts = await prisma.contact.findMany({
+      where: { customerPhone: { startsWith: testCustomerPrefix } },
+      select: { id: true },
+    });
+    const contactIds = contacts.map((c) => c.id);
+
     await prisma.message.deleteMany({
-      where: {
-        conversation: {
-          contact: { customerPhone: { startsWith: testCustomerPrefix } },
-        },
-      },
+      where: { conversation: { contactId: { in: contactIds } } },
     });
     await prisma.conversation.deleteMany({
-      where: {
-        contact: { customerPhone: { startsWith: testCustomerPrefix } },
-      },
+      where: { contactId: { in: contactIds } },
     });
     await prisma.contact.deleteMany({
-      where: { customerPhone: { startsWith: testCustomerPrefix } },
+      where: { id: { in: contactIds } },
     });
   });
 
@@ -123,15 +123,6 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
       expect(result?.phoneNumber.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
       expect(result?.phoneNumber.waba?.userId).toBe(userId);
-    });
-  });
-
-  describe('findPhoneNumberByMetaId', () => {
-    it('locates the seeded internal phone number by its Meta ID', async () => {
-      const result = await ConversationRepository.findPhoneNumberByMetaId(
-        SEED_DATA.PHONE_META_ID,
-      );
-      expect(result?.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
     });
   });
 

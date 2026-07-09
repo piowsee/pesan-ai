@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
@@ -31,7 +32,9 @@ type BusinessProfileLookup = {
 type EmbeddedSignupResult = {
   failedPhoneNumberIds: string[];
   message: string | null;
-  phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>;
+  phoneNumbers: Awaited<
+    ReturnType<typeof PhoneNumberRepository.upsertPhoneNumbers>
+  >;
   waba: Awaited<ReturnType<typeof WabaRepository.upsertWaba>>;
 };
 
@@ -172,7 +175,9 @@ export const EmbeddedSignUpService = {
   },
 
   async _fetchBusinessProfiles(params: {
-    phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>;
+    phoneNumbers: Awaited<
+      ReturnType<typeof PhoneNumberRepository.upsertPhoneNumbers>
+    >;
     token: string;
   }): Promise<BusinessProfileLookup[]> {
     const { phoneNumbers, token } = params;
@@ -262,11 +267,10 @@ export const EmbeddedSignUpService = {
       }),
     ]);
 
-    const existingPhoneNumbers = await WabaRepository.findPhoneNumbersByMetaIds(
-      {
+    const existingPhoneNumbers =
+      await PhoneNumberRepository.findPhoneNumbersByMetaIds({
         phoneNumberIds: phoneNumberDatas.map((phoneNumber) => phoneNumber.id),
-      },
-    );
+      });
     const phoneRegistrations = this._buildPhoneRegistrations(
       phoneNumberDatas,
       existingPhoneNumbers,
@@ -347,7 +351,7 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
+    const phoneNumbers = await PhoneNumberRepository.upsertPhoneNumbers({
       wabaDbId: waba.id, // Internal DB WhatsappBusinessAccount.id.
       phoneNumberDatas: registeredPhoneNumbers.map((phoneNumber) => ({
         id: phoneNumber.id,

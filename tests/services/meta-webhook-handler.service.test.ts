@@ -1,6 +1,7 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { DebouncerService } from '@/services/debouncer.service';
 import { MetaWebhookHandlerService } from '@/services/meta-webhook-handler.service';
@@ -219,7 +220,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('updates outbound message statuses and emits one bulk SSE event', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(
         MessageRepository.updateStatusesByMetaMessageIds,
@@ -337,7 +338,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('stores WhatsApp Business App message echoes with a distinct source', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(MessageRepository.processOutgoingMessageEcho).mockResolvedValue(
         {
@@ -437,7 +438,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       const objectKey = `user-1/waba-1/conv-1/${type}-echo-key`;
 
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(
         ConversationRepository.prepareWebhookMessageConversation,
@@ -554,7 +555,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       const objectKey = `user-1/waba-1/conv-1/${type}-incoming-key`;
 
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(
         ConversationRepository.prepareWebhookMessageConversation,
@@ -663,7 +664,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('uses contact profile, username, phone, and BSUID for incoming messages', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'db-message-1', content: 'hello' },
@@ -730,7 +731,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('stores incoming username-only contacts when no phone is supplied', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'db-message-1', content: 'hello' },
@@ -813,7 +814,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
       // Mock repository calls
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
         id: 'phone-1',
       } as never);
@@ -905,7 +906,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('queues the conversation when saved text content is missing', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
         id: 'phone-1',
       } as never);
@@ -965,7 +966,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('does not queue redirect message when admin has taken over the conversation', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
         id: 'phone-1',
       } as never);

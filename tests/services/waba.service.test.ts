@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-helper/error';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { WabaService } from '@/services/waba.service';
 import { describe, expect, it, vi } from 'vitest';
@@ -93,7 +94,7 @@ describe('WabaService', { tags: ['backend'] }, () => {
       vi.mocked(WabaRepository.findById).mockResolvedValue({
         id: 'waba-1',
       } as never);
-      vi.mocked(WabaRepository.updateWabaWebhook).mockResolvedValue(
+      vi.mocked(PhoneNumberRepository.updateWabaWebhook).mockResolvedValue(
         {} as never,
       );
 
@@ -103,7 +104,7 @@ describe('WabaService', { tags: ['backend'] }, () => {
       });
 
       expect(result.success).toBe(true);
-      expect(WabaRepository.updateWabaWebhook).toHaveBeenCalledWith({
+      expect(PhoneNumberRepository.updateWabaWebhook).toHaveBeenCalledWith({
         wabaId: 'waba-1',
         botWebhookId: 'webhook-1',
       });
