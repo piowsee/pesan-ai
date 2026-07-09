@@ -7,7 +7,9 @@ import {
 import crypto from 'crypto';
 
 import { AccountUpdateWebhookHandler } from './account-update';
+import { HistoryWebhookHandler } from './history';
 import { MessagesWebhookHandler } from './messages';
+import { SmbAppStateSyncWebhookHandler } from './smb-app-state-sync';
 import { SmbMessageEchoesWebhookHandler } from './smb-message-echoes';
 
 export const MetaWebhookHandlerService = {
@@ -128,6 +130,23 @@ async function processEntries(entries: WebhookEntry[]): Promise<number> {
             eventTime: entry.time,
             value: change.value,
           });
+          continue;
+        }
+
+        if (change.field === 'smb_app_state_sync') {
+          processedCount += await SmbAppStateSyncWebhookHandler.processChange({
+            metaWabaId: entry.id,
+            value: change.value,
+          });
+          continue;
+        }
+
+        if (change.field === 'history') {
+          processedCount += await HistoryWebhookHandler.processChange({
+            metaWabaId: entry.id,
+            value: change.value,
+          });
+          continue;
         }
       } catch (error) {
         logError(error, {

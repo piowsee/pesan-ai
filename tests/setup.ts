@@ -62,6 +62,7 @@ vi.mock('@/repositories/conversation.repository', () => ({
 vi.mock('@/repositories/contact.repository', () => ({
   ContactRepository: {
     findConversationContacts: vi.fn(),
+    upsertContact: vi.fn(),
   },
 }));
 
@@ -77,6 +78,8 @@ vi.mock('@/repositories/message.repository', () => ({
     findMessagesPaginated: vi.fn(),
     saveMessage: vi.fn(),
     updateStatusesByMetaMessageIds: vi.fn(),
+    updateMediaPlaceholder: vi.fn(),
+    findMessageWithWaba: vi.fn(),
   },
 }));
 
@@ -102,6 +105,15 @@ vi.mock('@/repositories/webhook.repository', () => ({
     findPaginated: vi.fn(),
     findWebhookByConversationId: vi.fn(),
     deleteWebhook: vi.fn(),
+  },
+}));
+
+vi.mock('@/repositories/sync-request.repository', () => ({
+  SyncRequestRepository: {
+    createSyncRequest: vi.fn(),
+    updateSyncRequestStatus: vi.fn(),
+    findByRequestId: vi.fn(),
+    findPendingByPhoneNumberId: vi.fn(),
   },
 }));
 

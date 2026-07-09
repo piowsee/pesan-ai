@@ -198,4 +198,35 @@ export const MessageRepository = {
       return savedMessage;
     });
   },
+
+  async updateMediaPlaceholder(params: {
+    messageId: string;
+    type: string;
+    mediaObjectKey: string;
+    mediaMimeType: string;
+    mediaSize: number | null;
+    content?: string | null;
+    metadata?: string | null;
+  }) {
+    const { messageId, ...data } = params;
+    return prisma.message.updateMany({
+      where: { messageId },
+      data,
+    });
+  },
+
+  async findMessageWithWaba(messageId: string) {
+    return prisma.message.findUnique({
+      where: { messageId },
+      include: {
+        conversation: {
+          include: {
+            phoneNumber: {
+              include: { waba: true },
+            },
+          },
+        },
+      },
+    });
+  },
 };

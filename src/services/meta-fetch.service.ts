@@ -87,6 +87,14 @@ type MetaSyncRequestResponse = {
   request_id: string;
 };
 
+type MediaUrlMetaResponse = {
+  url: string;
+  mime_type: string;
+  file_size: string;
+  id: string;
+  sha256: string;
+};
+
 function getBearerAuth(token: string): BetterFetchOption['auth'] {
   return {
     type: 'Bearer',
@@ -309,6 +317,33 @@ export const MetaFetchService = {
     }
 
     return data.data?.[0]?.business_profile ?? null;
+  },
+
+  async getMediaUrl(params: {
+    mediaId: string;
+    token: string;
+    phoneNumberId?: string;
+  }) {
+    const { mediaId, token, phoneNumberId } = params;
+    const query = phoneNumberId ? `?phone_number_id=${phoneNumberId}` : '';
+
+    const { data, error } = await fetchMeta<MediaUrlMetaResponse>(
+      `/${mediaId}${query}`,
+      {
+        action: 'MetaFetchService.getMediaUrl',
+        auth: getBearerAuth(token),
+      },
+    );
+
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
+        `Failed to fetch media URL for ${mediaId}`,
+      );
+      throw new ApiError(message, 502);
+    }
+
+    return data;
   },
 
   async registerPhoneNumber(params: {

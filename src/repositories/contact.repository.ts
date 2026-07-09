@@ -120,4 +120,21 @@ export const ContactRepository = {
       total: groupedContacts.length,
     };
   },
+
+  async upsertContact(params: {
+    customerPhone: string;
+    customerName?: string | null;
+  }) {
+    const { customerPhone, customerName } = params;
+    return prisma.contact.upsert({
+      where: { customerPhone },
+      create: {
+        customerPhone,
+        customerName: customerName ?? null,
+      },
+      update: {
+        ...(customerName !== undefined ? { customerName } : {}),
+      },
+    });
+  },
 };
