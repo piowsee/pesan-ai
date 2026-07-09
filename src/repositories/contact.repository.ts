@@ -121,20 +121,47 @@ export const ContactRepository = {
     };
   },
 
-  async upsertContact(params: {
-    customerPhone: string;
-    customerName?: string | null;
-  }) {
-    const { customerPhone, customerName } = params;
-    return prisma.contact.upsert({
-      where: { customerPhone },
-      create: {
-        customerPhone,
-        customerName: customerName ?? null,
-      },
-      update: {
-        ...(customerName !== undefined ? { customerName } : {}),
-      },
+  async upsertContact(
+    params: {
+      customerPhone?: string | null;
+      bsuid?: string | null;
+      customerName?: string | null;
+      customerUsername?: string | null;
+    },
+    tx?: Prisma.TransactionClient,
+  ) {
+    const db = tx ?? prisma;
+    const bsuid = params.bsuid?.trim() || undefined;
+    const customerPhone = params.customerPhone?.trim() || undefined;
+    const customerName = params.customerName?.trim() || undefined;
+    const customerUsername = params.customerUsername?.trim() || undefined;
+
+    if (!bsuid && !customerPhone) {
+      throw new Error('Cannot upsert a contact without a phone or BSUID');
+    }
+
+    const data: Prisma.ContactUpdateInput = {};
+    if (bsuid) data.bsuid = bsuid;
+    if (customerPhone) data.customerPhone = customerPhone;
+    if (customerName !== undefined) data.customerName = customerName;
+    if (customerUsername !== undefined)
+      data.customerUsername = customerUsername;
+
+    const existingContact =
+      (bsuid ? await db.contact.findUnique({ where: { bsuid } }) : null) ??
+      (customerPhone
+        ? await db.contact.findUnique({ where: { customerPhone } })
+        : null);
+
+    if (existingContact) {
+      return db.contact.update({
+        where: { id: existingContact.id },
+        data,
+      });
+    }
+
+    return db.contact.create({
+      data: data as Prisma.ContactCreateInput,
     });
   },
 };

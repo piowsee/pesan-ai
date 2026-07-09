@@ -1,87 +1,7 @@
 import { Prisma } from '@/generated/prisma/client';
 import prisma from '@/lib/server/prisma';
 
-interface ContactInput {
-  bsuid?: string | null;
-  customerPhone?: string | null;
-  customerName?: string | null;
-  customerUsername?: string | null;
-}
-
-type ContactIdentifier = Pick<
-  ContactInput,
-  'bsuid' | 'customerPhone' | 'customerUsername'
->;
-
-function normalizeOptionalString(value?: string | null) {
-  const normalized = value?.trim();
-  return normalized ? normalized : undefined;
-}
-
-function buildContactIdentifiers(input: ContactIdentifier) {
-  const identifiers: Prisma.ContactWhereInput[] = [];
-  const bsuid = normalizeOptionalString(input.bsuid);
-  const customerPhone = normalizeOptionalString(input.customerPhone);
-
-  if (bsuid) identifiers.push({ bsuid });
-  if (customerPhone) identifiers.push({ customerPhone });
-
-  return identifiers;
-}
-
-function buildContactWriteData(input: ContactInput): Prisma.ContactUpdateInput {
-  const data: Prisma.ContactUpdateInput = {};
-  const bsuid = normalizeOptionalString(input.bsuid);
-  const customerPhone = normalizeOptionalString(input.customerPhone);
-  const customerName = normalizeOptionalString(input.customerName);
-  const customerUsername = normalizeOptionalString(input.customerUsername);
-
-  if (bsuid) data.bsuid = bsuid;
-  if (customerPhone) data.customerPhone = customerPhone;
-  if (customerName) data.customerName = customerName;
-  if (customerUsername) data.customerUsername = customerUsername;
-
-  return data;
-}
-
-// make sure atleast phoneNumber/BSUID exist since it is needed for sending message
-function assertContactIdentifiable(input: ContactInput) {
-  if (buildContactIdentifiers(input).length === 0) {
-    throw new Error(
-      'Cannot create a conversation without a contact phone or BSUID',
-    );
-  }
-}
-
-async function findOrCreateContact(
-  tx: Prisma.TransactionClient,
-  input: ContactInput,
-) {
-  assertContactIdentifiable(input);
-
-  const data = buildContactWriteData(input);
-
-  // Only Check existing contact via BSUID and customerPhone
-  // because user can change their username periodically according to WhatsApp Cloud API docs
-  const bsuid = normalizeOptionalString(input.bsuid);
-  const customerPhone = normalizeOptionalString(input.customerPhone);
-  const existingContact =
-    (bsuid ? await tx.contact.findUnique({ where: { bsuid } }) : null) ??
-    (customerPhone
-      ? await tx.contact.findUnique({ where: { customerPhone } })
-      : null);
-
-  if (existingContact) {
-    return tx.contact.update({
-      where: { id: existingContact.id },
-      data,
-    });
-  }
-
-  return tx.contact.create({
-    data: data as Prisma.ContactCreateInput,
-  });
-}
+import { ContactRepository } from './contact.repository';
 
 const safeContactSelect = {
   customerPhone: true,
@@ -227,12 +147,10 @@ export const ConversationRepository = {
     } = params;
 
     const result = await prisma.$transaction(async (tx) => {
-      const contact = await findOrCreateContact(tx, {
-        bsuid,
-        customerPhone,
-        customerName,
-        customerUsername,
-      });
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
 
       const conversation = await tx.conversation.upsert({
         where: {
@@ -377,12 +295,10 @@ export const ConversationRepository = {
         },
       });
 
-      const contact = await findOrCreateContact(tx, {
-        bsuid,
-        customerPhone,
-        customerName,
-        customerUsername,
-      });
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
 
       // 1. Upsert conversation
       const conversation = await tx.conversation.upsert({
@@ -510,12 +426,10 @@ export const ConversationRepository = {
         },
       });
 
-      const contact = await findOrCreateContact(tx, {
-        bsuid,
-        customerPhone,
-        customerName,
-        customerUsername,
-      });
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
 
       const conversation = await tx.conversation.upsert({
         where: {

@@ -12,7 +12,8 @@ import {
 
 import { SEED_DATA } from '../seed-data';
 
-vi.unmock('@/repositories/conversation.repository.ts');
+vi.unmock('@/repositories/conversation.repository');
+vi.unmock('@/repositories/contact.repository');
 
 describe('ConversationRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
