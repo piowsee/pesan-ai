@@ -131,7 +131,9 @@ export async function redirectMessageToExternalWebhook(params: {
   });
 
   await _handlePostRedirectMessage({
-    conversation,
+    conversationId,
+    userId,
+    wabaId,
     content: data.botResponse,
     adminTakeover: data.adminTakeover,
   });
@@ -250,13 +252,40 @@ function _emitBotWebhookFailed(conversation: BotConversation) {
 }
 
 async function _handlePostRedirectMessage(params: {
-  conversation: BotConversation;
+  conversationId: string;
+  userId: string;
+  wabaId: string;
   content?: string | null;
   adminTakeover: boolean;
 }) {
-  const { conversation, content, adminTakeover } = params;
+  const { conversationId, userId, wabaId, content, adminTakeover } = params;
 
-  let effectiveAdminTakeover = conversation.adminTakeover;
+  const conversation = await ConversationRepository.findConversationById({
+    conversationId,
+    userId,
+    wabaId,
+  });
+
+  if (!conversation) {
+    logError(
+      new Error(
+        `Conversation ${conversationId} does not exist for post-redirect message`,
+      ),
+    );
+    return;
+  }
+
+  if (conversation.adminTakeover) {
+    logger.info(
+      'Skipping bot webhook for admin takeover conversation during post-redirect',
+      {
+        conversationId,
+      },
+    );
+    return;
+  }
+
+  let effectiveAdminTakeover: boolean = conversation.adminTakeover;
 
   if (adminTakeover) {
     const updatedConversation =
@@ -319,8 +348,6 @@ async function _handlePostRedirectMessage(params: {
     messageId: waResult.messageId,
     timestamp: new Date(),
   });
-
-  const userId = conversation.phoneNumber.waba.userId;
 
   const eventName = getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId);
   if (eventBus.listenerCount(eventName) === 0) return;

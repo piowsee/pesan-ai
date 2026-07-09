@@ -100,6 +100,45 @@ describe('MessageService', { tags: ['backend'] }, () => {
         message: { type: 'text', text: 'Hello Admin' },
       });
       expect(MessageRepository.saveMessage).toHaveBeenCalled();
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        adminTakeover: true,
+      });
+    });
+
+    it('does not update adminTakeover if it is already true', async () => {
+      vi.mocked(
+        ConversationRepository.getConversationMetaForSending,
+      ).mockResolvedValue({
+        lastCustomerMessageAt: new Date(),
+        adminTakeover: true,
+        phoneNumber: {
+          phoneNumberId: 'pn-1',
+          waba: { systemUserToken: 'token', status: 'active' },
+        },
+        customerPhone: '+123456',
+        contact: { bsuid: 'US.customer-123' },
+      } as never);
+      vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
+        status: 'sent',
+        messageId: 'wa-msg-1',
+      });
+      vi.mocked(MessageRepository.saveMessage).mockResolvedValue({
+        id: 'msg-1',
+      } as never);
+
+      await MessageService.sendAdminTextMessage({
+        convId: 'conv-1',
+        wabaId: 'waba-1',
+        userId: 'user-1',
+        content: 'Hello Admin',
+      });
+
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).not.toHaveBeenCalled();
     });
 
     it('uses customer phone as to when BSUID is not available', async () => {
@@ -295,6 +334,12 @@ describe('MessageService', { tags: ['backend'] }, () => {
           timestamp: expect.any(Date),
         }),
       );
+      expect(
+        ConversationRepository.updateAdminTakeoverStatus,
+      ).toHaveBeenCalledWith({
+        conversationId: 'conv-1',
+        adminTakeover: true,
+      });
       expect(result.message.mediaSize).toBe(123);
       expect(result.conversation.phoneNumber.waba).not.toHaveProperty(
         'systemUserToken',
