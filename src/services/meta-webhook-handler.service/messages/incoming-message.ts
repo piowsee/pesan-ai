@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
+import { MessageRepository } from '@/repositories/message.repository';
 import type { WebhookMessage } from '@/schemas/meta-webhook-handler.schema/messages';
 import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import { DebouncerService } from '@/services/debouncer.service';
@@ -108,7 +109,7 @@ async function processIncomingTextMessage(params: {
     conversation,
     userId,
     wabaId,
-  } = await ConversationRepository.processIncomingMessage({
+  } = await MessageRepository.processIncomingMessage({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
     message: {
@@ -198,7 +199,7 @@ async function processIncomingMediaMessage(params: {
     conversation,
     userId,
     wabaId,
-  } = await ConversationRepository.processIncomingMessage({
+  } = await MessageRepository.processIncomingMessage({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
     message: {

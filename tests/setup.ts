@@ -54,8 +54,6 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findConversationById: vi.fn(),
     updateAdminTakeoverStatus: vi.fn(),
     prepareWebhookMessageConversation: vi.fn(),
-    processIncomingMessage: vi.fn(),
-    processOutgoingMessageEcho: vi.fn(),
   },
 }));
 
@@ -80,6 +78,8 @@ vi.mock('@/repositories/message.repository', () => ({
     updateStatusesByMetaMessageIds: vi.fn(),
     updateMediaPlaceholder: vi.fn(),
     findMessageWithWaba: vi.fn(),
+    processIncomingMessage: vi.fn(),
+    processOutgoingMessageEcho: vi.fn(),
   },
 }));
 

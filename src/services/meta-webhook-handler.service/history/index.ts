@@ -1,7 +1,6 @@
 import { decrypt } from '@/lib/server/encryption';
 import { logger } from '@/lib/server/logger';
 import prisma from '@/lib/server/prisma';
-import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { HistoryValue } from '@/schemas/meta-webhook-handler.schema';
@@ -88,13 +87,13 @@ export const HistoryWebhookHandler = {
 
               try {
                 if (isOutgoing) {
-                  await ConversationRepository.processOutgoingMessageEcho({
+                  await MessageRepository.processOutgoingMessageEcho({
                     phoneNumberId: phoneNumber.id,
                     customerPhone,
                     message: messageData,
                   });
                 } else {
-                  await ConversationRepository.processIncomingMessage({
+                  await MessageRepository.processIncomingMessage({
                     phoneNumberId: phoneNumber.id,
                     customerPhone,
                     message: messageData,

@@ -1,5 +1,4 @@
 import prisma from '@/lib/server/prisma';
-import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { HistoryWebhookHandler } from '@/services/meta-webhook-handler.service/history';
@@ -68,14 +67,12 @@ describe('HistoryWebhookHandler', () => {
     });
 
     expect(result).toBe(2);
-    expect(ConversationRepository.processIncomingMessage).toHaveBeenCalledWith(
+    expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.objectContaining({ messageId: 'msg-in', type: 'text' }),
       }),
     );
-    expect(
-      ConversationRepository.processOutgoingMessageEcho,
-    ).toHaveBeenCalledWith(
+    expect(MessageRepository.processOutgoingMessageEcho).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.objectContaining({
           messageId: 'msg-out',
