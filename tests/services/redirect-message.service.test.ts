@@ -122,7 +122,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
 
     expect(result).toEqual({ botResponse: 'ok', adminTakeover: false });
     expect(ConversationRepository.findConversationById).toHaveBeenCalledTimes(
-      1,
+      2,
     );
     expect(WebhookRepository.findWebhookByConversationId).toHaveBeenCalledWith({
       conversationId: 'conv-1',
@@ -212,6 +212,43 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       ).not.toHaveBeenCalled();
     },
   );
+
+  it('does not send a WhatsApp message if admin takes over while webhook is processing', async () => {
+    vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
+      url: 'https://bot.example.com/message',
+      passphrase: 'encrypted-passphrase',
+      isActive: true,
+    });
+    vi.mocked(betterFetch).mockResolvedValue({
+      data: { botResponse: 'I am a bot', adminTakeover: false },
+      error: null,
+    } as never);
+    // On first call, adminTakeover is false. On second call, it is true.
+    vi.mocked(ConversationRepository.findConversationById)
+      .mockReset()
+      .mockResolvedValueOnce({
+        id: 'conv-1',
+        adminTakeover: false,
+        contact: { customerPhone: '+123456' },
+        phoneNumber: { waba: { userId: 'user-1' } },
+      } as never)
+      .mockResolvedValueOnce({
+        id: 'conv-1',
+        adminTakeover: true,
+        contact: { customerPhone: '+123456' },
+        phoneNumber: { waba: { userId: 'user-1' } },
+      } as never);
+
+    await redirectMessageToExternalWebhook({
+      conversationId: 'conv-1',
+      userId: 'user-1',
+      wabaId: 'waba-1',
+      messages: messageHistory('hello'),
+    });
+
+    expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
+    expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
+  });
 
   it('persists admin takeover without sending when bot response is empty', async () => {
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
