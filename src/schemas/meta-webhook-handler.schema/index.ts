@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 import { AccountUpdateValueSchema } from './account-update';
+import { HistoryValueSchema } from './history';
 import { WebhookValueSchema } from './messages';
+import { SmbAppStateSyncValueSchema } from './smb-app-state-sync';
 import { WebhookMessageEchoValueSchema } from './smb-message-echoes';
 
 const WebhookChangeSchema = z.discriminatedUnion('field', [
@@ -16,6 +18,14 @@ const WebhookChangeSchema = z.discriminatedUnion('field', [
   z.object({
     field: z.literal('account_update'),
     value: AccountUpdateValueSchema,
+  }),
+  z.object({
+    field: z.literal('smb_app_state_sync'),
+    value: SmbAppStateSyncValueSchema,
+  }),
+  z.object({
+    field: z.literal('history'),
+    value: HistoryValueSchema,
   }),
 ]);
 
@@ -41,6 +51,8 @@ export {
   WebhookMessageEchoSchema,
   WebhookMessageEchoValueSchema,
 } from './smb-message-echoes';
+export { SmbAppStateSyncValueSchema } from './smb-app-state-sync';
+export { HistoryValueSchema } from './history';
 export { ContactSchema } from './shared';
 
 export type MetaWebhookPayload = z.infer<typeof MetaWebhookPayloadSchema>;
@@ -51,4 +63,6 @@ export type {
   WebhookMessageEcho,
   WebhookMessageEchoValue,
 } from './smb-message-echoes';
+export type { SmbAppStateSyncValue } from './smb-app-state-sync';
+export type { HistoryValue, HistoryMessage } from './history';
 export type { Contact } from './shared';

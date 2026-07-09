@@ -1,6 +1,7 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { encrypt } from '@/lib/server/encryption';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
+import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 import { MetaFetchService } from '@/services/meta-fetch.service';
@@ -321,11 +322,17 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       });
     });
 
-    it('skips phone registration for WhatsApp Business App coexistence', async () => {
+    it('skips phone registration and triggers history sync for WhatsApp Business App coexistence', async () => {
       const registerPhoneNumberSpy = vi.spyOn(
         MetaFetchService,
         'registerPhoneNumber',
       );
+      const syncRequestSpy = vi
+        .spyOn(MetaFetchService, 'syncRequest')
+        .mockResolvedValue({
+          sync_type: 'history',
+          request_id: 'sync-req-123',
+        });
 
       const result = await EmbeddedSignUpService.completeEmbeddedSignup({
         code: VALID_CODE,
@@ -343,6 +350,35 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           registrationPin: REGISTRATION_PINS[index],
         })),
       });
+
+      expect(syncRequestSpy).toHaveBeenCalledTimes(4); // 2 phone numbers * 2 sync types
+      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledTimes(4);
+      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledWith({
+        requestId: 'sync-req-123',
+        syncType: 'history',
+        phoneNumberId: MOCK_PHONE_DBS[0].id,
+      });
+    });
+
+    it('continues when one syncRequest fails during coexistence signup (Promise.allSettled)', async () => {
+      vi.spyOn(MetaFetchService, 'syncRequest').mockImplementation(
+        async ({ phoneNumberId }) => {
+          if (phoneNumberId === META_PHONE_NUMBERS[0].id) {
+            throw new ApiError('Sync failed', 502);
+          }
+          return { sync_type: 'history', request_id: 'sync-req-456' };
+        },
+      );
+
+      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
+        code: VALID_CODE,
+        event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+        wabaId: WABA_ID,
+        userId: USER_ID,
+      });
+
+      expect(result.phoneNumbers).toHaveLength(2); // Still succeeds
+      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledTimes(2); // Only for the second phone number (2 sync types)
     });
 
     it('saves the encrypted access token on the WABA record', async () => {

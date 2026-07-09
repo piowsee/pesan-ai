@@ -13,7 +13,7 @@ import {
 
 import { SEED_DATA } from '../seed-data';
 
-vi.unmock('@/repositories/webhook.repository.ts');
+vi.unmock('@/repositories/webhook.repository');
 
 /**
  * WebhookRepository Integration Tests (Synced with Seed)

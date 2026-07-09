@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
+import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { PhoneNumberMetaResponse, WhatsappBusinessProfile } from '@/types/waba';
@@ -380,6 +381,36 @@ export const EmbeddedSignUpService = {
       count: businessProfiles.length,
       wabaId,
     });
+
+    if (event === COEXISTENCE_SIGNUP_EVENT) {
+      await Promise.allSettled(
+        phoneNumbers.map(async (phoneNumber) => {
+          const syncTypes = ['history', 'smb_app_state_sync'] as const;
+          await Promise.allSettled(
+            syncTypes.map(async (syncType) => {
+              try {
+                const { request_id } = await MetaFetchService.syncRequest({
+                  phoneNumberId: phoneNumber.phoneNumberId,
+                  token: systemUserToken,
+                  sync_type: syncType,
+                });
+                await SyncRequestRepository.createSyncRequest({
+                  requestId: request_id,
+                  syncType,
+                  phoneNumberId: phoneNumber.id,
+                });
+              } catch (error) {
+                logError(error, {
+                  action: 'Failed to request and save sync history',
+                  phoneNumberId: phoneNumber.phoneNumberId,
+                  syncType,
+                });
+              }
+            }),
+          );
+        }),
+      );
+    }
 
     return {
       waba,

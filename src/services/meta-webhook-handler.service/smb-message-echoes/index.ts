@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
+import { MessageRepository } from '@/repositories/message.repository';
 import type {
   WebhookMessageEcho,
   WebhookMessageEchoValue,
@@ -102,7 +103,7 @@ async function processMessageEchoTextMessage(params: {
     conversation,
     userId,
     wabaId,
-  } = await ConversationRepository.processOutgoingMessageEcho({
+  } = await MessageRepository.processOutgoingMessageEcho({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
     message: {
@@ -163,7 +164,7 @@ async function processMessageEchoMediaMessage(params: {
     conversation,
     userId,
     wabaId,
-  } = await ConversationRepository.processOutgoingMessageEcho({
+  } = await MessageRepository.processOutgoingMessageEcho({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
     message: {

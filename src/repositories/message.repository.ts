@@ -1,6 +1,9 @@
 import prisma from '@/lib/server/prisma';
 import type { ChatMessageSource } from '@/types/chat';
 
+import { ContactRepository } from './contact.repository';
+import { safeContactSelect } from './conversation.repository';
+
 export const MessageRepository = {
   async updateStatusesByMetaMessageIds(
     statuses: Array<{
@@ -196,6 +199,278 @@ export const MessageRepository = {
       });
 
       return savedMessage;
+    });
+  },
+
+  async updateMediaPlaceholder(params: {
+    messageId: string;
+    type: string;
+    mediaObjectKey: string;
+    mediaMimeType: string;
+    mediaSize: number | null;
+    content?: string | null;
+    metadata?: string | null;
+  }) {
+    const { messageId, ...data } = params;
+    return prisma.message.updateMany({
+      where: { messageId },
+      data,
+    });
+  },
+
+  async findMessageWithWaba(messageId: string) {
+    return prisma.message.findUnique({
+      where: { messageId },
+      include: {
+        conversation: {
+          include: {
+            phoneNumber: {
+              include: { waba: true },
+            },
+          },
+        },
+      },
+    });
+  },
+
+  async processIncomingMessage(params: {
+    phoneNumberId: string; // Internal ID
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string | null;
+      timestamp: Date;
+      metadata?: string | null;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
+    };
+  }) {
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      message,
+    } = params;
+
+    return prisma.$transaction(async (tx) => {
+      // we want to find the owner so we can emit SSE
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
+
+      // 1. Upsert conversation
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
+          },
+        },
+        update: {
+          unreadCount: { increment: 1 },
+        },
+        create: {
+          phoneNumberId,
+          contactId: contact.id,
+          unreadCount: 1,
+        },
+        include: {
+          contact: {
+            select: safeContactSelect,
+          },
+          phoneNumber: true,
+        },
+      });
+
+      // 2. Create message
+      const savedMessage = await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          messageId: message.messageId,
+          direction: 'incoming',
+          source: 'customer',
+          type: message.type,
+          content: message.content,
+          timestamp: message.timestamp,
+          metadata: message.metadata,
+          mediaObjectKey: message.mediaObjectKey,
+          mediaMimeType: message.mediaMimeType,
+          mediaFilename: message.mediaFilename,
+          mediaSize: message.mediaSize,
+          status: 'delivered', // Incoming messages from Meta are delivered
+        },
+      });
+
+      const shouldUpdateLastMessageAt =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt;
+      const shouldUpdateLastCustomerMessageAt =
+        !conversation.lastCustomerMessageAt ||
+        message.timestamp > conversation.lastCustomerMessageAt;
+
+      const latestConversation =
+        shouldUpdateLastMessageAt || shouldUpdateLastCustomerMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                ...(shouldUpdateLastMessageAt && {
+                  lastMessageAt: message.timestamp,
+                }),
+                ...(shouldUpdateLastCustomerMessageAt && {
+                  lastCustomerMessageAt: message.timestamp,
+                }),
+              },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
+            })
+          : conversation;
+
+      // 3. Update parent PhoneNumber unread count
+      await tx.phoneNumber.update({
+        where: { id: phoneNumberId },
+        data: { unreadCount: { increment: 1 } },
+      });
+
+      return {
+        conversation: latestConversation,
+        message: savedMessage,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
+      };
+    });
+  },
+
+  async processOutgoingMessageEcho(params: {
+    phoneNumberId: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string | null;
+      timestamp: Date;
+      metadata?: string | null;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
+    };
+  }) {
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      message,
+    } = params;
+
+    return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
+
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
+          },
+        },
+        update: {},
+        create: {
+          phoneNumberId,
+          contactId: contact.id,
+        },
+        include: {
+          contact: {
+            select: safeContactSelect,
+          },
+          phoneNumber: true,
+        },
+      });
+
+      const savedMessage = await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          messageId: message.messageId,
+          direction: 'outgoing',
+          // `whatsapp_app` covers live echoes and all history-sync messages,
+          // regardless of their original sender. Only realtime inbound messages use `customer`.
+          source: 'whatsapp_app',
+          type: message.type,
+          content: message.content,
+          timestamp: message.timestamp,
+          metadata: message.metadata,
+          mediaObjectKey: message.mediaObjectKey,
+          mediaMimeType: message.mediaMimeType,
+          mediaFilename: message.mediaFilename,
+          mediaSize: message.mediaSize,
+          status: 'sent',
+        },
+      });
+
+      const latestConversation =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: message.timestamp },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
+            })
+          : conversation;
+
+      return {
+        conversation: latestConversation,
+        message: savedMessage,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
+      };
     });
   },
 };
