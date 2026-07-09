@@ -125,12 +125,6 @@ export const ConversationRepository = {
     });
   },
 
-  async findPhoneNumberByMetaId(metaPhoneNumberId: string) {
-    return prisma.phoneNumber.findUnique({
-      where: { phoneNumberId: metaPhoneNumberId },
-    });
-  },
-
   async prepareWebhookMessageConversation(params: {
     phoneNumberId: string;
     customerPhone?: string | null;

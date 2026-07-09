@@ -1,7 +1,7 @@
 import { decrypt } from '@/lib/server/encryption';
 import { logger } from '@/lib/server/logger';
-import prisma from '@/lib/server/prisma';
 import { MessageRepository } from '@/repositories/message.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { HistoryValue } from '@/schemas/meta-webhook-handler.schema';
 import { MetaFetchService } from '@/services/meta-fetch.service';
@@ -17,9 +17,9 @@ export const HistoryWebhookHandler = {
     const { metadata, history, messages } = value;
     let processedCount = 0;
 
-    const phoneNumber = await prisma.phoneNumber.findUnique({
-      where: { phoneNumberId: metadata.phone_number_id },
-    });
+    const phoneNumber = await PhoneNumberRepository.findPhoneNumberByMetaId(
+      metadata.phone_number_id,
+    );
 
     if (!phoneNumber) {
       logger.warn('Received history webhook for unknown phone number', {

@@ -1,5 +1,6 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { logger } from '@/lib/server/logger';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 
 interface PhoneNumberWithWebhook {
@@ -104,7 +105,7 @@ export const WabaService = {
       throw new ApiError('WABA not found', 404);
     }
 
-    await WabaRepository.updateWabaWebhook({
+    await PhoneNumberRepository.updateWabaWebhook({
       wabaId,
       botWebhookId: webhookId,
     });

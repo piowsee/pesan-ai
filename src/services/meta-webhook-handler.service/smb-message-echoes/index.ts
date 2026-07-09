@@ -3,6 +3,7 @@ import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import type {
   WebhookMessageEcho,
   WebhookMessageEchoValue,
@@ -18,7 +19,7 @@ export const SmbMessageEchoesWebhookHandler = {
     if (!metaPhoneNumberId) return 0;
 
     const internalPhoneResult =
-      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
+      await PhoneNumberRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
 
     if (!internalPhoneResult) {
       logger.warn('Received message echo for unknown Meta Phone Number ID', {

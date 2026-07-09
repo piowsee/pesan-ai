@@ -427,6 +427,42 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
         'Newer incoming message',
       );
     });
+
+    it('upserts an existing incoming message idempotently without creating duplicates', async () => {
+      const messageId = 'wamid.incoming.test.idempotent';
+      const timestamp = new Date('2026-06-28T12:00:00.000Z');
+      const customerPhone = '998010';
+
+      const firstCall = await MessageRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId,
+          type: 'text',
+          content: 'First incoming payload',
+          timestamp,
+        },
+      });
+
+      const secondCall = await MessageRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId,
+          type: 'text',
+          content: 'Updated payload content',
+          timestamp,
+        },
+      });
+
+      expect(firstCall.message.id).toBe(secondCall.message.id);
+      expect(secondCall.message.content).toBe('Updated payload content');
+
+      const messagesCount = await prisma.message.count({
+        where: { messageId },
+      });
+      expect(messagesCount).toBe(1);
+    });
   });
 
   describe('processOutgoingMessageEcho', () => {
@@ -506,6 +542,42 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
 
       expect(savedConversation.lastMessageAt).toEqual(newerTimestamp);
       expect(savedConversation.messages[0]?.content).toBe('Newer message');
+    });
+
+    it('upserts an existing outgoing message idempotently without creating duplicates', async () => {
+      const messageId = 'wamid.echo.test.idempotent';
+      const timestamp = new Date('2026-06-28T12:00:00.000Z');
+      const customerPhone = '998011';
+
+      const firstCall = await MessageRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId,
+          type: 'text',
+          content: 'First echo payload',
+          timestamp,
+        },
+      });
+
+      const secondCall = await MessageRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId,
+          type: 'text',
+          content: 'Updated echo payload',
+          timestamp,
+        },
+      });
+
+      expect(firstCall.message.id).toBe(secondCall.message.id);
+      expect(secondCall.message.content).toBe('Updated echo payload');
+
+      const messagesCount = await prisma.message.count({
+        where: { messageId },
+      });
+      expect(messagesCount).toBe(1);
     });
   });
 });

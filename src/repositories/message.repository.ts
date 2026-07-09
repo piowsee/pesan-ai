@@ -303,23 +303,29 @@ export const MessageRepository = {
         },
       });
 
-      // 2. Create message
-      const savedMessage = await tx.message.create({
-        data: {
-          conversationId: conversation.id,
+      // 2. Upsert message
+      const messageData = {
+        conversationId: conversation.id,
+        direction: 'incoming',
+        source: 'customer',
+        type: message.type,
+        content: message.content,
+        timestamp: message.timestamp,
+        metadata: message.metadata,
+        mediaObjectKey: message.mediaObjectKey,
+        mediaMimeType: message.mediaMimeType,
+        mediaFilename: message.mediaFilename,
+        mediaSize: message.mediaSize,
+        status: 'delivered', // Incoming messages from Meta are delivered
+      } as const;
+
+      const savedMessage = await tx.message.upsert({
+        where: { messageId: message.messageId },
+        create: {
+          ...messageData,
           messageId: message.messageId,
-          direction: 'incoming',
-          source: 'customer',
-          type: message.type,
-          content: message.content,
-          timestamp: message.timestamp,
-          metadata: message.metadata,
-          mediaObjectKey: message.mediaObjectKey,
-          mediaMimeType: message.mediaMimeType,
-          mediaFilename: message.mediaFilename,
-          mediaSize: message.mediaSize,
-          status: 'delivered', // Incoming messages from Meta are delivered
         },
+        update: messageData,
       });
 
       const shouldUpdateLastMessageAt =
@@ -430,24 +436,30 @@ export const MessageRepository = {
         },
       });
 
-      const savedMessage = await tx.message.create({
-        data: {
-          conversationId: conversation.id,
+      const messageData = {
+        conversationId: conversation.id,
+        direction: 'outgoing',
+        // `whatsapp_app` covers live echoes and all history-sync messages,
+        // regardless of their original sender. Only realtime inbound messages use `customer`.
+        source: 'whatsapp_app',
+        type: message.type,
+        content: message.content,
+        timestamp: message.timestamp,
+        metadata: message.metadata,
+        mediaObjectKey: message.mediaObjectKey,
+        mediaMimeType: message.mediaMimeType,
+        mediaFilename: message.mediaFilename,
+        mediaSize: message.mediaSize,
+        status: 'sent',
+      } as const;
+
+      const savedMessage = await tx.message.upsert({
+        where: { messageId: message.messageId },
+        create: {
+          ...messageData,
           messageId: message.messageId,
-          direction: 'outgoing',
-          // `whatsapp_app` covers live echoes and all history-sync messages,
-          // regardless of their original sender. Only realtime inbound messages use `customer`.
-          source: 'whatsapp_app',
-          type: message.type,
-          content: message.content,
-          timestamp: message.timestamp,
-          metadata: message.metadata,
-          mediaObjectKey: message.mediaObjectKey,
-          mediaMimeType: message.mediaMimeType,
-          mediaFilename: message.mediaFilename,
-          mediaSize: message.mediaSize,
-          status: 'sent',
         },
+        update: messageData,
       });
 
       const latestConversation =

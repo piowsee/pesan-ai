@@ -24,7 +24,6 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let anotherUserId: string;
   let dbWabaId: string;
-  let dbWebhookId: string;
 
   beforeEach(async () => {
     const user = await prisma.user.findUnique({
@@ -63,7 +62,6 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         `Seeded Webhook ${SEED_DATA.WEBHOOK_NAME} not found. Please run prisma db seed.`,
       );
     }
-    dbWebhookId = webhook.id;
   });
 
   afterEach(async () => {
@@ -128,20 +126,6 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('updateWabaWebhook', () => {
-    it('updates phone numbers associated with the seeded WABA', async () => {
-      const result = await WabaRepository.updateWabaWebhook({
-        wabaId: dbWabaId,
-        botWebhookId: dbWebhookId,
-      });
-      expect(result.count).toBeGreaterThanOrEqual(1);
-      const check = await prisma.phoneNumber.findFirst({
-        where: { wabaId: dbWabaId },
-      });
-      expect(check?.botWebhookId).toBe(dbWebhookId);
-    });
-  });
-
   describe('findById', () => {
     it('finds the seeded WABA by its internal ID', async () => {
       const result = await WabaRepository.findById(dbWabaId);
@@ -172,30 +156,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('findPhoneNumbersByMetaIds', () => {
-    it('returns stored pins for matching Meta phone number ids', async () => {
-      const result = await WabaRepository.findPhoneNumbersByMetaIds({
-        phoneNumberIds: [SEED_DATA.PHONE_META_ID, 'missing-phone-id'],
-      });
-
-      expect(result).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            phoneNumberId: SEED_DATA.PHONE_META_ID,
-          }),
-        ]),
-      );
-    });
-
-    it('returns an empty array when no ids are requested', async () => {
-      await expect(
-        WabaRepository.findPhoneNumbersByMetaIds({ phoneNumberIds: [] }),
-      ).resolves.toEqual([]);
-    });
-  });
-
   const TEST_WABA_ID = 'test-upsert-waba-999';
-  const TEST_PHONE_ID = 'test-upsert-phone-999';
 
   describe('updateStatusByMetaWabaId', () => {
     it('updates WABA status by Meta WABA id', async () => {
@@ -295,108 +256,6 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       });
       expect(result?.userId).toBe(userId);
       expect(result?.systemUserToken).toBe('enc:owner-token');
-    });
-  });
-
-  describe('upsertPhoneNumbers', () => {
-    let wabaDbId: string;
-
-    beforeEach(async () => {
-      const waba = await WabaRepository.upsertWaba({
-        wabaId: TEST_WABA_ID,
-        userId,
-        systemUserToken: 'enc:tok',
-        businessName: 'Test Salon',
-      });
-      wabaDbId = waba.id;
-    });
-
-    it('creates a new PhoneNumber linked to the WABA', async () => {
-      const [result] = await WabaRepository.upsertPhoneNumbers({
-        wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+62 851-9556-3454',
-            verified_name: 'Test Salon Bot',
-            code_verification_status: 'NOT_VERIFIED',
-            registrationPin: 'enc:230601',
-          },
-        ],
-      });
-
-      expect(result.phoneNumberId).toBe(TEST_PHONE_ID);
-      expect(result.wabaId).toBe(wabaDbId);
-      expect(result.displayPhoneNumber).toBe('6285195563454');
-      expect(result.registrationPin).toBe('enc:230601');
-      expect(result.codeVerificationStatus).toBe('NOT_VERIFIED');
-    });
-
-    it('updates display number, verified name, and verification status on subsequent calls (idempotent)', async () => {
-      await WabaRepository.upsertPhoneNumbers({
-        wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+6281234567890',
-            verified_name: 'Old Name',
-            code_verification_status: 'NOT_VERIFIED',
-            registrationPin: 'enc:111111',
-          },
-        ],
-      });
-
-      const [updated] = await WabaRepository.upsertPhoneNumbers({
-        wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+62 899-9999-9999',
-            verified_name: 'New Name',
-            code_verification_status: 'VERIFIED',
-            registrationPin: 'enc:222222',
-          },
-        ],
-      });
-
-      expect(updated.displayPhoneNumber).toBe('6289999999999');
-      expect(updated.verifiedName).toBe('New Name');
-      expect(updated.registrationPin).toBe('enc:222222');
-      expect(updated.codeVerificationStatus).toBe('VERIFIED');
-    });
-
-    it('handles null verifiedName gracefully', async () => {
-      const [result] = await WabaRepository.upsertPhoneNumbers({
-        wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+628000000000',
-            verified_name: null,
-            code_verification_status: null,
-            registrationPin: null,
-          },
-        ],
-      });
-
-      expect(result.verifiedName).toBeNull();
-      expect(result.registrationPin).toBeNull();
-    });
-
-    it('falls back to UNVERIFIED when Meta does not return code_verification_status', async () => {
-      const [result] = await WabaRepository.upsertPhoneNumbers({
-        wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+6281234567890',
-            verified_name: 'Fallback Bot',
-            registrationPin: 'enc:333333',
-          },
-        ],
-      });
-
-      expect(result.codeVerificationStatus).toBe('UNVERIFIED');
     });
   });
 });

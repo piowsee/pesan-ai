@@ -1,6 +1,6 @@
 import { logger } from '@/lib/server/logger';
-import prisma from '@/lib/server/prisma';
 import { ContactRepository } from '@/repositories/contact.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SmbAppStateSyncValue } from '@/schemas/meta-webhook-handler.schema';
 
 export const SmbAppStateSyncWebhookHandler = {
@@ -17,9 +17,9 @@ export const SmbAppStateSyncWebhookHandler = {
     }
 
     // Find the internal phone number
-    const phoneNumber = await prisma.phoneNumber.findUnique({
-      where: { phoneNumberId: metadata.phone_number_id },
-    });
+    const phoneNumber = await PhoneNumberRepository.findPhoneNumberByMetaId(
+      metadata.phone_number_id,
+    );
 
     if (!phoneNumber) {
       logger.warn(
