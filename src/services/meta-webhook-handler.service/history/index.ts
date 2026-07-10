@@ -157,6 +157,8 @@ export const HistoryWebhookHandler = {
           if (existingMessage) {
             convId = existingMessage.conversationId;
           } else {
+            // FIX ME:
+            // this might cause a race condition on `status` field between repo call below and the threads handler above
             const upsertResult = await MessageRepository.processHistoryMessage({
               phoneNumberId: phoneNumber.id,
               customerPhone,
