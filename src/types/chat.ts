@@ -45,6 +45,7 @@ export interface ChatConversation {
   status: string;
   createdAt: string;
   updatedAt: string;
+  messagingProduct: string;
   canSendFreeform: boolean;
   freeformWindowEndsAt: string | null;
   phoneNumber: {

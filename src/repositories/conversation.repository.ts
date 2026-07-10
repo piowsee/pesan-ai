@@ -203,6 +203,7 @@ export const ConversationRepository = {
       select: {
         id: true,
         contact: true,
+        messagingProduct: true,
         adminTakeover: true,
         lastMessageAt: true,
         lastCustomerMessageAt: true,

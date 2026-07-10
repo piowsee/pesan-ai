@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import type { LucideIcon } from 'lucide-react';
 import { FileTextIcon, ImageIcon, MusicIcon, VideoIcon } from 'lucide-react';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const mediaPreviewIcons = {
   audio: MusicIcon,
@@ -85,11 +86,18 @@ export function ConversationListItem({
         aria-label={`Open conversation with ${conversation.displayName}${requiresAdminResponse ? ', requires admin response' : ''}`}
         className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 px-4 py-3 text-left"
       >
-        <Avatar className="mt-0.5 size-11 border">
-          <AvatarFallback className="bg-primary/5 text-sm font-medium text-primary">
-            {conversation.displayName.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative mt-0.5">
+          <Avatar className="size-11 border">
+            <AvatarFallback className="bg-primary/5 text-sm font-medium text-primary">
+              {conversation.displayName.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          {conversation.messagingProduct === 'whatsapp' && (
+            <div className="absolute bottom-0 right-0 flex items-center justify-center rounded-full bg-background p-[2px]">
+              <FaWhatsapp className="size-5 text-[#25D366]" />
+            </div>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1 overflow-hidden">
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">

@@ -25,6 +25,7 @@ export interface RawConversation {
   customerName: string | null;
   customerUsername: string | null;
   adminTakeover: boolean;
+  messagingProduct: string;
   lastMessageAt: string | Date | null;
   lastCustomerMessageAt: string | Date | null;
   unreadCount: number;
@@ -82,6 +83,7 @@ export function mapRawConversationToChatConversation(
     displayName,
     contactIdentifier,
     adminTakeover: chat.adminTakeover,
+    messagingProduct: chat.messagingProduct,
     lastMessageAt: chat.lastMessageAt?.toString() || null,
     lastCustomerMessageAt,
     unreadCount: Number.isFinite(unreadCount) ? unreadCount : 0,
