@@ -590,4 +590,52 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(messagesCount).toBe(1);
     });
   });
+
+  describe('processHistoryMessage', () => {
+    it('upserts a history message and contact with bsuid', async () => {
+      const result = await MessageRepository.processHistoryMessage({
+        phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
+        customerPhone: '998012',
+        bsuid: 'test-bsuid-123',
+        isOutgoing: false,
+        message: {
+          messageId: 'wamid.history.test.1',
+          type: 'text',
+          content: 'Hello History',
+          timestamp: new Date(),
+          status: 'delivered',
+          source: 'whatsapp_app',
+        },
+      });
+
+      expect(result.conversation.contact.customerPhone).toBe('998012');
+      expect(result.message.content).toBe('Hello History');
+      expect(result.message.status).toBe('delivered');
+      expect(result.message.direction).toBe('incoming');
+      expect(result.conversation.unreadCount).toBeGreaterThan(0);
+    });
+
+    it('upserts an outgoing history message correctly', async () => {
+      const result = await MessageRepository.processHistoryMessage({
+        phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
+        customerPhone: '998013',
+        isOutgoing: true,
+        message: {
+          messageId: 'wamid.history.test.2',
+          type: 'text',
+          content: 'Hello Outgoing History',
+          timestamp: new Date(),
+          status: 'read',
+          source: 'whatsapp_app',
+        },
+      });
+
+      expect(result.conversation.contact.customerPhone).toBe('998013');
+      expect(result.message.content).toBe('Hello Outgoing History');
+      expect(result.message.status).toBe('read');
+      expect(result.message.direction).toBe('outgoing');
+    });
+  });
 });

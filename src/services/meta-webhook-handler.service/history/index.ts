@@ -3,6 +3,7 @@ import { logger } from '@/lib/server/logger';
 import { MessageRepository } from '@/repositories/message.repository';
 import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
+import { WabaRepository } from '@/repositories/waba.repository';
 import { HistoryValue } from '@/schemas/meta-webhook-handler.schema';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { S3Service } from '@/services/s3.service';
@@ -35,9 +36,9 @@ export const HistoryWebhookHandler = {
       });
     const activeSyncRequest = pendingRequests[0];
 
-    // Handle history error payloads
     if (history && history.length > 0) {
       for (const entry of history) {
+        // Handle history error payloads
         if (entry.errors && entry.errors.length > 0) {
           logger.warn('Received error in history webhook', {
             errors: entry.errors,
@@ -70,18 +71,16 @@ export const HistoryWebhookHandler = {
             const customerPhone = thread.id.replace(/\D/g, '');
 
             for (const message of thread.messages) {
-              const displayPhone = metadata.display_phone_number.replace(
-                /\D/g,
-                '',
-              );
-              const messageFrom = message.from?.replace(/\D/g, '') || '';
-              const isOutgoing = messageFrom === displayPhone;
+              const isOutgoing = message.history_context?.from_me === true;
+              const bsuid = isOutgoing ? undefined : message.from_user_id;
+
               let status = (
                 message.history_context?.status || ''
               ).toLowerCase();
               if (status === 'played') {
                 status = 'read';
               }
+
               const messageData = {
                 messageId: message.id,
                 type: message.type,
@@ -93,21 +92,14 @@ export const HistoryWebhookHandler = {
               };
 
               try {
-                if (isOutgoing) {
-                  await MessageRepository.processOutgoingMessageEcho({
-                    phoneNumberId: phoneNumber.id,
-                    customerPhone,
-                    messagingProduct: value.messaging_product,
-                    message: messageData,
-                  });
-                } else {
-                  await MessageRepository.processIncomingMessage({
-                    phoneNumberId: phoneNumber.id,
-                    customerPhone,
-                    messagingProduct: value.messaging_product,
-                    message: messageData,
-                  });
-                }
+                await MessageRepository.processHistoryMessage({
+                  phoneNumberId: phoneNumber.id,
+                  customerPhone,
+                  bsuid,
+                  messagingProduct: value.messaging_product,
+                  isOutgoing,
+                  message: messageData,
+                });
                 processedCount++;
               } catch (error) {
                 logger.error('Failed to process history message', {
@@ -123,6 +115,17 @@ export const HistoryWebhookHandler = {
 
     // Handle media follow-up webhooks
     if (messages && messages.length > 0) {
+      // look for systemUserToken
+      const waba = await WabaRepository.findByMetaWabaId({
+        wabaId: metaWabaId,
+      });
+      if (!waba) {
+        logger.warn('Received history media follow-up for unknown WABA', {
+          metaWabaId,
+        });
+        return processedCount;
+      }
+
       for (const message of messages) {
         try {
           const mediaObj = (
@@ -132,6 +135,44 @@ export const HistoryWebhookHandler = {
             >
           )[message.type];
           const mediaId = mediaObj?.id;
+
+          const displayPhone = metadata.display_phone_number.replace(/\D/g, '');
+          const messageFrom = message.from?.replace(/\D/g, '');
+          const isOutgoing = messageFrom === displayPhone;
+          const customerPhone = isOutgoing ? undefined : messageFrom;
+          const bsuid = isOutgoing ? undefined : message.from_user_id;
+
+          if (!customerPhone) {
+            logger.warn(
+              'Received history media follow-up for unknown message and missing customer phone. Ignoring.',
+              { messageId: message.id, isOutgoing },
+            );
+            continue;
+          }
+
+          let convId = '';
+          const existingMessage =
+            await MessageRepository.findMessageConversationId(message.id);
+
+          if (existingMessage) {
+            convId = existingMessage.conversationId;
+          } else {
+            const upsertResult = await MessageRepository.processHistoryMessage({
+              phoneNumberId: phoneNumber.id,
+              customerPhone,
+              bsuid,
+              messagingProduct: value.messaging_product,
+              isOutgoing,
+              message: {
+                messageId: message.id,
+                type: message.type,
+                timestamp: new Date(Number(message.timestamp) * 1000),
+                source: 'whatsapp_app',
+                status: 'delivered',
+              },
+            });
+            convId = upsertResult.conversation.id;
+          }
 
           if (!mediaId) {
             // No media ID to fetch, just update type
@@ -146,21 +187,6 @@ export const HistoryWebhookHandler = {
             continue;
           }
 
-          const existingMessage = await MessageRepository.findMessageWithWaba(
-            message.id,
-          );
-
-          if (!existingMessage) {
-            logger.warn(
-              'Received history media follow-up for unknown message. Ignoring.',
-              {
-                messageId: message.id,
-              },
-            );
-            continue;
-          }
-
-          const waba = existingMessage.conversation.phoneNumber.waba;
           if (!waba.systemUserToken) {
             logger.warn('WABA missing token for media fetch', { metaWabaId });
             continue;
@@ -170,8 +196,7 @@ export const HistoryWebhookHandler = {
           const mediaUrlInfo = await MetaFetchService.getMediaUrl({
             mediaId,
             token,
-            phoneNumberId:
-              existingMessage.conversation.phoneNumber.phoneNumberId,
+            phoneNumberId: phoneNumber.phoneNumberId,
           });
 
           if (mediaUrlInfo && mediaUrlInfo.url) {
@@ -181,7 +206,7 @@ export const HistoryWebhookHandler = {
                 token,
                 userId: waba.userId,
                 wabaId: waba.id,
-                convId: existingMessage.conversation.id,
+                convId,
                 contentType: mediaUrlInfo.mime_type || mediaObj?.mime_type,
               });
 
