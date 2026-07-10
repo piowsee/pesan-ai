@@ -366,6 +366,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
           content: 'Hello Test',
           timestamp: new Date(),
           status: 'read',
+          source: 'whatsapp_app',
         },
       });
 
@@ -374,6 +375,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(result.conversation.phoneNumber?.id).toBe(dbPhoneNumberId);
       expect(result.message.content).toBe('Hello Test');
       expect(result.message.status).toBe('read');
+      expect(result.message.source).toBe('whatsapp_app');
       expect(result.userId).toBe(userId);
       expect(result.wabaId).toBe(dbWabaId);
 
@@ -483,6 +485,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
           content: 'Sent from WhatsApp Business App',
           timestamp,
           status: 'read',
+          source: 'admin',
         },
       });
 
@@ -491,7 +494,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(result.conversation.lastCustomerMessageAt).toBeNull();
       expect(result.message).toMatchObject({
         direction: 'outgoing',
-        source: 'whatsapp_app',
+        source: 'admin',
         status: 'read',
         content: 'Sent from WhatsApp Business App',
       });
