@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { type Waba, useWabas } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
 import {
@@ -233,7 +234,11 @@ function ListSkeleton() {
   );
 }
 
-function EmptyState() {
+function EmptyState({
+  onSignupSuccess,
+}: {
+  onSignupSuccess?: () => Promise<void> | void;
+}) {
   const t = useTranslations('Waba');
   return (
     <div className="flex min-h-72 flex-col items-center justify-start gap-5 px-6 pt-8 pb-10 text-center">
@@ -251,7 +256,19 @@ function EmptyState() {
         size="lg"
         idleLabel={t('action.connect')}
         pendingLabel={t('action.connecting')}
+        onSuccess={onSignupSuccess}
       />
+    </div>
+  );
+}
+
+function ConnectionLoader() {
+  const t = useTranslations('Waba.action');
+
+  return (
+    <div className="flex min-h-72 flex-col items-center justify-center gap-3 px-6 py-10 text-center text-brand">
+      <Spinner className="size-6 text-brand" />
+      <p className="text-sm font-semibold">{t('connecting')}</p>
     </div>
   );
 }
@@ -335,9 +352,10 @@ function ErrorState({
 export function WabaDashboardManager() {
   const t = useTranslations('Waba');
   const [page, setPage] = useState(1);
+  const [isRefreshingAfterSignup, setIsRefreshingAfterSignup] = useState(false);
   const { data, isLoading, isError, error, isPlaceholderData, refetch } =
     useWabas(page, PAGE_SIZE);
-  const { data: overviewData } = useWabas(1, 100);
+  const { data: overviewData, refetch: refetchOverview } = useWabas(1, 100);
 
   const wabas = data?.wabas ?? [];
   const overviewWabas = overviewData?.wabas ?? wabas;
@@ -354,7 +372,20 @@ export function WabaDashboardManager() {
     ['disconnected', 'suspended'].includes(waba.status.toLowerCase()),
   ).length;
 
+  async function refreshAfterSignup() {
+    setIsRefreshingAfterSignup(true);
+    try {
+      await Promise.all([refetch(), refetchOverview()]);
+    } finally {
+      setIsRefreshingAfterSignup(false);
+    }
+  }
+
   function renderList() {
+    if (isRefreshingAfterSignup) {
+      return <ConnectionLoader />;
+    }
+
     if (isLoading) {
       return <ListSkeleton />;
     }
@@ -365,7 +396,7 @@ export function WabaDashboardManager() {
     }
 
     if (wabas.length === 0) {
-      return <EmptyState />;
+      return <EmptyState onSignupSuccess={refreshAfterSignup} />;
     }
 
     return wabas.map((waba) => <WabaAccountRow key={waba.id} waba={waba} />);
@@ -400,13 +431,18 @@ export function WabaDashboardManager() {
               className="w-full sm:w-auto"
               idleLabel={t('action.connect')}
               pendingLabel={t('action.connecting')}
+              onSuccess={refreshAfterSignup}
             />
           ) : null}
         </section>
 
         {isEmpty ? (
           <section className="flex min-h-0 flex-1 items-start justify-center">
-            <EmptyState />
+            {isRefreshingAfterSignup ? (
+              <ConnectionLoader />
+            ) : (
+              <EmptyState onSignupSuccess={refreshAfterSignup} />
+            )}
           </section>
         ) : (
           <section
