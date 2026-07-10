@@ -661,10 +661,16 @@
       "noteWarning": "Data label dan catatan saat ini disimpan sementara di tampilan obrolan."
     },
     "wabaSwitcher": {
+      "title": "Akun WhatsApp Business",
       "select": "Pilih WABA",
       "search": "Cari WABA atau nomor telepon",
       "noMatch": "Tidak ada WABA yang cocok dengan pencarian ini.",
       "noNumbers": "Tidak ada nomor yang terhubung"
+    },
+    "phoneFilter": {
+      "title": "Nomor Telepon",
+      "search": "Cari nomor telepon",
+      "noMatch": "Tidak ada nomor telepon yang cocok dengan pencarian ini."
     }
   },
   "Admin": {

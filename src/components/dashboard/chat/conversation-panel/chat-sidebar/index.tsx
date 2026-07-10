@@ -9,9 +9,6 @@ export function ChatSidebar({
   onSearchChange,
   filter,
   onFilterChange,
-  phoneNumbers,
-  selectedPhoneNumberId,
-  onPhoneNumberChange,
   conversations,
   activeConversationId,
   isLoading,
@@ -29,9 +26,6 @@ export function ChatSidebar({
   onSearchChange: (value: string) => void;
   filter: ChatSidebarFilter;
   onFilterChange: (value: ChatSidebarFilter) => void;
-  phoneNumbers: Array<{ id: string; displayPhoneNumber: string }>;
-  selectedPhoneNumberId?: string;
-  onPhoneNumberChange: (value?: string) => void;
   conversations: ChatConversation[];
   activeConversationId?: string;
   isLoading: boolean;
@@ -54,9 +48,6 @@ export function ChatSidebar({
         onSearchChange={onSearchChange}
         filter={filter}
         onFilterChange={onFilterChange}
-        phoneNumbers={phoneNumbers}
-        selectedPhoneNumberId={selectedPhoneNumberId}
-        onPhoneNumberChange={onPhoneNumberChange}
       />
 
       <div className="min-h-0 flex-1">

@@ -661,10 +661,16 @@
       "noteWarning": "Label and notes data are currently saved temporarily in the chat view."
     },
     "wabaSwitcher": {
+      "title": "WhatsApp Business Accounts",
       "select": "Select a WABA",
       "search": "Search WABA or phone number",
       "noMatch": "No WABA matches this search.",
       "noNumbers": "No connected numbers"
+    },
+    "phoneFilter": {
+      "title": "Phone Numbers",
+      "search": "Search phone number",
+      "noMatch": "No phone number matches this search."
     }
   },
   "Admin": {

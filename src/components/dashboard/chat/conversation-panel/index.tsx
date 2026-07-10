@@ -6,9 +6,6 @@ interface ChatConversationPaneProps {
   onSearchChange: (value: string) => void;
   filter: ChatSidebarFilter;
   onFilterChange: (value: ChatSidebarFilter) => void;
-  phoneNumbers: Array<{ id: string; displayPhoneNumber: string }>;
-  selectedPhoneNumberId?: string;
-  onPhoneNumberChange: (value?: string) => void;
   conversations: ChatConversation[];
   activeConversationId?: string;
   isLoading: boolean;
@@ -36,15 +33,12 @@ export function ChatConversationPane({
   isError,
   isLoading,
   onFilterChange,
-  onPhoneNumberChange,
   onRetry,
   onSearchChange,
   onSelectConversation,
   onToggleTakeover,
   pendingTakeoverConversationId,
-  phoneNumbers,
   searchValue,
-  selectedPhoneNumberId,
   showMobileDetail,
 }: ChatConversationPaneProps) {
   return (
@@ -56,9 +50,6 @@ export function ChatConversationPane({
         onSearchChange={onSearchChange}
         filter={filter}
         onFilterChange={onFilterChange}
-        phoneNumbers={phoneNumbers}
-        selectedPhoneNumberId={selectedPhoneNumberId}
-        onPhoneNumberChange={onPhoneNumberChange}
         conversations={conversations}
         activeConversationId={activeConversationId}
         isLoading={isLoading}
