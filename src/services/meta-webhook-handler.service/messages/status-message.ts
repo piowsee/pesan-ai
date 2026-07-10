@@ -44,17 +44,22 @@ function getSupportedStatusUpdates(
   const statusUpdates: MessageStatusUpdate[] = [];
 
   for (const status of statuses) {
-    if (!SUPPORTED_MESSAGE_STATUSES.has(status.status)) {
+    let currentStatus = status.status;
+    if (currentStatus === 'played') {
+      currentStatus = 'read';
+    }
+
+    if (!SUPPORTED_MESSAGE_STATUSES.has(currentStatus)) {
       logger.info('Skipping unsupported WhatsApp message status', {
         messageId: status.id,
-        status: status.status,
+        status: currentStatus,
       });
       continue;
     }
 
     statusUpdates.push({
       messageId: status.id,
-      status: status.status,
+      status: currentStatus,
       errorMessage: getStatusErrorMessage(status),
     });
   }
