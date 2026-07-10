@@ -249,6 +249,8 @@ export const MessageRepository = {
       mediaMimeType?: string | null;
       mediaFilename?: string | null;
       mediaSize?: number | null;
+      status?: string;
+      source?: ChatMessageSource;
     };
   }) {
     const {
@@ -307,7 +309,7 @@ export const MessageRepository = {
       const messageData = {
         conversationId: conversation.id,
         direction: 'incoming',
-        source: 'customer',
+        source: message.source ?? 'customer',
         type: message.type,
         content: message.content,
         timestamp: message.timestamp,
@@ -316,7 +318,7 @@ export const MessageRepository = {
         mediaMimeType: message.mediaMimeType,
         mediaFilename: message.mediaFilename,
         mediaSize: message.mediaSize,
-        status: 'delivered', // Incoming messages from Meta are delivered
+        status: message.status ?? 'delivered', // Incoming messages from Meta are delivered
       } as const;
 
       const savedMessage = await tx.message.upsert({
@@ -387,6 +389,8 @@ export const MessageRepository = {
       mediaMimeType?: string | null;
       mediaFilename?: string | null;
       mediaSize?: number | null;
+      status?: string;
+      source?: ChatMessageSource;
     };
   }) {
     const {
@@ -441,7 +445,7 @@ export const MessageRepository = {
         direction: 'outgoing',
         // `whatsapp_app` covers live echoes and all history-sync messages,
         // regardless of their original sender. Only realtime inbound messages use `customer`.
-        source: 'whatsapp_app',
+        source: message.source ?? 'whatsapp_app',
         type: message.type,
         content: message.content,
         timestamp: message.timestamp,
@@ -450,7 +454,7 @@ export const MessageRepository = {
         mediaMimeType: message.mediaMimeType,
         mediaFilename: message.mediaFilename,
         mediaSize: message.mediaSize,
-        status: 'sent',
+        status: message.status ?? 'sent',
       } as const;
 
       const savedMessage = await tx.message.upsert({

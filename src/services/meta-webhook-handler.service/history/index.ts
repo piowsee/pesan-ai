@@ -76,6 +76,12 @@ export const HistoryWebhookHandler = {
               );
               const messageFrom = message.from?.replace(/\D/g, '') || '';
               const isOutgoing = messageFrom === displayPhone;
+              let status = (
+                message.history_context?.status || ''
+              ).toLowerCase();
+              if (status === 'played') {
+                status = 'read';
+              }
               const messageData = {
                 messageId: message.id,
                 type: message.type,
@@ -83,6 +89,8 @@ export const HistoryWebhookHandler = {
                 content:
                   message.type === 'text' ? message.text?.body : undefined,
                 metadata: JSON.stringify(message), // store full raw message as metadata
+                status: status || undefined,
+                source: 'whatsapp_app' as const,
               };
 
               try {
