@@ -1,4 +1,4 @@
-import { WabaSwitcher } from '@/components/chat/header-panel/waba-switcher';
+import { WabaSwitcher } from '@/components/dashboard/chat/header-panel/waba-switcher';
 import type { Waba } from '@/hooks/use-wabas';
 
 interface ChatWorkspaceHeaderProps {

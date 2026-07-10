@@ -1,5 +1,5 @@
-import { ChatSidebarToolbar } from '@/components/chat/conversation-panel/chat-sidebar/chat-sidebar-toolbar';
-import { ConversationList } from '@/components/chat/conversation-panel/chat-sidebar/conversation-list';
+import { ChatSidebarToolbar } from '@/components/dashboard/chat/conversation-panel/chat-sidebar/chat-sidebar-toolbar';
+import { ConversationList } from '@/components/dashboard/chat/conversation-panel/chat-sidebar/conversation-list';
 import { cn } from '@/lib/utils';
 import type { ChatConversation, ChatSidebarFilter } from '@/types/chat';
 

@@ -50,6 +50,7 @@ function createConversation(
     displayName: '628111111111',
     contactIdentifier: '628111111111',
     adminTakeover: false,
+    messagingProduct: 'whatsapp',
     lastMessageAt: null,
     lastCustomerMessageAt: null,
     unreadCount: 0,

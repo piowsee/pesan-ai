@@ -1,16 +1,16 @@
 'use client';
 
-import { ChatContactPanel } from '@/components/chat/contact-panel';
-import { ChatConversationPane } from '@/components/chat/conversation-panel';
-import { ChatDetailPane } from '@/components/chat/detail-panel';
-import { ChatWorkspaceHeader } from '@/components/chat/header-panel';
+import { ChatContactPanel } from '@/components/dashboard/chat/contact-panel';
+import { ChatConversationPane } from '@/components/dashboard/chat/conversation-panel';
+import { ChatDetailPane } from '@/components/dashboard/chat/detail-panel';
+import { ChatWorkspaceHeader } from '@/components/dashboard/chat/header-panel';
 import {
   type UnreadDividerSnapshotMap,
   captureUnreadDividerSnapshot,
   clearUnreadDividerSnapshot,
   getUnreadDividerInitialCount,
   hasUnreadDividerSnapshot,
-} from '@/components/chat/shared/unread-divider';
+} from '@/components/dashboard/chat/shared/unread-divider';
 import {
   CHAT_BASE_PARAM_KEYS,
   CHAT_DETAIL_PARAM_KEYS,
@@ -23,7 +23,7 @@ import {
   getChatRouteSelection,
   pickChatSearchParams,
   writeStoredChatState,
-} from '@/components/chat/workspace/chat-route-state';
+} from '@/components/dashboard/chat/workspace/chat-route-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import {

@@ -1,7 +1,7 @@
 import {
   ChatWorkspace,
   ChatWorkspaceSkeleton,
-} from '@/components/chat/workspace';
+} from '@/components/dashboard/chat/workspace';
 import { type ReactNode, Suspense } from 'react';
 
 export default function ChatLayout({ children }: { children: ReactNode }) {

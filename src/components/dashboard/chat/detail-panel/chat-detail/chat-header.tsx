@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ConversationAvatar } from '@/components/dashboard/chat/conversation-avatar';
 import { Button } from '@/components/ui/button';
 import { formatLastSeen } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
@@ -42,19 +42,11 @@ export function ChatHeader({
             onContactAreaClick ? 'cursor-pointer' : 'cursor-default',
           )}
         >
-          <Avatar className="size-10 shrink-0 border">
-            <AvatarImage
-              src={
-                conversation.phoneNumber.businessProfile?.profilePictureUrl ??
-                undefined
-              }
-              alt={conversation.displayName}
-              className="object-cover"
-            />
-            <AvatarFallback className="bg-brand/15 text-brand text-sm font-medium">
-              {conversation.displayName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <ConversationAvatar
+            conversation={conversation}
+            size="sm"
+            fallbackClassName="bg-brand/15 text-brand"
+          />
 
           <div className="min-w-0 flex flex-col justify-center text-left">
             <h2 className="truncate text-[15px] font-semibold tracking-tight text-foreground">

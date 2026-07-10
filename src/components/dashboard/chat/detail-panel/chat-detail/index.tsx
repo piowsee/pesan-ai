@@ -1,10 +1,10 @@
-import { ChatHeader } from '@/components/chat/detail-panel/chat-detail/chat-header';
-import { MessageComposer } from '@/components/chat/detail-panel/chat-detail/message-composer';
+import { ChatHeader } from '@/components/dashboard/chat/detail-panel/chat-detail/chat-header';
+import { MessageComposer } from '@/components/dashboard/chat/detail-panel/chat-detail/message-composer';
 import {
   MessageTimeline,
   MessageTimelineSkeleton,
-} from '@/components/chat/detail-panel/chat-detail/message-timeline';
-import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
+} from '@/components/dashboard/chat/detail-panel/chat-detail/message-timeline';
+import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
 import {
   AlertDialog,
   AlertDialogAction,

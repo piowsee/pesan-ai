@@ -6,7 +6,7 @@ import {
   getUnreadDividerInitialCount,
   hasUnreadDividerSnapshot,
   shouldRenderUnreadDivider,
-} from '@/components/chat/shared/unread-divider';
+} from '@/components/dashboard/chat/shared/unread-divider';
 import { describe, expect, it } from 'vitest';
 
 describe('unread divider logic', () => {

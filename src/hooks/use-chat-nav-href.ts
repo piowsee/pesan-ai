@@ -4,7 +4,7 @@ import {
   CHAT_BASE_HREF,
   getStoredChatHref,
   subscribeStoredChatState,
-} from '@/components/chat/workspace/chat-route-state';
+} from '@/components/dashboard/chat/workspace/chat-route-state';
 import { useSyncExternalStore } from 'react';
 
 /**
