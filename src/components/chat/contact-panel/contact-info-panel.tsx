@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ConversationAvatar } from '@/components/chat/conversation-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -137,19 +137,12 @@ export function ContactInfoPanel({
         <div className="flex w-full flex-col py-5">
           <div className="px-6 sm:px-7">
             <div className="flex items-center gap-3">
-              <Avatar className="size-12 shrink-0 border border-brand/25">
-                <AvatarImage
-                  src={
-                    conversation.phoneNumber.businessProfile
-                      ?.profilePictureUrl ?? undefined
-                  }
-                  alt={conversation.displayName}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-brand/15 text-sm font-medium text-brand">
-                  {conversation.displayName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <ConversationAvatar
+                conversation={conversation}
+                size="lg"
+                avatarClassName="border-brand/25"
+                fallbackClassName="bg-brand/15 text-brand"
+              />
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-base font-semibold text-foreground">
