@@ -131,6 +131,7 @@ export const ConversationRepository = {
     customerName?: string | null;
     customerUsername?: string | null;
     bsuid?: string | null;
+    messagingProduct?: string;
   }) {
     const {
       phoneNumberId,
@@ -138,6 +139,7 @@ export const ConversationRepository = {
       customerName,
       customerUsername,
       bsuid,
+      messagingProduct,
     } = params;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -157,6 +159,7 @@ export const ConversationRepository = {
         create: {
           phoneNumberId,
           contactId: contact.id,
+          messagingProduct: messagingProduct ?? 'whatsapp',
         },
         include: {
           contact: {

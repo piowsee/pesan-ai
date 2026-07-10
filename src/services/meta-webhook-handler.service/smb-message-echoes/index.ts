@@ -31,6 +31,7 @@ export const SmbMessageEchoesWebhookHandler = {
     return processMessageEchoesList({
       messageEchoes: value.message_echoes,
       internalPhoneId: internalPhoneResult.id,
+      messagingProduct: value.messaging_product,
     });
   },
 };
@@ -46,8 +47,9 @@ function getEchoContactDetails(
 async function processMessageEchoesList(params: {
   messageEchoes?: WebhookMessageEcho[];
   internalPhoneId: string; // Internal DB PhoneNumber.id.
+  messagingProduct?: string;
 }): Promise<number> {
-  const { messageEchoes = [], internalPhoneId } = params;
+  const { messageEchoes = [], internalPhoneId, messagingProduct } = params;
   let count = 0;
 
   for (const messageEcho of messageEchoes) {
@@ -55,6 +57,7 @@ async function processMessageEchoesList(params: {
       const wasProcessed = await processSingleMessageEcho({
         messageEcho,
         internalPhoneId,
+        messagingProduct,
       });
       if (wasProcessed) count++;
     } catch (error) {
@@ -71,6 +74,7 @@ async function processMessageEchoesList(params: {
 async function processSingleMessageEcho(params: {
   messageEcho: WebhookMessageEcho;
   internalPhoneId: string; // Internal DB PhoneNumber.id.
+  messagingProduct?: string;
 }): Promise<boolean> {
   const { messageEcho } = params;
 
@@ -96,8 +100,9 @@ async function processSingleMessageEcho(params: {
 async function processMessageEchoTextMessage(params: {
   messageEcho: WebhookMessageEcho;
   internalPhoneId: string; // Internal DB PhoneNumber.id.
+  messagingProduct?: string;
 }): Promise<boolean> {
-  const { messageEcho, internalPhoneId } = params;
+  const { messageEcho, internalPhoneId, messagingProduct } = params;
   const contactDetails = getEchoContactDetails(messageEcho);
   const {
     message: savedMessage,
@@ -107,6 +112,7 @@ async function processMessageEchoTextMessage(params: {
   } = await MessageRepository.processOutgoingMessageEcho({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
+    messagingProduct,
     message: {
       messageId: messageEcho.id,
       type: 'text',
@@ -129,8 +135,9 @@ async function processMessageEchoMediaMessage(params: {
   messageEcho: WebhookMessageEcho;
   internalPhoneId: string; // Internal DB PhoneNumber.id.
   mediaType: UploadMediaType;
+  messagingProduct?: string;
 }): Promise<boolean> {
-  const { messageEcho, internalPhoneId, mediaType } = params;
+  const { messageEcho, internalPhoneId, mediaType, messagingProduct } = params;
   const mediaPayload = messageEcho[mediaType];
 
   if (!mediaPayload?.url) {
@@ -143,6 +150,7 @@ async function processMessageEchoMediaMessage(params: {
     await ConversationRepository.prepareWebhookMessageConversation({
       phoneNumberId: internalPhoneId,
       ...contactDetails,
+      messagingProduct,
     });
 
   const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
@@ -167,6 +175,7 @@ async function processMessageEchoMediaMessage(params: {
   } = await MessageRepository.processOutgoingMessageEcho({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
+    messagingProduct,
     message: {
       messageId: messageEcho.id,
       type: mediaType,

@@ -30,6 +30,7 @@ export const MessagesWebhookHandler = {
         messages: value.messages,
         internalPhoneId: internalPhoneResult.id,
         contactsLookup: mapContacts(value.contacts),
+        messagingProduct: value.messaging_product,
       });
     const statusesProcessed = await StatusMessageHandler.processStatuses({
       statuses: value.statuses,
