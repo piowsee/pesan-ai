@@ -2,6 +2,7 @@
 CREATE TABLE "conversation" (
     "id" TEXT NOT NULL,
     "contactId" TEXT NOT NULL,
+    "messagingProduct" TEXT NOT NULL DEFAULT 'whatsapp',
     "adminTakeover" BOOLEAN NOT NULL DEFAULT false,
     "lastMessageAt" TIMESTAMP(3),
     "lastCustomerMessageAt" TIMESTAMP(3),
