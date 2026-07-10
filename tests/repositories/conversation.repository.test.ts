@@ -131,6 +131,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       const result =
         await ConversationRepository.prepareWebhookMessageConversation({
           phoneNumberId: dbPhoneNumberId,
+          messagingProduct: 'whatsapp',
           customerPhone: '999006',
           customerName: 'Webhook Media Customer',
         });
@@ -146,6 +147,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
           customerName: 'Webhook Media Customer',
         },
         phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
         unreadCount: 0,
       });
       expect(result.conversation.id).toBeTruthy();
@@ -157,6 +159,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       const first =
         await ConversationRepository.prepareWebhookMessageConversation({
           phoneNumberId: dbPhoneNumberId,
+          messagingProduct: 'whatsapp',
           customerPhone: '999007',
           customerName: 'Initial Webhook Customer',
         });
@@ -164,6 +167,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       const second =
         await ConversationRepository.prepareWebhookMessageConversation({
           phoneNumberId: dbPhoneNumberId,
+          messagingProduct: 'whatsapp',
           customerPhone: '999007',
           customerName: 'Updated Webhook Customer',
         });
