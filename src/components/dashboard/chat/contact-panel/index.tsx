@@ -1,4 +1,4 @@
-import { ContactInfoPanel } from '@/components/chat/contact-panel/contact-info-panel';
+import { ContactInfoPanel } from '@/components/dashboard/chat/contact-panel/contact-info-panel';
 import type { ChatConversation } from '@/types/chat';
 
 interface ContactDraft {

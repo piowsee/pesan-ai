@@ -1,5 +1,5 @@
-import { ConversationListItem } from '@/components/chat/conversation-panel/chat-sidebar/conversation-list/conversation-list-item';
-import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
+import { ConversationListItem } from '@/components/dashboard/chat/conversation-panel/chat-sidebar/conversation-list/conversation-list-item';
+import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ChatConversation } from '@/types/chat';

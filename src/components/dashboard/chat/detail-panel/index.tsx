@@ -1,5 +1,5 @@
-import { ChatDetail } from '@/components/chat/detail-panel/chat-detail';
-import { ChatEmptyState } from '@/components/chat/shared/chat-empty-state';
+import { ChatDetail } from '@/components/dashboard/chat/detail-panel/chat-detail';
+import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
 import type { MessageGroup } from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';

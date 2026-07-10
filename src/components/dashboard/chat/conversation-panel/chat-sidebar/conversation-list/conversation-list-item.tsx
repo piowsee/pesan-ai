@@ -1,5 +1,5 @@
-import { ConversationAvatar } from '@/components/chat/conversation-avatar';
-import { ConversationActionsMenu } from '@/components/chat/conversation-panel/chat-sidebar/conversation-list/conversation-actions-menu';
+import { ConversationAvatar } from '@/components/dashboard/chat/conversation-avatar';
+import { ConversationActionsMenu } from '@/components/dashboard/chat/conversation-panel/chat-sidebar/conversation-list/conversation-actions-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

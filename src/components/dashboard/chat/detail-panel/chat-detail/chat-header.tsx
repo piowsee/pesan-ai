@@ -1,4 +1,4 @@
-import { ConversationAvatar } from '@/components/chat/conversation-avatar';
+import { ConversationAvatar } from '@/components/dashboard/chat/conversation-avatar';
 import { Button } from '@/components/ui/button';
 import { formatLastSeen } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';

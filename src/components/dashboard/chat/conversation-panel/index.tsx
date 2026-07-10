@@ -1,4 +1,4 @@
-import { ChatSidebar } from '@/components/chat/conversation-panel/chat-sidebar';
+import { ChatSidebar } from '@/components/dashboard/chat/conversation-panel/chat-sidebar';
 import type { ChatConversation, ChatSidebarFilter } from '@/types/chat';
 
 interface ChatConversationPaneProps {

@@ -1,11 +1,11 @@
 'use client';
 
-import { MessageBubble } from '@/components/chat/detail-panel/chat-detail/message-bubble/message-bubble';
+import { MessageBubble } from '@/components/dashboard/chat/detail-panel/chat-detail/message-bubble/message-bubble';
 import {
   UnreadMessagesDivider,
   getUnreadBoundaryMessageId,
   shouldRenderUnreadDivider,
-} from '@/components/chat/shared/unread-divider';
+} from '@/components/dashboard/chat/shared/unread-divider';
 import { Badge } from '@/components/ui/badge';
 import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { Button } from '@/components/ui/button';

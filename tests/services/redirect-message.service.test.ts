@@ -46,6 +46,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         updatedAt: new Date('2026-06-24T09:00:00.000Z'),
       },
       adminTakeover: false,
+      messagingProduct: 'whatsapp',
       lastMessageAt: new Date('2026-06-24T10:00:00.000Z'),
       lastCustomerMessageAt: new Date('2026-06-24T09:00:00.000Z'),
       unreadCount: 2,
