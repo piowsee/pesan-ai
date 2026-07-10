@@ -186,7 +186,6 @@ export const MessageRepository = {
     mediaMimeType?: string | null;
     mediaFilename?: string | null;
     mediaSize?: number | null;
-    metadata?: string | null;
   }) {
     return prisma.$transaction(async (tx) => {
       const savedMessage = await tx.message.create({
@@ -209,7 +208,6 @@ export const MessageRepository = {
     mediaMimeType: string;
     mediaSize: number | null;
     content?: string | null;
-    metadata?: string | null;
   }) {
     const { messageId, ...data } = params;
     return prisma.message.updateMany({
@@ -244,7 +242,6 @@ export const MessageRepository = {
       type: string;
       content?: string | null;
       timestamp: Date;
-      metadata?: string | null;
       mediaObjectKey?: string | null;
       mediaMimeType?: string | null;
       mediaFilename?: string | null;
@@ -313,7 +310,6 @@ export const MessageRepository = {
         type: message.type,
         content: message.content,
         timestamp: message.timestamp,
-        metadata: message.metadata,
         mediaObjectKey: message.mediaObjectKey,
         mediaMimeType: message.mediaMimeType,
         mediaFilename: message.mediaFilename,
@@ -384,7 +380,6 @@ export const MessageRepository = {
       type: string;
       content?: string | null;
       timestamp: Date;
-      metadata?: string | null;
       mediaObjectKey?: string | null;
       mediaMimeType?: string | null;
       mediaFilename?: string | null;
@@ -449,7 +444,6 @@ export const MessageRepository = {
         type: message.type,
         content: message.content,
         timestamp: message.timestamp,
-        metadata: message.metadata,
         mediaObjectKey: message.mediaObjectKey,
         mediaMimeType: message.mediaMimeType,
         mediaFilename: message.mediaFilename,

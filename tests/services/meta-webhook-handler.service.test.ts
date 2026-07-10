@@ -396,7 +396,6 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
             type: 'text',
             content: 'Ou',
             timestamp: new Date(1782640182 * 1000),
-            metadata: expect.any(String),
           },
         },
       );

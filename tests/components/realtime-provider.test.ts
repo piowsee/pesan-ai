@@ -32,7 +32,7 @@ function createMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
     mediaSize: null,
     status: 'delivered',
     errorMessage: null,
-    metadata: null,
+    localMediaUrl: null,
     timestamp: NOW.toISOString(),
     createdAt: NOW.toISOString(),
     ...overrides,

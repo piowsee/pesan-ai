@@ -51,7 +51,7 @@ export interface RawConversation {
     mediaSize: number | null;
     status: string;
     errorMessage: string | null;
-    metadata: string | null;
+    localMediaUrl?: string | null;
     timestamp: string | Date;
     createdAt: string | Date;
   }> | null;

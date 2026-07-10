@@ -112,7 +112,6 @@ async function processMessageEchoTextMessage(params: {
       type: 'text',
       content: messageEcho.text?.body,
       timestamp: new Date(parseInt(messageEcho.timestamp) * 1000),
-      metadata: JSON.stringify(messageEcho),
     },
   });
 
@@ -173,7 +172,6 @@ async function processMessageEchoMediaMessage(params: {
       type: mediaType,
       content: mediaPayload.caption,
       timestamp: new Date(parseInt(messageEcho.timestamp) * 1000),
-      metadata: JSON.stringify(messageEcho),
       mediaObjectKey: uploadedMedia.key,
       mediaMimeType: uploadedMedia.mediaMimeType,
       mediaFilename:

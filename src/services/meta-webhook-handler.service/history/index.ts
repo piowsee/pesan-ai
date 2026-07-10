@@ -88,8 +88,7 @@ export const HistoryWebhookHandler = {
                 timestamp: new Date(Number(message.timestamp) * 1000),
                 content:
                   message.type === 'text' ? message.text?.body : undefined,
-                metadata: JSON.stringify(message), // store full raw message as metadata
-                status: status || 'sent',
+                status: status || undefined,
                 source: 'whatsapp_app' as const,
               };
 
@@ -140,7 +139,6 @@ export const HistoryWebhookHandler = {
               mediaObjectKey: '',
               mediaMimeType: '',
               mediaSize: null,
-              metadata: JSON.stringify(message),
             });
             processedCount++;
             continue;
@@ -195,7 +193,6 @@ export const HistoryWebhookHandler = {
                 Number(mediaUrlInfo.file_size) ||
                 null,
               content: mediaObj?.caption || undefined,
-              metadata: JSON.stringify(message),
             });
             processedCount++;
           }
