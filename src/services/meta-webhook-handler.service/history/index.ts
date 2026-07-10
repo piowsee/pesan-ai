@@ -89,7 +89,7 @@ export const HistoryWebhookHandler = {
                 content:
                   message.type === 'text' ? message.text?.body : undefined,
                 metadata: JSON.stringify(message), // store full raw message as metadata
-                status: status || undefined,
+                status: status || 'sent',
                 source: 'whatsapp_app' as const,
               };
 
