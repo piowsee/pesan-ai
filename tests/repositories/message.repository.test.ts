@@ -358,6 +358,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
     it('upserts a new conversation and message for a new customer', async () => {
       const result = await MessageRepository.processIncomingMessage({
         phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
         customerPhone: '998002',
         customerName: 'Test Customer',
         message: {
@@ -378,6 +379,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(result.message.source).toBe('whatsapp_app');
       expect(result.userId).toBe(userId);
       expect(result.wabaId).toBe(dbWabaId);
+      expect(result.conversation.messagingProduct).toBe('whatsapp');
 
       const savedPn = await prisma.phoneNumber.findUnique({
         where: { id: dbPhoneNumberId },
@@ -478,6 +480,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
 
       const result = await MessageRepository.processOutgoingMessageEcho({
         phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
         customerPhone: '998004',
         message: {
           messageId: 'wamid.echo.test.1',
@@ -500,6 +503,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       });
       expect(result.userId).toBe(userId);
       expect(result.wabaId).toBe(dbWabaId);
+      expect(result.conversation.messagingProduct).toBe('whatsapp');
 
       const phoneNumberAfter = await prisma.phoneNumber.findUniqueOrThrow({
         where: { id: dbPhoneNumberId },

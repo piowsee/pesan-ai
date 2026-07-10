@@ -390,6 +390,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       expect(MessageRepository.processOutgoingMessageEcho).toHaveBeenCalledWith(
         {
           phoneNumberId: 'phone-1',
+          messagingProduct: 'whatsapp',
           customerPhone: '628116150122',
           message: {
             messageId: 'wamid.echo-1',
@@ -509,6 +510,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       expect(MessageRepository.processOutgoingMessageEcho).toHaveBeenCalledWith(
         {
           phoneNumberId: 'phone-1',
+          messagingProduct: 'whatsapp',
           customerPhone: '628116150122',
           message: expect.objectContaining({
             messageId: `wamid.echo-${type}-1`,
@@ -623,6 +625,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       );
       expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        messagingProduct: 'whatsapp',
         bsuid: 'US.customer-1',
         customerPhone: 'customer-1',
         message: expect.objectContaining({
@@ -716,6 +719,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       expect(result).toEqual({ processed: true, count: 1 });
       expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        messagingProduct: 'whatsapp',
         customerPhone: '16315551181',
         customerName: 'Test User Name',
         customerUsername: '@testusername',
@@ -781,6 +785,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       expect(result).toEqual({ processed: true, count: 1 });
       expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        messagingProduct: 'whatsapp',
         customerPhone: undefined,
         customerName: 'Test User Name',
         customerUsername: '@testusername',

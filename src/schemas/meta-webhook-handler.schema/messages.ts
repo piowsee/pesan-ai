@@ -67,7 +67,7 @@ export const WebhookStatusSchema = z
 
 export const WebhookValueSchema = z
   .object({
-    messaging_product: z.string(),
+    messaging_product: z.literal('whatsapp'),
     metadata: WebhookMetadataSchema,
     contacts: z.array(ContactSchema).optional(),
     messages: z.array(WebhookMessageSchema).optional(),

@@ -237,6 +237,7 @@ export const MessageRepository = {
     customerName?: string | null;
     customerUsername?: string | null;
     bsuid?: string | null;
+    messagingProduct?: string;
     message: {
       messageId: string;
       type: string;
@@ -256,6 +257,7 @@ export const MessageRepository = {
       customerName,
       customerUsername,
       bsuid,
+      messagingProduct,
       message,
     } = params;
 
@@ -292,6 +294,7 @@ export const MessageRepository = {
         create: {
           phoneNumberId,
           contactId: contact.id,
+          messagingProduct: messagingProduct ?? 'whatsapp',
           unreadCount: 1,
         },
         include: {
@@ -375,6 +378,7 @@ export const MessageRepository = {
     customerName?: string | null;
     customerUsername?: string | null;
     bsuid?: string | null;
+    messagingProduct?: string;
     message: {
       messageId: string;
       type: string;
@@ -394,6 +398,7 @@ export const MessageRepository = {
       customerName,
       customerUsername,
       bsuid,
+      messagingProduct,
       message,
     } = params;
 
@@ -426,6 +431,7 @@ export const MessageRepository = {
         create: {
           phoneNumberId,
           contactId: contact.id,
+          messagingProduct: messagingProduct ?? 'whatsapp',
         },
         include: {
           contact: {

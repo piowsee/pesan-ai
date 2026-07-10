@@ -97,12 +97,14 @@ export const HistoryWebhookHandler = {
                   await MessageRepository.processOutgoingMessageEcho({
                     phoneNumberId: phoneNumber.id,
                     customerPhone,
+                    messagingProduct: value.messaging_product,
                     message: messageData,
                   });
                 } else {
                   await MessageRepository.processIncomingMessage({
                     phoneNumberId: phoneNumber.id,
                     customerPhone,
+                    messagingProduct: value.messaging_product,
                     message: messageData,
                   });
                 }
