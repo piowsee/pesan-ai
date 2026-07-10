@@ -173,13 +173,19 @@ export const ContactRepository = {
       customerUsername?: string | null;
     }>,
   ) {
-    return prisma.$transaction(async (tx) => {
-      let processedCount = 0;
-      for (const contact of contacts) {
-        await this.upsertContact(contact, tx);
-        processedCount++;
-      }
-      return processedCount;
-    });
+    return prisma.$transaction(
+      async (tx) => {
+        let processedCount = 0;
+        for (const contact of contacts) {
+          await this.upsertContact(contact, tx);
+          processedCount++;
+        }
+        return processedCount;
+      },
+      {
+        timeout: 60000,
+        maxWait: 30000,
+      },
+    );
   },
 };
