@@ -12,6 +12,7 @@ export const HistoryMessageSchema = WebhookMessageSchema.extend({
   history_context: z
     .object({
       status: z.string(),
+      from_me: z.boolean().optional(),
     })
     .optional(),
 });
