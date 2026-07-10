@@ -26,7 +26,7 @@ export interface ChatMessage {
   mediaSize: number | null;
   status: string;
   errorMessage: string | null;
-  metadata: string | null;
+  localMediaUrl?: string | null;
   timestamp: string;
   createdAt: string;
 }

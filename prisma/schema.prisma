@@ -208,7 +208,6 @@ model Message {
   mediaSize     BigInt?  // File size in bytes
   status        String   @default("sent") // sent, delivered, read, failed
   errorMessage  String?
-  metadata      String?  // Additional Meta webhook data (JSON string)
   timestamp     DateTime // Message timestamp from Meta or server time
   createdAt     DateTime @default(now())
 

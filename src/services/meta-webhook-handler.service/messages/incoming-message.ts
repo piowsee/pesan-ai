@@ -117,7 +117,6 @@ async function processIncomingTextMessage(params: {
       type: 'text',
       content,
       timestamp,
-      metadata: JSON.stringify(webhookMessage),
     },
   });
 
@@ -207,7 +206,6 @@ async function processIncomingMediaMessage(params: {
       type: mediaType,
       content: mediaPayload.caption,
       timestamp: new Date(parseInt(webhookMessage.timestamp) * 1000),
-      metadata: JSON.stringify(webhookMessage),
       mediaObjectKey: uploadedMedia.key,
       mediaMimeType: uploadedMedia.mediaMimeType,
       mediaFilename:

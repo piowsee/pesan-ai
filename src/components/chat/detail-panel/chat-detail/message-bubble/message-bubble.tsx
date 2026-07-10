@@ -41,21 +41,6 @@ const mediaRenderers = {
   (props: MediaRendererProps) => ReactElement
 >;
 
-function getLocalMediaUrl(metadata: string | null) {
-  if (!metadata) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(metadata) as { localMediaUrl?: unknown };
-    return typeof parsed.localMediaUrl === 'string'
-      ? parsed.localMediaUrl
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 function getMediaLoadErrorDescription(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
@@ -77,7 +62,7 @@ function MessageBubbleContent({
       wabaId,
       convId: message.conversationId,
       key: message.mediaObjectKey,
-      enabled: canLoadMedia && isInViewport,
+      enabled: canLoadMedia && isInViewport && !message.localMediaUrl,
     },
   );
 
@@ -102,7 +87,7 @@ function MessageBubbleContent({
   const Renderer = mediaRenderers[mediaType];
   const title = getMediaTitle(message, `${mediaType} message`);
   const icon = mediaTypeIcons[mediaType];
-  const localMediaUrl = getLocalMediaUrl(message.metadata);
+  const localMediaUrl = message.localMediaUrl;
 
   if (localMediaUrl) {
     return <Renderer message={message} downloadUrl={localMediaUrl} />;
