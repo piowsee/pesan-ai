@@ -1,6 +1,7 @@
 import { logger } from '@/lib/server/logger';
 import { ContactRepository } from '@/repositories/contact.repository';
 import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
+import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { SmbAppStateSyncValue } from '@/schemas/meta-webhook-handler.schema';
 
 export const SmbAppStateSyncWebhookHandler = {
@@ -32,7 +33,7 @@ export const SmbAppStateSyncWebhookHandler = {
       return 0;
     }
 
-    let processedCount = 0;
+    const contactsPayload = [];
 
     for (const entry of state_sync) {
       if (!entry.contact || !entry.contact.phone_number) {
@@ -42,27 +43,56 @@ export const SmbAppStateSyncWebhookHandler = {
       const { phone_number, full_name, first_name } = entry.contact;
       const customerName = full_name ?? first_name ?? null;
 
+      if (entry.action === 'add') {
+        contactsPayload.push({
+          customerPhone: phone_number,
+          customerName,
+        });
+      } else if (entry.action === 'remove') {
+        contactsPayload.push({
+          customerPhone: phone_number,
+          customerName: null,
+        });
+      }
+    }
+
+    const pendingRequests =
+      await SyncRequestRepository.findPendingByPhoneNumberId({
+        phoneNumberId: phoneNumber.id,
+      });
+    // For SMB App State Sync, we might just grab the first pending request since it is the latest req
+    const activeSyncRequest =
+      pendingRequests.find((req) => req.syncType === 'smb_app_state_sync') ??
+      pendingRequests[0];
+
+    let processedCount = 0;
+    if (contactsPayload.length > 0) {
       try {
-        if (entry.action === 'add') {
-          await ContactRepository.upsertContact({
-            customerPhone: phone_number,
-            customerName,
+        processedCount =
+          await ContactRepository.upsertContactsBulk(contactsPayload);
+
+        if (activeSyncRequest) {
+          await SyncRequestRepository.updateSyncRequestStatus({
+            requestId: activeSyncRequest.requestId,
+            status: 'completed',
           });
-          processedCount++;
-        } else if (entry.action === 'remove') {
-          // If a contact is removed, we shouldn't delete the record to preserve conversation history.
-          // Instead, we clear the name.
-          await ContactRepository.upsertContact({
-            customerPhone: phone_number,
-            customerName: null,
-          });
-          processedCount++;
         }
       } catch (error) {
-        logger.error('Failed to process smb_app_state_sync entry', {
-          action: entry.action,
-          customerPhone: phone_number,
+        if (activeSyncRequest) {
+          await SyncRequestRepository.updateSyncRequestStatus({
+            requestId: activeSyncRequest.requestId,
+            status: 'failed',
+          });
+        }
+        logger.error('Failed to process bulk smb_app_state_sync contacts', {
           error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    } else {
+      if (activeSyncRequest) {
+        await SyncRequestRepository.updateSyncRequestStatus({
+          requestId: activeSyncRequest.requestId,
+          status: 'completed',
         });
       }
     }

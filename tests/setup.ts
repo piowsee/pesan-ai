@@ -59,6 +59,7 @@ vi.mock('@/repositories/contact.repository', () => ({
   ContactRepository: {
     findConversationContacts: vi.fn(),
     upsertContact: vi.fn(),
+    upsertContactsBulk: vi.fn(),
   },
 }));
 

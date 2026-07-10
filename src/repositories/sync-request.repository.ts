@@ -46,6 +46,9 @@ export const SyncRequestRepository = {
         phoneNumberId,
         status: 'pending',
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
   },
 };
