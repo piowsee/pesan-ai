@@ -1,5 +1,19 @@
 # pesan-ai
 
+## 1.2.0
+
+### Minor Changes
+
+- 5376f98: add `messaging_product` column on `conversation` table and add `messaging_product` logo on conversation list avatar
+- 5bc4826: Implement i18n across all page and add Indonesia translation
+- 5c6b0e3: Implement history sync on embedded sign up service, webhook handler for `history` and `smb_app_state_sync` webhooks, and reorganize some repositories code
+- e203c71: remove `metadata` column on `message` table
+
+### Patch Changes
+
+- ea20bc8: Handle `media_placeholder` message type on frontend and history webhook handler
+- 28ce029: fix the conversation to automatically switch adminTakeover to true when the admin sends a message and recheck adminTakeover status after successful bot webhook request
+
 ## 1.1.0
 
 ### Minor Changes
