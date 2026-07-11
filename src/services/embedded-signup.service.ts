@@ -2,6 +2,8 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { BusinessProfileRepository } from '@/repositories/business-profile.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
+import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { PhoneNumberMetaResponse, WhatsappBusinessProfile } from '@/types/waba';
@@ -30,7 +32,9 @@ type BusinessProfileLookup = {
 type EmbeddedSignupResult = {
   failedPhoneNumberIds: string[];
   message: string | null;
-  phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>;
+  phoneNumbers: Awaited<
+    ReturnType<typeof PhoneNumberRepository.upsertPhoneNumbers>
+  >;
   waba: Awaited<ReturnType<typeof WabaRepository.upsertWaba>>;
 };
 
@@ -171,7 +175,9 @@ export const EmbeddedSignUpService = {
   },
 
   async _fetchBusinessProfiles(params: {
-    phoneNumbers: Awaited<ReturnType<typeof WabaRepository.upsertPhoneNumbers>>;
+    phoneNumbers: Awaited<
+      ReturnType<typeof PhoneNumberRepository.upsertPhoneNumbers>
+    >;
     token: string;
   }): Promise<BusinessProfileLookup[]> {
     const { phoneNumbers, token } = params;
@@ -261,11 +267,10 @@ export const EmbeddedSignUpService = {
       }),
     ]);
 
-    const existingPhoneNumbers = await WabaRepository.findPhoneNumbersByMetaIds(
-      {
+    const existingPhoneNumbers =
+      await PhoneNumberRepository.findPhoneNumbersByMetaIds({
         phoneNumberIds: phoneNumberDatas.map((phoneNumber) => phoneNumber.id),
-      },
-    );
+      });
     const phoneRegistrations = this._buildPhoneRegistrations(
       phoneNumberDatas,
       existingPhoneNumbers,
@@ -346,7 +351,7 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    const phoneNumbers = await WabaRepository.upsertPhoneNumbers({
+    const phoneNumbers = await PhoneNumberRepository.upsertPhoneNumbers({
       wabaDbId: waba.id, // Internal DB WhatsappBusinessAccount.id.
       phoneNumberDatas: registeredPhoneNumbers.map((phoneNumber) => ({
         id: phoneNumber.id,
@@ -380,6 +385,36 @@ export const EmbeddedSignUpService = {
       count: businessProfiles.length,
       wabaId,
     });
+
+    if (event === COEXISTENCE_SIGNUP_EVENT) {
+      await Promise.allSettled(
+        phoneNumbers.map(async (phoneNumber) => {
+          const syncTypes = ['history', 'smb_app_state_sync'] as const;
+          await Promise.allSettled(
+            syncTypes.map(async (syncType) => {
+              try {
+                const { request_id } = await MetaFetchService.syncRequest({
+                  phoneNumberId: phoneNumber.phoneNumberId,
+                  token: systemUserToken,
+                  sync_type: syncType,
+                });
+                await SyncRequestRepository.createSyncRequest({
+                  requestId: request_id,
+                  syncType,
+                  phoneNumberId: phoneNumber.id,
+                });
+              } catch (error) {
+                logError(error, {
+                  action: 'Failed to request and save sync history',
+                  phoneNumberId: phoneNumber.phoneNumberId,
+                  syncType,
+                });
+              }
+            }),
+          );
+        }),
+      );
+    }
 
     return {
       waba,

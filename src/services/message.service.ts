@@ -247,6 +247,14 @@ export const MessageService = {
       timestamp: new Date(),
     });
 
+    if (!conversationMeta.adminTakeover) {
+      await ConversationRepository.updateAdminTakeoverStatus({
+        conversationId: convId,
+        adminTakeover: true,
+      });
+      conversationMeta.adminTakeover = true;
+    }
+
     const safeConversation = flattenContactForEvent(conversationMeta);
 
     // Emit real-time event via SSE to the specific user channel
@@ -337,6 +345,14 @@ export const MessageService = {
       mediaSize: uploadedMedia.mediaSize,
     });
     const message = normalizeMessageMediaSize(savedMessage);
+
+    if (!conversationMeta.adminTakeover) {
+      await ConversationRepository.updateAdminTakeoverStatus({
+        conversationId: convId,
+        adminTakeover: true,
+      });
+      conversationMeta.adminTakeover = true;
+    }
 
     const safeConversation = flattenContactForEvent(conversationMeta);
 

@@ -1,6 +1,9 @@
 import prisma from '@/lib/server/prisma';
 import type { ChatMessageSource } from '@/types/chat';
 
+import { ContactRepository } from './contact.repository';
+import { safeContactSelect } from './conversation.repository';
+
 export const MessageRepository = {
   async updateStatusesByMetaMessageIds(
     statuses: Array<{
@@ -183,7 +186,6 @@ export const MessageRepository = {
     mediaMimeType?: string | null;
     mediaFilename?: string | null;
     mediaSize?: number | null;
-    metadata?: string | null;
   }) {
     return prisma.$transaction(async (tx) => {
       const savedMessage = await tx.message.create({
@@ -197,5 +199,626 @@ export const MessageRepository = {
 
       return savedMessage;
     });
+  },
+
+  async updateMediaPlaceholder(params: {
+    messageId: string;
+    type: string;
+    mediaObjectKey: string;
+    mediaMimeType: string;
+    mediaSize: number | null;
+    content?: string | null;
+  }) {
+    const { messageId, ...data } = params;
+    return prisma.message.updateMany({
+      where: { messageId },
+      data,
+    });
+  },
+
+  async findMessageConversationId(messageId: string) {
+    return prisma.message.findUnique({
+      where: { messageId },
+      select: { conversationId: true },
+    });
+  },
+
+  async processIncomingMessage(params: {
+    phoneNumberId: string; // Internal ID
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
+    messagingProduct?: string;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string | null;
+      timestamp: Date;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
+      status?: string;
+      source?: ChatMessageSource;
+    };
+  }) {
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      messagingProduct,
+      message,
+    } = params;
+
+    return prisma.$transaction(async (tx) => {
+      // we want to find the owner so we can emit SSE
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
+
+      // 1. Upsert conversation
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
+          },
+        },
+        update: {
+          unreadCount: { increment: 1 },
+        },
+        create: {
+          phoneNumberId,
+          contactId: contact.id,
+          messagingProduct: messagingProduct ?? 'whatsapp',
+          unreadCount: 1,
+        },
+        include: {
+          contact: {
+            select: safeContactSelect,
+          },
+          phoneNumber: true,
+        },
+      });
+
+      // 2. Upsert message
+      const messageData = {
+        conversationId: conversation.id,
+        direction: 'incoming',
+        source: message.source ?? 'customer',
+        type: message.type,
+        content: message.content,
+        timestamp: message.timestamp,
+        mediaObjectKey: message.mediaObjectKey,
+        mediaMimeType: message.mediaMimeType,
+        mediaFilename: message.mediaFilename,
+        mediaSize: message.mediaSize,
+        status: message.status ?? 'delivered', // Incoming messages from Meta are delivered
+      } as const;
+
+      const savedMessage = await tx.message.upsert({
+        where: { messageId: message.messageId },
+        create: {
+          ...messageData,
+          messageId: message.messageId,
+        },
+        update: messageData,
+      });
+
+      const shouldUpdateLastMessageAt =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt;
+      const shouldUpdateLastCustomerMessageAt =
+        !conversation.lastCustomerMessageAt ||
+        message.timestamp > conversation.lastCustomerMessageAt;
+
+      const latestConversation =
+        shouldUpdateLastMessageAt || shouldUpdateLastCustomerMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                ...(shouldUpdateLastMessageAt && {
+                  lastMessageAt: message.timestamp,
+                }),
+                ...(shouldUpdateLastCustomerMessageAt && {
+                  lastCustomerMessageAt: message.timestamp,
+                }),
+              },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
+            })
+          : conversation;
+
+      // 3. Update parent PhoneNumber unread count
+      await tx.phoneNumber.update({
+        where: { id: phoneNumberId },
+        data: { unreadCount: { increment: 1 } },
+      });
+
+      return {
+        conversation: latestConversation,
+        message: savedMessage,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
+      };
+    });
+  },
+
+  async processOutgoingMessageEcho(params: {
+    phoneNumberId: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
+    messagingProduct?: string;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string | null;
+      timestamp: Date;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
+      status?: string;
+      source?: ChatMessageSource;
+    };
+  }) {
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      messagingProduct,
+      message,
+    } = params;
+
+    return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
+
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
+          },
+        },
+        update: {},
+        create: {
+          phoneNumberId,
+          contactId: contact.id,
+          messagingProduct: messagingProduct ?? 'whatsapp',
+        },
+        include: {
+          contact: {
+            select: safeContactSelect,
+          },
+          phoneNumber: true,
+        },
+      });
+
+      const messageData = {
+        conversationId: conversation.id,
+        direction: 'outgoing',
+        // `whatsapp_app` covers live echoes and all history-sync messages,
+        // regardless of their original sender. Only realtime inbound messages use `customer`.
+        source: message.source ?? 'whatsapp_app',
+        type: message.type,
+        content: message.content,
+        timestamp: message.timestamp,
+        mediaObjectKey: message.mediaObjectKey,
+        mediaMimeType: message.mediaMimeType,
+        mediaFilename: message.mediaFilename,
+        mediaSize: message.mediaSize,
+        status: message.status ?? 'sent',
+      } as const;
+
+      const savedMessage = await tx.message.upsert({
+        where: { messageId: message.messageId },
+        create: {
+          ...messageData,
+          messageId: message.messageId,
+        },
+        update: messageData,
+      });
+
+      const latestConversation =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: { lastMessageAt: message.timestamp },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
+            })
+          : conversation;
+
+      return {
+        conversation: latestConversation,
+        message: savedMessage,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
+      };
+    });
+  },
+
+  async processHistoryMessage(params: {
+    phoneNumberId: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
+    messagingProduct?: string;
+    isOutgoing: boolean;
+    message: {
+      messageId: string;
+      type: string;
+      content?: string | null;
+      timestamp: Date;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
+      status?: string;
+      source?: ChatMessageSource;
+    };
+  }) {
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      messagingProduct,
+      isOutgoing,
+      message,
+    } = params;
+
+    return prisma.$transaction(async (tx) => {
+      const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+        where: { id: phoneNumberId },
+        select: {
+          wabaId: true,
+          waba: {
+            select: {
+              userId: true,
+            },
+          },
+        },
+      });
+
+      const contact = await ContactRepository.upsertContact(
+        { bsuid, customerPhone, customerName, customerUsername },
+        tx,
+      );
+
+      const status = message.status || (isOutgoing ? 'sent' : 'delivered');
+      const shouldIncrementUnread = !isOutgoing && status !== 'read';
+
+      const conversation = await tx.conversation.upsert({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
+          },
+        },
+        update: {
+          unreadCount: shouldIncrementUnread ? { increment: 1 } : undefined,
+        },
+        create: {
+          phoneNumberId,
+          contactId: contact.id,
+          messagingProduct: messagingProduct ?? 'whatsapp',
+          unreadCount: shouldIncrementUnread ? 1 : 0,
+        },
+        include: {
+          contact: {
+            select: safeContactSelect,
+          },
+          phoneNumber: true,
+        },
+      });
+
+      const messageData = {
+        conversationId: conversation.id,
+        direction: isOutgoing ? 'outgoing' : 'incoming',
+        source: message.source ?? 'whatsapp_app',
+        type: message.type,
+        content: message.content,
+        timestamp: message.timestamp,
+        mediaObjectKey: message.mediaObjectKey,
+        mediaMimeType: message.mediaMimeType,
+        mediaFilename: message.mediaFilename,
+        mediaSize: message.mediaSize,
+        status,
+      } as const;
+
+      const isMediaPlaceholder = message.type === 'media_placeholder';
+      const updateData = isMediaPlaceholder
+        ? {
+            direction: isOutgoing ? 'outgoing' : 'incoming',
+            source: message.source ?? 'whatsapp_app',
+            timestamp: message.timestamp,
+            status,
+          }
+        : messageData;
+
+      const savedMessage = await tx.message.upsert({
+        where: { messageId: message.messageId },
+        create: {
+          ...messageData,
+          messageId: message.messageId,
+        },
+        update: updateData,
+      });
+
+      const shouldUpdateLastMessageAt =
+        !conversation.lastMessageAt ||
+        message.timestamp > conversation.lastMessageAt;
+      const shouldUpdateLastCustomerMessageAt =
+        !isOutgoing &&
+        (!conversation.lastCustomerMessageAt ||
+          message.timestamp > conversation.lastCustomerMessageAt);
+
+      const latestConversation =
+        shouldUpdateLastMessageAt || shouldUpdateLastCustomerMessageAt
+          ? await tx.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                ...(shouldUpdateLastMessageAt && {
+                  lastMessageAt: message.timestamp,
+                }),
+                ...(shouldUpdateLastCustomerMessageAt && {
+                  lastCustomerMessageAt: message.timestamp,
+                }),
+              },
+              include: {
+                contact: {
+                  select: safeContactSelect,
+                },
+                phoneNumber: true,
+              },
+            })
+          : conversation;
+
+      if (shouldIncrementUnread) {
+        await tx.phoneNumber.update({
+          where: { id: phoneNumberId },
+          data: { unreadCount: { increment: 1 } },
+        });
+      }
+
+      return {
+        conversation: latestConversation,
+        message: savedMessage,
+        userId: phoneNumberOwner.waba.userId,
+        wabaId: phoneNumberOwner.wabaId,
+      };
+    });
+  },
+
+  async processBulkHistoryThread(params: {
+    phoneNumberId: string;
+    customerPhone?: string | null;
+    customerName?: string | null;
+    customerUsername?: string | null;
+    bsuid?: string | null;
+    messagingProduct?: string;
+    messages: Array<{
+      isOutgoing: boolean;
+      messageId: string;
+      type: string;
+      content?: string | null;
+      timestamp: Date;
+      mediaObjectKey?: string | null;
+      mediaMimeType?: string | null;
+      mediaFilename?: string | null;
+      mediaSize?: number | null;
+      status?: string;
+      source?: ChatMessageSource;
+    }>;
+  }) {
+    const {
+      phoneNumberId,
+      customerPhone,
+      customerName,
+      customerUsername,
+      bsuid,
+      messagingProduct,
+      messages,
+    } = params;
+
+    if (messages.length === 0) return null;
+
+    return prisma.$transaction(
+      async (tx) => {
+        const phoneNumberOwner = await tx.phoneNumber.findUniqueOrThrow({
+          where: { id: phoneNumberId },
+          select: {
+            wabaId: true,
+            waba: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        });
+
+        const contact = await ContactRepository.upsertContact(
+          { bsuid, customerPhone, customerName, customerUsername },
+          tx,
+        );
+
+        let totalUnreadIncrement = 0;
+        let latestMessageAt: Date | undefined = undefined;
+        let latestCustomerMessageAt: Date | undefined = undefined;
+
+        const preparedMessages = [];
+        for (const msg of messages) {
+          const status = msg.status || (msg.isOutgoing ? 'sent' : 'delivered');
+          const shouldIncrementUnread = !msg.isOutgoing && status !== 'read';
+
+          if (shouldIncrementUnread) {
+            totalUnreadIncrement++;
+          }
+
+          if (!latestMessageAt || msg.timestamp > latestMessageAt) {
+            latestMessageAt = msg.timestamp;
+          }
+
+          if (
+            !msg.isOutgoing &&
+            (!latestCustomerMessageAt ||
+              msg.timestamp > latestCustomerMessageAt)
+          ) {
+            latestCustomerMessageAt = msg.timestamp;
+          }
+
+          preparedMessages.push({
+            direction: msg.isOutgoing ? 'outgoing' : 'incoming',
+            source: msg.source ?? 'whatsapp_app',
+            type: msg.type,
+            content: msg.content,
+            timestamp: msg.timestamp,
+            mediaObjectKey: msg.mediaObjectKey,
+            mediaMimeType: msg.mediaMimeType,
+            mediaFilename: msg.mediaFilename,
+            mediaSize: msg.mediaSize,
+            status,
+            messageId: msg.messageId,
+          } as const);
+        }
+
+        let conversation = await tx.conversation.findUnique({
+          where: {
+            unique_conversation: {
+              phoneNumberId,
+              contactId: contact.id,
+            },
+          },
+        });
+
+        let finalLastMessageAt = conversation?.lastMessageAt ?? undefined;
+        if (
+          latestMessageAt &&
+          (!finalLastMessageAt || latestMessageAt > finalLastMessageAt)
+        ) {
+          finalLastMessageAt = latestMessageAt;
+        }
+
+        let finalLastCustomerMessageAt =
+          conversation?.lastCustomerMessageAt ?? undefined;
+        if (
+          latestCustomerMessageAt &&
+          (!finalLastCustomerMessageAt ||
+            latestCustomerMessageAt > finalLastCustomerMessageAt)
+        ) {
+          finalLastCustomerMessageAt = latestCustomerMessageAt;
+        }
+
+        conversation = await tx.conversation.upsert({
+          where: {
+            unique_conversation: {
+              phoneNumberId,
+              contactId: contact.id,
+            },
+          },
+          update: {
+            unreadCount:
+              totalUnreadIncrement > 0
+                ? { increment: totalUnreadIncrement }
+                : undefined,
+            lastMessageAt: finalLastMessageAt,
+            lastCustomerMessageAt: finalLastCustomerMessageAt,
+          },
+          create: {
+            phoneNumberId,
+            contactId: contact.id,
+            messagingProduct: messagingProduct ?? 'whatsapp',
+            unreadCount: totalUnreadIncrement,
+            lastMessageAt: finalLastMessageAt,
+            lastCustomerMessageAt: finalLastCustomerMessageAt,
+          },
+        });
+
+        const insertData = preparedMessages.map((msg) => ({
+          conversationId: conversation.id,
+          direction: msg.direction,
+          source: msg.source,
+          type: msg.type,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          mediaObjectKey: msg.mediaObjectKey,
+          mediaMimeType: msg.mediaMimeType,
+          mediaFilename: msg.mediaFilename,
+          mediaSize: msg.mediaSize,
+          status: msg.status,
+          messageId: msg.messageId,
+        }));
+
+        await tx.message.createMany({
+          data: insertData,
+          skipDuplicates: true,
+        });
+
+        if (totalUnreadIncrement > 0) {
+          await tx.phoneNumber.update({
+            where: { id: phoneNumberId },
+            data: { unreadCount: { increment: totalUnreadIncrement } },
+          });
+        }
+
+        return {
+          conversationId: conversation.id,
+          processedCount: insertData.length,
+          userId: phoneNumberOwner.waba.userId,
+          wabaId: phoneNumberOwner.wabaId,
+        };
+      },
+      {
+        timeout: 30000,
+        maxWait: 30000,
+      },
+    );
   },
 };

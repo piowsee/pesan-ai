@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Menu, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
-import NextLink from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type LanguageCode = (typeof routing.locales)[number];
@@ -164,9 +163,9 @@ function AuthActionLink({
 }: AuthActionLinkProps) {
   if (isLoggedIn) {
     return (
-      <NextLink href="/dashboard" className={className} onClick={onClick}>
+      <Link href="/dashboard" className={className} onClick={onClick}>
         {label}
-      </NextLink>
+      </Link>
     );
   }
 

@@ -50,18 +50,16 @@ vi.mock('@/repositories/conversation.repository', () => ({
     findById: vi.fn(),
     getConversationMetaForSending: vi.fn(),
     markConversationAsRead: vi.fn(),
-    findPhoneNumberByMetaId: vi.fn(),
     findConversationById: vi.fn(),
     updateAdminTakeoverStatus: vi.fn(),
     prepareWebhookMessageConversation: vi.fn(),
-    processIncomingMessage: vi.fn(),
-    processOutgoingMessageEcho: vi.fn(),
   },
 }));
-
 vi.mock('@/repositories/contact.repository', () => ({
   ContactRepository: {
     findConversationContacts: vi.fn(),
+    upsertContact: vi.fn(),
+    upsertContactsBulk: vi.fn(),
   },
 }));
 
@@ -77,6 +75,12 @@ vi.mock('@/repositories/message.repository', () => ({
     findMessagesPaginated: vi.fn(),
     saveMessage: vi.fn(),
     updateStatusesByMetaMessageIds: vi.fn(),
+    updateMediaPlaceholder: vi.fn(),
+    findMessageConversationId: vi.fn(),
+    processHistoryMessage: vi.fn(),
+    processIncomingMessage: vi.fn(),
+    processOutgoingMessageEcho: vi.fn(),
+    processBulkHistoryThread: vi.fn(),
   },
 }));
 
@@ -89,9 +93,15 @@ vi.mock('@/repositories/waba.repository', () => ({
     findById: vi.fn(),
     findByMetaWabaId: vi.fn(),
     updateStatusByMetaWabaId: vi.fn(),
+    upsertWaba: vi.fn(),
+  },
+}));
+
+vi.mock('@/repositories/phone-number.repository', () => ({
+  PhoneNumberRepository: {
+    findPhoneNumberByMetaId: vi.fn(),
     findPhoneNumbersByMetaIds: vi.fn(),
     updateWabaWebhook: vi.fn(),
-    upsertWaba: vi.fn(),
     upsertPhoneNumbers: vi.fn(),
   },
 }));
@@ -102,6 +112,15 @@ vi.mock('@/repositories/webhook.repository', () => ({
     findPaginated: vi.fn(),
     findWebhookByConversationId: vi.fn(),
     deleteWebhook: vi.fn(),
+  },
+}));
+
+vi.mock('@/repositories/sync-request.repository', () => ({
+  SyncRequestRepository: {
+    createSyncRequest: vi.fn(),
+    updateSyncRequestStatus: vi.fn(),
+    findByRequestId: vi.fn(),
+    findPendingByPhoneNumberId: vi.fn(),
   },
 }));
 

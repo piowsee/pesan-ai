@@ -10,7 +10,7 @@ export const WebhookMessageEchoSchema = BaseWebhookMessageSchema.extend({
 
 export const WebhookMessageEchoValueSchema = z
   .object({
-    messaging_product: z.string(),
+    messaging_product: z.literal('whatsapp'),
     metadata: WebhookMetadataSchema,
     message_echoes: z.array(WebhookMessageEchoSchema).optional(),
   })

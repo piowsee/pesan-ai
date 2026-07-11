@@ -132,6 +132,7 @@ model PhoneNumber {
   botWebhook   BotWebhook? @relation(fields: [botWebhookId], references: [id])
 
   conversations Conversation[]
+  syncRequests  SyncRequest[]
 
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
@@ -173,6 +174,7 @@ model Contact {
 model Conversation {
   id                    String    @id @default(cuid())
   contactId             String
+  messagingProduct      String    @default("whatsapp") // literal "whatsapp"
   adminTakeover         Boolean   @default(false) // Admin has taken over (bot paused)
   lastMessageAt         DateTime?
   lastCustomerMessageAt DateTime? // For 24h window check
@@ -207,7 +209,6 @@ model Message {
   mediaSize     BigInt?  // File size in bytes
   status        String   @default("sent") // sent, delivered, read, failed
   errorMessage  String?
-  metadata      String?  // Additional Meta webhook data (JSON string)
   timestamp     DateTime // Message timestamp from Meta or server time
   createdAt     DateTime @default(now())
 
@@ -235,3 +236,19 @@ model BusinessProfile {
 
   @@map("business_profile")
 }
+
+model SyncRequest {
+  id              String   @id @default(cuid())
+  requestId       String   @unique  // Meta sync request_id
+  syncType        String   // 'history' | 'smb_app_state_sync' | 'media_reupload'
+  status          String   @default("pending") // pending, in_progress, completed, failed
+  progress        Int      @default(0)  // 0-100 progress percentage (for history sync)
+  phoneNumberId   String
+  phoneNumber     PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([phoneNumberId], name: "idx_sync_request_phone_number_id")
+  @@map("sync_request")
+}
+

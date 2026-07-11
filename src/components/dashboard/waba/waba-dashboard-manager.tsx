@@ -22,6 +22,7 @@ import {
   Plus,
   RefreshCw,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa6';
 import { toast } from 'sonner';
@@ -33,19 +34,21 @@ import { WabaEmbeddedSignupButton } from './waba-embedded-signup-button';
 const PAGE_SIZE = 10;
 
 function StatusBadge({ status }: { status: string }) {
+  const t = useTranslations('Waba.status');
   const normalized = status.toLowerCase();
 
   if (normalized === 'active') {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[oklch(0.46_0.13_155)]">
-        Active
+        {t('active')}
         <CheckCircle2 className="size-4 shrink-0" />
       </span>
     );
   }
 
   if (['disconnected', 'suspended'].includes(normalized)) {
-    const label = normalized === 'disconnected' ? 'Disconnected' : 'Suspended';
+    const label =
+      normalized === 'disconnected' ? t('disconnected') : t('suspended');
 
     return (
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-destructive">
@@ -59,10 +62,13 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function PhoneNumbersMenu({ waba }: { waba: Waba }) {
+  const t = useTranslations('Waba.numbers');
   const [isAddPhoneOpen, setIsAddPhoneOpen] = useState(false);
   const phoneNumberCount = waba.phoneNumbers.length;
   const triggerLabel =
-    phoneNumberCount === 1 ? '1 number' : `${phoneNumberCount} numbers`;
+    phoneNumberCount === 1
+      ? t('one')
+      : t('multiple', { count: phoneNumberCount });
 
   return (
     <>
@@ -71,7 +77,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
           <Button
             variant="unstyled"
             type="button"
-            aria-label="Manage WhatsApp numbers"
+            aria-label={t('manage')}
             className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-left text-sm font-medium text-brand transition hover:border-brand/30 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <FaWhatsapp className="size-3.5 shrink-0 text-[#25D366]" />
@@ -88,10 +94,10 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
             <FaWhatsapp className="size-7 shrink-0 text-[#25D366]" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-brand">
-                WhatsApp Number
+                {t('whatsappNumber')}
               </p>
               <p className="truncate text-xs text-brand">
-                {triggerLabel} connected
+                {t('connected', { label: triggerLabel })}
               </p>
             </div>
           </div>
@@ -103,7 +109,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
           <div className="max-h-56 overflow-y-auto p-2 [scrollbar-gutter:stable]">
             {phoneNumberCount === 0 ? (
               <div className="px-2.5 py-2.5 text-sm leading-relaxed text-brand">
-                No numbers connected yet.
+                {t('none')}
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -131,7 +137,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
               onSelect={() => setIsAddPhoneOpen(true)}
             >
               <Plus />
-              Add number
+              {t('add')}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -147,12 +153,13 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
   );
 }
 
-function copyWabaId(wabaId: string) {
+function copyWabaId(wabaId: string, successMessage: string) {
   void navigator.clipboard.writeText(wabaId);
-  toast.success('WABA ID copied.');
+  toast.success(successMessage);
 }
 
 function WabaAccountRow({ waba }: { waba: Waba }) {
+  const t = useTranslations('Waba');
   const formattedDate = new Date(waba.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -163,36 +170,39 @@ function WabaAccountRow({ waba }: { waba: Waba }) {
     <div className="grid gap-4 border-t border-border px-1 py-4 first:border-t-0 lg:grid-cols-4 lg:items-center lg:gap-0">
       <div className="min-w-0">
         <p className="truncate font-semibold text-brand">
-          {waba.businessName || 'Unnamed business'}
+          {waba.businessName || t('row.unnamed')}
         </p>
         <Button
           variant="unstyled"
           type="button"
           className="mt-1 flex max-w-full cursor-pointer items-center gap-1.5 text-xs font-medium text-brand transition hover:text-brand/80"
-          onClick={() => copyWabaId(waba.wabaId)}
+          onClick={() => copyWabaId(waba.wabaId, t('id.copied'))}
         >
-          <span className="truncate">WABA ID: {waba.wabaId}</span>
+          <span className="truncate">
+            {t('row.idPrefix')}
+            {waba.wabaId}
+          </span>
           <Copy className="size-3.5 shrink-0" />
         </Button>
       </div>
 
       <div className="min-w-0">
         <span className="mb-2 block text-xs font-semibold text-brand lg:hidden">
-          Status
+          {t('row.status')}
         </span>
         <StatusBadge status={waba.status} />
       </div>
 
       <div className="min-w-0">
         <span className="mb-2 block text-xs font-semibold text-brand lg:hidden">
-          WhatsApp Number
+          {t('numbers.whatsappNumber')}
         </span>
         <PhoneNumbersMenu waba={waba} />
       </div>
 
       <div className="min-w-0">
         <span className="mb-2 block text-xs font-semibold text-brand lg:hidden">
-          Connected on
+          {t('row.connectedOn')}
         </span>
         <span className="text-sm font-semibold text-brand">
           {formattedDate}
@@ -224,23 +234,23 @@ function ListSkeleton() {
 }
 
 function EmptyState() {
+  const t = useTranslations('Waba');
   return (
     <div className="flex min-h-72 flex-col items-center justify-start gap-5 px-6 pt-8 pb-10 text-center">
       <MessageSquare className="size-12 text-brand" />
       <div className="flex max-w-lg flex-col gap-2">
         <p className="text-xl font-semibold tracking-tight text-brand sm:text-2xl">
-          No WhatsApp accounts yet
+          {t('empty.title')}
         </p>
         <p className="text-sm leading-relaxed text-brand sm:text-base sm:leading-7">
-          Connect your first WhatsApp Business account so pesan-ai can start
-          receiving and managing conversations.
+          {t('empty.description')}
         </p>
       </div>
       <WabaEmbeddedSignupButton
         variant="brand"
         size="lg"
-        idleLabel="Connect WhatsApp account"
-        pendingLabel="Connecting account..."
+        idleLabel={t('action.connect')}
+        pendingLabel={t('action.connecting')}
       />
     </div>
   );
@@ -255,23 +265,24 @@ function StatusSummary({
   active: number;
   attention: number;
 }) {
+  const t = useTranslations('Waba.summary');
   const items = [
     {
-      label: 'accounts',
+      label: t('accounts'),
       value: total,
       icon: FaWhatsapp,
       iconColor: 'text-brand',
       tone: 'text-brand',
     },
     {
-      label: 'active',
+      label: t('active'),
       value: active,
       icon: CheckCircle2,
       iconColor: 'text-[oklch(0.46_0.13_155)]',
       tone: 'text-[oklch(0.46_0.13_155)]',
     },
     {
-      label: 'needs attention',
+      label: t('needsAttention'),
       value: attention,
       icon: CircleAlert,
       iconColor: 'text-destructive',
@@ -304,6 +315,7 @@ function ErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const t = useTranslations('Waba.error');
   return (
     <div className="flex min-h-44 flex-col items-center justify-center gap-3 px-6 py-10 text-center text-destructive">
       <p className="text-sm">{message}</p>
@@ -314,13 +326,14 @@ function ErrorState({
         onClick={onRetry}
       >
         <RefreshCw data-icon="inline-start" />
-        Try again
+        {t('retry')}
       </Button>
     </div>
   );
 }
 
 export function WabaDashboardManager() {
+  const t = useTranslations('Waba');
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, isPlaceholderData, refetch } =
     useWabas(page, PAGE_SIZE);
@@ -347,8 +360,7 @@ export function WabaDashboardManager() {
     }
 
     if (isError) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to load WABA list';
+      const message = error instanceof Error ? error.message : t('error.load');
       return <ErrorState message={message} onRetry={() => refetch()} />;
     }
 
@@ -367,10 +379,10 @@ export function WabaDashboardManager() {
         <section>
           <div className="max-w-2xl">
             <h1 className="text-2xl leading-snug font-semibold tracking-tight text-brand sm:text-3xl">
-              WhatsApp Business Accounts
+              {t('header.title')}
             </h1>
             <p className="mt-1 text-[0.9rem] leading-relaxed text-brand">
-              Manage WhatsApp accounts and numbers connected to pesan-ai.
+              {t('header.description')}
             </p>
           </div>
         </section>
@@ -386,8 +398,8 @@ export function WabaDashboardManager() {
               variant="brand"
               size="lg"
               className="w-full sm:w-auto"
-              idleLabel="Connect WhatsApp account"
-              pendingLabel="Connecting account..."
+              idleLabel={t('action.connect')}
+              pendingLabel={t('action.connecting')}
             />
           ) : null}
         </section>
@@ -405,13 +417,13 @@ export function WabaDashboardManager() {
           >
             <div className="min-h-0 flex-1 overflow-y-auto border-b border-border [scrollbar-gutter:stable]">
               <div className="sticky top-0 z-10 hidden border-b border-border bg-background px-1 py-3 text-xs font-semibold tracking-[0.12em] text-brand uppercase lg:grid lg:grid-cols-4">
-                <span>Business</span>
-                <span>Status</span>
+                <span>{t('table.business')}</span>
+                <span>{t('row.status')}</span>
                 <span className="inline-flex items-center gap-2">
-                  WhatsApp Number
+                  {t('numbers.whatsappNumber')}
                   <FaWhatsapp className="size-3.5" />
                 </span>
-                <span>Connected on</span>
+                <span>{t('row.connectedOn')}</span>
               </div>
               <div>{renderList()}</div>
             </div>
@@ -423,8 +435,12 @@ export function WabaDashboardManager() {
         <div className="mt-4 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-brand">
             {total > 0
-              ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${total} accounts`
-              : 'No accounts yet'}
+              ? t('pagination.showing', {
+                  start: (page - 1) * PAGE_SIZE + 1,
+                  end: Math.min(page * PAGE_SIZE, total),
+                  total,
+                })
+              : t('pagination.empty')}
           </p>
 
           <div className="flex items-center gap-2">
@@ -436,12 +452,12 @@ export function WabaDashboardManager() {
                 onClick={() => setPage((prev) => prev - 1)}
               >
                 <ChevronLeft data-icon="inline-start" />
-                Previous
+                {t('pagination.previous')}
               </Button>
             ) : null}
 
             <span className="px-2 text-sm font-medium text-brand">
-              Page {page} of {totalPages}
+              {t('pagination.page', { current: page, total: totalPages })}
             </span>
 
             {canGoNext ? (
@@ -451,7 +467,7 @@ export function WabaDashboardManager() {
                 className="text-brand hover:bg-muted hover:text-brand"
                 onClick={() => setPage((prev) => prev + 1)}
               >
-                Next
+                {t('pagination.next')}
                 <ChevronRight data-icon="inline-end" />
               </Button>
             ) : null}

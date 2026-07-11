@@ -16,16 +16,19 @@ export function getWabaLabel(waba: Waba) {
   return waba.businessName?.trim() || waba.wabaId;
 }
 
-export function getCustomerName(customer: CustomerContact) {
-  return customer.customerName?.trim() || 'No name';
+export function getCustomerName(customer: CustomerContact, fallback: string) {
+  return customer.customerName?.trim() || fallback;
 }
 
-export function getCustomerUsername(customer: CustomerContact) {
-  return customer.customerUsername?.trim() || 'No username';
+export function getCustomerUsername(
+  customer: CustomerContact,
+  fallback: string,
+) {
+  return customer.customerUsername?.trim() || fallback;
 }
 
-export function getCustomerPhone(customer: CustomerContact) {
-  return customer.customerPhone?.trim() || 'No phone number';
+export function getCustomerPhone(customer: CustomerContact, fallback: string) {
+  return customer.customerPhone?.trim() || fallback;
 }
 
 export function normalizePhone(value: string) {

@@ -21,6 +21,7 @@ import {
 import { useAssignWebhook } from '@/hooks/use-wabas';
 import { useInfiniteWebhooks } from '@/hooks/use-webhooks';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -35,6 +36,7 @@ export function AssignWebhookDialog({
   wabaName,
   currentWebhookId,
 }: AssignWebhookDialogProps) {
+  const t = useTranslations('Admin.AssignWebhookDialog');
   const [open, setOpen] = useState(false);
   const [selectedWebhook, setSelectedWebhook] = useState<string>(
     currentWebhookId || 'none',
@@ -89,12 +91,14 @@ export function AssignWebhookDialog({
       { wabaId, webhookId: webhookIdToSave },
       {
         onSuccess: () => {
-          toast.success('Webhook assigned successfully');
+          toast.success(t('messages.success'));
           setOpen(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Failed to assign webhook',
+            error instanceof Error
+              ? error.message
+              : t('messages.errorFallback'),
           );
         },
       },
@@ -105,16 +109,17 @@ export function AssignWebhookDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Assign Webhook
+          {t('trigger')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Assign Webhook to WABA</DialogTitle>
+          <DialogTitle>{t('title')}</DialogTitle>
           <DialogDescription>
-            Select a webhook to handle messages for <strong>{wabaName}</strong>.
-            Choosing &quot;None / Remove&quot; will remove the current
-            assignment.
+            {t.rich('description', {
+              name: wabaName,
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -125,7 +130,7 @@ export function AssignWebhookDialog({
             disabled={isPending || isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a webhook" />
+              <SelectValue placeholder={t('placeholder')} />
             </SelectTrigger>
             <SelectContent
               position="popper"
@@ -137,7 +142,7 @@ export function AssignWebhookDialog({
                     value="none"
                     className="font-semibold text-destructive"
                   >
-                    None / Remove
+                    {t('noneOption')}
                   </SelectItem>
                   {webhooks.map((webhook) => (
                     <SelectItem key={webhook.id} value={webhook.id}>
@@ -165,11 +170,11 @@ export function AssignWebhookDialog({
             onClick={() => setOpen(false)}
             disabled={isPending}
           >
-            Cancel
+            {t('actions.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isPending}>
             {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Save
+            {t('actions.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

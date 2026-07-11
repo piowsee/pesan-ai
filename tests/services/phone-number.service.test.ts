@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/api-helper/error';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { PhoneNumberService } from '@/services/phone-number.service';
@@ -47,7 +48,7 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
       },
     ]);
 
-    vi.spyOn(WabaRepository, 'upsertPhoneNumbers').mockResolvedValue(
+    vi.spyOn(PhoneNumberRepository, 'upsertPhoneNumbers').mockResolvedValue(
       [] as never,
     );
 
@@ -134,7 +135,7 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
         token: 'sys-user-token',
         pin: '123456',
       });
-      expect(WabaRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-123',
         phoneNumberDatas: [
           {

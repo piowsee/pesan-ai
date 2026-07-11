@@ -8,7 +8,7 @@ import {
 
 export const WebhookMessageSchema = BaseWebhookMessageSchema.extend({
   from: z.string().optional(),
-  from_user_id: z.string(),
+  from_user_id: z.string().optional(),
 });
 
 const WebhookStatusErrorSchema = z
@@ -67,7 +67,7 @@ export const WebhookStatusSchema = z
 
 export const WebhookValueSchema = z
   .object({
-    messaging_product: z.string(),
+    messaging_product: z.literal('whatsapp'),
     metadata: WebhookMetadataSchema,
     contacts: z.array(ContactSchema).optional(),
     messages: z.array(WebhookMessageSchema).optional(),

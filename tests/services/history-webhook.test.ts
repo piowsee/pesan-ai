@@ -1,0 +1,172 @@
+import { MessageRepository } from '@/repositories/message.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
+import { SyncRequestRepository } from '@/repositories/sync-request.repository';
+import { WabaRepository } from '@/repositories/waba.repository';
+import { HistoryWebhookHandler } from '@/services/meta-webhook-handler.service/history';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/lib/server/prisma', () => ({
+  default: {
+    phoneNumber: {
+      findUnique: vi.fn(),
+    },
+    message: {
+      updateMany: vi.fn(),
+    },
+  },
+}));
+
+describe('HistoryWebhookHandler', () => {
+  const metaWabaId = 'waba-123';
+  const phoneNumberId = 'phone-123';
+
+  it('processes text messages from history correctly (incoming and outgoing)', async () => {
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
+      id: 'internal-phone-id',
+    } as never);
+    vi.mocked(
+      SyncRequestRepository.findPendingByPhoneNumberId,
+    ).mockResolvedValue([{ requestId: 'req-1' }] as never);
+    vi.spyOn(MessageRepository, 'processBulkHistoryThread').mockResolvedValue({
+      processedCount: 2,
+    } as never);
+
+    const result = await HistoryWebhookHandler.processChange({
+      metaWabaId,
+      value: {
+        messaging_product: 'whatsapp',
+        metadata: {
+          display_phone_number: '123',
+          phone_number_id: phoneNumberId,
+        },
+        history: [
+          {
+            metadata: { progress: 50, phase: 0, chunk_order: 1 },
+            threads: [
+              {
+                id: '987',
+                messages: [
+                  {
+                    id: 'msg-in',
+                    from: '987',
+                    from_user_id: 'u-1',
+                    type: 'text',
+                    text: { body: 'Hello' },
+                    timestamp: '12345',
+                    history_context: { from_me: false, status: 'delivered' },
+                  },
+                  {
+                    id: 'msg-out',
+                    from: '123',
+                    from_user_id: 'u-1',
+                    type: 'text',
+                    text: { body: 'Hi' },
+                    timestamp: '12346',
+                    history_context: { from_me: true, status: 'read' },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(result).toBe(2);
+    expect(MessageRepository.processBulkHistoryThread).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phoneNumberId: 'internal-phone-id',
+        customerPhone: '987',
+        bsuid: 'u-1',
+        messages: [
+          expect.objectContaining({
+            messageId: 'msg-in',
+            type: 'text',
+            isOutgoing: false,
+          }),
+          expect.objectContaining({
+            messageId: 'msg-out',
+            type: 'text',
+            isOutgoing: true,
+          }),
+        ],
+      }),
+    );
+    expect(SyncRequestRepository.updateSyncRequestStatus).toHaveBeenCalledWith({
+      requestId: 'req-1',
+      status: 'in_progress',
+      progress: 50,
+    });
+  });
+
+  it('handles media follow-up webhooks', async () => {
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
+      id: 'internal-phone-id',
+    } as never);
+    vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue({
+      id: 'waba-internal-id',
+    } as never);
+    vi.mocked(MessageRepository.findMessageConversationId).mockResolvedValue(
+      null as never,
+    );
+    vi.mocked(MessageRepository.processHistoryMessage).mockResolvedValue({
+      conversation: { id: 'conv-1' },
+    } as never);
+
+    const result = await HistoryWebhookHandler.processChange({
+      metaWabaId,
+      value: {
+        messaging_product: 'whatsapp',
+        metadata: {
+          display_phone_number: '123',
+          phone_number_id: phoneNumberId,
+        },
+        messages: [
+          {
+            id: 'msg-media',
+            from: '987',
+            from_user_id: 'u-1',
+            type: 'image',
+            timestamp: '12345',
+          },
+        ],
+      },
+    });
+
+    expect(result).toBe(1);
+    expect(MessageRepository.updateMediaPlaceholder).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'msg-media', type: 'image' }),
+    );
+  });
+
+  it('handles history sharing declined error', async () => {
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
+      id: 'internal-phone-id',
+    } as never);
+    vi.mocked(
+      SyncRequestRepository.findPendingByPhoneNumberId,
+    ).mockResolvedValue([{ requestId: 'req-1' }] as never);
+
+    const result = await HistoryWebhookHandler.processChange({
+      metaWabaId,
+      value: {
+        messaging_product: 'whatsapp',
+        metadata: {
+          display_phone_number: '123',
+          phone_number_id: phoneNumberId,
+        },
+        history: [
+          {
+            errors: [{ code: 2593109, title: 'History sharing declined' }],
+          },
+        ],
+      },
+    });
+
+    expect(result).toBe(0);
+    expect(SyncRequestRepository.updateSyncRequestStatus).toHaveBeenCalledWith({
+      requestId: 'req-1',
+      status: 'failed',
+    });
+  });
+});

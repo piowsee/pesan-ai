@@ -1,5 +1,5 @@
 import { logger } from '@/lib/server/logger';
-import { ConversationRepository } from '@/repositories/conversation.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import type { WebhookValue } from '@/schemas/meta-webhook-handler.schema/messages';
 import type { Contact } from '@/schemas/meta-webhook-handler.schema/shared';
 
@@ -16,7 +16,7 @@ export const MessagesWebhookHandler = {
     if (!metaPhoneNumberId) return 0;
 
     const internalPhoneResult =
-      await ConversationRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
+      await PhoneNumberRepository.findPhoneNumberByMetaId(metaPhoneNumberId);
 
     if (!internalPhoneResult) {
       logger.warn('Received message for unknown Meta Phone Number ID', {
@@ -30,6 +30,7 @@ export const MessagesWebhookHandler = {
         messages: value.messages,
         internalPhoneId: internalPhoneResult.id,
         contactsLookup: mapContacts(value.contacts),
+        messagingProduct: value.messaging_product,
       });
     const statusesProcessed = await StatusMessageHandler.processStatuses({
       statuses: value.statuses,

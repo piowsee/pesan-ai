@@ -1,6 +1,7 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logger } from '@/lib/server/logger';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { randomInt } from 'node:crypto';
@@ -124,7 +125,7 @@ export const PhoneNumberService = {
       );
     }
 
-    await WabaRepository.upsertPhoneNumbers({
+    await PhoneNumberRepository.upsertPhoneNumbers({
       wabaDbId: wabaDbId,
       phoneNumberDatas: [
         {

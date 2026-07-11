@@ -1,31 +1,37 @@
 'use client';
 
 import { useChatNavHref } from '@/hooks/use-chat-nav-href';
+import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { Home, Layers, MessageSquare, UsersRound } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const chatHref = useChatNavHref();
+  const t = useTranslations('Sidebar');
 
   const mobileNavItems = [
-    { title: 'Home', url: '/dashboard', icon: Home, matchPath: '/dashboard' },
     {
-      title: 'WABA',
+      title: t('home'),
+      url: '/dashboard',
+      icon: Home,
+      matchPath: '/dashboard',
+    },
+    {
+      title: t('waba'),
       url: '/dashboard/waba',
       icon: Layers,
       matchPath: '/dashboard/waba',
     },
     {
-      title: 'Chat',
+      title: t('chat'),
       url: chatHref,
       icon: MessageSquare,
       matchPath: '/dashboard/chat',
     },
     {
-      title: 'Customers',
+      title: t('customers'),
       url: '/dashboard/customers',
       icon: UsersRound,
       matchPath: '/dashboard/customers',

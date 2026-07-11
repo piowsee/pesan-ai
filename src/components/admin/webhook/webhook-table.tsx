@@ -14,107 +14,110 @@ import {
 import { type Webhook, useWebhooks } from '@/hooks/use-webhooks';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, Globe, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { DeleteWebhookDialog } from './delete-webhook-dialog';
 
 const PAGE_SIZE = 10;
-const TABLE_COLUMNS = ['Name', 'URL', 'Status', 'Created At', 'Actions'];
-
-// ─── Sub-components ──────────────────────────────────────────────────
-
-function StatusBadge({ isActive }: { isActive: boolean }) {
-  return (
-    <Badge variant={isActive ? 'default' : 'secondary'}>
-      {isActive ? 'Active' : 'Inactive'}
-    </Badge>
-  );
-}
-
-function WebhookRow({ webhook }: { webhook: Webhook }) {
-  const formattedDate = new Date(webhook.createdAt).toLocaleDateString(
-    'en-US',
-    {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    },
-  );
-
-  return (
-    <TableRow>
-      <TableCell className="font-medium">{webhook.name}</TableCell>
-      <TableCell className="max-w-[200px] truncate text-muted-foreground">
-        {webhook.webhookUrl}
-      </TableCell>
-      <TableCell>
-        <StatusBadge isActive={webhook.isActive} />
-      </TableCell>
-      <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
-      <TableCell>
-        <DeleteWebhookDialog
-          webhookId={webhook.id}
-          webhookName={webhook.name}
-        />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <TableRow key={index}>
-          {TABLE_COLUMNS.map((col) => (
-            <TableCell key={col}>
-              <Skeleton className="h-4 w-24" />
-            </TableCell>
-          ))}
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
-function EmptyState() {
-  return (
-    <TableRow>
-      <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <Globe className="size-8 opacity-50" />
-          <p className="text-sm">No webhooks found.</p>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  return (
-    <TableRow>
-      <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
-        <div className="flex flex-col items-center gap-3 text-destructive">
-          <p className="text-sm">{message}</p>
-          <Button variant="outline" size="sm" onClick={onRetry}>
-            <RefreshCw data-icon="inline-start" />
-            Retry
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// ─── Main Component ──────────────────────────────────────────────────
 
 export function WebhookTable() {
+  const t = useTranslations('Admin.WebhookTable');
+
+  const TABLE_COLUMNS = [
+    t('columns.name'),
+    t('columns.url'),
+    t('columns.status'),
+    t('columns.createdAt'),
+    t('columns.actions'),
+  ];
+
+  function StatusBadge({ isActive }: { isActive: boolean }) {
+    return (
+      <Badge variant={isActive ? 'default' : 'secondary'}>
+        {isActive ? t('status.active') : t('status.inactive')}
+      </Badge>
+    );
+  }
+
+  function WebhookRow({ webhook }: { webhook: Webhook }) {
+    const formattedDate = new Date(webhook.createdAt).toLocaleDateString(
+      'en-US',
+      {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      },
+    );
+
+    return (
+      <TableRow>
+        <TableCell className="font-medium">{webhook.name}</TableCell>
+        <TableCell className="max-w-[200px] truncate text-muted-foreground">
+          {webhook.webhookUrl}
+        </TableCell>
+        <TableCell>
+          <StatusBadge isActive={webhook.isActive} />
+        </TableCell>
+        <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
+        <TableCell>
+          <DeleteWebhookDialog id={webhook.id} name={webhook.name} />
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  function TableSkeleton() {
+    return (
+      <>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <TableRow key={index}>
+            {TABLE_COLUMNS.map((col) => (
+              <TableCell key={col}>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </>
+    );
+  }
+
+  function EmptyState() {
+    return (
+      <TableRow>
+        <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <Globe className="size-8 opacity-50" />
+            <p className="text-sm">{t('empty.description')}</p>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  function ErrorState({
+    message,
+    onRetry,
+  }: {
+    message: string;
+    onRetry: () => void;
+  }) {
+    return (
+      <TableRow>
+        <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
+          <div className="flex flex-col items-center gap-3 text-destructive">
+            <p className="text-sm">{message}</p>
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              <RefreshCw data-icon="inline-start" />
+              {t('error.retry')}
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   const [page, setPage] = useState(1);
   const { data, isLoading, isError, error, isPlaceholderData, refetch } =
     useWebhooks(page, PAGE_SIZE);
@@ -130,7 +133,7 @@ export function WebhookTable() {
     if (isLoading) return <TableSkeleton />;
     if (isError) {
       const message =
-        error instanceof Error ? error.message : 'An error occurred';
+        error instanceof Error ? error.message : t('error.fallback');
       return <ErrorState message={message} onRetry={() => refetch()} />;
     }
     if (webhooks.length === 0) return <EmptyState />;
@@ -164,8 +167,12 @@ export function WebhookTable() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {total > 0
-            ? `Showing ${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} of ${total} webhooks`
-            : 'No webhooks'}
+            ? t('pagination.showing', {
+                start: (page - 1) * PAGE_SIZE + 1,
+                end: Math.min(page * PAGE_SIZE, total),
+                total: total,
+              })
+            : t('pagination.empty')}
         </p>
 
         <div className="flex items-center gap-2">
@@ -176,11 +183,11 @@ export function WebhookTable() {
             onClick={() => setPage((prev) => prev - 1)}
           >
             <ChevronLeft data-icon="inline-start" />
-            Previous
+            {t('pagination.previous')}
           </Button>
 
           <span className="px-2 text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t('pagination.page', { current: page, total: totalPages })}
           </span>
 
           <Button
@@ -189,7 +196,7 @@ export function WebhookTable() {
             disabled={!canGoNext}
             onClick={() => setPage((prev) => prev + 1)}
           >
-            Next
+            {t('pagination.next')}
             <ChevronRight data-icon="inline-end" />
           </Button>
         </div>

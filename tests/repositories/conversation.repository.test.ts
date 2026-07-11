@@ -12,7 +12,8 @@ import {
 
 import { SEED_DATA } from '../seed-data';
 
-vi.unmock('@/repositories/conversation.repository.ts');
+vi.unmock('@/repositories/conversation.repository');
+vi.unmock('@/repositories/contact.repository');
 
 describe('ConversationRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
@@ -72,20 +73,20 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
 
   afterEach(async () => {
     const testCustomerPrefix = '999';
+    const contacts = await prisma.contact.findMany({
+      where: { customerPhone: { startsWith: testCustomerPrefix } },
+      select: { id: true },
+    });
+    const contactIds = contacts.map((c) => c.id);
+
     await prisma.message.deleteMany({
-      where: {
-        conversation: {
-          contact: { customerPhone: { startsWith: testCustomerPrefix } },
-        },
-      },
+      where: { conversation: { contactId: { in: contactIds } } },
     });
     await prisma.conversation.deleteMany({
-      where: {
-        contact: { customerPhone: { startsWith: testCustomerPrefix } },
-      },
+      where: { contactId: { in: contactIds } },
     });
     await prisma.contact.deleteMany({
-      where: { customerPhone: { startsWith: testCustomerPrefix } },
+      where: { id: { in: contactIds } },
     });
   });
 
@@ -125,20 +126,12 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('findPhoneNumberByMetaId', () => {
-    it('locates the seeded internal phone number by its Meta ID', async () => {
-      const result = await ConversationRepository.findPhoneNumberByMetaId(
-        SEED_DATA.PHONE_META_ID,
-      );
-      expect(result?.phoneNumberId).toBe(SEED_DATA.PHONE_META_ID);
-    });
-  });
-
   describe('prepareWebhookMessageConversation', () => {
     it('creates a conversation and returns storage key metadata for webhook media', async () => {
       const result =
         await ConversationRepository.prepareWebhookMessageConversation({
           phoneNumberId: dbPhoneNumberId,
+          messagingProduct: 'whatsapp',
           customerPhone: '999006',
           customerName: 'Webhook Media Customer',
         });
@@ -154,6 +147,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
           customerName: 'Webhook Media Customer',
         },
         phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
         unreadCount: 0,
       });
       expect(result.conversation.id).toBeTruthy();
@@ -165,6 +159,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       const first =
         await ConversationRepository.prepareWebhookMessageConversation({
           phoneNumberId: dbPhoneNumberId,
+          messagingProduct: 'whatsapp',
           customerPhone: '999007',
           customerName: 'Initial Webhook Customer',
         });
@@ -172,6 +167,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       const second =
         await ConversationRepository.prepareWebhookMessageConversation({
           phoneNumberId: dbPhoneNumberId,
+          messagingProduct: 'whatsapp',
           customerPhone: '999007',
           customerName: 'Updated Webhook Customer',
         });
@@ -243,161 +239,6 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
       });
 
       expect(result).toBeNull();
-    });
-  });
-
-  describe('processIncomingMessage', () => {
-    it('upserts a new conversation and message for a new customer', async () => {
-      const result = await ConversationRepository.processIncomingMessage({
-        phoneNumberId: dbPhoneNumberId,
-        customerPhone: '999002',
-        customerName: 'Test Customer',
-        message: {
-          messageId: 'wamid.test.1',
-          type: 'text',
-          content: 'Hello Test',
-          timestamp: new Date(),
-        },
-      });
-
-      expect(result.conversation.contact.customerPhone).toBe('999002');
-      expect(result.conversation.phoneNumber).toBeDefined();
-      expect(result.conversation.phoneNumber?.id).toBe(dbPhoneNumberId);
-      expect(result.message.content).toBe('Hello Test');
-      expect(result.userId).toBe(userId);
-      expect(result.wabaId).toBe(dbWabaId);
-
-      const savedPn = await prisma.phoneNumber.findUnique({
-        where: { id: dbPhoneNumberId },
-      });
-      expect(savedPn?.unreadCount).toBeGreaterThan(0);
-    });
-
-    it('preserves the latest message timestamp when incoming messages arrive out of order', async () => {
-      const newerTimestamp = new Date('2026-06-28T12:00:00.000Z');
-      const olderTimestamp = new Date('2026-06-28T11:00:00.000Z');
-      const customerPhone = '999008';
-
-      await ConversationRepository.processIncomingMessage({
-        phoneNumberId: dbPhoneNumberId,
-        customerPhone,
-        message: {
-          messageId: 'wamid.incoming.test.newer',
-          type: 'text',
-          content: 'Newer incoming message',
-          timestamp: newerTimestamp,
-        },
-      });
-
-      const result = await ConversationRepository.processIncomingMessage({
-        phoneNumberId: dbPhoneNumberId,
-        customerPhone,
-        message: {
-          messageId: 'wamid.incoming.test.older',
-          type: 'text',
-          content: 'Older incoming message',
-          timestamp: olderTimestamp,
-        },
-      });
-
-      expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
-      expect(result.conversation.lastCustomerMessageAt).toEqual(newerTimestamp);
-
-      const savedConversation = await prisma.conversation.findFirstOrThrow({
-        where: {
-          phoneNumberId: dbPhoneNumberId,
-          contact: { customerPhone },
-        },
-        include: {
-          messages: { orderBy: { timestamp: 'desc' }, take: 1 },
-        },
-      });
-
-      expect(savedConversation.lastMessageAt).toEqual(newerTimestamp);
-      expect(savedConversation.lastCustomerMessageAt).toEqual(newerTimestamp);
-      expect(savedConversation.messages[0]?.content).toBe(
-        'Newer incoming message',
-      );
-    });
-  });
-
-  describe('processOutgoingMessageEcho', () => {
-    it('stores an app-sent message without increasing unread counts', async () => {
-      const phoneNumberBefore = await prisma.phoneNumber.findUniqueOrThrow({
-        where: { id: dbPhoneNumberId },
-      });
-      const timestamp = new Date();
-
-      const result = await ConversationRepository.processOutgoingMessageEcho({
-        phoneNumberId: dbPhoneNumberId,
-        customerPhone: '999004',
-        message: {
-          messageId: 'wamid.echo.test.1',
-          type: 'text',
-          content: 'Sent from WhatsApp Business App',
-          timestamp,
-        },
-      });
-
-      expect(result.conversation.contact.customerPhone).toBe('999004');
-      expect(result.conversation.unreadCount).toBe(0);
-      expect(result.conversation.lastCustomerMessageAt).toBeNull();
-      expect(result.message).toMatchObject({
-        direction: 'outgoing',
-        source: 'whatsapp_app',
-        status: 'sent',
-        content: 'Sent from WhatsApp Business App',
-      });
-      expect(result.userId).toBe(userId);
-      expect(result.wabaId).toBe(dbWabaId);
-
-      const phoneNumberAfter = await prisma.phoneNumber.findUniqueOrThrow({
-        where: { id: dbPhoneNumberId },
-      });
-      expect(phoneNumberAfter.unreadCount).toBe(phoneNumberBefore.unreadCount);
-    });
-
-    it('preserves the latest message timestamp when echoes arrive out of order', async () => {
-      const newerTimestamp = new Date('2026-06-28T12:00:00.000Z');
-      const olderTimestamp = new Date('2026-06-28T11:00:00.000Z');
-      const customerPhone = '999005';
-
-      await ConversationRepository.processOutgoingMessageEcho({
-        phoneNumberId: dbPhoneNumberId,
-        customerPhone,
-        message: {
-          messageId: 'wamid.echo.test.newer',
-          type: 'text',
-          content: 'Newer message',
-          timestamp: newerTimestamp,
-        },
-      });
-
-      const result = await ConversationRepository.processOutgoingMessageEcho({
-        phoneNumberId: dbPhoneNumberId,
-        customerPhone,
-        message: {
-          messageId: 'wamid.echo.test.older',
-          type: 'text',
-          content: 'Older message',
-          timestamp: olderTimestamp,
-        },
-      });
-
-      expect(result.conversation.lastMessageAt).toEqual(newerTimestamp);
-
-      const savedConversation = await prisma.conversation.findFirstOrThrow({
-        where: {
-          phoneNumberId: dbPhoneNumberId,
-          contact: { customerPhone },
-        },
-        include: {
-          messages: { orderBy: { timestamp: 'desc' }, take: 1 },
-        },
-      });
-
-      expect(savedConversation.lastMessageAt).toEqual(newerTimestamp);
-      expect(savedConversation.messages[0]?.content).toBe('Newer message');
     });
   });
 });

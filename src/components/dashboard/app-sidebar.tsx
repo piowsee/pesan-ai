@@ -15,34 +15,40 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { useChatNavHref } from '@/hooks/use-chat-nav-href';
+import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
 import { Home, MessageSquare, UsersRound } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { FaWhatsapp } from 'react-icons/fa6';
 
 export function AppSidebar({ user }: { user: User | null }) {
   const pathname = usePathname();
   const chatHref = useChatNavHref();
+  const t = useTranslations('Sidebar');
 
   const navItems = [
-    { title: 'Home', url: '/dashboard', icon: Home, matchPath: '/dashboard' },
     {
-      title: 'WABA Management',
+      title: t('home'),
+      url: '/dashboard',
+      icon: Home,
+      matchPath: '/dashboard',
+    },
+    {
+      title: t('wabaManagement'),
       url: '/dashboard/waba',
       icon: FaWhatsapp,
       matchPath: '/dashboard/waba',
     },
     {
-      title: 'Chat',
+      title: t('chat'),
       url: chatHref,
       icon: MessageSquare,
       matchPath: '/dashboard/chat',
     },
     {
-      title: 'Customers',
+      title: t('customers'),
       url: '/dashboard/customers',
       icon: UsersRound,
       matchPath: '/dashboard/customers',
@@ -88,7 +94,7 @@ export function AppSidebar({ user }: { user: User | null }) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="truncate font-semibold whitespace-nowrap text-brand/70 transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
-            Navigation
+            {t('navigation')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">

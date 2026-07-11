@@ -1,6 +1,7 @@
 import eventBus, { SSE_EVENTS, getUserEvent } from '@/lib/chat/event-bus';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
+import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { DebouncerService } from '@/services/debouncer.service';
 import { MetaWebhookHandlerService } from '@/services/meta-webhook-handler.service';
@@ -219,7 +220,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('updates outbound message statuses and emits one bulk SSE event', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(
         MessageRepository.updateStatusesByMetaMessageIds,
@@ -296,9 +297,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       });
 
       expect(result).toEqual({ processed: true, count: 2 });
-      expect(
-        ConversationRepository.processIncomingMessage,
-      ).not.toHaveBeenCalled();
+      expect(MessageRepository.processIncomingMessage).not.toHaveBeenCalled();
       expect(
         MessageRepository.updateStatusesByMetaMessageIds,
       ).toHaveBeenCalledWith([
@@ -339,21 +338,21 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('stores WhatsApp Business App message echoes with a distinct source', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
-      vi.mocked(
-        ConversationRepository.processOutgoingMessageEcho,
-      ).mockResolvedValue({
-        message: {
-          id: 'db-message-1',
-          direction: 'outgoing',
-          source: 'whatsapp_app',
-          content: 'Ou',
-        },
-        conversation: { id: 'conversation-1' },
-        userId: 'user-1',
-        wabaId: 'waba-1',
-      } as never);
+      vi.mocked(MessageRepository.processOutgoingMessageEcho).mockResolvedValue(
+        {
+          message: {
+            id: 'db-message-1',
+            direction: 'outgoing',
+            source: 'whatsapp_app',
+            content: 'Ou',
+          },
+          conversation: { id: 'conversation-1' },
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        } as never,
+      );
 
       const result = await MetaWebhookHandlerService.processMetaWebhookPayload({
         object: 'whatsapp_business_account',
@@ -388,22 +387,20 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       });
 
       expect(result).toEqual({ processed: true, count: 1 });
-      expect(
-        ConversationRepository.processOutgoingMessageEcho,
-      ).toHaveBeenCalledWith({
-        phoneNumberId: 'phone-1',
-        customerPhone: '628116150122',
-        message: {
-          messageId: 'wamid.echo-1',
-          type: 'text',
-          content: 'Ou',
-          timestamp: new Date(1782640182 * 1000),
-          metadata: expect.any(String),
+      expect(MessageRepository.processOutgoingMessageEcho).toHaveBeenCalledWith(
+        {
+          phoneNumberId: 'phone-1',
+          messagingProduct: 'whatsapp',
+          customerPhone: '628116150122',
+          message: {
+            messageId: 'wamid.echo-1',
+            type: 'text',
+            content: 'Ou',
+            timestamp: new Date(1782640182 * 1000),
+          },
         },
-      });
-      expect(
-        ConversationRepository.processIncomingMessage,
-      ).not.toHaveBeenCalled();
+      );
+      expect(MessageRepository.processIncomingMessage).not.toHaveBeenCalled();
       expect(
         DebouncerService.handleDebounceIncomingMessage,
       ).not.toHaveBeenCalled();
@@ -441,7 +438,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       const objectKey = `user-1/waba-1/conv-1/${type}-echo-key`;
 
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(
         ConversationRepository.prepareWebhookMessageConversation,
@@ -459,14 +456,14 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
           mediaSize: 123,
         } as never,
       );
-      vi.mocked(
-        ConversationRepository.processOutgoingMessageEcho,
-      ).mockResolvedValue({
-        message: { id: 'db-echo-media-1', type, mediaObjectKey: objectKey },
-        conversation: { id: 'conv-1' },
-        userId: 'user-1',
-        wabaId: 'waba-1',
-      } as never);
+      vi.mocked(MessageRepository.processOutgoingMessageEcho).mockResolvedValue(
+        {
+          message: { id: 'db-echo-media-1', type, mediaObjectKey: objectKey },
+          conversation: { id: 'conv-1' },
+          userId: 'user-1',
+          wabaId: 'waba-1',
+        } as never,
+      );
 
       const result = await MetaWebhookHandlerService.processMetaWebhookPayload({
         object: 'whatsapp_business_account',
@@ -510,22 +507,23 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
           contentType: mediaPayload.mime_type,
         },
       );
-      expect(
-        ConversationRepository.processOutgoingMessageEcho,
-      ).toHaveBeenCalledWith({
-        phoneNumberId: 'phone-1',
-        customerPhone: '628116150122',
-        message: expect.objectContaining({
-          messageId: `wamid.echo-${type}-1`,
-          type,
-          content: 'echo caption',
-          mediaObjectKey: objectKey,
-          mediaMimeType: mediaPayload.mime_type,
-          mediaFilename:
-            'filename' in mediaPayload ? mediaPayload.filename : null,
-          mediaSize: 123,
-        }),
-      });
+      expect(MessageRepository.processOutgoingMessageEcho).toHaveBeenCalledWith(
+        {
+          phoneNumberId: 'phone-1',
+          messagingProduct: 'whatsapp',
+          customerPhone: '628116150122',
+          message: expect.objectContaining({
+            messageId: `wamid.echo-${type}-1`,
+            type,
+            content: 'echo caption',
+            mediaObjectKey: objectKey,
+            mediaMimeType: mediaPayload.mime_type,
+            mediaFilename:
+              'filename' in mediaPayload ? mediaPayload.filename : null,
+            mediaSize: 123,
+          }),
+        },
+      );
       expect(eventBus.emit).toHaveBeenCalledWith(
         getUserEvent(SSE_EVENTS.NEW_MESSAGE, 'user-1'),
         expect.objectContaining({
@@ -558,7 +556,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       const objectKey = `user-1/waba-1/conv-1/${type}-incoming-key`;
 
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
       vi.mocked(
         ConversationRepository.prepareWebhookMessageConversation,
@@ -576,9 +574,7 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
           mediaSize: 123,
         } as never,
       );
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
+      vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'db-incoming-media-1', type, mediaObjectKey: objectKey },
         conversation: { id: 'conv-1' },
         userId: 'user-1',
@@ -627,10 +623,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
           contentType: mediaPayload.mime_type,
         },
       );
-      expect(
-        ConversationRepository.processIncomingMessage,
-      ).toHaveBeenCalledWith({
+      expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        messagingProduct: 'whatsapp',
         bsuid: 'US.customer-1',
         customerPhone: 'customer-1',
         message: expect.objectContaining({
@@ -671,11 +666,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('uses contact profile, username, phone, and BSUID for incoming messages', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
+      vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'db-message-1', content: 'hello' },
         conversation: { id: 'conv-1' },
         userId: 'user-1',
@@ -724,10 +717,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       });
 
       expect(result).toEqual({ processed: true, count: 1 });
-      expect(
-        ConversationRepository.processIncomingMessage,
-      ).toHaveBeenCalledWith({
+      expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        messagingProduct: 'whatsapp',
         customerPhone: '16315551181',
         customerName: 'Test User Name',
         customerUsername: '@testusername',
@@ -742,11 +734,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('stores incoming username-only contacts when no phone is supplied', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({ id: 'phone-1' } as never);
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
+      vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'db-message-1', content: 'hello' },
         conversation: { id: 'conv-1' },
         userId: 'user-1',
@@ -793,10 +783,9 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
       });
 
       expect(result).toEqual({ processed: true, count: 1 });
-      expect(
-        ConversationRepository.processIncomingMessage,
-      ).toHaveBeenCalledWith({
+      expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith({
         phoneNumberId: 'phone-1',
+        messagingProduct: 'whatsapp',
         customerPhone: undefined,
         customerName: 'Test User Name',
         customerUsername: '@testusername',
@@ -829,14 +818,12 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
       // Mock repository calls
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
         id: 'phone-1',
       } as never);
 
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
+      vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'msg-1', content: 'hello' },
         conversation: {
           id: 'conv-1',
@@ -923,14 +910,12 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('queues the conversation when saved text content is missing', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
         id: 'phone-1',
       } as never);
 
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
+      vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'msg-1', content: null },
         conversation: { id: 'conv-1' },
         userId: 'user-123',
@@ -985,14 +970,12 @@ describe('MetaWebhookHandlerService', { tags: ['backend'] }, () => {
 
     it('does not queue redirect message when admin has taken over the conversation', async () => {
       vi.mocked(
-        ConversationRepository.findPhoneNumberByMetaId,
+        PhoneNumberRepository.findPhoneNumberByMetaId,
       ).mockResolvedValue({
         id: 'phone-1',
       } as never);
 
-      vi.mocked(
-        ConversationRepository.processIncomingMessage,
-      ).mockResolvedValue({
+      vi.mocked(MessageRepository.processIncomingMessage).mockResolvedValue({
         message: { id: 'msg-1', content: 'manual please' },
         conversation: {
           id: 'conv-1',

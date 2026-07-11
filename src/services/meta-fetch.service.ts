@@ -1,3 +1,4 @@
+// TODO: we need to update so the api can be fetch based on passed messaging_product (whatsapp, instagram, etc.)
 import { ApiError } from '@/lib/api-helper/error';
 import { logError, logger } from '@/lib/server/logger';
 import {
@@ -80,6 +81,19 @@ type MetaMessagePayload = {
   Record<string, unknown>;
 
 export type MetaSendMessageRecipient = MetaMessageRecipient;
+
+type MetaSyncRequestResponse = {
+  messaging_product: string;
+  request_id: string;
+};
+
+type MediaUrlMetaResponse = {
+  url: string;
+  mime_type: string;
+  file_size: string;
+  id: string;
+  sha256: string;
+};
 
 function getBearerAuth(token: string): BetterFetchOption['auth'] {
   return {
@@ -178,6 +192,7 @@ function buildMetaMessagePayload(
       };
   }
 }
+
 function getMetaAppCredentials() {
   return {
     appId: process.env.NEXT_PUBLIC_META_APP_ID,
@@ -302,6 +317,33 @@ export const MetaFetchService = {
     }
 
     return data.data?.[0]?.business_profile ?? null;
+  },
+
+  async getMediaUrl(params: {
+    mediaId: string;
+    token: string;
+    phoneNumberId?: string;
+  }) {
+    const { mediaId, token, phoneNumberId } = params;
+    const query = phoneNumberId ? `?phone_number_id=${phoneNumberId}` : '';
+
+    const { data, error } = await fetchMeta<MediaUrlMetaResponse>(
+      `/${mediaId}${query}`,
+      {
+        action: 'MetaFetchService.getMediaUrl',
+        auth: getBearerAuth(token),
+      },
+    );
+
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
+        `Failed to fetch media URL for ${mediaId}`,
+      );
+      throw new ApiError(message, 502);
+    }
+
+    return data;
   },
 
   async registerPhoneNumber(params: {
@@ -597,6 +639,52 @@ export const MetaFetchService = {
     return {
       messageId: data.messages?.[0]?.id ?? '',
       status: 'sent',
+    };
+  },
+
+  // call this to trigger smb_app_state_sync or history webhooks.
+  // this is used for history sync for Coexistence user
+  async syncRequest(params: {
+    phoneNumberId: string;
+    token: string;
+    sync_type: 'history' | 'smb_app_state_sync' | 'media_reupload';
+  }) {
+    const { phoneNumberId, token, sync_type } = params;
+
+    logger.info(`Send request to sync history`, {
+      phoneNumberId,
+      sync_type,
+    });
+
+    const { data, error } = await fetchMeta<MetaSyncRequestResponse>(
+      `/${phoneNumberId}/smb_app_data`,
+      {
+        action: 'MetaFetchService.SyncRequest',
+        method: 'POST',
+        auth: getBearerAuth(token),
+        body: {
+          messaging_product: 'whatsapp',
+          sync_type,
+        },
+      },
+    );
+
+    if (error) {
+      const errorMessage = this._extractMetaErrorMessage(
+        error,
+        `Failed to request for sync history with ${sync_type}`,
+      );
+      throw new ApiError(errorMessage, 502);
+    }
+
+    logger.info('Successfully request for sync', {
+      phoneNumberId,
+      sync_type,
+    });
+
+    return {
+      sync_type,
+      request_id: data.request_id,
     };
   },
 };

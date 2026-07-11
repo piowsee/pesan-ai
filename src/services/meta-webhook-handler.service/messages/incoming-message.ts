@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
+import { MessageRepository } from '@/repositories/message.repository';
 import type { WebhookMessage } from '@/schemas/meta-webhook-handler.schema/messages';
 import type { UploadMediaType } from '@/schemas/s3-upload.schema';
 import { DebouncerService } from '@/services/debouncer.service';
@@ -41,8 +42,14 @@ async function processMessages(params: {
   messages?: WebhookMessage[];
   internalPhoneId: string; // Internal DB PhoneNumber.id.
   contactsLookup: WebhookContactLookup;
+  messagingProduct?: string;
 }): Promise<number> {
-  const { messages = [], internalPhoneId, contactsLookup } = params;
+  const {
+    messages = [],
+    internalPhoneId,
+    contactsLookup,
+    messagingProduct,
+  } = params;
   let count = 0;
 
   for (const message of messages) {
@@ -51,6 +58,7 @@ async function processMessages(params: {
         message,
         internalPhoneId,
         contactsLookup,
+        messagingProduct,
       });
       if (wasProcessed) count++;
     } catch (msgErr) {
@@ -68,6 +76,7 @@ async function processSingleMessage(params: {
   message: WebhookMessage;
   internalPhoneId: string; // Internal DB PhoneNumber.id.
   contactsLookup: WebhookContactLookup;
+  messagingProduct?: string;
 }): Promise<boolean> {
   const { message } = params;
 
@@ -94,8 +103,14 @@ async function processIncomingTextMessage(params: {
   message: WebhookMessage;
   internalPhoneId: string; // Internal DB PhoneNumber.id.
   contactsLookup: WebhookContactLookup;
+  messagingProduct?: string;
 }): Promise<boolean> {
-  const { message: webhookMessage, internalPhoneId, contactsLookup } = params;
+  const {
+    message: webhookMessage,
+    internalPhoneId,
+    contactsLookup,
+    messagingProduct,
+  } = params;
   const contactDetails = getIncomingContactDetails(
     webhookMessage,
     contactsLookup,
@@ -108,15 +123,15 @@ async function processIncomingTextMessage(params: {
     conversation,
     userId,
     wabaId,
-  } = await ConversationRepository.processIncomingMessage({
+  } = await MessageRepository.processIncomingMessage({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
+    messagingProduct,
     message: {
       messageId: webhookMessage.id,
       type: 'text',
       content,
       timestamp,
-      metadata: JSON.stringify(webhookMessage),
     },
   });
 
@@ -155,12 +170,14 @@ async function processIncomingMediaMessage(params: {
   internalPhoneId: string; // Internal DB PhoneNumber.id.
   contactsLookup: WebhookContactLookup;
   mediaType: UploadMediaType;
+  messagingProduct?: string;
 }): Promise<boolean> {
   const {
     message: webhookMessage,
     internalPhoneId,
     contactsLookup,
     mediaType,
+    messagingProduct,
   } = params;
   const mediaPayload = webhookMessage[mediaType];
 
@@ -177,6 +194,7 @@ async function processIncomingMediaMessage(params: {
     await ConversationRepository.prepareWebhookMessageConversation({
       phoneNumberId: internalPhoneId,
       ...contactDetails,
+      messagingProduct,
     });
 
   const tokenToUse = decrypt(preparedConversation.systemUserToken || '');
@@ -198,15 +216,15 @@ async function processIncomingMediaMessage(params: {
     conversation,
     userId,
     wabaId,
-  } = await ConversationRepository.processIncomingMessage({
+  } = await MessageRepository.processIncomingMessage({
     phoneNumberId: internalPhoneId,
     ...contactDetails,
+    messagingProduct,
     message: {
       messageId: webhookMessage.id,
       type: mediaType,
       content: mediaPayload.caption,
       timestamp: new Date(parseInt(webhookMessage.timestamp) * 1000),
-      metadata: JSON.stringify(webhookMessage),
       mediaObjectKey: uploadedMedia.key,
       mediaMimeType: uploadedMedia.mediaMimeType,
       mediaFilename:

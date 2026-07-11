@@ -230,10 +230,6 @@ function getMediaTypeFromFile(file: File): ChatMediaType {
   return 'document';
 }
 
-function createLocalMediaMetadata(localMediaUrl: string) {
-  return JSON.stringify({ localMediaUrl });
-}
-
 function getCachedMessages({
   convId,
   queryClient,
@@ -690,7 +686,7 @@ export function useSendMessage() {
         mediaSize: null,
         status: 'sending',
         errorMessage: null,
-        metadata: null,
+        localMediaUrl: null,
         timestamp: timelineTimestamp,
         createdAt: timelineTimestamp,
       };
@@ -755,7 +751,7 @@ export function useSendMediaMessage() {
         mediaSize: file.size,
         status: 'sending',
         errorMessage: null,
-        metadata: createLocalMediaMetadata(localMediaUrl),
+        localMediaUrl,
         timestamp: timelineTimestamp,
         createdAt: timelineTimestamp,
       };
@@ -780,7 +776,9 @@ export function useSendMediaMessage() {
     },
     onSuccess: ({ conversation, message }, { convId, wabaId }, context) => {
       if (context?.localMediaUrl) {
-        URL.revokeObjectURL(context.localMediaUrl);
+        // Keep the local media URL around in the confirmed message to prevent a
+        // visual flicker while the S3 download URL is being fetched in the background.
+        message.localMediaUrl = context.localMediaUrl;
       }
 
       updateCachesWithConfirmedMessage({

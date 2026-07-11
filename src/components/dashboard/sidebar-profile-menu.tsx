@@ -15,10 +15,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
 import { LogOut, Settings, UserRound } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 export function SidebarProfileMenu({ user }: { user: User }) {
@@ -27,6 +28,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
   const isCollapsed = state === 'collapsed';
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const t = useTranslations('ProfileMenu');
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -59,7 +61,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
               <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="right" align="center">
-              Open profile
+              {t('openProfile')}
             </TooltipContent>
           </Tooltip>
         ) : (
@@ -97,14 +99,14 @@ export function SidebarProfileMenu({ user }: { user: User }) {
               onSelect={() => setIsProfileOpen(true)}
             >
               <UserRound />
-              <span>Profile</span>
+              <span>{t('profile')}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
               onSelect={() => setIsPasswordOpen(true)}
             >
               <Settings />
-              <span>Settings</span>
+              <span>{t('settings')}</span>
             </DropdownMenuItem>
           </div>
 
@@ -119,7 +121,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
               onClick={handleSignOut}
             >
               <LogOut />
-              <span>Logout</span>
+              <span>{t('logout')}</span>
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>

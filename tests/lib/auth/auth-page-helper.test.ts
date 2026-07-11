@@ -71,7 +71,7 @@ describe('AuthPageHelper', () => {
     });
 
     await expect(AuthPageHelper.requireAdmin()).rejects.toThrow(
-      'REDIRECT:/dashboard',
+      'REDIRECT:/en/dashboard',
     );
   });
 

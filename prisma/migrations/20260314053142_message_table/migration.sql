@@ -12,7 +12,6 @@ CREATE TABLE "message" (
     "mediaSize" BIGINT,
     "status" TEXT NOT NULL DEFAULT 'sent',
     "errorMessage" TEXT,
-    "metadata" TEXT,
     "timestamp" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "conversationId" TEXT NOT NULL,

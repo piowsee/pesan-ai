@@ -17,7 +17,6 @@ function createMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
     mediaSize: null,
     status: 'delivered',
     errorMessage: null,
-    metadata: null,
     timestamp: '2026-07-06T10:00:00.000Z',
     createdAt: '2026-07-06T10:00:00.000Z',
     ...overrides,

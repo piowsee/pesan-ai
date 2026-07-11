@@ -120,4 +120,72 @@ export const ContactRepository = {
       total: groupedContacts.length,
     };
   },
+
+  async upsertContact(
+    params: {
+      customerPhone?: string | null;
+      bsuid?: string | null;
+      customerName?: string | null;
+      customerUsername?: string | null;
+    },
+    tx?: Prisma.TransactionClient,
+  ) {
+    const db = tx ?? prisma;
+    const bsuid = params.bsuid?.trim() || undefined;
+    const customerPhone = params.customerPhone?.trim() || undefined;
+    const customerName = params.customerName?.trim() || undefined;
+    const customerUsername = params.customerUsername?.trim() || undefined;
+
+    if (!bsuid && !customerPhone) {
+      throw new Error('Cannot upsert a contact without a phone or BSUID');
+    }
+
+    const data: Prisma.ContactUpdateInput = {};
+    if (bsuid) data.bsuid = bsuid;
+    if (customerPhone) data.customerPhone = customerPhone;
+    if (customerName !== undefined) data.customerName = customerName;
+    if (customerUsername !== undefined)
+      data.customerUsername = customerUsername;
+
+    const existingContact =
+      (bsuid ? await db.contact.findUnique({ where: { bsuid } }) : null) ??
+      (customerPhone
+        ? await db.contact.findUnique({ where: { customerPhone } })
+        : null);
+
+    if (existingContact) {
+      return db.contact.update({
+        where: { id: existingContact.id },
+        data,
+      });
+    }
+
+    return db.contact.create({
+      data: data as Prisma.ContactCreateInput,
+    });
+  },
+
+  async upsertContactsBulk(
+    contacts: Array<{
+      customerPhone?: string | null;
+      bsuid?: string | null;
+      customerName?: string | null;
+      customerUsername?: string | null;
+    }>,
+  ) {
+    return prisma.$transaction(
+      async (tx) => {
+        let processedCount = 0;
+        for (const contact of contacts) {
+          await this.upsertContact(contact, tx);
+          processedCount++;
+        }
+        return processedCount;
+      },
+      {
+        timeout: 60000,
+        maxWait: 30000,
+      },
+    );
+  },
 };

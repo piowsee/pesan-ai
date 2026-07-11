@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
 
 import { PhoneNumberInputStep } from './phone-number-input-step';
@@ -28,6 +29,7 @@ export function AddPhoneNumberDialog({
   const [internalOpen, setInternalOpen] = useState(false);
   const [step, setStep] = useState<Step>('input');
   const [phoneNumberId, setPhoneNumberId] = useState<string | null>(null);
+  const t = useTranslations('Waba.addNumber');
 
   const isOpen = open ?? internalOpen;
   const isControlled = open !== undefined;
@@ -67,7 +69,7 @@ export function AddPhoneNumberDialog({
               className="w-full border-brand text-brand hover:bg-brand/90 hover:text-brand-foreground sm:w-auto"
             >
               <Plus data-icon="inline-start" />
-              Add number
+              {t('trigger')}
             </Button>
           )}
         </DialogTrigger>
