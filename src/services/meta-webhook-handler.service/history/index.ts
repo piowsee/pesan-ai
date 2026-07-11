@@ -66,13 +66,17 @@ export const HistoryWebhookHandler = {
 
         if (entry.threads) {
           for (const thread of entry.threads) {
-            if (!thread.messages) continue;
+            if (!thread.messages || thread.messages.length === 0) continue;
 
             const customerPhone = thread.id.replace(/\D/g, '');
+            let bsuid: string | undefined = undefined;
+            const messagesPayload = [];
 
             for (const message of thread.messages) {
               const isOutgoing = message.history_context?.from_me === true;
-              const bsuid = isOutgoing ? undefined : message.from_user_id;
+              if (!isOutgoing && message.from_user_id) {
+                bsuid = message.from_user_id;
+              }
 
               let status = (
                 message.history_context?.status || ''
@@ -81,7 +85,8 @@ export const HistoryWebhookHandler = {
                 status = 'read';
               }
 
-              const messageData = {
+              messagesPayload.push({
+                isOutgoing,
                 messageId: message.id,
                 type: message.type,
                 timestamp: new Date(Number(message.timestamp) * 1000),
@@ -89,24 +94,25 @@ export const HistoryWebhookHandler = {
                   message.type === 'text' ? message.text?.body : undefined,
                 status: status || undefined,
                 source: 'whatsapp_app' as const,
-              };
+              });
+            }
 
-              try {
-                await MessageRepository.processHistoryMessage({
-                  phoneNumberId: phoneNumber.id,
-                  customerPhone,
-                  bsuid,
-                  messagingProduct: value.messaging_product,
-                  isOutgoing,
-                  message: messageData,
-                });
-                processedCount++;
-              } catch (error) {
-                logger.error('Failed to process history message', {
-                  messageId: message.id,
-                  error: error instanceof Error ? error.message : String(error),
-                });
+            try {
+              const result = await MessageRepository.processBulkHistoryThread({
+                phoneNumberId: phoneNumber.id,
+                customerPhone,
+                bsuid,
+                messagingProduct: value.messaging_product,
+                messages: messagesPayload,
+              });
+              if (result) {
+                processedCount += result.processedCount;
               }
+            } catch (error) {
+              logger.error('Failed to process bulk history thread', {
+                threadId: thread.id,
+                error: error instanceof Error ? error.message : String(error),
+              });
             }
           }
         }

@@ -80,6 +80,7 @@ vi.mock('@/repositories/message.repository', () => ({
     processHistoryMessage: vi.fn(),
     processIncomingMessage: vi.fn(),
     processOutgoingMessageEcho: vi.fn(),
+    processBulkHistoryThread: vi.fn(),
   },
 }));
 

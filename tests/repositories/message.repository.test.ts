@@ -638,4 +638,126 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       expect(result.message.direction).toBe('outgoing');
     });
   });
+  describe('processBulkHistoryThread', () => {
+    it('processes multiple messages and aggregates unread counts and timestamps correctly', async () => {
+      const phoneNumberBefore = await prisma.phoneNumber.findUniqueOrThrow({
+        where: { id: dbPhoneNumberId },
+      });
+      const customerPhone = '998015';
+
+      const olderTimestamp = new Date('2026-06-28T11:00:00.000Z');
+      const newerTimestamp = new Date('2026-06-28T12:00:00.000Z');
+      const middleTimestamp = new Date('2026-06-28T11:30:00.000Z');
+
+      const result = await MessageRepository.processBulkHistoryThread({
+        phoneNumberId: dbPhoneNumberId,
+        messagingProduct: 'whatsapp',
+        customerPhone,
+        bsuid: 'test-bulk-bsuid',
+        messages: [
+          {
+            isOutgoing: false,
+            messageId: 'wamid.bulk.test.1',
+            type: 'text',
+            content: 'Incoming unread 1',
+            timestamp: olderTimestamp,
+            status: 'delivered',
+            source: 'whatsapp_app',
+          },
+          {
+            isOutgoing: true,
+            messageId: 'wamid.bulk.test.2',
+            type: 'text',
+            content: 'Outgoing 1',
+            timestamp: middleTimestamp,
+            status: 'read',
+            source: 'whatsapp_app',
+          },
+          {
+            isOutgoing: false,
+            messageId: 'wamid.bulk.test.3',
+            type: 'text',
+            content: 'Incoming unread 2',
+            timestamp: newerTimestamp,
+            status: 'delivered',
+            source: 'whatsapp_app',
+          },
+        ],
+      });
+
+      expect(result).toBeDefined();
+      expect(result?.processedCount).toBe(3);
+
+      const conversation = await prisma.conversation.findUniqueOrThrow({
+        where: { id: result!.conversationId },
+        include: { contact: true, messages: { orderBy: { timestamp: 'asc' } } },
+      });
+
+      expect(conversation.contact.customerPhone).toBe(customerPhone);
+      expect(conversation.contact.bsuid).toBe('test-bulk-bsuid');
+
+      // Total unread increment should be 2 (from the two incoming delivered messages)
+      expect(conversation.unreadCount).toBe(2);
+
+      // lastMessageAt should be the newest timestamp
+      expect(conversation.lastMessageAt).toEqual(newerTimestamp);
+      expect(conversation.lastCustomerMessageAt).toEqual(newerTimestamp);
+
+      const phoneNumberAfter = await prisma.phoneNumber.findUniqueOrThrow({
+        where: { id: dbPhoneNumberId },
+      });
+      // unread incremented by 2
+      expect(phoneNumberAfter.unreadCount).toBe(
+        phoneNumberBefore.unreadCount + 2,
+      );
+
+      // Verify messages inserted
+      expect(conversation.messages.length).toBe(3);
+      expect(conversation.messages[0].messageId).toBe('wamid.bulk.test.1');
+      expect(conversation.messages[1].messageId).toBe('wamid.bulk.test.2');
+      expect(conversation.messages[2].messageId).toBe('wamid.bulk.test.3');
+    });
+
+    it('skips duplicate messages gracefully', async () => {
+      const customerPhone = '998016';
+      const timestamp = new Date();
+
+      // First run
+      await MessageRepository.processBulkHistoryThread({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        messages: [
+          {
+            isOutgoing: true,
+            messageId: 'wamid.bulk.dup.1',
+            type: 'text',
+            content: 'Initial message',
+            timestamp,
+            status: 'read',
+          },
+        ],
+      });
+
+      // Second run with same message ID
+      await MessageRepository.processBulkHistoryThread({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        messages: [
+          {
+            isOutgoing: true,
+            messageId: 'wamid.bulk.dup.1',
+            type: 'text',
+            content: 'Duplicate message',
+            timestamp,
+            status: 'read',
+          },
+        ],
+      });
+
+      const count = await prisma.message.count({
+        where: { messageId: 'wamid.bulk.dup.1' },
+      });
+      expect(count).toBe(1);
+    });
+  });
 });
