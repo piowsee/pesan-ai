@@ -1,6 +1,7 @@
 import { MessageRepository } from '@/repositories/message.repository';
 import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
+import { WabaRepository } from '@/repositories/waba.repository';
 import { HistoryWebhookHandler } from '@/services/meta-webhook-handler.service/history';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -26,6 +27,9 @@ describe('HistoryWebhookHandler', () => {
     vi.mocked(
       SyncRequestRepository.findPendingByPhoneNumberId,
     ).mockResolvedValue([{ requestId: 'req-1' }] as never);
+    vi.spyOn(MessageRepository, 'processBulkHistoryThread').mockResolvedValue({
+      processedCount: 2,
+    } as never);
 
     const result = await HistoryWebhookHandler.processChange({
       metaWabaId,
@@ -49,6 +53,7 @@ describe('HistoryWebhookHandler', () => {
                     type: 'text',
                     text: { body: 'Hello' },
                     timestamp: '12345',
+                    history_context: { from_me: false, status: 'delivered' },
                   },
                   {
                     id: 'msg-out',
@@ -57,6 +62,7 @@ describe('HistoryWebhookHandler', () => {
                     type: 'text',
                     text: { body: 'Hi' },
                     timestamp: '12346',
+                    history_context: { from_me: true, status: 'read' },
                   },
                 ],
               },
@@ -67,17 +73,23 @@ describe('HistoryWebhookHandler', () => {
     });
 
     expect(result).toBe(2);
-    expect(MessageRepository.processIncomingMessage).toHaveBeenCalledWith(
+    expect(MessageRepository.processBulkHistoryThread).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: expect.objectContaining({ messageId: 'msg-in', type: 'text' }),
-      }),
-    );
-    expect(MessageRepository.processOutgoingMessageEcho).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: expect.objectContaining({
-          messageId: 'msg-out',
-          type: 'text',
-        }),
+        phoneNumberId: 'internal-phone-id',
+        customerPhone: '987',
+        bsuid: 'u-1',
+        messages: [
+          expect.objectContaining({
+            messageId: 'msg-in',
+            type: 'text',
+            isOutgoing: false,
+          }),
+          expect.objectContaining({
+            messageId: 'msg-out',
+            type: 'text',
+            isOutgoing: true,
+          }),
+        ],
       }),
     );
     expect(SyncRequestRepository.updateSyncRequestStatus).toHaveBeenCalledWith({
@@ -90,6 +102,15 @@ describe('HistoryWebhookHandler', () => {
   it('handles media follow-up webhooks', async () => {
     vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
+    } as never);
+    vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue({
+      id: 'waba-internal-id',
+    } as never);
+    vi.mocked(MessageRepository.findMessageConversationId).mockResolvedValue(
+      null as never,
+    );
+    vi.mocked(MessageRepository.processHistoryMessage).mockResolvedValue({
+      conversation: { id: 'conv-1' },
     } as never);
 
     const result = await HistoryWebhookHandler.processChange({

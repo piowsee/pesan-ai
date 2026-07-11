@@ -164,4 +164,28 @@ export const ContactRepository = {
       data: data as Prisma.ContactCreateInput,
     });
   },
+
+  async upsertContactsBulk(
+    contacts: Array<{
+      customerPhone?: string | null;
+      bsuid?: string | null;
+      customerName?: string | null;
+      customerUsername?: string | null;
+    }>,
+  ) {
+    return prisma.$transaction(
+      async (tx) => {
+        let processedCount = 0;
+        for (const contact of contacts) {
+          await this.upsertContact(contact, tx);
+          processedCount++;
+        }
+        return processedCount;
+      },
+      {
+        timeout: 60000,
+        maxWait: 30000,
+      },
+    );
+  },
 };

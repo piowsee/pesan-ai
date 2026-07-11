@@ -1,10 +1,12 @@
 import { ContactRepository } from '@/repositories/contact.repository';
 import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
+import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { SmbAppStateSyncWebhookHandler } from '@/services/meta-webhook-handler.service/smb-app-state-sync';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/server/prisma', () => ({
   default: {
+    $transaction: vi.fn((callback) => callback()),
     phoneNumber: {
       findUnique: vi.fn(),
     },
@@ -19,6 +21,15 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
+    vi.mocked(
+      SyncRequestRepository.findPendingByPhoneNumberId,
+    ).mockResolvedValue([
+      {
+        requestId: 'sync-req-1',
+        syncType: 'smb_app_state_sync',
+      },
+    ] as never);
+    vi.mocked(ContactRepository.upsertContactsBulk).mockResolvedValue(1);
 
     const result = await SmbAppStateSyncWebhookHandler.processChange({
       metaWabaId,
@@ -39,16 +50,27 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     });
 
     expect(result).toBe(1);
-    expect(ContactRepository.upsertContact).toHaveBeenCalledWith({
-      customerPhone: '987',
-      customerName: 'John Doe',
-    });
+    expect(ContactRepository.upsertContactsBulk).toHaveBeenCalledWith([
+      {
+        customerPhone: '987',
+        customerName: 'John Doe',
+      },
+    ]);
   });
 
   it('processes remove action contacts correctly', async () => {
     vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue({
       id: 'internal-phone-id',
     } as never);
+    vi.mocked(
+      SyncRequestRepository.findPendingByPhoneNumberId,
+    ).mockResolvedValue([
+      {
+        requestId: 'sync-req-1',
+        syncType: 'smb_app_state_sync',
+      },
+    ] as never);
+    vi.mocked(ContactRepository.upsertContactsBulk).mockResolvedValue(1);
 
     const result = await SmbAppStateSyncWebhookHandler.processChange({
       metaWabaId,
@@ -69,13 +91,18 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     });
 
     expect(result).toBe(1);
-    expect(ContactRepository.upsertContact).toHaveBeenCalledWith({
-      customerPhone: '987',
-      customerName: null,
-    });
+    expect(ContactRepository.upsertContactsBulk).toHaveBeenCalledWith([
+      {
+        customerPhone: '987',
+        customerName: null,
+      },
+    ]);
   });
 
   it('handles empty state_sync array', async () => {
+    vi.mocked(
+      SyncRequestRepository.findPendingByPhoneNumberId,
+    ).mockResolvedValue([] as never);
     const result = await SmbAppStateSyncWebhookHandler.processChange({
       metaWabaId,
       value: {
@@ -89,13 +116,16 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     });
 
     expect(result).toBe(0);
-    expect(ContactRepository.upsertContact).not.toHaveBeenCalled();
+    expect(ContactRepository.upsertContactsBulk).not.toHaveBeenCalled();
   });
 
   it('skips unknown phone numbers', async () => {
     vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue(
       null,
     );
+    vi.mocked(
+      SyncRequestRepository.findPendingByPhoneNumberId,
+    ).mockResolvedValue([] as never);
 
     const result = await SmbAppStateSyncWebhookHandler.processChange({
       metaWabaId,
@@ -116,6 +146,6 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     });
 
     expect(result).toBe(0);
-    expect(ContactRepository.upsertContact).not.toHaveBeenCalled();
+    expect(ContactRepository.upsertContactsBulk).not.toHaveBeenCalled();
   });
 });

@@ -59,6 +59,7 @@ vi.mock('@/repositories/contact.repository', () => ({
   ContactRepository: {
     findConversationContacts: vi.fn(),
     upsertContact: vi.fn(),
+    upsertContactsBulk: vi.fn(),
   },
 }));
 
@@ -75,9 +76,11 @@ vi.mock('@/repositories/message.repository', () => ({
     saveMessage: vi.fn(),
     updateStatusesByMetaMessageIds: vi.fn(),
     updateMediaPlaceholder: vi.fn(),
-    findMessageWithWaba: vi.fn(),
+    findMessageConversationId: vi.fn(),
+    processHistoryMessage: vi.fn(),
     processIncomingMessage: vi.fn(),
     processOutgoingMessageEcho: vi.fn(),
+    processBulkHistoryThread: vi.fn(),
   },
 }));
 

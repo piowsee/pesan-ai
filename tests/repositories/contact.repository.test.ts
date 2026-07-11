@@ -382,5 +382,53 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
         customerUsername: null,
       });
     });
+    describe('upsertContactsBulk', () => {
+      it('upserts multiple contacts correctly in a single transaction', async () => {
+        const testPhone1 = `881${Date.now()}`;
+        const testPhone2 = `882${Date.now()}`;
+
+        const processedCount = await ContactRepository.upsertContactsBulk([
+          { customerPhone: testPhone1, customerName: 'Bulk User 1' },
+          { customerPhone: testPhone2, customerName: 'Bulk User 2' },
+        ]);
+
+        expect(processedCount).toBe(2);
+
+        const savedContact1 = await prisma.contact.findUnique({
+          where: { customerPhone: testPhone1 },
+        });
+        const savedContact2 = await prisma.contact.findUnique({
+          where: { customerPhone: testPhone2 },
+        });
+
+        expect(savedContact1).not.toBeNull();
+        expect(savedContact1?.customerName).toBe('Bulk User 1');
+        expect(savedContact2).not.toBeNull();
+        expect(savedContact2?.customerName).toBe('Bulk User 2');
+
+        // cleanup
+        await prisma.contact.deleteMany({
+          where: { customerPhone: { in: [testPhone1, testPhone2] } },
+        });
+      });
+
+      it('rolls back the transaction if one contact fails', async () => {
+        const testPhone1 = `883${Date.now()}`;
+
+        await expect(
+          ContactRepository.upsertContactsBulk([
+            { customerPhone: testPhone1, customerName: 'Bulk User 3' },
+            { customerName: 'Bulk User 4' }, // Missing both bsuid and customerPhone causes throw
+          ]),
+        ).rejects.toThrow('Cannot upsert a contact without a phone or BSUID');
+
+        // Verify rollback
+        const savedContact1 = await prisma.contact.findUnique({
+          where: { customerPhone: testPhone1 },
+        });
+
+        expect(savedContact1).toBeNull();
+      });
+    });
   });
 });
