@@ -183,12 +183,18 @@ async function main() {
     const customerName = 'Budi Santoso';
 
     const contact = await tx.contact.upsert({
-      where: { bsuid: customerBSUID },
+      where: {
+        phoneNumberId_bsuid: {
+          phoneNumberId: phoneNumber.id,
+          bsuid: customerBSUID,
+        },
+      },
       update: {
         customerPhone,
         customerName,
       },
       create: {
+        phoneNumberId: phoneNumber.id,
         bsuid: customerBSUID,
         customerPhone,
         customerName,

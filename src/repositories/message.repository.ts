@@ -268,7 +268,7 @@ export const MessageRepository = {
       });
 
       const contact = await ContactRepository.upsertContact(
-        { bsuid, customerPhone, customerName, customerUsername },
+        { phoneNumberId, bsuid, customerPhone, customerName, customerUsername },
         tx,
       );
 
@@ -408,7 +408,7 @@ export const MessageRepository = {
       });
 
       const contact = await ContactRepository.upsertContact(
-        { bsuid, customerPhone, customerName, customerUsername },
+        { phoneNumberId, bsuid, customerPhone, customerName, customerUsername },
         tx,
       );
 
@@ -528,7 +528,7 @@ export const MessageRepository = {
       });
 
       const contact = await ContactRepository.upsertContact(
-        { bsuid, customerPhone, customerName, customerUsername },
+        { phoneNumberId, bsuid, customerPhone, customerName, customerUsername },
         tx,
       );
 
@@ -685,7 +685,13 @@ export const MessageRepository = {
         });
 
         const contact = await ContactRepository.upsertContact(
-          { bsuid, customerPhone, customerName, customerUsername },
+          {
+            phoneNumberId,
+            bsuid,
+            customerPhone,
+            customerName,
+            customerUsername,
+          },
           tx,
         );
 

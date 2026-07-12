@@ -52,6 +52,7 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     expect(result).toBe(1);
     expect(ContactRepository.upsertContactsBulk).toHaveBeenCalledWith([
       {
+        phoneNumberId: 'internal-phone-id',
         customerPhone: '987',
         customerName: 'John Doe',
       },
@@ -93,6 +94,7 @@ describe('SmbAppStateSyncWebhookHandler', () => {
     expect(result).toBe(1);
     expect(ContactRepository.upsertContactsBulk).toHaveBeenCalledWith([
       {
+        phoneNumberId: 'internal-phone-id',
         customerPhone: '987',
         customerName: null,
       },

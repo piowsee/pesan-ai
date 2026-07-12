@@ -45,11 +45,13 @@ export const SmbAppStateSyncWebhookHandler = {
 
       if (entry.action === 'add') {
         contactsPayload.push({
+          phoneNumberId: phoneNumber.id,
           customerPhone: phone_number,
           customerName,
         });
       } else if (entry.action === 'remove') {
         contactsPayload.push({
+          phoneNumberId: phoneNumber.id,
           customerPhone: phone_number,
           customerName: null,
         });
