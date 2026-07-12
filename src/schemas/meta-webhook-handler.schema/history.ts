@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { WebhookMessageSchema } from './messages';
+import { BaseWebhookMessageSchema } from './shared';
 
 export const HistoryMetadataSchema = z.object({
   phase: z.number(),
@@ -8,10 +8,13 @@ export const HistoryMetadataSchema = z.object({
   progress: z.number(),
 });
 
-export const HistoryMessageSchema = WebhookMessageSchema.extend({
+export const HistoryMessageSchema = BaseWebhookMessageSchema.extend({
+  from: z.string().optional(),
+  from_user_id: z.string().optional(),
   history_context: z
     .object({
       status: z.string(),
+      from_me: z.boolean().optional(),
     })
     .optional(),
 });
