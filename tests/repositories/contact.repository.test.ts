@@ -150,38 +150,38 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
     });
     anotherUserPhoneDbId = anotherUserPhone.id;
 
-    const [
-      sameWabaContact,
-      primaryWabaContact,
-      otherUserContact,
-      secondWabaContact,
-    ] = await Promise.all([
-      prisma.contact.create({
-        data: {
-          customerPhone: sameWabaCustomerPhone,
-          customerName: 'Same WABA Customer',
-          customerUsername: '@samewaba',
-        },
-      }),
-      prisma.contact.create({
-        data: {
-          customerPhone: primaryWabaCustomerPhone,
-          customerName: 'Primary WABA Customer',
-        },
-      }),
-      prisma.contact.create({
-        data: {
-          customerPhone: otherUserCustomerPhone,
-          customerName: 'Other User Customer',
-        },
-      }),
-      prisma.contact.create({
-        data: {
-          customerPhone: secondWabaCustomerPhone,
-          customerName: 'Second WABA Customer',
-        },
-      }),
-    ]);
+    const primaryWabaContact = await prisma.contact.create({
+      data: {
+        customerPhone: primaryWabaCustomerPhone,
+        customerName: 'Primary WABA Customer',
+        phoneNumberId: primaryPhoneDbId,
+      },
+    });
+
+    const sameWabaContact = await prisma.contact.create({
+      data: {
+        customerPhone: sameWabaCustomerPhone,
+        customerName: 'Same WABA Customer',
+        customerUsername: '@samewaba',
+        phoneNumberId: secondaryPhoneDbId,
+      },
+    });
+
+    const otherUserContact = await prisma.contact.create({
+      data: {
+        customerPhone: otherUserCustomerPhone,
+        customerName: 'Other User Customer',
+        phoneNumberId: anotherUserPhoneDbId,
+      },
+    });
+
+    const secondWabaContact = await prisma.contact.create({
+      data: {
+        customerPhone: secondWabaCustomerPhone,
+        customerName: 'Second WABA Customer',
+        phoneNumberId: thirdPhoneDbId,
+      },
+    });
 
     await prisma.conversation.createMany({
       data: [
@@ -388,17 +388,25 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
         const testPhone2 = `882${Date.now()}`;
 
         const processedCount = await ContactRepository.upsertContactsBulk([
-          { customerPhone: testPhone1, customerName: 'Bulk User 1' },
-          { customerPhone: testPhone2, customerName: 'Bulk User 2' },
+          {
+            phoneNumberId: primaryPhoneDbId,
+            customerPhone: testPhone1,
+            customerName: 'Bulk User 1',
+          },
+          {
+            phoneNumberId: primaryPhoneDbId,
+            customerPhone: testPhone2,
+            customerName: 'Bulk User 2',
+          },
         ]);
 
         expect(processedCount).toBe(2);
 
-        const savedContact1 = await prisma.contact.findUnique({
-          where: { customerPhone: testPhone1 },
+        const savedContact1 = await prisma.contact.findFirst({
+          where: { phoneNumberId: primaryPhoneDbId, customerPhone: testPhone1 },
         });
-        const savedContact2 = await prisma.contact.findUnique({
-          where: { customerPhone: testPhone2 },
+        const savedContact2 = await prisma.contact.findFirst({
+          where: { phoneNumberId: primaryPhoneDbId, customerPhone: testPhone2 },
         });
 
         expect(savedContact1).not.toBeNull();
@@ -417,14 +425,18 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
 
         await expect(
           ContactRepository.upsertContactsBulk([
-            { customerPhone: testPhone1, customerName: 'Bulk User 3' },
-            { customerName: 'Bulk User 4' }, // Missing both bsuid and customerPhone causes throw
+            {
+              phoneNumberId: primaryPhoneDbId,
+              customerPhone: testPhone1,
+              customerName: 'Bulk User 3',
+            },
+            { phoneNumberId: primaryPhoneDbId, customerName: 'Bulk User 4' }, // Missing both bsuid and customerPhone causes throw
           ]),
         ).rejects.toThrow('Cannot upsert a contact without a phone or BSUID');
 
         // Verify rollback
-        const savedContact1 = await prisma.contact.findUnique({
-          where: { customerPhone: testPhone1 },
+        const savedContact1 = await prisma.contact.findFirst({
+          where: { phoneNumberId: primaryPhoneDbId, customerPhone: testPhone1 },
         });
 
         expect(savedContact1).toBeNull();

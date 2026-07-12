@@ -133,6 +133,7 @@ model PhoneNumber {
 
   conversations Conversation[]
   syncRequests  SyncRequest[]
+  contacts      Contact[]
 
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
@@ -158,15 +159,20 @@ model BotWebhook {
 
 model Contact {
   id               String   @id @default(cuid())
-  bsuid            String?  @unique // WhatsApp Business-scoped user ID (BSUID / user_id), absent on some message echoes
-  customerPhone    String?  @unique
+  bsuid            String?  // WhatsApp Business-scoped user ID (BSUID / user_id), absent on some message echoes
+  customerPhone    String?  
   customerName     String?
   customerUsername String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  phoneNumberId    String
+  phoneNumber      PhoneNumber @relation(fields: [phoneNumberId], references: [id])
+
   conversations Conversation[]
 
+  @@unique([phoneNumberId, bsuid])
+  @@unique([phoneNumberId, customerPhone])
   @@index([customerUsername], name: "idx_contact_customer_username")
   @@map("contact")
 }

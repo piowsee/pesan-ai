@@ -193,6 +193,7 @@ describe('ConversationRepository Integration', { tags: ['db'] }, () => {
         data: {
           customerPhone: '999003',
           customerName: 'Takeover Test Customer',
+          phoneNumberId: dbPhoneNumberId,
         },
       });
       const conversation = await prisma.conversation.create({

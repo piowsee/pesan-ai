@@ -172,6 +172,7 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
         data: {
           customerPhone: `9998${Date.now()}`,
           customerName: 'Redirect Customer',
+          phoneNumberId: phoneNumber.id,
         },
       });
       const conversation = await prisma.conversation.create({

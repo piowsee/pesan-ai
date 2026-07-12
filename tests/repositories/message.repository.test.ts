@@ -123,6 +123,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       const contact = await prisma.contact.create({
         data: {
           customerPhone: '998006',
+          phoneNumberId: dbPhoneNumberId,
         },
       });
       const conversation = await prisma.conversation.create({
@@ -231,6 +232,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       const contact = await prisma.contact.create({
         data: {
           customerPhone: '998007',
+          phoneNumberId: dbPhoneNumberId,
         },
       });
       const conversation = await prisma.conversation.create({
@@ -282,6 +284,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       const contact = await prisma.contact.create({
         data: {
           customerPhone: '998008',
+          phoneNumberId: dbPhoneNumberId,
         },
       });
       const conversation = await prisma.conversation.create({
@@ -330,6 +333,7 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       const contact = await prisma.contact.create({
         data: {
           customerPhone: '998005',
+          phoneNumberId: dbPhoneNumberId,
         },
       });
       const testConv = await prisma.conversation.create({
