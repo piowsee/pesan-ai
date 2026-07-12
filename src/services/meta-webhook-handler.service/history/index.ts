@@ -73,6 +73,18 @@ export const HistoryWebhookHandler = {
             const messagesPayload = [];
 
             for (const message of thread.messages) {
+              if (
+                !['text', 'image', 'audio', 'video', 'document'].includes(
+                  message.type,
+                )
+              ) {
+                logger.info('Skipping unsupported history message type', {
+                  type: message.type,
+                  messageId: message.id,
+                });
+                continue;
+              }
+
               const isOutgoing = message.history_context?.from_me === true;
               if (!isOutgoing && message.from_user_id) {
                 bsuid = message.from_user_id;
@@ -133,6 +145,21 @@ export const HistoryWebhookHandler = {
       }
 
       for (const message of messages) {
+        if (
+          !['text', 'image', 'audio', 'video', 'document'].includes(
+            message.type,
+          )
+        ) {
+          logger.info(
+            'Skipping unsupported history media follow-up message type',
+            {
+              type: message.type,
+              messageId: message.id,
+            },
+          );
+          continue;
+        }
+
         try {
           const mediaObj = (
             message as Record<
@@ -215,7 +242,7 @@ export const HistoryWebhookHandler = {
                 userId: waba.userId,
                 wabaId: waba.id,
                 convId,
-                contentType: mediaUrlInfo.mime_type || mediaObj?.mime_type,
+                contentType: mediaObj?.mime_type || mediaUrlInfo.mime_type,
               });
 
             await MessageRepository.updateMediaPlaceholder({

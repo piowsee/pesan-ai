@@ -7,7 +7,7 @@ import { useMessageMediaDownloadUrl } from '@/hooks/use-message';
 import { formatMessageTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/chat';
-import { EyeOffIcon } from 'lucide-react';
+import { AlertCircleIcon, EyeOffIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactElement } from 'react';
 
@@ -74,8 +74,18 @@ function MessageBubbleContent({
     return (
       <MediaPlaceholder
         icon={EyeOffIcon}
-        title={t('unsupported', { type: 'media' })}
-        description={t('errorUnavailable')}
+        title="Media Expired"
+        description="This media is no longer available and cannot be downloaded or viewed."
+      />
+    );
+  }
+
+  if (message.type === 'errors' || message.type === 'error') {
+    return (
+      <MediaPlaceholder
+        icon={AlertCircleIcon}
+        title="Error"
+        description="This message could not be processed due to an error."
       />
     );
   }
