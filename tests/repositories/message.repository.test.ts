@@ -593,6 +593,110 @@ describe('MessageRepository Integration', { tags: ['db'] }, () => {
       });
       expect(messagesCount).toBe(1);
     });
+
+    it('clears conversation unread count and decreases phoneNumber unread count for the latest outgoing echo', async () => {
+      const customerPhone = '998020';
+      const incomingTimestamp = new Date('2026-06-28T10:00:00.000Z');
+      const outgoingTimestamp = new Date('2026-06-28T11:00:00.000Z');
+
+      // First, simulate an incoming message to increase unread counts
+      await MessageRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.incoming.test.unread',
+          type: 'text',
+          content: 'Incoming message to create unread count',
+          timestamp: incomingTimestamp,
+        },
+      });
+
+      const phoneNumberAfterIncoming =
+        await prisma.phoneNumber.findUniqueOrThrow({
+          where: { id: dbPhoneNumberId },
+        });
+
+      const conversationAfterIncoming =
+        await prisma.conversation.findFirstOrThrow({
+          where: { phoneNumberId: dbPhoneNumberId, contact: { customerPhone } },
+        });
+
+      expect(conversationAfterIncoming.unreadCount).toBe(1);
+
+      // Now process an outgoing echo that is newer
+      const result = await MessageRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.echo.test.clear_unread',
+          type: 'text',
+          content: 'Reply to clear unread',
+          timestamp: outgoingTimestamp,
+        },
+      });
+
+      expect(result.conversation.unreadCount).toBe(0);
+
+      const phoneNumberAfterEcho = await prisma.phoneNumber.findUniqueOrThrow({
+        where: { id: dbPhoneNumberId },
+      });
+
+      expect(phoneNumberAfterEcho.unreadCount).toBe(
+        phoneNumberAfterIncoming.unreadCount - 1,
+      );
+    });
+
+    it('does not clear unread counts if the outgoing echo is older than the latest message', async () => {
+      const customerPhone = '998021';
+      const newerIncomingTimestamp = new Date('2026-06-28T12:00:00.000Z');
+      const olderOutgoingTimestamp = new Date('2026-06-28T11:00:00.000Z');
+
+      // Process newer incoming message
+      await MessageRepository.processIncomingMessage({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.incoming.test.newer2',
+          type: 'text',
+          content: 'Newer incoming message',
+          timestamp: newerIncomingTimestamp,
+        },
+      });
+
+      const phoneNumberAfterIncoming =
+        await prisma.phoneNumber.findUniqueOrThrow({
+          where: { id: dbPhoneNumberId },
+        });
+
+      const conversationAfterIncoming =
+        await prisma.conversation.findFirstOrThrow({
+          where: { phoneNumberId: dbPhoneNumberId, contact: { customerPhone } },
+        });
+      expect(conversationAfterIncoming.unreadCount).toBe(1);
+
+      // Process older outgoing echo
+      const result = await MessageRepository.processOutgoingMessageEcho({
+        phoneNumberId: dbPhoneNumberId,
+        customerPhone,
+        message: {
+          messageId: 'wamid.echo.test.older2',
+          type: 'text',
+          content: 'Older echo',
+          timestamp: olderOutgoingTimestamp,
+        },
+      });
+
+      // The unread count should still be 1 because the outgoing message is older
+      expect(result.conversation.unreadCount).toBe(1);
+
+      const phoneNumberAfterEcho = await prisma.phoneNumber.findUniqueOrThrow({
+        where: { id: dbPhoneNumberId },
+      });
+
+      expect(phoneNumberAfterEcho.unreadCount).toBe(
+        phoneNumberAfterIncoming.unreadCount,
+      );
+    });
   });
 
   describe('processHistoryMessage', () => {
