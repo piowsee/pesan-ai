@@ -19,7 +19,11 @@ export function WebhookDocsDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="lg"
+          className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
+        >
           <Code data-icon="inline-start" />
           {t('trigger')}
         </Button>

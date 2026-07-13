@@ -13,12 +13,7 @@ import {
 } from '@/components/ui/table';
 import { type Waba, useWabas } from '@/hooks/use-wabas';
 import { cn } from '@/lib/utils';
-import {
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
-  RefreshCw,
-} from 'lucide-react';
+import { MessageSquare, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -39,9 +34,15 @@ export function WabaTable() {
 
   function WebhookBadge({ webhook }: { webhook: Waba['assignedWebhook'] }) {
     if (!webhook) {
-      return <Badge variant="secondary">{t('badges.none')}</Badge>;
+      return (
+        <Badge className="border border-brand bg-transparent text-brand">
+          {t('badges.none')}
+        </Badge>
+      );
     }
-    return <Badge variant="default">{webhook.name}</Badge>;
+    return (
+      <Badge className="bg-brand text-brand-foreground">{webhook.name}</Badge>
+    );
   }
 
   function WabaRow({ waba }: { waba: Waba }) {
@@ -57,34 +58,36 @@ export function WabaTable() {
         : t('row.noPhoneNumbers');
 
     return (
-      <TableRow>
-        <TableCell className="font-medium">
+      <TableRow className="hover:bg-transparent">
+        <TableCell className="py-4 font-semibold text-brand">
           <div className="flex flex-col gap-1">
             <span>{waba.businessName || waba.wabaId}</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs font-medium text-brand/70">
               {phonesDisplay}
             </span>
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell className="py-4">
           {waba.user ? (
             <div className="flex flex-col">
-              <span>{waba.user.name || t('row.unknownUser')}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="font-semibold text-brand">
+                {waba.user.name || t('row.unknownUser')}
+              </span>
+              <span className="text-xs font-medium text-brand/70">
                 {waba.user.email}
               </span>
             </div>
           ) : (
-            <span className="text-muted-foreground italic">
-              {t('row.none')}
-            </span>
+            <span className="text-brand/60 italic">{t('row.none')}</span>
           )}
         </TableCell>
-        <TableCell>
+        <TableCell className="py-4">
           <WebhookBadge webhook={waba.assignedWebhook} />
         </TableCell>
-        <TableCell className="text-muted-foreground">{formattedDate}</TableCell>
-        <TableCell>
+        <TableCell className="py-4 text-sm font-medium text-brand/70">
+          {formattedDate}
+        </TableCell>
+        <TableCell className="py-4">
           <AssignWebhookDialog
             wabaId={waba.id}
             wabaName={waba.businessName || waba.wabaId}
@@ -99,10 +102,10 @@ export function WabaTable() {
     return (
       <>
         {Array.from({ length: 5 }).map((_, index) => (
-          <TableRow key={index}>
+          <TableRow key={index} className="hover:bg-transparent">
             {TABLE_COLUMNS.map((col) => (
-              <TableCell key={col}>
-                <Skeleton className="h-4 w-24" />
+              <TableCell key={col} className="py-4">
+                <Skeleton className="h-5 w-24" />
               </TableCell>
             ))}
           </TableRow>
@@ -115,9 +118,9 @@ export function WabaTable() {
     return (
       <TableRow>
         <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <MessageSquare className="size-8 opacity-50" />
-            <p className="text-sm">{t('empty.description')}</p>
+          <div className="flex flex-col items-center gap-3 text-brand">
+            <MessageSquare className="size-10" />
+            <p className="text-sm font-medium">{t('empty.description')}</p>
           </div>
         </TableCell>
       </TableRow>
@@ -136,7 +139,12 @@ export function WabaTable() {
         <TableCell colSpan={TABLE_COLUMNS.length} className="h-40 text-center">
           <div className="flex flex-col items-center gap-3 text-destructive">
             <p className="text-sm">{message}</p>
-            <Button variant="outline" size="sm" onClick={onRetry}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-brand text-brand hover:bg-muted hover:text-brand"
+              onClick={onRetry}
+            >
               <RefreshCw data-icon="inline-start" />
               {t('error.retry')}
             </Button>
@@ -170,18 +178,23 @@ export function WabaTable() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div
         className={cn(
-          'overflow-hidden rounded-xl border transition-opacity duration-200',
+          'min-h-0 flex-1 overflow-y-auto border-b border-border transition-opacity duration-200 [scrollbar-gutter:stable]',
           isPlaceholderData && 'opacity-50',
         )}
       >
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
+        <Table className="min-w-190">
+          <TableHeader className="sticky top-0 z-10 bg-background">
+            <TableRow className="hover:bg-transparent">
               {TABLE_COLUMNS.map((column) => (
-                <TableHead key={column}>{column}</TableHead>
+                <TableHead
+                  key={column}
+                  className="text-xs font-semibold tracking-[0.12em] text-brand uppercase"
+                >
+                  {column}
+                </TableHead>
               ))}
             </TableRow>
           </TableHeader>
@@ -189,44 +202,45 @@ export function WabaTable() {
         </Table>
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {total > 0
-            ? t('pagination.showing', {
-                start: (page - 1) * PAGE_SIZE + 1,
-                end: Math.min(page * PAGE_SIZE, total),
-                total: total,
-              })
-            : t('pagination.empty')}
-        </p>
+      {total > 0 ? (
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-brand">
+            {t('pagination.showing', {
+              start: (page - 1) * PAGE_SIZE + 1,
+              end: Math.min(page * PAGE_SIZE, total),
+              total: total,
+            })}
+          </p>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canGoPrevious}
-            onClick={() => setPage((prev) => prev - 1)}
-          >
-            <ChevronLeft data-icon="inline-start" />
-            {t('pagination.previous')}
-          </Button>
+          <div className="flex items-center gap-2">
+            {canGoPrevious ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-brand hover:bg-muted hover:text-brand"
+                onClick={() => setPage((prev) => prev - 1)}
+              >
+                {t('pagination.previous')}
+              </Button>
+            ) : null}
 
-          <span className="px-2 text-sm text-muted-foreground">
-            {t('pagination.page', { current: page, total: totalPages })}
-          </span>
+            <span className="px-2 text-sm font-medium text-brand">
+              {t('pagination.page', { current: page, total: totalPages })}
+            </span>
 
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canGoNext}
-            onClick={() => setPage((prev) => prev + 1)}
-          >
-            {t('pagination.next')}
-            <ChevronRight data-icon="inline-end" />
-          </Button>
+            {canGoNext ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-brand hover:bg-muted hover:text-brand"
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                {t('pagination.next')}
+              </Button>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

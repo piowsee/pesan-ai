@@ -71,7 +71,7 @@ export function CreateWebhookDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button variant="brand" size="lg">
           <Plus data-icon="inline-start" />
           {t('trigger')}
         </Button>
@@ -150,11 +150,16 @@ export function CreateWebhookDialog() {
             <Button
               type="button"
               variant="outline"
+              className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
               onClick={() => handleOpenChange(false)}
             >
               {t('actions.cancel')}
             </Button>
-            <Button type="submit" disabled={createWebhook.isPending}>
+            <Button
+              type="submit"
+              variant="brand"
+              disabled={createWebhook.isPending}
+            >
               {createWebhook.isPending
                 ? t('actions.creating')
                 : t('actions.submit')}

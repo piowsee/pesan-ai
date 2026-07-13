@@ -108,7 +108,11 @@ export function AssignWebhookDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
+        >
           {t('trigger')}
         </Button>
       </DialogTrigger>
@@ -167,12 +171,13 @@ export function AssignWebhookDialog({
         <DialogFooter>
           <Button
             variant="outline"
+            className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
             onClick={() => setOpen(false)}
             disabled={isPending}
           >
             {t('actions.cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={isPending}>
+          <Button variant="brand" onClick={handleSave} disabled={isPending}>
             {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t('actions.save')}
           </Button>

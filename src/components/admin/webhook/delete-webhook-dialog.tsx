@@ -43,8 +43,12 @@ export function DeleteWebhookDialog({ id, name }: DeleteWebhookDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive">
-          <Trash2 className="size-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:bg-muted hover:text-destructive"
+        >
+          <Trash2 className="size-4 text-destructive" />
           <span className="sr-only">{t('trigger')}</span>
         </Button>
       </DialogTrigger>
@@ -59,6 +63,7 @@ export function DeleteWebhookDialog({ id, name }: DeleteWebhookDialogProps) {
           <Button
             type="button"
             variant="outline"
+            className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
             onClick={() => setIsOpen(false)}
           >
             {t('actions.cancel')}

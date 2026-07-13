@@ -80,7 +80,7 @@ export function CreateUserDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button variant="brand" size="lg">
           <UserPlus data-icon="inline-start" />
           {t('trigger')}
         </Button>
@@ -167,11 +167,16 @@ export function CreateUserDialog() {
             <Button
               type="button"
               variant="outline"
+              className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
               onClick={() => handleOpenChange(false)}
             >
               {t('actions.cancel')}
             </Button>
-            <Button type="submit" disabled={createUser.isPending}>
+            <Button
+              type="submit"
+              variant="brand"
+              disabled={createUser.isPending}
+            >
               {createUser.isPending
                 ? t('actions.creating')
                 : t('actions.submit')}
