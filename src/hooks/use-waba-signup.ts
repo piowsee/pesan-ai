@@ -66,8 +66,8 @@ export function useWabaSignup() {
 
       return json;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: wabaKeys.all });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: wabaKeys.all });
     },
   });
 }
