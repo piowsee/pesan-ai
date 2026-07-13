@@ -412,6 +412,20 @@ export const MessageRepository = {
         tx,
       );
 
+      // Find existing conversation to check lastMessageAt and unreadCount
+      const existingConversation = await tx.conversation.findUnique({
+        where: {
+          unique_conversation: {
+            phoneNumberId,
+            contactId: contact.id,
+          },
+        },
+      });
+
+      const isLatest =
+        !existingConversation?.lastMessageAt ||
+        message.timestamp >= existingConversation.lastMessageAt;
+
       const conversation = await tx.conversation.upsert({
         where: {
           unique_conversation: {
@@ -419,11 +433,18 @@ export const MessageRepository = {
             contactId: contact.id,
           },
         },
-        update: {},
+        update: {
+          ...(isLatest && {
+            lastMessageAt: message.timestamp,
+            unreadCount: 0,
+          }),
+        },
         create: {
           phoneNumberId,
           contactId: contact.id,
           messagingProduct: messagingProduct ?? 'whatsapp',
+          lastMessageAt: message.timestamp,
+          unreadCount: 0,
         },
         include: {
           contact: {
@@ -458,23 +479,18 @@ export const MessageRepository = {
         update: messageData,
       });
 
-      const latestConversation =
-        !conversation.lastMessageAt ||
-        message.timestamp > conversation.lastMessageAt
-          ? await tx.conversation.update({
-              where: { id: conversation.id },
-              data: { lastMessageAt: message.timestamp },
-              include: {
-                contact: {
-                  select: safeContactSelect,
-                },
-                phoneNumber: true,
-              },
-            })
-          : conversation;
+      const unreadCountToClear = isLatest
+        ? (existingConversation?.unreadCount ?? 0)
+        : 0;
+      if (unreadCountToClear > 0) {
+        await tx.phoneNumber.update({
+          where: { id: phoneNumberId },
+          data: { unreadCount: { decrement: unreadCountToClear } },
+        });
+      }
 
       return {
-        conversation: latestConversation,
+        conversation,
         message: savedMessage,
         userId: phoneNumberOwner.waba.userId,
         wabaId: phoneNumberOwner.wabaId,
