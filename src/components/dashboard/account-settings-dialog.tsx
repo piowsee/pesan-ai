@@ -170,7 +170,7 @@ export function AccountSettingsDialog({
           <DialogDescription>{labels.description}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid h-[min(620px,calc(100vh-2rem))] grid-cols-1 overflow-hidden bg-background sm:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="grid h-[min(580px,calc(100vh-2rem))] grid-cols-1 overflow-hidden bg-background sm:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="border-b border-brand/15 bg-background p-6 sm:border-r sm:border-b-0 sm:p-7">
             <div className="pr-10 sm:pr-0">
               <p className="text-base font-semibold text-brand">
