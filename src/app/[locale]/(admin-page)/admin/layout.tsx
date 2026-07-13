@@ -22,10 +22,7 @@ export default async function AdminLayout({
   await AuthPageHelper.requireAdmin();
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-muted/25 px-6 pt-20 font-sans">
-      <div className="pointer-events-none absolute -left-24 top-16 size-80 rounded-full bg-brand/12 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 bottom-12 size-96 rounded-full bg-brand/10 blur-3xl" />
-
+    <main className="relative min-h-svh bg-background px-5 pt-18 font-sans sm:px-6">
       <PageHeader />
 
       <div className="relative">{children}</div>
