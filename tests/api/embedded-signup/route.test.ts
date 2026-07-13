@@ -19,8 +19,6 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
       role: 'user',
     } as never);
     vi.mocked(EmbeddedSignUpService.completeEmbeddedSignup).mockResolvedValue({
-      failedPhoneNumberIds: [],
-      message: null,
       waba: {
         id: 'db-waba-1',
         wabaId: 'meta-waba-1',
@@ -32,8 +30,10 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
       createRequest({
         code: 'auth-code-123',
         event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
-        wabaId: 'meta-waba-1',
-        sessionPayload: { step: 'finish' },
+        sessionPayload: {
+          waba_id: 'meta-waba-1',
+          phone_number_id: 'meta-phone-1',
+        },
       }),
       { params: Promise.resolve({}) } as never,
     );
@@ -42,8 +42,6 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     expect(response.status).toBe(201);
     expect(data.status).toBe('success');
     expect(data.data).toEqual({
-      failedPhoneNumberIds: [],
-      message: null,
       wabaId: 'meta-waba-1',
       wabaDbId: 'db-waba-1',
       phoneNumbers: [{ id: 'db-phone-1' }],
@@ -53,6 +51,7 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
       event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
       wabaId: 'meta-waba-1',
       userId: 'user-1',
+      phoneNumberId: 'meta-phone-1',
     });
   });
 
@@ -65,7 +64,10 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: '',
-        wabaId: 'meta-waba-1',
+        sessionPayload: {
+          waba_id: 'meta-waba-1',
+          phone_number_id: 'meta-phone-1',
+        },
       }),
       { params: Promise.resolve({}) } as never,
     );
@@ -90,7 +92,10 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
       createRequest({
         code: 'auth-code-123',
         event: 'FINISH',
-        wabaId: 'meta-waba-1',
+        sessionPayload: {
+          waba_id: 'meta-waba-1',
+          phone_number_id: 'meta-phone-1',
+        },
       }),
       { params: Promise.resolve({}) } as never,
     );
@@ -110,48 +115,14 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
       createRequest({
         code: 'auth-code-123',
         event: 'FINISH',
-        wabaId: 'meta-waba-1',
+        sessionPayload: {
+          waba_id: 'meta-waba-1',
+          phone_number_id: 'meta-phone-1',
+        },
       }),
       { params: Promise.resolve({}) } as never,
     );
 
     expect(response.status).toBe(500);
-  });
-
-  it('returns partial signup message and failed phone ids on success', async () => {
-    vi.mocked(AuthHelper.requireUser).mockResolvedValue({
-      id: 'user-1',
-      role: 'user',
-    } as never);
-    vi.mocked(EmbeddedSignUpService.completeEmbeddedSignup).mockResolvedValue({
-      failedPhoneNumberIds: ['meta-phone-2'],
-      message:
-        'WhatsApp Business Account connected, but some phone numbers could not be registered.',
-      waba: {
-        id: 'db-waba-1',
-        wabaId: 'meta-waba-1',
-      },
-      phoneNumbers: [{ id: 'db-phone-1' }],
-    } as never);
-
-    const response = await POST(
-      createRequest({
-        code: 'auth-code-123',
-        event: 'FINISH',
-        wabaId: 'meta-waba-1',
-      }),
-      { params: Promise.resolve({}) } as never,
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(201);
-    expect(data.data).toEqual({
-      failedPhoneNumberIds: ['meta-phone-2'],
-      message:
-        'WhatsApp Business Account connected, but some phone numbers could not be registered.',
-      wabaId: 'meta-waba-1',
-      wabaDbId: 'db-waba-1',
-      phoneNumbers: [{ id: 'db-phone-1' }],
-    });
   });
 });

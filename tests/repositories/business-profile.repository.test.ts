@@ -77,23 +77,21 @@ describe('BusinessProfileRepository Integration', { tags: ['db'] }, () => {
     await prisma.$disconnect();
   });
 
-  describe('upsertBusinessProfiles', () => {
+  describe('upsertBusinessProfile', () => {
     it('creates a business profile and links it to the phone number', async () => {
-      const [result] = await BusinessProfileRepository.upsertBusinessProfiles([
-        {
-          phoneNumberDbId,
-          businessProfile: {
-            messaging_product: 'whatsapp',
-            address: 'Create Street 123',
-            description: 'Create description',
-            vertical: 'BEAUTY',
-            about: 'Create about text',
-            email: 'profile-create@example.com',
-            websites: ['https://create.example.com'],
-            profile_picture_url: 'https://cdn.example.com/create.jpg',
-          },
+      const result = await BusinessProfileRepository.upsertBusinessProfile({
+        phoneNumberDbId,
+        businessProfile: {
+          messaging_product: 'whatsapp',
+          address: 'Create Street 123',
+          description: 'Create description',
+          vertical: 'BEAUTY',
+          about: 'Create about text',
+          email: 'profile-create@example.com',
+          websites: ['https://create.example.com'],
+          profile_picture_url: 'https://cdn.example.com/create.jpg',
         },
-      ]);
+      });
 
       expect(result.businessProfileId).toBeTruthy();
 
@@ -116,40 +114,33 @@ describe('BusinessProfileRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('updates the existing business profile instead of creating a new one', async () => {
-      const [created] = await BusinessProfileRepository.upsertBusinessProfiles([
-        {
-          phoneNumberDbId,
-          businessProfile: {
-            messaging_product: 'whatsapp',
-            address: 'Old Address',
-            description: 'Old description',
-            vertical: 'BEAUTY',
-            about: 'Old about',
-            email: 'profile-create@example.com',
-            websites: ['https://old.example.com'],
-            profile_picture_url: 'https://cdn.example.com/old.jpg',
-          },
+      const created = await BusinessProfileRepository.upsertBusinessProfile({
+        phoneNumberDbId,
+        businessProfile: {
+          messaging_product: 'whatsapp',
+          address: 'Old Address',
+          description: 'Old description',
+          vertical: 'BEAUTY',
+          about: 'Old about',
+          email: 'profile-create@example.com',
+          websites: ['https://old.example.com'],
+          profile_picture_url: 'https://cdn.example.com/old.jpg',
         },
-      ]);
+      });
 
-      const [updated] = await BusinessProfileRepository.upsertBusinessProfiles([
-        {
-          phoneNumberDbId,
-          businessProfile: {
-            messaging_product: 'whatsapp',
-            address: 'New Address',
-            description: 'New description',
-            vertical: 'SPA',
-            about: 'New about',
-            email: 'profile-update@example.com',
-            websites: [
-              'https://new-1.example.com',
-              'https://new-2.example.com',
-            ],
-            profile_picture_url: 'https://cdn.example.com/new.jpg',
-          },
+      const updated = await BusinessProfileRepository.upsertBusinessProfile({
+        phoneNumberDbId,
+        businessProfile: {
+          messaging_product: 'whatsapp',
+          address: 'New Address',
+          description: 'New description',
+          vertical: 'SPA',
+          about: 'New about',
+          email: 'profile-update@example.com',
+          websites: ['https://new-1.example.com', 'https://new-2.example.com'],
+          profile_picture_url: 'https://cdn.example.com/new.jpg',
         },
-      ]);
+      });
 
       expect(updated.businessProfileId).toBe(created.businessProfileId);
 
@@ -168,12 +159,6 @@ describe('BusinessProfileRepository Integration', { tags: ['db'] }, () => {
         websites: ['https://new-1.example.com', 'https://new-2.example.com'],
         profilePictureUrl: 'https://cdn.example.com/new.jpg',
       });
-    });
-
-    it('returns an empty array when no profiles are provided', async () => {
-      await expect(
-        BusinessProfileRepository.upsertBusinessProfiles([]),
-      ).resolves.toEqual([]);
     });
   });
 });

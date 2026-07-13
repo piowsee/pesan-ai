@@ -94,32 +94,10 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
-  describe('findPhoneNumbersByMetaIds', () => {
-    it('returns stored pins for matching Meta phone number ids', async () => {
-      const result = await PhoneNumberRepository.findPhoneNumbersByMetaIds({
-        phoneNumberIds: [SEED_DATA.PHONE_META_ID, 'missing-phone-id'],
-      });
-
-      expect(result).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            phoneNumberId: SEED_DATA.PHONE_META_ID,
-          }),
-        ]),
-      );
-    });
-
-    it('returns an empty array when no ids are requested', async () => {
-      await expect(
-        PhoneNumberRepository.findPhoneNumbersByMetaIds({ phoneNumberIds: [] }),
-      ).resolves.toEqual([]);
-    });
-  });
-
   const TEST_WABA_ID = 'test-phone-repo-waba-999';
   const TEST_PHONE_ID = 'test-phone-repo-phone-999';
 
-  describe('upsertPhoneNumbers', () => {
+  describe('upsertPhoneNumber', () => {
     let wabaDbId: string;
 
     beforeEach(async () => {
@@ -133,17 +111,15 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('creates a new PhoneNumber linked to the WABA', async () => {
-      const [result] = await PhoneNumberRepository.upsertPhoneNumbers({
+      const result = await PhoneNumberRepository.upsertPhoneNumber({
         wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+62 851-9556-3454',
-            verified_name: 'Test Salon Bot',
-            code_verification_status: 'NOT_VERIFIED',
-            registrationPin: 'enc:230601',
-          },
-        ],
+        phoneNumberData: {
+          id: TEST_PHONE_ID,
+          display_phone_number: '+62 851-9556-3454',
+          verified_name: 'Test Salon Bot',
+          code_verification_status: 'NOT_VERIFIED',
+          registrationPin: 'enc:230601',
+        },
       });
 
       expect(result.phoneNumberId).toBe(TEST_PHONE_ID);
@@ -154,30 +130,26 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('updates display number, verified name, and verification status on subsequent calls (idempotent)', async () => {
-      await PhoneNumberRepository.upsertPhoneNumbers({
+      await PhoneNumberRepository.upsertPhoneNumber({
         wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+6281234567890',
-            verified_name: 'Old Name',
-            code_verification_status: 'NOT_VERIFIED',
-            registrationPin: 'enc:111111',
-          },
-        ],
+        phoneNumberData: {
+          id: TEST_PHONE_ID,
+          display_phone_number: '+6281234567890',
+          verified_name: 'Old Name',
+          code_verification_status: 'NOT_VERIFIED',
+          registrationPin: 'enc:111111',
+        },
       });
 
-      const [updated] = await PhoneNumberRepository.upsertPhoneNumbers({
+      const updated = await PhoneNumberRepository.upsertPhoneNumber({
         wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+62 899-9999-9999',
-            verified_name: 'New Name',
-            code_verification_status: 'VERIFIED',
-            registrationPin: 'enc:222222',
-          },
-        ],
+        phoneNumberData: {
+          id: TEST_PHONE_ID,
+          display_phone_number: '+62 899-9999-9999',
+          verified_name: 'New Name',
+          code_verification_status: 'VERIFIED',
+          registrationPin: 'enc:222222',
+        },
       });
 
       expect(updated.displayPhoneNumber).toBe('6289999999999');
@@ -187,17 +159,15 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('handles null verifiedName gracefully', async () => {
-      const [result] = await PhoneNumberRepository.upsertPhoneNumbers({
+      const result = await PhoneNumberRepository.upsertPhoneNumber({
         wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+628000000000',
-            verified_name: null,
-            code_verification_status: null,
-            registrationPin: null,
-          },
-        ],
+        phoneNumberData: {
+          id: TEST_PHONE_ID,
+          display_phone_number: '+628000000000',
+          verified_name: null,
+          code_verification_status: null,
+          registrationPin: null,
+        },
       });
 
       expect(result.verifiedName).toBeNull();
@@ -205,16 +175,14 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
     });
 
     it('falls back to UNVERIFIED when Meta does not return code_verification_status', async () => {
-      const [result] = await PhoneNumberRepository.upsertPhoneNumbers({
+      const result = await PhoneNumberRepository.upsertPhoneNumber({
         wabaDbId,
-        phoneNumberDatas: [
-          {
-            id: TEST_PHONE_ID,
-            display_phone_number: '+6281234567890',
-            verified_name: 'Fallback Bot',
-            registrationPin: 'enc:333333',
-          },
-        ],
+        phoneNumberData: {
+          id: TEST_PHONE_ID,
+          display_phone_number: '+6281234567890',
+          verified_name: 'Fallback Bot',
+          registrationPin: 'enc:333333',
+        },
       });
 
       expect(result.codeVerificationStatus).toBe('UNVERIFIED');

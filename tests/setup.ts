@@ -65,7 +65,7 @@ vi.mock('@/repositories/contact.repository', () => ({
 
 vi.mock('@/repositories/business-profile.repository', () => ({
   BusinessProfileRepository: {
-    upsertBusinessProfiles: vi.fn(),
+    upsertBusinessProfile: vi.fn(),
   },
 }));
 
@@ -100,9 +100,9 @@ vi.mock('@/repositories/waba.repository', () => ({
 vi.mock('@/repositories/phone-number.repository', () => ({
   PhoneNumberRepository: {
     findPhoneNumberByMetaId: vi.fn(),
-    findPhoneNumbersByMetaIds: vi.fn(),
+
     updateWabaWebhook: vi.fn(),
-    upsertPhoneNumbers: vi.fn(),
+    upsertPhoneNumber: vi.fn(),
   },
 }));
 

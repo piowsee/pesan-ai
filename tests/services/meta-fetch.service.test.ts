@@ -127,19 +127,15 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
         } as Response;
       }
 
-      if (url.includes(`/${WABA_ID}/phone_numbers`)) {
+      if (url.includes('?fields=display_phone_number')) {
         return {
           ok: true,
           json: async () => ({
-            data: [
-              {
-                id: PHONE_NUMBER_ID,
-                display_phone_number: '+6281234567890',
-                verified_name: 'Test Bot',
-                code_verification_status: 'VERIFIED',
-                quality_rating: 'GREEN',
-              },
-            ],
+            id: PHONE_NUMBER_ID,
+            display_phone_number: '+6281234567890',
+            verified_name: 'Test Bot',
+            code_verification_status: 'VERIFIED',
+            quality_rating: 'GREEN',
           }),
         } as Response;
       }
@@ -365,22 +361,22 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
     it('returns phone number data on success', async () => {
       await expect(
         MetaFetchService.fetchPhoneNumberDetails({
-          wabaId: WABA_ID,
+          phoneNumberId: PHONE_NUMBER_ID,
           token: 'sys-user-token-xyz',
         }),
-      ).resolves.toEqual([
+      ).resolves.toEqual(
         expect.objectContaining({
           id: PHONE_NUMBER_ID,
           code_verification_status: 'VERIFIED',
         }),
-      ]);
+      );
     });
 
     it('wraps Meta failures as ApiError(502)', async () => {
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
 
-        if (url.includes(`/${WABA_ID}/phone_numbers`)) {
+        if (url.includes('?fields=display_phone_number')) {
           return {
             ok: false,
             status: 503,
@@ -396,7 +392,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
 
       await expect(
         MetaFetchService.fetchPhoneNumberDetails({
-          wabaId: WABA_ID,
+          phoneNumberId: PHONE_NUMBER_ID,
           token: 'sys-user-token-xyz',
         }),
       ).rejects.toMatchObject({

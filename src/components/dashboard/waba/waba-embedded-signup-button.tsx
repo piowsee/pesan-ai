@@ -5,6 +5,7 @@ import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { WabaSignupError, useWabaSignup } from '@/hooks/use-waba-signup';
 import { cn } from '@/lib/utils';
+import { type EmbeddedSignupSessionPayload } from '@/schemas/embedded-signup.schema';
 import { Link2, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -158,20 +159,13 @@ export function WabaEmbeddedSignupButton({
 
     const submitData = async () => {
       try {
-        const result = await signupMutation.mutateAsync({
+        await signupMutation.mutateAsync({
           code: authorizationCode,
           event: signupEvent,
-          wabaId: session.wabaId,
-          sessionPayload: session.payload ?? null,
+          sessionPayload: session.payload as EmbeddedSignupSessionPayload,
         });
         setAuthorizationCode(null);
-        const message = result.data?.message;
-
-        if (message) {
-          toast.warning(message);
-        } else {
-          toast.success(t('success'));
-        }
+        toast.success(t('success'));
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);

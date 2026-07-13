@@ -6,8 +6,8 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 
 /**
  * @route POST /api/embedded-signup
- * @body { code: string, event: string, wabaId: string, sessionPayload?: unknown }
- * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers, message, failedPhoneNumberIds } }
+ * @body { code: string, event: string, sessionPayload: EmbeddedSignupSessionPayload }
+ * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers } }
  * @access Authenticated users
  * @description Receives the Embedded Signup authorization code, exchanges it for a
  *              System User Access Token with Meta, then persists the WABA and
@@ -16,29 +16,37 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
 
-  const { code, event, wabaId, sessionPayload } =
-    EmbeddedSignupSchema.parse(rawBody);
+  const { code, event, sessionPayload } = EmbeddedSignupSchema.parse(rawBody);
+
+  const wabaId = sessionPayload.waba_id;
+  const phoneNumberId = sessionPayload.phone_number_id;
+
+  if (!wabaId || !phoneNumberId) {
+    return jsend.error(
+      'Missing waba_id or phone_number_id in session payload',
+      400,
+    );
+  }
 
   logger.info('Embedded signup payload received', {
     userId: user.id,
     hasCode: Boolean(code),
     event,
     wabaId,
-    hasSessionPayload: sessionPayload !== undefined,
+    phoneNumberId,
   });
 
-  const { failedPhoneNumberIds, message, phoneNumbers, waba } =
+  const { phoneNumbers, waba } =
     await EmbeddedSignUpService.completeEmbeddedSignup({
       code,
       event,
-      wabaId,
       userId: user.id,
+      wabaId,
+      phoneNumberId,
     });
 
   return jsend.success(
     {
-      failedPhoneNumberIds,
-      message,
       wabaId: waba.wabaId,
       wabaDbId: waba.id,
       phoneNumbers,

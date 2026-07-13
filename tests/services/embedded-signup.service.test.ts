@@ -207,10 +207,10 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         } as Response;
       }
 
-      if (url.includes(`/${WABA_ID}/phone_numbers`)) {
+      if (url.includes('?fields=display_phone_number')) {
         return {
           ok: true,
-          json: async () => ({ data: META_PHONE_NUMBERS }),
+          json: async () => META_PHONE_NUMBERS[0],
         } as Response;
       }
 
@@ -251,16 +251,20 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     vi.mocked(WabaRepository.upsertWaba).mockResolvedValue(
       MOCK_WABA_DB as never,
     );
-    vi.mocked(PhoneNumberRepository.upsertPhoneNumbers).mockResolvedValue(
-      MOCK_PHONE_DBS as never,
+    vi.mocked(PhoneNumberRepository.upsertPhoneNumber).mockResolvedValue(
+      MOCK_PHONE_DBS[0] as never,
     );
     vi.mocked(
-      BusinessProfileRepository.upsertBusinessProfiles,
-    ).mockResolvedValue(MOCK_PHONE_DBS as never);
+      BusinessProfileRepository.upsertBusinessProfile,
+    ).mockResolvedValue(MOCK_PHONE_DBS[0] as never);
     vi.mocked(WabaRepository.findByMetaWabaId).mockResolvedValue(null as never);
-    vi.mocked(
-      PhoneNumberRepository.findPhoneNumbersByMetaIds,
-    ).mockResolvedValue([] as never);
+    vi.mocked(PhoneNumberRepository.findPhoneNumberByMetaId).mockResolvedValue(
+      [] as never,
+    );
+
+    vi.spyOn(MetaFetchService, 'fetchPhoneNumberDetails').mockResolvedValue(
+      META_PHONE_NUMBERS[0] as never,
+    );
   });
 
   afterEach(() => {
@@ -273,10 +277,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         code: VALID_CODE,
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       expect(result.waba.id).toBe('db-waba-cuid');
-      expect(result.phoneNumbers).toHaveLength(2);
+      expect(result.phoneNumbers).toHaveLength(1);
 
       const fetchMock = vi.mocked(global.fetch);
       const tokenCall = fetchMock.mock.calls.find(([url]) =>
@@ -295,7 +300,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
       const registerCalls = fetchMock.mock.calls.filter(([url]) =>
         String(url).endsWith('/register'),
       );
-      expect(registerCalls).toHaveLength(2);
+      expect(registerCalls).toHaveLength(1);
 
       for (const [index, [, options]] of registerCalls.entries()) {
         expect(options?.method).toBe('POST');
@@ -338,20 +343,21 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       expect(registerPhoneNumberSpy).not.toHaveBeenCalled();
-      expect(result.phoneNumbers).toHaveLength(2);
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+      expect(result.phoneNumbers).toHaveLength(1);
+      expect(PhoneNumberRepository.upsertPhoneNumber).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: META_PHONE_NUMBERS.map((phoneNumber, index) => ({
-          ...phoneNumber,
-          registrationPin: REGISTRATION_PINS[index],
-        })),
+        phoneNumberData: {
+          ...META_PHONE_NUMBERS[0],
+          registrationPin: REGISTRATION_PINS[0],
+        },
       });
 
-      expect(syncRequestSpy).toHaveBeenCalledTimes(4); // 2 phone numbers * 2 sync types
-      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledTimes(4);
+      expect(syncRequestSpy).toHaveBeenCalledTimes(2); // 1 phone number * 2 sync types
+      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledTimes(2);
       expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledWith({
         requestId: 'sync-req-123',
         syncType: 'history',
@@ -374,10 +380,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
-      expect(result.phoneNumbers).toHaveLength(2); // Still succeeds
-      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledTimes(2); // Only for the second phone number (2 sync types)
+      expect(result.phoneNumbers).toHaveLength(1); // Still succeeds
+      expect(SyncRequestRepository.createSyncRequest).toHaveBeenCalledTimes(0);
     });
 
     it('saves the encrypted access token on the WABA record', async () => {
@@ -385,6 +392,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         code: VALID_CODE,
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       expect(encrypt).toHaveBeenCalledWith('sys-user-token-xyz');
@@ -403,96 +411,75 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         code: VALID_CODE,
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       expect(encrypt).toHaveBeenCalledWith(REGISTRATION_PINS[0]);
-      expect(encrypt).toHaveBeenCalledWith(REGISTRATION_PINS[1]);
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+      expect(PhoneNumberRepository.upsertPhoneNumber).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: META_PHONE_NUMBERS.map((phoneNumber, index) => ({
-          ...phoneNumber,
-          registrationPin: REGISTRATION_PINS[index],
-        })),
+        phoneNumberData: {
+          ...META_PHONE_NUMBERS[0],
+          registrationPin: REGISTRATION_PINS[0],
+        },
       });
 
       expect(
-        BusinessProfileRepository.upsertBusinessProfiles,
-      ).toHaveBeenCalledWith(
-        MOCK_PHONE_DBS.map((phoneNumberDb) => ({
-          phoneNumberDbId: phoneNumberDb.id,
-          businessProfile: META_BUSINESS_PROFILES[phoneNumberDb.phoneNumberId],
-        })),
-      );
+        BusinessProfileRepository.upsertBusinessProfile,
+      ).toHaveBeenCalledWith({
+        phoneNumberDbId: MOCK_PHONE_DBS[0].id,
+        businessProfile:
+          META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId]!,
+      });
     });
 
     it('reuses the stored pin from our db before generating a new one', async () => {
       vi.mocked(
-        PhoneNumberRepository.findPhoneNumbersByMetaIds,
-      ).mockResolvedValue([
-        {
-          phoneNumberId: META_PHONE_NUMBERS[0].id,
-          registrationPin: '991122',
-        },
-      ] as never);
+        PhoneNumberRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        registrationPin: '991122',
+      } as never);
 
       await EmbeddedSignUpService.completeEmbeddedSignup({
         code: VALID_CODE,
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       const registerCalls = vi
         .mocked(global.fetch)
         .mock.calls.filter(([url]) => String(url).endsWith('/register'));
 
-      expect(registerCalls).toHaveLength(2);
+      expect(registerCalls).toHaveLength(1);
       expect(JSON.parse(registerCalls[0]?.[1]?.body as string)).toEqual({
         messaging_product: 'whatsapp',
         pin: '991122',
       });
-      expect(JSON.parse(registerCalls[1]?.[1]?.body as string)).toEqual({
-        messaging_product: 'whatsapp',
-        pin: REGISTRATION_PINS[1],
-      });
 
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+      expect(PhoneNumberRepository.upsertPhoneNumber).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: [
-          {
-            ...META_PHONE_NUMBERS[0],
-            registrationPin: '991122',
-          },
-          {
-            ...META_PHONE_NUMBERS[1],
-            registrationPin: REGISTRATION_PINS[1],
-          },
-        ],
+        phoneNumberData: {
+          ...META_PHONE_NUMBERS[0],
+          registrationPin: '991122',
+        },
       });
       expect(
-        BusinessProfileRepository.upsertBusinessProfiles,
-      ).toHaveBeenCalledWith([
-        {
-          phoneNumberDbId: MOCK_PHONE_DBS[0].id,
-          businessProfile:
-            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId],
-        },
-        {
-          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
-          businessProfile:
-            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
-        },
-      ]);
+        BusinessProfileRepository.upsertBusinessProfile,
+      ).toHaveBeenCalledWith({
+        phoneNumberDbId: MOCK_PHONE_DBS[0].id,
+        businessProfile:
+          META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId]!,
+      });
     });
 
     it('upserts the fresh pin after stored-pin recovery succeeds', async () => {
       vi.mocked(
-        PhoneNumberRepository.findPhoneNumbersByMetaIds,
-      ).mockResolvedValue([
-        {
-          phoneNumberId: META_PHONE_NUMBERS[0].id,
-          registrationPin: '991122',
-        },
-      ] as never);
+        PhoneNumberRepository.findPhoneNumberByMetaId,
+      ).mockResolvedValue({
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
+        registrationPin: '991122',
+      } as never);
 
       const registerSpy = vi
         .spyOn(MetaFetchService, 'registerPhoneNumber')
@@ -509,6 +496,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         code: VALID_CODE,
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       expect(registerSpy).toHaveBeenCalledWith({
@@ -527,40 +515,23 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         pin: REGISTRATION_PINS[0],
       });
 
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+      expect(PhoneNumberRepository.upsertPhoneNumber).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: [
-          {
-            ...META_PHONE_NUMBERS[0],
-            registrationPin: REGISTRATION_PINS[0],
-          },
-          {
-            ...META_PHONE_NUMBERS[1],
-            registrationPin: REGISTRATION_PINS[1],
-          },
-        ],
+        phoneNumberData: {
+          ...META_PHONE_NUMBERS[0],
+          registrationPin: REGISTRATION_PINS[0],
+        },
       });
       expect(
-        BusinessProfileRepository.upsertBusinessProfiles,
-      ).toHaveBeenCalledWith([
-        {
-          phoneNumberDbId: MOCK_PHONE_DBS[0].id,
-          businessProfile:
-            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId],
-        },
-        {
-          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
-          businessProfile:
-            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
-        },
-      ]);
+        BusinessProfileRepository.upsertBusinessProfile,
+      ).toHaveBeenCalledWith({
+        phoneNumberDbId: MOCK_PHONE_DBS[0].id,
+        businessProfile:
+          META_BUSINESS_PROFILES[MOCK_PHONE_DBS[0].phoneNumberId]!,
+      });
     });
 
-    it('continues registering other numbers when one phone number fails', async () => {
-      vi.mocked(PhoneNumberRepository.upsertPhoneNumbers).mockResolvedValueOnce(
-        [MOCK_PHONE_DBS[1]] as never,
-      );
-
+    it('throws ApiError when phone registration fails', async () => {
       vi.spyOn(
         EmbeddedSignUpService,
         '_registerPhoneNumberWithRecovery',
@@ -572,35 +543,14 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return phoneNumber;
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
-        code: VALID_CODE,
-        wabaId: WABA_ID,
-        userId: USER_ID,
-      });
-
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
-        wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: [
-          {
-            ...META_PHONE_NUMBERS[1],
-            registrationPin: REGISTRATION_PINS[1],
-          },
-        ],
-      });
-      expect(
-        BusinessProfileRepository.upsertBusinessProfiles,
-      ).toHaveBeenCalledWith([
-        {
-          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
-          businessProfile:
-            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
-        },
-      ]);
-      expect(result.phoneNumbers).toEqual([MOCK_PHONE_DBS[1]]);
-      expect(result.message).toBe(
-        'WhatsApp Business Account connected, but some phone numbers could not be registered.',
-      );
-      expect(result.failedPhoneNumberIds).toEqual([META_PHONE_NUMBERS[0].id]);
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
+          wabaId: WABA_ID,
+          userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
+        }),
+      ).rejects.toThrow(ApiError);
     });
 
     it('throws when metadata lookups fail with a network error', async () => {
@@ -629,6 +579,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toThrow('Network error');
     });
@@ -707,17 +658,12 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         code: VALID_CODE,
         wabaId: WABA_ID,
         userId: USER_ID,
+        phoneNumberId: META_PHONE_NUMBERS[0].id,
       });
 
       expect(
-        BusinessProfileRepository.upsertBusinessProfiles,
-      ).toHaveBeenCalledWith([
-        {
-          phoneNumberDbId: MOCK_PHONE_DBS[1].id,
-          businessProfile:
-            META_BUSINESS_PROFILES[MOCK_PHONE_DBS[1].phoneNumberId],
-        },
-      ]);
+        BusinessProfileRepository.upsertBusinessProfile,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -781,6 +727,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -790,7 +737,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
 
       expect(global.fetch).not.toHaveBeenCalled();
       expect(WabaRepository.upsertWaba).not.toHaveBeenCalled();
-      expect(PhoneNumberRepository.upsertPhoneNumbers).not.toHaveBeenCalled();
+      expect(PhoneNumberRepository.upsertPhoneNumber).not.toHaveBeenCalled();
     });
 
     it('throws ApiError(502) when Meta token exchange returns an error body', async () => {
@@ -819,6 +766,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: 'bad-code',
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({ status: 502 });
     });
@@ -832,6 +780,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({ status: 500 });
 
@@ -847,6 +796,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({ status: 500 });
 
@@ -872,14 +822,13 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({ status: 502 });
     });
 
-    it('upserts the WABA and returns a message when all phone registrations fail', async () => {
-      vi.mocked(PhoneNumberRepository.upsertPhoneNumbers).mockResolvedValueOnce(
-        [] as never,
-      );
+    it('throws ApiError when phone registration fails with a network error', async () => {
+      // Removed mock since we don't expect it to be called if it fails before upserting
 
       vi.mocked(global.fetch).mockImplementation(async (input) => {
         const url = typeof input === 'string' ? input : input.toString();
@@ -924,30 +873,16 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
         return { ok: true, json: async () => ({}) } as Response;
       });
 
-      const result = await EmbeddedSignUpService.completeEmbeddedSignup({
-        code: VALID_CODE,
-        wabaId: WABA_ID,
-        userId: USER_ID,
-      });
-
-      expect(WabaRepository.upsertWaba).toHaveBeenCalledWith(
-        expect.objectContaining({
+      await expect(
+        EmbeddedSignUpService.completeEmbeddedSignup({
+          code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
-      );
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
-        wabaDbId: 'db-waba-cuid',
-        phoneNumberDatas: [],
-      });
-      expect(result.phoneNumbers).toEqual([]);
-      expect(result.message).toBe(
-        'WhatsApp Business Account connected, but no phone numbers could be registered.',
-      );
-      expect(result.failedPhoneNumberIds).toEqual([
-        META_PHONE_NUMBERS[0].id,
-        META_PHONE_NUMBERS[1].id,
-      ]);
+      ).rejects.toThrow(ApiError);
+
+      expect(PhoneNumberRepository.upsertPhoneNumber).not.toHaveBeenCalled();
     });
 
     it('sets a fallback pin and recovers when new phone registration fails', async () => {
@@ -1033,6 +968,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).resolves.toMatchObject({
         waba: expect.objectContaining({
@@ -1102,6 +1038,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).resolves.toMatchObject({
         waba: expect.objectContaining({
@@ -1159,6 +1096,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({ status: 502, message: 'Subscription failed' });
     });
@@ -1200,6 +1138,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({
         status: 502,
@@ -1258,6 +1197,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           code: VALID_CODE,
           wabaId: WABA_ID,
           userId: USER_ID,
+          phoneNumberId: META_PHONE_NUMBERS[0].id,
         }),
       ).rejects.toMatchObject({
         status: 502,
