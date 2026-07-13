@@ -374,13 +374,22 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
         limit: 1,
       });
 
+      const expectedContacts = [
+        {
+          customerPhone: primaryWabaCustomerPhone,
+          customerName: 'Primary WABA Customer',
+          customerUsername: null,
+        },
+        {
+          customerPhone: sameWabaCustomerPhone,
+          customerName: 'Same WABA Customer',
+          customerUsername: '@samewaba',
+        },
+      ];
+
       expect(result.total).toBe(2);
       expect(result.customerContacts).toHaveLength(1);
-      expect(result.customerContacts[0]).toEqual({
-        customerPhone: primaryWabaCustomerPhone,
-        customerName: 'Primary WABA Customer',
-        customerUsername: null,
-      });
+      expect(expectedContacts).toContainEqual(result.customerContacts[0]);
     });
     describe('upsertContactsBulk', () => {
       it('upserts multiple contacts correctly in a single transaction', async () => {

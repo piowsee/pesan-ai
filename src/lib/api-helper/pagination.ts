@@ -5,7 +5,7 @@ export function getPaginationParams(
   const page = Math.max(1, Number(searchParams.get('page') ?? 1));
   const limit = Math.max(
     1,
-    Math.min(100, Number(searchParams.get('limit') ?? defaultLimit)),
+    Math.min(200, Number(searchParams.get('limit') ?? defaultLimit)),
   );
 
   return { page, limit };

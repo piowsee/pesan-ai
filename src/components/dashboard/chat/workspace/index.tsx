@@ -339,13 +339,26 @@ export function ChatWorkspace() {
     refetch,
   } = useConversations(activeWabaId);
 
+  const inlineSelectedConversation = convData?.chats?.find(
+    (c) => c.id === selectedConversationId,
+  );
+  const selectedInitialUnreadCountForMessages = getUnreadDividerInitialCount({
+    conversationId: selectedConversationId,
+    conversationUnreadCount: inlineSelectedConversation?.unreadCount,
+    snapshotByConversation: initialUnreadCountByConversation,
+  });
+
   const {
     data: groupedMessages,
     isLoading: isMessagesLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useMessages(activeWabaId, selectedConversationId);
+  } = useMessages(
+    activeWabaId,
+    selectedConversationId,
+    selectedInitialUnreadCountForMessages,
+  );
 
   useChatSSE({
     viewingConversationId: selectedConversationId,
