@@ -137,7 +137,7 @@ export function WabaEmbeddedSignupButton({
       handledCodeRef.current = null;
       setAuthorizationCode(code);
 
-      if (!sessionRef.current?.wabaId) {
+      if (!sessionRef.current?.data?.waba_id) {
         toast.message(t('waitingDetails'));
       }
     },
@@ -147,7 +147,7 @@ export function WabaEmbeddedSignupButton({
   useEffect(() => {
     if (
       !authorizationCode ||
-      !session?.wabaId ||
+      !session?.data?.waba_id ||
       !session.event?.startsWith('FINISH') ||
       signupMutation.isPending ||
       handledCodeRef.current === authorizationCode
@@ -156,14 +156,12 @@ export function WabaEmbeddedSignupButton({
     }
 
     handledCodeRef.current = authorizationCode;
-    const signupEvent = session.event;
 
     const submitData = async () => {
       try {
         await signupMutation.mutateAsync({
           code: authorizationCode,
-          event: signupEvent,
-          sessionPayload: session.payload as EmbeddedSignupSessionPayload,
+          sessionPayload: session as EmbeddedSignupSessionPayload,
         });
         setAuthorizationCode(null);
         toast.success(t('success'));

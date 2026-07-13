@@ -6,7 +6,7 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 
 /**
  * @route POST /api/embedded-signup
- * @body { code: string, event: string, sessionPayload: EmbeddedSignupSessionPayload }
+ * @body { code: string, sessionPayload: EmbeddedSignupSessionPayload }
  * @response { status: 'success', data: { wabaId, wabaDbId, phoneNumbers } }
  * @access Authenticated users
  * @description Receives the Embedded Signup authorization code, exchanges it for a
@@ -16,14 +16,15 @@ import { EmbeddedSignUpService } from '@/services/embedded-signup.service';
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
 
-  const { code, event, sessionPayload } = EmbeddedSignupSchema.parse(rawBody);
+  const { code, sessionPayload } = EmbeddedSignupSchema.parse(rawBody);
 
-  const wabaId = sessionPayload.waba_id;
-  const phoneNumberId = sessionPayload.phone_number_id;
+  const event = sessionPayload.event;
+  const wabaId = sessionPayload.data?.waba_id;
+  const phoneNumberId = sessionPayload.data?.phone_number_id;
 
-  if (!wabaId || !phoneNumberId) {
+  if (!event || !wabaId || !phoneNumberId) {
     return jsend.error(
-      'Missing waba_id or phone_number_id in session payload',
+      'Missing event, waba id, or phone number id in session payload. Please make sure to complete the phone number registration step.',
       400,
     );
   }

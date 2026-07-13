@@ -29,10 +29,12 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
-        event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
         sessionPayload: {
-          waba_id: 'meta-waba-1',
-          phone_number_id: 'meta-phone-1',
+          event: 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING',
+          data: {
+            waba_id: 'meta-waba-1',
+            phone_number_id: 'meta-phone-1',
+          },
         },
       }),
       { params: Promise.resolve({}) } as never,
@@ -65,8 +67,11 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
       createRequest({
         code: '',
         sessionPayload: {
-          waba_id: 'meta-waba-1',
-          phone_number_id: 'meta-phone-1',
+          event: 'FINISH',
+          data: {
+            waba_id: 'meta-waba-1',
+            phone_number_id: 'meta-phone-1',
+          },
         },
       }),
       { params: Promise.resolve({}) } as never,
@@ -91,10 +96,12 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
-        event: 'FINISH',
         sessionPayload: {
-          waba_id: 'meta-waba-1',
-          phone_number_id: 'meta-phone-1',
+          event: 'FINISH',
+          data: {
+            waba_id: 'meta-waba-1',
+            phone_number_id: 'meta-phone-1',
+          },
         },
       }),
       { params: Promise.resolve({}) } as never,
@@ -114,10 +121,12 @@ describe('POST /api/embedded-signup', { tags: ['backend'] }, () => {
     const response = await POST(
       createRequest({
         code: 'auth-code-123',
-        event: 'FINISH',
         sessionPayload: {
-          waba_id: 'meta-waba-1',
-          phone_number_id: 'meta-phone-1',
+          event: 'FINISH',
+          data: {
+            waba_id: 'meta-waba-1',
+            phone_number_id: 'meta-phone-1',
+          },
         },
       }),
       { params: Promise.resolve({}) } as never,
