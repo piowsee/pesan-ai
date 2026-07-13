@@ -59,8 +59,9 @@ export function ChatWorkspaceSkeleton() {
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
       <div className="shrink-0 border-b border-brand/15 bg-background">
-        <div className="flex h-15 items-center px-4">
-          <Skeleton className="ml-4 h-8 w-40 rounded-md" />
+        <div className="flex h-14 items-center gap-3 px-4">
+          <Skeleton className="h-5 w-40 rounded-md" />
+          <Skeleton className="h-5 w-28 rounded-md" />
         </div>
       </div>
 
@@ -75,7 +76,6 @@ export function ChatWorkspaceSkeleton() {
               <Skeleton className="h-8 w-12 rounded-full" />
               <Skeleton className="h-8 w-16 rounded-full" />
               <Skeleton className="h-8 w-12 rounded-full" />
-              <Skeleton className="ml-auto h-8 w-28 rounded-full" />
             </div>
           </div>
 
@@ -668,12 +668,17 @@ export function ChatWorkspace() {
       <ChatWorkspaceHeader
         wabas={wabas}
         activeWabaId={activeWaba?.id}
+        phoneNumbers={phoneNumbers}
+        selectedPhoneNumberId={selectedPhoneNumberId}
         onSelectWaba={(wabaId) => {
           pushChatRoute({
             wabaId,
             keys: CHAT_LIST_PARAM_KEYS,
             updates: { panel: undefined },
           });
+        }}
+        onPhoneNumberChange={(value) => {
+          replaceChatSearchState({ phoneNumberId: value });
         }}
       />
 
@@ -691,11 +696,6 @@ export function ChatWorkspace() {
             replaceChatSearchState({
               filter: value === 'all' ? undefined : value,
             });
-          }}
-          phoneNumbers={phoneNumbers}
-          selectedPhoneNumberId={selectedPhoneNumberId}
-          onPhoneNumberChange={(value) => {
-            replaceChatSearchState({ phoneNumberId: value });
           }}
           conversations={filteredConversations}
           activeConversationId={selectedConversationId}

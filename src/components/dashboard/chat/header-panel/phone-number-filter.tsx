@@ -1,0 +1,125 @@
+'use client';
+
+import { SingleSelectOption } from '@/components/dashboard/chat/header-panel/single-select-option';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  ChevronDownIcon,
+  ListFilterIcon,
+  PhoneIcon,
+  SearchIcon,
+} from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+
+type PhoneNumberOption = {
+  id: string;
+  displayPhoneNumber: string;
+};
+
+export function PhoneNumberFilter({
+  disabled,
+  phoneNumbers,
+  selectedPhoneNumberId,
+  onPhoneNumberChange,
+}: {
+  disabled: boolean;
+  phoneNumbers: PhoneNumberOption[];
+  selectedPhoneNumberId?: string;
+  onPhoneNumberChange: (value?: string) => void;
+}) {
+  const t = useTranslations('Chat.phoneFilter');
+  const tSidebar = useTranslations('Chat.sidebar');
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const selectedLabel =
+    phoneNumbers.find((phoneNumber) => phoneNumber.id === selectedPhoneNumberId)
+      ?.displayPhoneNumber ?? tSidebar('allPhones');
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredPhoneNumbers = useMemo(
+    () =>
+      normalizedQuery
+        ? phoneNumbers.filter((phoneNumber) =>
+            phoneNumber.displayPhoneNumber
+              .toLowerCase()
+              .includes(normalizedQuery),
+          )
+        : phoneNumbers,
+    [normalizedQuery, phoneNumbers],
+  );
+
+  function selectPhoneNumber(phoneNumberId?: string) {
+    onPhoneNumberChange(phoneNumberId);
+    setOpen(false);
+    setQuery('');
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="unstyled"
+          type="button"
+          disabled={disabled}
+          className="flex h-7 max-w-36 cursor-pointer items-center gap-1.5 px-0 text-left text-brand hover:bg-transparent disabled:text-brand/45"
+        >
+          <PhoneIcon className="size-3.5 shrink-0 text-brand/80" />
+          <span className="truncate text-xs font-semibold">
+            {selectedLabel}
+          </span>
+          <ChevronDownIcon className="size-3 shrink-0 text-brand/60" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-brand/20 bg-popover p-0 text-brand shadow-lg"
+      >
+        <div className="px-3 pt-3 pb-2 text-[11px] font-semibold tracking-[0.12em] text-brand/75 uppercase">
+          {t('title')}
+        </div>
+        <div className="relative px-3 pb-3">
+          <SearchIcon className="pointer-events-none absolute top-4.5 left-6 size-3.5 -translate-y-1/2 text-brand/60" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('search')}
+            className="h-9 border-brand/20 bg-brand/5 py-1 pr-3 pl-9 text-xs text-brand shadow-none placeholder:text-brand/55 focus-visible:border-brand/20 focus-visible:ring-0"
+          />
+        </div>
+        <div className="max-h-72 overflow-y-auto px-2 pb-2">
+          <SingleSelectOption
+            isSelected={!selectedPhoneNumberId}
+            icon={<ListFilterIcon className="size-4 text-brand/80" />}
+            label={tSidebar('allPhones')}
+            onSelect={() => selectPhoneNumber()}
+          />
+
+          {filteredPhoneNumbers.length === 0 ? (
+            <p className="px-2 py-4 text-center text-xs text-brand/65">
+              {t('noMatch')}
+            </p>
+          ) : (
+            filteredPhoneNumbers.map((phoneNumber) => {
+              const isSelected = selectedPhoneNumberId === phoneNumber.id;
+
+              return (
+                <SingleSelectOption
+                  key={phoneNumber.id}
+                  isSelected={isSelected}
+                  icon={<PhoneIcon className="size-4 text-brand/80" />}
+                  label={phoneNumber.displayPhoneNumber}
+                  onSelect={() => selectPhoneNumber(phoneNumber.id)}
+                />
+              );
+            })
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}

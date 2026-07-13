@@ -94,7 +94,7 @@ function useIsHttpsPage() {
 type WabaEmbeddedSignupButtonProps = ComponentProps<typeof Button> & {
   idleLabel?: string;
   pendingLabel?: string;
-  onSuccess?: () => void;
+  onSuccess?: () => Promise<void> | void;
 };
 
 export function WabaEmbeddedSignupButton({
@@ -112,6 +112,7 @@ export function WabaEmbeddedSignupButton({
   const t = useTranslations('Waba.signup');
 
   const [isLaunching, setIsLaunching] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
     null,
   );
@@ -169,6 +170,7 @@ export function WabaEmbeddedSignupButton({
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
+        setIsCompleting(false);
         if (error instanceof WabaSignupError) {
           toast.warning(error.message || t('alreadyConnected'));
           return;
@@ -201,7 +203,7 @@ export function WabaEmbeddedSignupButton({
     });
   }, [handleFbLoginResponse, isHttpsPage, t]);
 
-  const isBusy = isLaunching || signupMutation.isPending;
+  const isBusy = isLaunching || signupMutation.isPending || isCompleting;
 
   return (
     <Button
