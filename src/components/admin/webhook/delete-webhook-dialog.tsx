@@ -53,18 +53,32 @@ export function DeleteWebhookDialog({ id, name }: DeleteWebhookDialogProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>{t('description', { name })}</DialogDescription>
+      <DialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
+        <DialogHeader className="px-5 pt-5 pb-4 pr-12">
+          <div className="flex items-start gap-3">
+            <Trash2 className="mt-0.5 size-7 shrink-0 text-destructive" />
+            <div className="min-w-0">
+              <DialogTitle className="text-base font-semibold text-brand">
+                {t('title')}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                {t('description', { name })}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <DialogFooter>
+        <div className="px-5">
+          <div className="h-px bg-brand/20" />
+        </div>
+
+        <DialogFooter className="mx-5 mb-5 mt-5 gap-2 border-t border-brand/20 bg-transparent p-0 pt-4">
           <Button
             type="button"
-            variant="outline"
-            className="border-brand/20 text-brand hover:bg-muted hover:text-brand"
+            variant="ghost"
+            className="text-brand hover:bg-primary/5 hover:text-brand"
             onClick={() => setIsOpen(false)}
+            disabled={deleteWebhook.isPending}
           >
             {t('actions.cancel')}
           </Button>

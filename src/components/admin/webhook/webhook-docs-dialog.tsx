@@ -9,9 +9,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Code, KeyRound, MessageSquare, ShieldCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { type ReactNode } from 'react';
+
+function InlineCode({ children }: { children: ReactNode }) {
+  return (
+    <code className="rounded bg-brand/8 px-1.5 py-0.5 font-mono text-[0.85em] font-medium text-brand">
+      {children}
+    </code>
+  );
+}
+
+function CodeExample({ value }: { value: unknown }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-brand/10 bg-brand/5 p-4 font-mono text-xs">
+      <pre className="text-brand">{JSON.stringify(value, null, 2)}</pre>
+    </div>
+  );
+}
 
 export function WebhookDocsDialog() {
   const t = useTranslations('Admin.WebhookDocsDialog');
@@ -28,223 +44,215 @@ export function WebhookDocsDialog() {
           {t('trigger')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] sm:max-w-[700px] p-0 flex flex-col">
-        <DialogHeader className="px-6 py-4 pb-0">
-          <DialogTitle className="text-xl">{t('title')}</DialogTitle>
-          <DialogDescription>{t('description')}</DialogDescription>
+
+      <DialogContent className="flex max-h-[85svh] flex-col gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-3xl">
+        <DialogHeader className="shrink-0 px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pt-6">
+          <div className="flex items-start gap-3">
+            <Code className="mt-0.5 size-7 shrink-0 text-brand" />
+            <div className="min-w-0">
+              <DialogTitle className="text-base font-semibold text-brand">
+                {t('title')}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                {t('description')}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6 pb-6">
-          <div className="space-y-8 pr-4">
-            {/* Authentication */}
-            <section className="space-y-3 pt-4">
+        <div className="shrink-0 px-5 sm:px-6">
+          <div className="h-px bg-brand/20" />
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 [scrollbar-gutter:stable] sm:px-6">
+          <div className="flex flex-col gap-8">
+            <section className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <KeyRound className="size-4" />
-                </div>
-                <h3 className="font-semibold text-lg">
+                <KeyRound className="size-5 shrink-0 text-brand/70" />
+                <h3 className="text-base font-semibold text-brand">
                   {t('sections.auth.title')}
                 </h3>
               </div>
-              <div className="space-y-3 text-sm text-muted-foreground pl-10">
+              <div className="flex flex-col gap-3 text-sm leading-6 text-brand/75 sm:pl-7">
                 <p>
                   {t.rich('sections.auth.p1', {
-                    authCode: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
+                    authCode: (chunks) => <InlineCode>{chunks}</InlineCode>,
+                    strongAuth: (chunks) => (
+                      <strong className="font-semibold text-brand">
                         {chunks}
-                      </code>
+                      </strong>
                     ),
-                    strongAuth: (chunks) => <strong>{chunks}</strong>,
-                    strongPassphrase: (chunks) => <strong>{chunks}</strong>,
+                    strongPassphrase: (chunks) => (
+                      <strong className="font-semibold text-brand">
+                        {chunks}
+                      </strong>
+                    ),
                   })}
                 </p>
                 <p>
                   {t.rich('sections.auth.p2', {
-                    strongType: (chunks) => <strong>{chunks}</strong>,
-                    strongAlgo: (chunks) => <strong>{chunks}</strong>,
-                  })}
-                </p>
-              </div>
-            </section>
-
-            {/* Validation Request */}
-            <section className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <ShieldCheck className="size-4" />
-                </div>
-                <h3 className="font-semibold text-lg">
-                  {t('sections.validation.title')}
-                </h3>
-              </div>
-              <div className="space-y-3 text-sm text-muted-foreground pl-10">
-                <p>
-                  {t.rich('sections.validation.p1', {
-                    strongGet: (chunks) => <strong>{chunks}</strong>,
-                    codeOk: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
+                    strongType: (chunks) => (
+                      <strong className="font-semibold text-brand">
                         {chunks}
-                      </code>
+                      </strong>
+                    ),
+                    strongAlgo: (chunks) => (
+                      <strong className="font-semibold text-brand">
+                        {chunks}
+                      </strong>
                     ),
                   })}
                 </p>
               </div>
             </section>
 
-            {/* Message Request */}
-            <section className="space-y-3">
+            <section className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <MessageSquare className="size-4" />
-                </div>
-                <h3 className="font-semibold text-lg">
+                <ShieldCheck className="size-5 shrink-0 text-brand/70" />
+                <h3 className="text-base font-semibold text-brand">
+                  {t('sections.validation.title')}
+                </h3>
+              </div>
+              <div className="text-sm leading-6 text-brand/75 sm:pl-7">
+                <p>
+                  {t.rich('sections.validation.p1', {
+                    strongGet: (chunks) => (
+                      <strong className="font-semibold text-brand">
+                        {chunks}
+                      </strong>
+                    ),
+                    codeOk: (chunks) => <InlineCode>{chunks}</InlineCode>,
+                  })}
+                </p>
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="size-5 shrink-0 text-brand/70" />
+                <h3 className="text-base font-semibold text-brand">
                   {t('sections.message.title')}
                 </h3>
               </div>
-              <div className="space-y-4 text-sm text-muted-foreground pl-10">
+
+              <div className="flex flex-col gap-4 text-sm leading-6 text-brand/75 sm:pl-7">
                 <p>
                   {t.rich('sections.message.p1', {
-                    strongPost: (chunks) => <strong>{chunks}</strong>,
+                    strongPost: (chunks) => (
+                      <strong className="font-semibold text-brand">
+                        {chunks}
+                      </strong>
+                    ),
                   })}
                 </p>
 
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <p>
                     {t.rich('sections.message.p2', {
-                      codePhone: (chunks) => (
-                        <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                          {chunks}
-                        </code>
-                      ),
+                      codePhone: (chunks) => <InlineCode>{chunks}</InlineCode>,
                       codeMessages: (chunks) => (
-                        <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                          {chunks}
-                        </code>
+                        <InlineCode>{chunks}</InlineCode>
                       ),
                     })}
                   </p>
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="flex list-disc flex-col gap-1 pl-5">
                     <li>
                       {t.rich('sections.message.list.phone', {
                         codeField: (chunks) => (
-                          <code className="font-semibold">{chunks}</code>
-                        ),
-                      })}
-                    </li>
-                    <li>
-                      {t.rich('sections.message.list.sequence', {
-                        codeField: (chunks) => (
-                          <code className="font-semibold">{chunks}</code>
-                        ),
-                      })}
-                    </li>
-                    <li>
-                      {t.rich('sections.message.list.source', {
-                        codeField: (chunks) => (
-                          <code className="font-semibold">{chunks}</code>
-                        ),
-                        codeSource: (chunks) => (
-                          <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
+                          <code className="font-semibold text-brand">
                             {chunks}
                           </code>
                         ),
                       })}
                     </li>
                     <li>
+                      {t.rich('sections.message.list.sequence', {
+                        codeField: (chunks) => (
+                          <code className="font-semibold text-brand">
+                            {chunks}
+                          </code>
+                        ),
+                      })}
+                    </li>
+                    <li>
+                      {t.rich('sections.message.list.source', {
+                        codeField: (chunks) => (
+                          <code className="font-semibold text-brand">
+                            {chunks}
+                          </code>
+                        ),
+                        codeSource: (chunks) => (
+                          <InlineCode>{chunks}</InlineCode>
+                        ),
+                      })}
+                    </li>
+                    <li>
                       {t.rich('sections.message.list.timestamp', {
                         codeField: (chunks) => (
-                          <code className="font-semibold">{chunks}</code>
+                          <code className="font-semibold text-brand">
+                            {chunks}
+                          </code>
                         ),
                       })}
                     </li>
                     <li>
                       {t.rich('sections.message.list.content', {
                         codeField: (chunks) => (
-                          <code className="font-semibold">{chunks}</code>
+                          <code className="font-semibold text-brand">
+                            {chunks}
+                          </code>
                         ),
                       })}
                     </li>
                   </ul>
                 </div>
 
-                <div className="rounded-md bg-muted p-4 font-mono text-xs overflow-x-auto">
-                  <pre className="text-foreground">
-                    {JSON.stringify(
+                <CodeExample
+                  value={{
+                    customerPhoneNumber: '+1234567890',
+                    messages: [
                       {
-                        customerPhoneNumber: '+1234567890',
-                        messages: [
-                          {
-                            sequence: 1,
-                            source: 'customer',
-                            timestamp: '2023-10-25T10:00:00Z',
-                            content: 'Hi, I need help with my order.',
-                          },
-                          {
-                            sequence: 2,
-                            source: 'bot',
-                            timestamp: '2023-10-25T10:01:00Z',
-                            content:
-                              'Sure, I can help with that. What is your order number?',
-                          },
-                        ],
+                        sequence: 1,
+                        source: 'customer',
+                        timestamp: '2023-10-25T10:00:00Z',
+                        content: 'Hi, I need help with my order.',
                       },
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </div>
+                      {
+                        sequence: 2,
+                        source: 'bot',
+                        timestamp: '2023-10-25T10:01:00Z',
+                        content:
+                          'Sure, I can help with that. What is your order number?',
+                      },
+                    ],
+                  }}
+                />
 
                 <p>
                   {t.rich('sections.message.p3', {
-                    codeBot: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                        {chunks}
-                      </code>
-                    ),
-                    codeAdmin: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                        {chunks}
-                      </code>
-                    ),
-                    codeFalse: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                        {chunks}
-                      </code>
-                    ),
-                    codeTrue: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                        {chunks}
-                      </code>
-                    ),
+                    codeBot: (chunks) => <InlineCode>{chunks}</InlineCode>,
+                    codeAdmin: (chunks) => <InlineCode>{chunks}</InlineCode>,
+                    codeFalse: (chunks) => <InlineCode>{chunks}</InlineCode>,
+                    codeTrue: (chunks) => <InlineCode>{chunks}</InlineCode>,
                   })}
                 </p>
 
-                <div className="rounded-md bg-muted p-4 font-mono text-xs overflow-x-auto">
-                  <pre className="text-foreground">
-                    {JSON.stringify(
-                      {
-                        botResponse: 'Your order is currently being processed.',
-                        adminTakeover: false,
-                      },
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </div>
+                <CodeExample
+                  value={{
+                    botResponse: 'Your order is currently being processed.',
+                    adminTakeover: false,
+                  }}
+                />
 
                 <p>
                   {t.rich('sections.message.p4', {
-                    code429: (chunks) => (
-                      <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">
-                        {chunks}
-                      </code>
-                    ),
+                    code429: (chunks) => <InlineCode>{chunks}</InlineCode>,
                   })}
                 </p>
               </div>
             </section>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
