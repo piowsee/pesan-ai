@@ -365,6 +365,50 @@
       "emailChangeSuccess": "Cek kotak masuk Anda, konfirmasi perubahan dari {currentEmail}. Lalu verifikasi dengan tautan yang dikirim ke {newEmail}."
     }
   },
+  "AccountSettingsDialog": {
+    "labels": {
+      "title": "Pengaturan",
+      "description": "Kelola preferensi workspace dan keamanan akun Anda.",
+      "tabs": {
+        "general": "Umum",
+        "security": "Keamanan"
+      }
+    },
+    "general": {
+      "title": "Umum",
+      "description": "Pilih bahasa yang digunakan di dashboard dan workspace chat Anda.",
+      "language": "Bahasa",
+      "languageDescription": "Untuk mengubah bahasa yang digunakan di dashboard dan workspace chat Anda."
+    },
+    "security": {
+      "labels": {
+        "title": "Keamanan",
+        "description": "Ubah kata sandi login atau kirim tautan reset ke email akun Anda.",
+        "currentPassword": "Kata sandi saat ini",
+        "newPassword": "Kata sandi baru",
+        "confirmPassword": "Konfirmasi kata sandi baru",
+        "forgotPassword": "Lupa kata sandi?",
+        "changePassword": "Ubah kata sandi",
+        "changePasswordDescription": "Untuk mengubah kata sandi login akun Anda atau meminta tautan reset melalui email.",
+        "changingPassword": "Mengubah...",
+        "hidePassword": "Sembunyikan kata sandi",
+        "showPassword": "Tampilkan kata sandi"
+      },
+      "errors": {
+        "currentPasswordRequired": "Kata sandi saat ini wajib diisi",
+        "newPasswordRequired": "Kata sandi baru wajib diisi",
+        "passwordLength": "Kata sandi minimal 8 karakter",
+        "confirmPasswordRequired": "Konfirmasi kata sandi wajib diisi",
+        "passwordMismatch": "Kata sandi tidak cocok",
+        "failedChangePassword": "Gagal mengubah kata sandi",
+        "failedSendReset": "Gagal mengirim tautan reset"
+      },
+      "messages": {
+        "passwordChanged": "Kata sandi berhasil diubah",
+        "resetLinkSent": "Tautan reset kata sandi telah dikirim ke email"
+      }
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "Ups, halaman yang kamu cari tidak tersedia.",
@@ -383,6 +427,8 @@
     "openProfile": "Buka profil",
     "profile": "Profil",
     "settings": "Pengaturan",
+    "general": "Umum",
+    "security": "Keamanan",
     "logout": "Keluar"
   },
   "DashboardHome": {

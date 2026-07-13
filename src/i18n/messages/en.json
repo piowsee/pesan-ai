@@ -365,6 +365,50 @@
       "emailChangeSuccess": "Check your inboxes, confirm the change from {currentEmail}. Then verify with the link sent to {newEmail}."
     }
   },
+  "AccountSettingsDialog": {
+    "labels": {
+      "title": "Settings",
+      "description": "Manage your workspace preferences and account security.",
+      "tabs": {
+        "general": "General",
+        "security": "Security"
+      }
+    },
+    "general": {
+      "title": "General",
+      "description": "Choose the language used across your dashboard and chat workspace.",
+      "language": "Language",
+      "languageDescription": "Change the language used across your dashboard and chat workspace."
+    },
+    "security": {
+      "labels": {
+        "title": "Security",
+        "description": "Change your login password or send a reset link to your account email.",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "forgotPassword": "Forgot password?",
+        "changePassword": "Change password",
+        "changePasswordDescription": "Change your account login password or request a reset link by email.",
+        "changingPassword": "Changing...",
+        "hidePassword": "Hide password",
+        "showPassword": "Show password"
+      },
+      "errors": {
+        "currentPasswordRequired": "Current password is required",
+        "newPasswordRequired": "New password is required",
+        "passwordLength": "Password must be at least 8 characters",
+        "confirmPasswordRequired": "Confirm password is required",
+        "passwordMismatch": "Passwords do not match",
+        "failedChangePassword": "Failed to change password",
+        "failedSendReset": "Failed to send reset link"
+      },
+      "messages": {
+        "passwordChanged": "Password changed successfully",
+        "resetLinkSent": "Password reset link sent to email"
+      }
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "We couldn't find the page you were looking for.",
@@ -383,6 +427,8 @@
     "openProfile": "Open profile",
     "profile": "Profile",
     "settings": "Settings",
+    "general": "General",
+    "security": "Security",
     "logout": "Logout"
   },
   "DashboardHome": {
