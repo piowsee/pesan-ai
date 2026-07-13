@@ -565,11 +565,14 @@ export function groupMessagesByDate(messages: ChatMessage[]): MessageGroup[] {
 export function useMessages(
   wabaId: string | undefined,
   convId: string | undefined,
+  initialUnreadCount = 0,
 ) {
+  const limit = Math.max(50, initialUnreadCount + 10);
+
   return useInfiniteQuery({
     queryKey: messageKeys.all(convId || ''),
     queryFn: ({ pageParam = 1 }) =>
-      fetchMessages(wabaId!, convId!, pageParam as number),
+      fetchMessages(wabaId!, convId!, pageParam as number, limit),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const { page, total, limit } = lastPage;
@@ -583,6 +586,7 @@ export function useMessages(
       // Group them by date
       return groupMessagesByDate(allMessages);
     },
+
     enabled: !!wabaId && !!convId,
     // Keep data fresh, let real-time updates (SSE) handle new messages
     staleTime: Infinity,
