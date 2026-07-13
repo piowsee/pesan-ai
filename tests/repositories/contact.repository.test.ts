@@ -83,7 +83,7 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
     const ownedWaba = await prisma.whatsappBusinessAccount.create({
       data: {
         wabaId: ownedWabaMetaId,
-        businessName: 'Owned Test WABA',
+        name: 'Owned Test WABA',
         systemUserToken: 'enc:test-owned-token',
         userId,
       },
@@ -93,7 +93,7 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
     const secondOwnedWaba = await prisma.whatsappBusinessAccount.create({
       data: {
         wabaId: secondOwnedWabaMetaId,
-        businessName: 'Second Owned Test WABA',
+        name: 'Second Owned Test WABA',
         systemUserToken: 'enc:test-owned-token-2',
         userId,
       },
@@ -133,7 +133,7 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
     const anotherUserWaba = await prisma.whatsappBusinessAccount.create({
       data: {
         wabaId: anotherUserWabaMetaId,
-        businessName: 'Other User WABA',
+        name: 'Other User WABA',
         systemUserToken: 'enc:test-token',
         userId: anotherUserId,
       },

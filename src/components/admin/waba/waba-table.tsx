@@ -60,7 +60,7 @@ export function WabaTable() {
       <TableRow>
         <TableCell className="font-medium">
           <div className="flex flex-col gap-1">
-            <span>{waba.businessName || waba.wabaId}</span>
+            <span>{waba.name || waba.wabaId}</span>
             <span className="text-xs text-muted-foreground">
               {phonesDisplay}
             </span>
@@ -87,7 +87,7 @@ export function WabaTable() {
         <TableCell>
           <AssignWebhookDialog
             wabaId={waba.id}
-            wabaName={waba.businessName || waba.wabaId}
+            wabaName={waba.name || waba.wabaId}
             currentWebhookId={waba.assignedWebhook?.id || null}
           />
         </TableCell>

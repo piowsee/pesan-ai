@@ -16,7 +16,7 @@ interface PhoneNumberWithWebhook {
 interface WabaWithRelations {
   id: string; // Internal DB WhatsappBusinessAccount.id.
   wabaId: string; // Meta WABA ID.
-  businessName: string | null;
+  name: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -36,7 +36,7 @@ export const WabaService = {
     return {
       id: waba.id,
       wabaId: waba.wabaId,
-      businessName: waba.businessName,
+      name: waba.name,
       status: waba.status,
       createdAt: waba.createdAt,
       updatedAt: waba.updatedAt,

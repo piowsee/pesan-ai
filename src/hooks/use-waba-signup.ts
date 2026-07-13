@@ -2,6 +2,7 @@
 
 import { extractJSendErrorMessage } from '@/lib/api-helper/error';
 import type { JSendResponse } from '@/lib/api-helper/jsend';
+import { type EmbeddedSignupSessionPayload } from '@/schemas/embedded-signup.schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { wabaKeys } from './use-wabas';
@@ -21,14 +22,10 @@ export class WabaSignupError extends Error {
 
 export interface WabaSignupPayload {
   code: string;
-  event: string;
-  wabaId: string | null;
-  sessionPayload: unknown;
+  sessionPayload: EmbeddedSignupSessionPayload;
 }
 
 type WabaSignupSuccessData = {
-  failedPhoneNumberIds: string[];
-  message: string | null;
   phoneNumbers: Array<{ id: string }>;
   wabaDbId: string;
   wabaId: string;

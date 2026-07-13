@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa6';
 
 function getWabaLabel(waba: Waba) {
-  return waba.businessName?.trim() || waba.wabaId;
+  return waba.name?.trim() || waba.wabaId;
 }
 
 export function WabaSwitcher({

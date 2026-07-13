@@ -5,6 +5,7 @@ import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { WabaSignupError, useWabaSignup } from '@/hooks/use-waba-signup';
 import { cn } from '@/lib/utils';
+import { type EmbeddedSignupSessionPayload } from '@/schemas/embedded-signup.schema';
 import { Link2, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -136,7 +137,7 @@ export function WabaEmbeddedSignupButton({
       handledCodeRef.current = null;
       setAuthorizationCode(code);
 
-      if (!sessionRef.current?.wabaId) {
+      if (!sessionRef.current?.data?.waba_id) {
         toast.message(t('waitingDetails'));
       }
     },
@@ -146,7 +147,7 @@ export function WabaEmbeddedSignupButton({
   useEffect(() => {
     if (
       !authorizationCode ||
-      !session?.wabaId ||
+      !session?.data?.waba_id ||
       !session.event?.startsWith('FINISH') ||
       signupMutation.isPending ||
       handledCodeRef.current === authorizationCode
@@ -155,33 +156,16 @@ export function WabaEmbeddedSignupButton({
     }
 
     handledCodeRef.current = authorizationCode;
-    const signupEvent = session.event;
 
     const submitData = async () => {
       try {
-        const result = await signupMutation.mutateAsync({
+        await signupMutation.mutateAsync({
           code: authorizationCode,
-          event: signupEvent,
-          wabaId: session.wabaId,
-          sessionPayload: session.payload ?? null,
+          sessionPayload: session as EmbeddedSignupSessionPayload,
         });
         setAuthorizationCode(null);
-        const message = result.data?.message;
-
-        if (message) {
-          toast.warning(message);
-        } else {
-          toast.success(t('success'));
-        }
-        setIsCompleting(true);
-        try {
-          await onSuccess?.();
-        } catch {
-          // The WABA connection already succeeded. A refresh failure should not
-          // turn that successful signup into an error state.
-        } finally {
-          setIsCompleting(false);
-        }
+        toast.success(t('success'));
+        onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
         setIsCompleting(false);

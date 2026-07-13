@@ -262,21 +262,16 @@ export const MetaFetchService = {
       throw new ApiError(message, 502);
     }
 
-    return { businessName: data.name ?? null };
+    return { name: data.name ?? null };
   },
 
   async fetchPhoneNumberDetails(params: {
-    wabaId: string;
+    phoneNumberId: string;
     token: string;
-  }): Promise<PhoneNumberMetaResponse[]> {
-    const { wabaId, token } = params;
-    const { data, error } = await fetchMeta<
-      | {
-          data?: PhoneNumberMetaResponse[];
-        }
-      | PhoneNumberMetaResponse[]
-    >(
-      `/${wabaId}/phone_numbers?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
+  }): Promise<PhoneNumberMetaResponse> {
+    const { phoneNumberId, token } = params;
+    const { data, error } = await fetchMeta<PhoneNumberMetaResponse>(
+      `/${phoneNumberId}?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
       {
         action: 'MetaFetchService.fetchPhoneNumberDetails',
         auth: getBearerAuth(token),
@@ -286,12 +281,12 @@ export const MetaFetchService = {
     if (error) {
       const message = this._extractMetaErrorMessage(
         error,
-        `Failed to fetch phone numbers for ${wabaId}`,
+        `Failed to fetch phone number details for ${phoneNumberId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    return Array.isArray(data) ? data : data.data || [];
+    return data;
   },
 
   async fetchBusinessProfile(params: {

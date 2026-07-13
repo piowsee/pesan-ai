@@ -8,9 +8,32 @@ export const EmbeddedSignupEventSchema = z.enum([
   'FINISH_GRANT_ONLY_API_ACCESS',
 ]);
 
+export const EmbeddedSignupSessionPayloadSchema = z
+  .object({
+    type: z.string().optional(),
+    event: z.string().optional(),
+    data: z
+      .object({
+        phone_number_id: z.string().optional(),
+        waba_id: z.string().optional(),
+        business_id: z.string().optional(),
+        ad_account_ids: z.array(z.string()).optional(),
+        page_ids: z.array(z.string()).optional(),
+        dataset_ids: z.array(z.string()).optional(),
+        catalog_ids: z.array(z.string()).optional(),
+        instagram_account_ids: z.array(z.string()).optional(),
+        waba_ids: z.array(z.string()).optional(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+export type EmbeddedSignupSessionPayload = z.infer<
+  typeof EmbeddedSignupSessionPayloadSchema
+>;
+
 export const EmbeddedSignupSchema = z.object({
   code: z.string().min(1),
-  event: EmbeddedSignupEventSchema,
-  wabaId: z.string(),
-  sessionPayload: z.unknown().optional(),
+  sessionPayload: EmbeddedSignupSessionPayloadSchema,
 });
