@@ -342,7 +342,7 @@ export const EmbeddedSignUpService = {
       wabaId, // Meta WABA ID.
       userId,
       systemUserToken: encrypt(systemUserToken),
-      businessName: wabaDetails.businessName,
+      name: wabaDetails.name,
     });
 
     logger.info('WABA upserted successfully', {

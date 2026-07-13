@@ -262,7 +262,7 @@ export const MetaFetchService = {
       throw new ApiError(message, 502);
     }
 
-    return { businessName: data.name ?? null };
+    return { name: data.name ?? null };
   },
 
   async fetchPhoneNumberDetails(params: {

@@ -2,9 +2,7 @@
 CREATE TABLE "whatsapp_business_account" (
     "id" TEXT NOT NULL,
     "wabaId" TEXT NOT NULL,
-    "businessName" TEXT,
-    "businessAddress" TEXT,
-    "businessDescription" TEXT,
+    "name" TEXT,
     "systemUserToken" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'active',
     "qualityRating" TEXT,

@@ -143,7 +143,7 @@ function PhoneNumbersMenu({ waba }: { waba: Waba }) {
         </DropdownMenuContent>
       </DropdownMenu>
       <AddPhoneNumberDialog
-        businessName={waba.businessName ?? null}
+        name={waba.name ?? null}
         open={isAddPhoneOpen}
         trigger={null}
         wabaId={waba.wabaId}
@@ -170,7 +170,7 @@ function WabaAccountRow({ waba }: { waba: Waba }) {
     <div className="grid gap-4 border-t border-border px-1 py-4 first:border-t-0 lg:grid-cols-4 lg:items-center lg:gap-0">
       <div className="min-w-0">
         <p className="truncate font-semibold text-brand">
-          {waba.businessName || t('row.unnamed')}
+          {waba.name || t('row.unnamed')}
         </p>
         <Button
           variant="unstyled"

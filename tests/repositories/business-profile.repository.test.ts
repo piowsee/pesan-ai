@@ -37,7 +37,7 @@ describe('BusinessProfileRepository Integration', { tags: ['db'] }, () => {
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:test-token',
-        businessName: 'Business Profile Test WABA',
+        name: 'Business Profile Test WABA',
         status: 'active',
       },
     });

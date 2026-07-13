@@ -90,9 +90,7 @@ model Verification {
 model WhatsappBusinessAccount {
   id                  String   @id @default(cuid())
   wabaId              String   @unique // Meta WABA ID — already indexed via @unique
-  businessName        String?
-  businessAddress     String?
-  businessDescription String?
+  name                String?
   systemUserToken     String
   status              String   @default("active") // active, disconnected, suspended
   qualityRating       String?  // GREEN, YELLOW, RED

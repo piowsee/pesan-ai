@@ -22,7 +22,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 function getWabaLabel(waba: Waba) {
-  return waba.businessName?.trim() || waba.wabaId;
+  return waba.name?.trim() || waba.wabaId;
 }
 
 export function WabaSwitcher({

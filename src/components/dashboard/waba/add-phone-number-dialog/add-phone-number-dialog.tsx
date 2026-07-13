@@ -12,7 +12,7 @@ import { PhoneNumberOtpStep } from './phone-number-otp-step';
 type Step = 'input' | 'otp';
 
 type AddPhoneNumberDialogProps = {
-  businessName: string | null;
+  name: string | null;
   wabaId: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -20,7 +20,7 @@ type AddPhoneNumberDialogProps = {
 };
 
 export function AddPhoneNumberDialog({
-  businessName,
+  name,
   wabaId,
   open,
   onOpenChange,
@@ -79,7 +79,7 @@ export function AddPhoneNumberDialog({
         {step === 'input' ? (
           <PhoneNumberInputStep
             wabaId={wabaId}
-            businessName={businessName}
+            name={name}
             onSuccess={handleInputSuccess}
             onCancel={() => handleOpenChange(false)}
           />

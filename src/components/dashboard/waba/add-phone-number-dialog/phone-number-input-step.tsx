@@ -45,14 +45,14 @@ type AddPhoneNumberFormValues = {
 
 interface PhoneNumberInputStepProps {
   wabaId: string;
-  businessName: string | null;
+  name: string | null;
   onSuccess: (phoneNumberId: string) => void;
   onCancel: () => void;
 }
 
 export function PhoneNumberInputStep({
   wabaId,
-  businessName,
+  name,
   onSuccess,
   onCancel,
 }: PhoneNumberInputStepProps) {
@@ -65,7 +65,7 @@ export function PhoneNumberInputStep({
     resolver: zodResolver(addPhoneNumberSchema(validationErrors)),
     defaultValues: {
       fullPhoneNumber: '',
-      name: businessName || '',
+      name: name || '',
     },
   });
 
@@ -114,7 +114,7 @@ export function PhoneNumberInputStep({
             <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
               {t('descriptionPrefix')}
               <span className="font-semibold">
-                {businessName || t('descriptionFallback')}
+                {name || t('descriptionFallback')}
               </span>
               .
             </DialogDescription>

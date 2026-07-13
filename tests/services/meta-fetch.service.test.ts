@@ -327,7 +327,7 @@ describe('MetaFetchService', { tags: ['backend'] }, () => {
           token: 'sys-user-token-xyz',
         }),
       ).resolves.toEqual({
-        businessName: 'Test Salon',
+        name: 'Test Salon',
       });
     });
 

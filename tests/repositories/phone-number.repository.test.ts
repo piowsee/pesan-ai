@@ -61,7 +61,7 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
       where: {
         OR: [
           { wabaId: 'test-phone-repo-waba-999' },
-          { businessName: 'Test Salon Phone Repo' },
+          { name: 'Test Salon Phone Repo' },
         ],
       },
     });
@@ -127,7 +127,7 @@ describe('PhoneNumberRepository Integration', { tags: ['db'] }, () => {
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:tok',
-        businessName: 'Test Salon Phone Repo',
+        name: 'Test Salon Phone Repo',
       });
       wabaDbId = waba.id;
     });

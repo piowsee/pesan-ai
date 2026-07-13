@@ -121,7 +121,7 @@ export const WabaRepository = {
     wabaId: string;
     userId: string;
     systemUserToken: string;
-    businessName?: string | null;
+    name?: string | null;
   }) {
     return prisma.$transaction(async (tx) => {
       const existingWaba = await tx.whatsappBusinessAccount.findUnique({
@@ -142,13 +142,13 @@ export const WabaRepository = {
           wabaId: data.wabaId,
           userId: data.userId,
           systemUserToken: data.systemUserToken,
-          businessName: data.businessName ?? null,
+          name: data.name ?? null,
           status: 'active',
         },
         update: {
           systemUserToken: data.systemUserToken,
           status: 'active',
-          businessName: data.businessName ?? undefined,
+          name: data.name ?? undefined,
         },
       });
     });

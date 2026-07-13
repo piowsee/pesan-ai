@@ -153,13 +153,11 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
     wabaId: WABA_ID,
     userId: USER_ID,
     systemUserToken: 'enc:fake-token',
-    businessName: 'Test Salon',
+    name: 'Test Salon',
     status: 'active',
     createdAt: new Date(),
     updatedAt: new Date(),
     qualityRating: null,
-    businessAddress: null,
-    businessDescription: null,
   };
 
   const MOCK_PHONE_DBS = META_PHONE_NUMBERS.map((phoneNumber, index) => ({
@@ -395,7 +393,7 @@ describe('EmbeddedSignUpService', { tags: ['backend'] }, () => {
           wabaId: WABA_ID,
           userId: USER_ID,
           systemUserToken: 'sys-user-token-xyz',
-          businessName: 'Test Salon',
+          name: 'Test Salon',
         }),
       );
     });
