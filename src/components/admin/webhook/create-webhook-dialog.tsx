@@ -13,15 +13,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateWebhook } from '@/hooks/use-webhooks';
+import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus, Webhook } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
-// ─── Component ───────────────────────────────────────────────────────
 
 export function CreateWebhookDialog() {
   const t = useTranslations('Admin.CreateWebhookDialog');
@@ -71,93 +70,131 @@ export function CreateWebhookDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button variant="brand" size="lg">
           <Plus data-icon="inline-start" />
           {t('trigger')}
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>{t('description')}</DialogDescription>
+      <DialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
+        <DialogHeader className="px-5 pt-5 pb-4 pr-12">
+          <div className="flex items-start gap-3">
+            <Webhook className="mt-0.5 size-7 shrink-0 text-brand" />
+            <div className="min-w-0">
+              <DialogTitle className="text-base font-semibold text-brand">
+                {t('title')}
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                {t('description')}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
+
+        <div className="px-5">
+          <div className="h-px bg-brand/20" />
+        </div>
 
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-4 px-5 py-5"
         >
-          {/* Name Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-name">{t('labels.name')}</Label>
+            <Label htmlFor="webhook-name" className="text-brand">
+              {t('labels.name')}
+            </Label>
             <Input
               id="webhook-name"
               placeholder={t('placeholders.name')}
               {...form.register('name')}
               aria-invalid={!!form.formState.errors.name}
+              className={cn(
+                form.formState.errors.name &&
+                  'border-destructive focus-visible:ring-destructive/20',
+              )}
             />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">
+              <p className="text-xs font-medium text-destructive">
                 {form.formState.errors.name.message}
               </p>
             )}
           </div>
 
-          {/* URL Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-url">{t('labels.webhookUrl')}</Label>
+            <Label htmlFor="webhook-url" className="text-brand">
+              {t('labels.webhookUrl')}
+            </Label>
             <Input
               id="webhook-url"
               type="url"
               placeholder={t('placeholders.webhookUrl')}
               {...form.register('webhookUrl')}
               aria-invalid={!!form.formState.errors.webhookUrl}
+              className={cn(
+                form.formState.errors.webhookUrl &&
+                  'border-destructive focus-visible:ring-destructive/20',
+              )}
             />
             {form.formState.errors.webhookUrl && (
-              <p className="text-sm text-destructive">
+              <p className="text-xs font-medium text-destructive">
                 {form.formState.errors.webhookUrl.message}
               </p>
             )}
           </div>
 
-          {/* Passphrase Field */}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="webhook-passphrase">{t('labels.passphrase')}</Label>
+            <Label htmlFor="webhook-passphrase" className="text-brand">
+              {t('labels.passphrase')}
+            </Label>
             <Input
               id="webhook-passphrase"
               type="password"
               placeholder={t('placeholders.passphrase')}
               {...form.register('passphrase')}
               aria-invalid={!!form.formState.errors.passphrase}
+              className={cn(
+                form.formState.errors.passphrase &&
+                  'border-destructive focus-visible:ring-destructive/20',
+              )}
             />
             {form.formState.errors.passphrase && (
-              <p className="text-sm text-destructive">
+              <p className="text-xs font-medium text-destructive">
                 {form.formState.errors.passphrase.message}
               </p>
             )}
           </div>
 
-          {/* Server Error */}
           {createWebhook.isError && (
-            <p className="text-sm text-destructive">
+            <p className="text-xs font-medium text-destructive">
               {createWebhook.error instanceof Error
                 ? createWebhook.error.message
                 : t('messages.errorFallback')}
             </p>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="mx-0 mb-0 mt-2 gap-2 border-t border-brand/20 bg-transparent p-0 pt-4">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
+              className="text-brand hover:bg-primary/5 hover:text-brand"
               onClick={() => handleOpenChange(false)}
+              disabled={createWebhook.isPending}
             >
               {t('actions.cancel')}
             </Button>
-            <Button type="submit" disabled={createWebhook.isPending}>
-              {createWebhook.isPending
-                ? t('actions.creating')
-                : t('actions.submit')}
+            <Button
+              type="submit"
+              variant="brand"
+              disabled={createWebhook.isPending}
+            >
+              {createWebhook.isPending ? (
+                <>
+                  <Loader2 className="animate-spin" data-icon="inline-start" />
+                  {t('actions.creating')}
+                </>
+              ) : (
+                t('actions.submit')
+              )}
             </Button>
           </DialogFooter>
         </form>

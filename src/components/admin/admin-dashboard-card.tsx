@@ -1,6 +1,5 @@
-import { Button } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
-import { CircleUser, UserPlus, Webhook } from 'lucide-react';
+import { ArrowUpRight, CircleUser, UserPlus, Webhook } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export function AdminDashboardCard() {
@@ -28,35 +27,41 @@ export function AdminDashboardCard() {
   ] as const;
 
   return (
-    <div className="w-full max-w-lg">
-      <div className="mb-10 flex flex-col gap-2 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+    <div className="w-full max-w-5xl">
+      <section className="mb-10">
+        <h1 className="text-2xl font-semibold leading-snug tracking-tight text-brand sm:text-3xl">
           {t('title')}
         </h1>
-        <p className="text-sm leading-6 text-muted-foreground">
+        <p className="mt-1 max-w-2xl text-[0.9rem] leading-relaxed text-brand">
           {t('description')}
         </p>
-      </div>
+      </section>
 
-      <nav className="flex flex-col gap-3" aria-label="Admin navigation">
+      <nav
+        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        aria-label="Admin navigation"
+      >
         {ADMIN_NAVIGATION.map(({ href, label, description, icon: Icon }) => (
-          <Link key={href} href={href} className="group">
-            <Button
-              variant="outline"
-              className="h-auto w-full cursor-pointer justify-start gap-4 rounded-xl border-border/60 px-5 py-5 shadow-sm transition-all hover:border-brand/40 hover:bg-accent/60 hover:shadow-md"
-            >
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand/15">
-                <Icon className="size-5" />
-              </div>
-              <div className="flex flex-col items-start gap-0.5 text-left">
-                <span className="text-sm font-semibold text-foreground">
+          <Link
+            key={href}
+            href={href}
+            className="group flex min-h-44 flex-col justify-between rounded-sm border border-brand/8 bg-brand/5 px-5 py-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="mb-6 flex items-start justify-between">
+              <Icon className="size-6 text-brand/50" />
+            </div>
+
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-brand/60">
                   {label}
-                </span>
-                <span className="text-xs text-muted-foreground">
+                </p>
+                <h2 className="max-w-sm text-lg font-semibold leading-snug text-brand">
                   {description}
-                </span>
+                </h2>
               </div>
-            </Button>
+              <ArrowUpRight className="mb-0.5 size-5 shrink-0 text-brand/35 transition-colors duration-200 group-hover:text-brand" />
+            </div>
           </Link>
         ))}
       </nav>

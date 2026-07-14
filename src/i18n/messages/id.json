@@ -739,6 +739,7 @@
       }
     },
     "AdminDashboardCard": {
+      "eyebrow": "Admin",
       "title": "Dashboard Admin",
       "description": "Pilih menu di bawah untuk mengelola sistem.",
       "navigation": {
@@ -758,7 +759,12 @@
     },
     "Header": {
       "logoAlt": "pesan.ai logo",
-      "brandName": "pesan-ai"
+      "brandName": "pesan.ai",
+      "navigation": {
+        "user": "Pengguna",
+        "webhook": "Webhook",
+        "waba": "WABA"
+      }
     },
     "CreateUserDialog": {
       "trigger": "Buat Pengguna",

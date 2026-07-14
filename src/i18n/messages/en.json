@@ -739,6 +739,7 @@
       }
     },
     "AdminDashboardCard": {
+      "eyebrow": "Admin",
       "title": "Admin Dashboard",
       "description": "Select a menu below to manage the system.",
       "navigation": {
@@ -758,7 +759,12 @@
     },
     "Header": {
       "logoAlt": "pesan.ai logo",
-      "brandName": "pesan-ai"
+      "brandName": "pesan.ai",
+      "navigation": {
+        "user": "Users",
+        "webhook": "Webhook",
+        "waba": "WABA"
+      }
     },
     "CreateUserDialog": {
       "trigger": "Create User",
