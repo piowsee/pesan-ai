@@ -110,6 +110,12 @@
     "brandPanel": {
       "headline": "Boost your business efficiency through WhatsApp chat automation with AI support."
     },
+    "panelSwitch": {
+      "contactPrompt": "Need an account?",
+      "contactAction": "Contact us",
+      "loginPrompt": "Already have an account?",
+      "loginAction": "Login here"
+    },
     "pages": {
       "login": {
         "title": "Login to Your Account",

@@ -110,6 +110,12 @@
     "brandPanel": {
       "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI."
     },
+    "panelSwitch": {
+      "contactPrompt": "Belum punya akun?",
+      "contactAction": "Hubungi kami",
+      "loginPrompt": "Sudah memiliki akun?",
+      "loginAction": "Login di sini"
+    },
     "pages": {
       "login": {
         "title": "Masuk ke Akun Anda",

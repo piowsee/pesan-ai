@@ -31,10 +31,8 @@ export default async function LocalizedContactUsPage({ params }: Props) {
   const t = await getTranslations('Auth.pages.contactUs');
 
   return (
-    <AuthCard
-      title={t('title')}
-      subtitle={t('subtitle')}
-      FormComponent={ContactUsForm}
-    />
+    <AuthCard title={t('title')} subtitle={t('subtitle')} formKey="contact-us">
+      <ContactUsForm />
+    </AuthCard>
   );
 }

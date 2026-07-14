@@ -17,7 +17,6 @@ import { z } from 'zod';
 type LoginFormLabels = {
   password: string;
   forgotPassword: string;
-  contactUs: string;
   agreePrefix: string;
   terms: string;
   and: string;
@@ -191,16 +190,7 @@ export function LoginForm() {
         {isPending ? labels.submitting : labels.submit}
       </Button>
 
-      <Button
-        asChild
-        variant="outline"
-        size="lg"
-        className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
-      >
-        <Link href="/contact-us">{labels.contactUs}</Link>
-      </Button>
-
-      <p className="text-center text-xs text-muted-foreground mt-2">
+      <p className="mt-2 text-center text-sm leading-6 text-muted-foreground">
         {labels.agreePrefix}{' '}
         <Link
           href="/terms"

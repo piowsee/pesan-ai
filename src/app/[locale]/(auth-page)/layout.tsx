@@ -1,4 +1,5 @@
 import { AuthBrandPanel } from '@/components/auth/auth-brand-panel';
+import { AuthPanelShell } from '@/components/auth/auth-panel-shell';
 import { routing } from '@/i18n/routing';
 import { hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
@@ -27,8 +28,8 @@ export default async function AuthPageLayout({ children, params }: Props) {
       <div className="relative grid min-h-svh w-full lg:grid-cols-2">
         <AuthBrandPanel />
 
-        <section className="relative flex min-h-svh items-center justify-center border-border/70 bg-card/95 px-6 py-10 sm:px-10 lg:border-l lg:px-14 xl:px-20">
-          {children}
+        <section className="relative flex min-h-svh items-center justify-center border-border/70 bg-card/95 px-6 sm:px-10 lg:border-l lg:px-14 xl:px-20">
+          <AuthPanelShell>{children}</AuthPanelShell>
         </section>
       </div>
     </main>
