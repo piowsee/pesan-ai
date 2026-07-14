@@ -1,9 +1,10 @@
 'use client';
 
+import { AuthTransitionLink } from '@/components/auth/auth-transition-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link, getPathname } from '@/i18n/navigation';
+import { getPathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
@@ -98,7 +99,9 @@ export function ForgotPasswordForm() {
           </p>
         </div>
         <Button asChild variant="brand" size="lg" className="h-10 w-full">
-          <Link href="/login">{labels.backToLogin}</Link>
+          <AuthTransitionLink href="/login">
+            {labels.backToLogin}
+          </AuthTransitionLink>
         </Button>
       </div>
     );
@@ -153,7 +156,9 @@ export function ForgotPasswordForm() {
         size="lg"
         className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
       >
-        <Link href="/login">{labels.backToLogin}</Link>
+        <AuthTransitionLink href="/login">
+          {labels.backToLogin}
+        </AuthTransitionLink>
       </Button>
     </form>
   );

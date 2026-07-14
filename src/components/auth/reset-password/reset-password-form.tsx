@@ -1,9 +1,9 @@
 'use client';
 
+import { AuthTransitionLink } from '@/components/auth/auth-transition-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -123,7 +123,9 @@ export function ResetPasswordForm() {
           </p>
         </div>
         <Button asChild variant="brand" size="lg" className="h-10 w-full">
-          <Link href="/forgot-password">{labels.requestNewLink}</Link>
+          <AuthTransitionLink href="/forgot-password">
+            {labels.requestNewLink}
+          </AuthTransitionLink>
         </Button>
       </div>
     );
@@ -141,7 +143,9 @@ export function ResetPasswordForm() {
           </p>
         </div>
         <Button asChild variant="brand" size="lg" className="h-10 w-full">
-          <Link href="/login">{labels.backToLogin}</Link>
+          <AuthTransitionLink href="/login">
+            {labels.backToLogin}
+          </AuthTransitionLink>
         </Button>
       </div>
     );
@@ -249,7 +253,9 @@ export function ResetPasswordForm() {
       </Button>
 
       <Button asChild variant="ghost" size="lg" className="h-10 w-full">
-        <Link href="/login">{labels.backToLogin}</Link>
+        <AuthTransitionLink href="/login">
+          {labels.backToLogin}
+        </AuthTransitionLink>
       </Button>
     </form>
   );

@@ -22,7 +22,9 @@ export default async function LocalizedForgotPasswordPage({ params }: Props) {
     <AuthCard
       title={t('title')}
       subtitle={t('subtitle')}
-      FormComponent={ForgotPasswordForm}
-    />
+      formKey="forgot-password"
+    >
+      <ForgotPasswordForm />
+    </AuthCard>
   );
 }

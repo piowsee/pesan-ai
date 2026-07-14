@@ -28,6 +28,14 @@ export function AuthTransitionLink({ href, onClick, target, ...props }: Props) {
 
     event.preventDefault();
 
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+
+    window.dispatchEvent(
+      new CustomEvent('auth-panel-leave', { detail: { href } }),
+    );
+
     if (href === '/login') {
       try {
         const session = await authClient.getSession({
@@ -50,17 +58,11 @@ export function AuthTransitionLink({ href, onClick, target, ...props }: Props) {
       }
     }
 
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches;
-
-    window.dispatchEvent(new Event('auth-panel-leave'));
-
     window.setTimeout(
       () => {
         router.push(href);
       },
-      prefersReducedMotion ? 0 : 160,
+      prefersReducedMotion ? 0 : 150,
     );
   }
 

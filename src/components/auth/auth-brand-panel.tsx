@@ -16,19 +16,27 @@ export function AuthBrandPanel() {
   const [isPanelVisible, setIsPanelVisible] = useState(true);
 
   const isContactPage = pathname.endsWith('/contact-us');
-  const panelKey = isContactPage ? 'contact-us' : pathname;
+  const panelKey = isContactPage ? 'contact-us' : 'default';
 
   const transition = useMemo(
     () => ({
-      opacity: prefersReducedMotion ? '0ms' : '180ms',
-      filter: prefersReducedMotion ? '0ms' : '280ms',
+      opacity: prefersReducedMotion ? '0ms' : '100ms',
+      filter: prefersReducedMotion ? '0ms' : '140ms',
     }),
     [prefersReducedMotion],
   );
 
   useEffect(() => {
-    function handleLeave() {
-      setIsPanelVisible(false);
+    function handleLeave(event: Event) {
+      const customEvent = event as CustomEvent<{ href?: string }>;
+      const targetHref = customEvent.detail?.href;
+      const targetIsContact = targetHref
+        ? targetHref.endsWith('/contact-us')
+        : false;
+
+      if (targetIsContact !== isContactPage) {
+        setIsPanelVisible(false);
+      }
     }
 
     window.addEventListener('auth-panel-leave', handleLeave);
@@ -36,7 +44,7 @@ export function AuthBrandPanel() {
     return () => {
       window.removeEventListener('auth-panel-leave', handleLeave);
     };
-  }, []);
+  }, [isContactPage]);
 
   useEffect(() => {
     const animationFrame = window.requestAnimationFrame(() => {
@@ -46,7 +54,7 @@ export function AuthBrandPanel() {
     return () => {
       window.cancelAnimationFrame(animationFrame);
     };
-  }, [pathname, prefersReducedMotion]);
+  }, [pathname]);
 
   return (
     <section className="relative hidden min-h-svh overflow-hidden lg:flex">

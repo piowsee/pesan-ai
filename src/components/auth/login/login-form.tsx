@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthTransitionLink } from '@/components/auth/auth-transition-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -166,12 +167,12 @@ export function LoginForm() {
           </p>
         )}
         <div className="flex justify-end">
-          <Link
+          <AuthTransitionLink
             href="/forgot-password"
             className="text-sm font-medium text-brand underline-offset-4 transition-colors hover:underline"
           >
             {labels.forgotPassword}
-          </Link>
+          </AuthTransitionLink>
         </div>
       </div>
 

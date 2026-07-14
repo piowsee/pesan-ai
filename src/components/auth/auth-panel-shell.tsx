@@ -42,31 +42,43 @@ export function AuthPanelShell({ children }: Props) {
 
   const transition = useMemo(
     () => ({
-      opacity: prefersReducedMotion ? '0ms' : '180ms',
-      filter: prefersReducedMotion ? '0ms' : '280ms',
+      opacity: prefersReducedMotion ? '0ms' : '150ms',
+      filter: prefersReducedMotion ? '0ms' : '200ms',
     }),
     [prefersReducedMotion],
   );
 
   useEffect(() => {
+    let timeoutId: number;
+
     function handleLeave() {
-      setIsPanelVisible(false);
+      if (prefersReducedMotion) {
+        setIsPanelVisible(false);
+      } else {
+        timeoutId = window.setTimeout(() => {
+          setIsPanelVisible(false);
+        }, 40);
+      }
     }
 
     window.addEventListener('auth-panel-leave', handleLeave);
 
     return () => {
       window.removeEventListener('auth-panel-leave', handleLeave);
+      window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   useEffect(() => {
-    const animationFrame = window.requestAnimationFrame(() => {
-      setIsPanelVisible(true);
-    });
+    const timeoutId = window.setTimeout(
+      () => {
+        setIsPanelVisible(true);
+      },
+      prefersReducedMotion ? 0 : 40,
+    );
 
     return () => {
-      window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(timeoutId);
     };
   }, [pathname, prefersReducedMotion]);
 
