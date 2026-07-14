@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
@@ -12,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 type LoginFormLabels = {
@@ -45,16 +44,12 @@ function createLoginSchema(errors: LoginFormErrors) {
       .string()
       .min(1, errors.passwordRequired)
       .min(8, errors.passwordLength),
-    terms: z.boolean().refine((val) => val === true, {
-      message: errors.termsRequired,
-    }),
   });
 }
 
 type LoginFormValues = {
   email: string;
   password: string;
-  terms: boolean;
 };
 
 export function LoginForm() {
@@ -75,7 +70,6 @@ export function LoginForm() {
     defaultValues: {
       email: '',
       password: '',
-      terms: false,
     },
   });
 
@@ -182,53 +176,6 @@ export function LoginForm() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <div className="flex items-start gap-3">
-          <Controller
-            control={form.control}
-            name="terms"
-            render={({ field }) => (
-              <Checkbox
-                id="terms"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className="mt-1 shrink-0 cursor-pointer"
-              />
-            )}
-          />
-          <Label
-            htmlFor="terms"
-            className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground select-none"
-          >
-            {labels.agreePrefix}{' '}
-            <Link
-              href="/terms"
-              className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {labels.terms}
-            </Link>{' '}
-            {labels.and}{' '}
-            <Link
-              href="/privacy"
-              className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {labels.privacy}
-            </Link>
-            .
-          </Label>
-        </div>
-
-        {form.formState.errors.terms && (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.terms.message}
-          </p>
-        )}
-      </div>
-
       {formError && <p className="text-xs text-destructive">{formError}</p>}
 
       <Button
@@ -252,6 +199,28 @@ export function LoginForm() {
       >
         <Link href="/contact-us">{labels.contactUs}</Link>
       </Button>
+
+      <p className="text-center text-xs text-muted-foreground mt-2">
+        {labels.agreePrefix}{' '}
+        <Link
+          href="/terms"
+          className="font-semibold text-brand underline-offset-4 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {labels.terms}
+        </Link>{' '}
+        {labels.and}{' '}
+        <Link
+          href="/privacy"
+          className="font-semibold text-brand underline-offset-4 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {labels.privacy}
+        </Link>
+        .
+      </p>
     </form>
   );
 }
