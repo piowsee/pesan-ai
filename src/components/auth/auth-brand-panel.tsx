@@ -1,12 +1,52 @@
+'use client';
+
 import { MetaTechPartner } from '@/components/auth/meta-tech-partner';
-import { Link } from '@/i18n/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
 import { Mail } from 'lucide-react';
+import { useReducedMotion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import { FaWhatsapp } from 'react-icons/fa';
 
 export function AuthBrandPanel() {
   const t = useTranslations('Auth.brandPanel');
+  const pathname = usePathname();
+  const prefersReducedMotion = useReducedMotion();
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
+
+  const isContactPage = pathname.endsWith('/contact-us');
+  const panelKey = isContactPage ? 'contact-us' : pathname;
+
+  const transition = useMemo(
+    () => ({
+      opacity: prefersReducedMotion ? '0ms' : '180ms',
+      filter: prefersReducedMotion ? '0ms' : '280ms',
+    }),
+    [prefersReducedMotion],
+  );
+
+  useEffect(() => {
+    function handleLeave() {
+      setIsPanelVisible(false);
+    }
+
+    window.addEventListener('auth-panel-leave', handleLeave);
+
+    return () => {
+      window.removeEventListener('auth-panel-leave', handleLeave);
+    };
+  }, []);
+
+  useEffect(() => {
+    const animationFrame = window.requestAnimationFrame(() => {
+      setIsPanelVisible(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [pathname, prefersReducedMotion]);
 
   return (
     <section className="relative hidden min-h-svh overflow-hidden lg:flex">
@@ -39,9 +79,18 @@ export function AuthBrandPanel() {
           </span>
         </Link>
 
-        <div className="my-auto max-w-2xl space-y-6">
+        <div
+          key={panelKey}
+          className="my-auto max-w-2xl space-y-6"
+          style={{
+            opacity: isPanelVisible ? 1 : 0,
+            filter: isPanelVisible ? 'blur(0px)' : 'blur(12px)',
+            transition: `opacity ${transition.opacity} cubic-bezier(0.22, 1, 0.36, 1), filter ${transition.filter} cubic-bezier(0.22, 1, 0.36, 1)`,
+            willChange: prefersReducedMotion ? 'auto' : 'opacity, filter',
+          }}
+        >
           <p className="text-[38px] leading-[1.3] font-bold text-white">
-            {t('headline')}
+            {isContactPage ? t('contactHeadline') : t('headline')}
           </p>
           <MetaTechPartner />
         </div>

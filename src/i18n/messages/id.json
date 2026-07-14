@@ -108,7 +108,8 @@
   },
   "Auth": {
     "brandPanel": {
-      "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI."
+      "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI.",
+      "contactHeadline": "Hubungi tim kami untuk menemukan solusi otomatisasi WhatsApp terbaik bagi bisnis Anda."
     },
     "panelSwitch": {
       "contactPrompt": "Belum punya akun?",
