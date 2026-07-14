@@ -61,8 +61,8 @@ export function WabaTable() {
       <TableRow className="hover:bg-transparent">
         <TableCell className="py-4 font-semibold text-brand">
           <div className="flex flex-col gap-1">
-            <span>{waba.businessName || waba.wabaId}</span>
-            <span className="text-xs font-medium text-brand/70">
+            <span>{waba.name || waba.wabaId}</span>
+            <span className="text-xs text-muted-foreground">
               {phonesDisplay}
             </span>
           </div>
@@ -90,7 +90,7 @@ export function WabaTable() {
         <TableCell className="py-4">
           <AssignWebhookDialog
             wabaId={waba.id}
-            wabaName={waba.businessName || waba.wabaId}
+            wabaName={waba.name || waba.wabaId}
             currentWebhookId={waba.assignedWebhook?.id || null}
           />
         </TableCell>

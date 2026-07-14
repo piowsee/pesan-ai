@@ -1,13 +1,5 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { SearchIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -17,17 +9,11 @@ export function ChatSidebarToolbar({
   onSearchChange,
   filter,
   onFilterChange,
-  phoneNumbers,
-  selectedPhoneNumberId,
-  onPhoneNumberChange,
 }: {
   searchValue: string;
   onSearchChange: (value: string) => void;
   filter: ChatSidebarFilter;
   onFilterChange: (value: ChatSidebarFilter) => void;
-  phoneNumbers: Array<{ id: string; displayPhoneNumber: string }>;
-  selectedPhoneNumberId?: string;
-  onPhoneNumberChange: (value?: string) => void;
 }) {
   const t = useTranslations('Chat.sidebar');
   return (
@@ -79,27 +65,6 @@ export function ChatSidebarToolbar({
         >
           {t('filterBot')}
         </Button>
-
-        <Select
-          value={selectedPhoneNumberId ?? 'all'}
-          onValueChange={(value: string) =>
-            onPhoneNumberChange(value === 'all' ? undefined : value)
-          }
-        >
-          <SelectTrigger className="ml-auto h-8 w-42.5 cursor-pointer gap-2 rounded-full border border-brand/20 bg-brand/5 px-3 text-brand transition-colors hover:bg-brand/10 [&>span]:block [&>span]:truncate">
-            <SelectValue placeholder={t('allPhones')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="all">{t('allPhones')}</SelectItem>
-              {phoneNumbers.map((phoneNumber) => (
-                <SelectItem key={phoneNumber.id} value={phoneNumber.id}>
-                  {phoneNumber.displayPhoneNumber}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );

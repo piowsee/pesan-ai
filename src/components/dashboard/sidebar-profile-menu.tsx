@@ -1,12 +1,19 @@
 'use client';
 
-import { PasswordSettingsDialog } from '@/components/dashboard/password-settings-dialog';
+import {
+  AccountSettingsDialog,
+  type AccountSettingsTab,
+} from '@/components/dashboard/account-settings-dialog';
 import { ProfileSettingsDialog } from '@/components/dashboard/profile-settings-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
@@ -18,7 +25,7 @@ import {
 import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
-import { LogOut, Settings, UserRound } from 'lucide-react';
+import { Globe, LogOut, Settings, ShieldCheck, UserRound } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -26,13 +33,21 @@ export function SidebarProfileMenu({ user }: { user: User }) {
   const router = useRouter();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<AccountSettingsTab>('general');
   const t = useTranslations('ProfileMenu');
 
   const handleSignOut = async () => {
     await authClient.signOut();
     router.push('/login');
+  };
+
+  const openSettings = (tab: AccountSettingsTab) => {
+    setIsMenuOpen(false);
+    setSettingsTab(tab);
+    setIsSettingsOpen(true);
   };
 
   const triggerButton = (
@@ -54,7 +69,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
         {isCollapsed ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -94,20 +109,49 @@ export function SidebarProfileMenu({ user }: { user: User }) {
           </div>
 
           <div className="p-2">
-            <DropdownMenuItem
-              className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
-              onSelect={() => setIsProfileOpen(true)}
-            >
-              <UserRound />
-              <span>{t('profile')}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
-              onSelect={() => setIsPasswordOpen(true)}
-            >
-              <Settings />
-              <span>{t('settings')}</span>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                onSelect={() => {
+                  setIsMenuOpen(false);
+                  setIsProfileOpen(true);
+                }}
+              >
+                <UserRound />
+                <span>{t('profile')}</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger
+                  className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand data-open:bg-primary/5 data-open:text-brand"
+                  onClick={() => openSettings('general')}
+                >
+                  <Settings />
+                  <span>{t('settings')}</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent
+                  sideOffset={8}
+                  className="relative w-44 rounded-lg border border-brand/20 p-1.5 shadow-lg before:absolute before:top-0 before:-left-2 before:h-full before:w-2 before:content-['']"
+                >
+                  <DropdownMenuGroup className="flex flex-col gap-1">
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                      onSelect={() => openSettings('general')}
+                    >
+                      <Globe />
+                      <span>{t('general')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                      onSelect={() => openSettings('security')}
+                    >
+                      <ShieldCheck />
+                      <span>{t('security')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuGroup>
           </div>
 
           <div className="px-4">
@@ -133,9 +177,11 @@ export function SidebarProfileMenu({ user }: { user: User }) {
         user={user}
       />
 
-      <PasswordSettingsDialog
-        open={isPasswordOpen}
-        onOpenChange={setIsPasswordOpen}
+      <AccountSettingsDialog
+        activeTab={settingsTab}
+        onActiveTabChange={setSettingsTab}
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
         user={user}
       />
     </>

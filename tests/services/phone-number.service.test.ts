@@ -38,18 +38,16 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
       undefined,
     );
 
-    vi.spyOn(MetaFetchService, 'fetchPhoneNumberDetails').mockResolvedValue([
-      {
-        id: PHONE_NUMBER_ID,
-        display_phone_number: '+6281234567890',
-        verified_name: 'Test Bot',
-        code_verification_status: 'VERIFIED',
-        quality_rating: 'GREEN',
-      },
-    ]);
+    vi.spyOn(MetaFetchService, 'fetchPhoneNumberDetails').mockResolvedValue({
+      id: PHONE_NUMBER_ID,
+      display_phone_number: '+6281234567890',
+      verified_name: 'Test Bot',
+      code_verification_status: 'VERIFIED',
+      quality_rating: 'GREEN',
+    } as never);
 
-    vi.spyOn(PhoneNumberRepository, 'upsertPhoneNumbers').mockResolvedValue(
-      [] as never,
+    vi.spyOn(PhoneNumberRepository, 'upsertPhoneNumber').mockResolvedValue(
+      {} as never,
     );
 
     vi.spyOn(MetaFetchService, 'createPhoneNumber').mockResolvedValue({
@@ -135,18 +133,16 @@ describe('PhoneNumberService', { tags: ['backend'] }, () => {
         token: 'sys-user-token',
         pin: '123456',
       });
-      expect(PhoneNumberRepository.upsertPhoneNumbers).toHaveBeenCalledWith({
+      expect(PhoneNumberRepository.upsertPhoneNumber).toHaveBeenCalledWith({
         wabaDbId: 'db-waba-123',
-        phoneNumberDatas: [
-          {
-            id: PHONE_NUMBER_ID,
-            display_phone_number: '+6281234567890',
-            verified_name: 'Test Bot',
-            code_verification_status: 'VERIFIED',
-            quality_rating: 'GREEN',
-            registrationPin: 'enc:123456',
-          },
-        ],
+        phoneNumberData: {
+          id: PHONE_NUMBER_ID,
+          display_phone_number: '+6281234567890',
+          verified_name: 'Test Bot',
+          code_verification_status: 'VERIFIED',
+          quality_rating: 'GREEN',
+          registrationPin: 'enc:123456',
+        },
       });
     });
   });

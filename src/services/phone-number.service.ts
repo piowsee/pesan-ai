@@ -109,14 +109,10 @@ export const PhoneNumberService = {
       wabaId,
     });
 
-    const phoneNumberDatas = await MetaFetchService.fetchPhoneNumberDetails({
-      wabaId,
+    const matchingPhone = await MetaFetchService.fetchPhoneNumberDetails({
+      phoneNumberId,
       token: systemUserToken,
-    });
-
-    const matchingPhone = phoneNumberDatas.find(
-      (pn) => pn.id === phoneNumberId,
-    );
+    }).catch(() => null);
 
     if (!matchingPhone) {
       logger.warn(
@@ -125,20 +121,18 @@ export const PhoneNumberService = {
       );
     }
 
-    await PhoneNumberRepository.upsertPhoneNumbers({
+    await PhoneNumberRepository.upsertPhoneNumber({
       wabaDbId: wabaDbId,
-      phoneNumberDatas: [
-        {
-          id: phoneNumberId,
-          display_phone_number:
-            matchingPhone?.display_phone_number ?? phoneNumberId,
-          verified_name: matchingPhone?.verified_name ?? null,
-          code_verification_status:
-            matchingPhone?.code_verification_status ?? null,
-          quality_rating: matchingPhone?.quality_rating ?? null,
-          registrationPin: encryptedPin,
-        },
-      ],
+      phoneNumberData: {
+        id: phoneNumberId,
+        display_phone_number:
+          matchingPhone?.display_phone_number ?? phoneNumberId,
+        verified_name: matchingPhone?.verified_name ?? null,
+        code_verification_status:
+          matchingPhone?.code_verification_status ?? null,
+        quality_rating: matchingPhone?.quality_rating ?? null,
+        registrationPin: encryptedPin,
+      },
     });
 
     logger.info('Phone number persisted in database', {

@@ -165,7 +165,7 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
       const tempWaba = await prisma.whatsappBusinessAccount.create({
         data: {
           wabaId: `test-waba-webhook-${unique}`,
-          businessName: 'Webhook Test WABA',
+          name: 'WABA with Custom Webhook',
           systemUserToken: 'enc:test',
           userId,
         },

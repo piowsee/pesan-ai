@@ -5,6 +5,7 @@ import { useEmbeddedSignupSession } from '@/hooks/use-embedded-signup-session';
 import { useFacebookSdk } from '@/hooks/use-facebook-sdk';
 import { WabaSignupError, useWabaSignup } from '@/hooks/use-waba-signup';
 import { cn } from '@/lib/utils';
+import { type EmbeddedSignupSessionPayload } from '@/schemas/embedded-signup.schema';
 import { Link2, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -93,7 +94,7 @@ function useIsHttpsPage() {
 type WabaEmbeddedSignupButtonProps = ComponentProps<typeof Button> & {
   idleLabel?: string;
   pendingLabel?: string;
-  onSuccess?: () => void;
+  onSuccess?: () => Promise<void> | void;
 };
 
 export function WabaEmbeddedSignupButton({
@@ -111,6 +112,7 @@ export function WabaEmbeddedSignupButton({
   const t = useTranslations('Waba.signup');
 
   const [isLaunching, setIsLaunching] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [authorizationCode, setAuthorizationCode] = useState<string | null>(
     null,
   );
@@ -135,7 +137,7 @@ export function WabaEmbeddedSignupButton({
       handledCodeRef.current = null;
       setAuthorizationCode(code);
 
-      if (!sessionRef.current?.wabaId) {
+      if (!sessionRef.current?.data?.waba_id) {
         toast.message(t('waitingDetails'));
       }
     },
@@ -145,7 +147,7 @@ export function WabaEmbeddedSignupButton({
   useEffect(() => {
     if (
       !authorizationCode ||
-      !session?.wabaId ||
+      !session?.data?.waba_id ||
       !session.event?.startsWith('FINISH') ||
       signupMutation.isPending ||
       handledCodeRef.current === authorizationCode
@@ -154,27 +156,19 @@ export function WabaEmbeddedSignupButton({
     }
 
     handledCodeRef.current = authorizationCode;
-    const signupEvent = session.event;
 
     const submitData = async () => {
       try {
-        const result = await signupMutation.mutateAsync({
+        await signupMutation.mutateAsync({
           code: authorizationCode,
-          event: signupEvent,
-          wabaId: session.wabaId,
-          sessionPayload: session.payload ?? null,
+          sessionPayload: session as EmbeddedSignupSessionPayload,
         });
         setAuthorizationCode(null);
-        const message = result.data?.message;
-
-        if (message) {
-          toast.warning(message);
-        } else {
-          toast.success(t('success'));
-        }
+        toast.success(t('success'));
         onSuccess?.();
       } catch (error) {
         setAuthorizationCode(null);
+        setIsCompleting(false);
         if (error instanceof WabaSignupError) {
           toast.warning(error.message || t('alreadyConnected'));
           return;
@@ -207,7 +201,7 @@ export function WabaEmbeddedSignupButton({
     });
   }, [handleFbLoginResponse, isHttpsPage, t]);
 
-  const isBusy = isLaunching || signupMutation.isPending;
+  const isBusy = isLaunching || signupMutation.isPending || isCompleting;
 
   return (
     <Button

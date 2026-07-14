@@ -43,5 +43,5 @@ export interface TokenExchangeResponse {
 }
 
 export type WabaDetails = {
-  businessName: string | null;
+  name: string | null;
 };
