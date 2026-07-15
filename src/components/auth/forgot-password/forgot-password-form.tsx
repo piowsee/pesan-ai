@@ -64,6 +64,9 @@ export function ForgotPasswordForm() {
     },
   });
 
+  const email = form.watch('email');
+  const isFormFilled = !!email?.trim();
+
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsPending(true);
     setFormError(null);
@@ -122,7 +125,7 @@ export function ForgotPasswordForm() {
           {...form.register('email')}
           aria-invalid={!!form.formState.errors.email}
           className={cn(
-            'h-10 rounded-md shadow-sm',
+            'h-10 rounded-md',
             form.formState.errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
@@ -141,8 +144,8 @@ export function ForgotPasswordForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
-        className="mt-2 h-10 w-full rounded-md shadow-sm"
+        disabled={isPending || !isFormFilled}
+        className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
@@ -154,7 +157,7 @@ export function ForgotPasswordForm() {
         asChild
         variant="outline"
         size="lg"
-        className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
+        className="h-10 w-full border-border/70 bg-background/70 px-3 hover:bg-muted/70"
       >
         <AuthTransitionLink href="/login">
           {labels.backToLogin}

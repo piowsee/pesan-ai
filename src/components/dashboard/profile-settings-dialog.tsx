@@ -258,7 +258,12 @@ export function ProfileSettingsDialog({
                 type="submit"
                 size="lg"
                 variant="brand"
-                disabled={isSaving || (isNameUnchanged && isEmailUnchanged)}
+                disabled={
+                  isSaving ||
+                  (isNameUnchanged && isEmailUnchanged) ||
+                  !watchedName?.trim() ||
+                  !watchedEmail?.trim()
+                }
               >
                 {isSaving ? (
                   <Loader2 className="animate-spin" data-icon="inline-start" />

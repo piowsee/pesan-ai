@@ -73,6 +73,10 @@ export function LoginForm() {
     },
   });
 
+  const email = form.watch('email');
+  const password = form.watch('password');
+  const isFormFilled = !!email?.trim() && !!password?.trim();
+
   async function onSubmit(values: LoginFormValues) {
     setIsPending(true);
     setFormError(null);
@@ -115,7 +119,7 @@ export function LoginForm() {
           {...form.register('email')}
           aria-invalid={!!form.formState.errors.email}
           className={cn(
-            'h-10 rounded-md shadow-sm',
+            'h-10 rounded-md',
             form.formState.errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
@@ -138,7 +142,7 @@ export function LoginForm() {
             {...form.register('password')}
             aria-invalid={!!form.formState.errors.password}
             className={cn(
-              'h-10 rounded-md pr-10 shadow-sm',
+              'h-10 rounded-md pr-10',
               form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
@@ -182,8 +186,8 @@ export function LoginForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
-        className="mt-2 h-10 w-full rounded-md shadow-sm"
+        disabled={isPending || !isFormFilled}
+        className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />

@@ -54,6 +54,11 @@ export function CreateUserDialog() {
     },
   });
 
+  const name = form.watch('name');
+  const email = form.watch('email');
+  const role = form.watch('role');
+  const isFormFilled = !!name?.trim() && !!email?.trim() && !!role;
+
   async function onSubmit(values: CreateUserFormValues) {
     createUser.mutate(values, {
       onSuccess: (result) => {
@@ -201,7 +206,7 @@ export function CreateUserDialog() {
             <Button
               type="submit"
               variant="brand"
-              disabled={createUser.isPending}
+              disabled={createUser.isPending || !isFormFilled}
             >
               {createUser.isPending ? (
                 <>

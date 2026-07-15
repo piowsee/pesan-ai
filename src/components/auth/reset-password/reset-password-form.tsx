@@ -83,6 +83,10 @@ export function ResetPasswordForm() {
     },
   });
 
+  const password = form.watch('password');
+  const confirmPassword = form.watch('confirmPassword');
+  const isFormFilled = !!password?.trim() && !!confirmPassword?.trim();
+
   async function onSubmit(values: ResetPasswordFormValues) {
     if (!token) {
       setFormError(errors.invalidToken);
@@ -167,7 +171,7 @@ export function ResetPasswordForm() {
             {...form.register('password')}
             aria-invalid={!!form.formState.errors.password}
             className={cn(
-              'h-10 rounded-md pr-10 shadow-sm',
+              'h-10 rounded-md pr-10',
               form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
@@ -207,7 +211,7 @@ export function ResetPasswordForm() {
             {...form.register('confirmPassword')}
             aria-invalid={!!form.formState.errors.confirmPassword}
             className={cn(
-              'h-10 rounded-md pr-10 shadow-sm',
+              'h-10 rounded-md pr-10',
               form.formState.errors.confirmPassword &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
@@ -243,8 +247,8 @@ export function ResetPasswordForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
-        className="mt-2 h-10 w-full rounded-md shadow-sm"
+        disabled={isPending || !isFormFilled}
+        className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />

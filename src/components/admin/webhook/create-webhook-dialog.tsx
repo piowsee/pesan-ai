@@ -44,6 +44,12 @@ export function CreateWebhookDialog() {
     },
   });
 
+  const name = form.watch('name');
+  const webhookUrl = form.watch('webhookUrl');
+  const passphrase = form.watch('passphrase');
+  const isFormFilled =
+    !!name?.trim() && !!webhookUrl?.trim() && !!passphrase?.trim();
+
   async function onSubmit(values: CreateWebhookFormValues) {
     createWebhook.mutate(values, {
       onSuccess: () => {
@@ -185,7 +191,7 @@ export function CreateWebhookDialog() {
             <Button
               type="submit"
               variant="brand"
-              disabled={createWebhook.isPending}
+              disabled={createWebhook.isPending || !isFormFilled}
             >
               {createWebhook.isPending ? (
                 <>
