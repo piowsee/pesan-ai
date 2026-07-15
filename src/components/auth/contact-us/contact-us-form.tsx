@@ -151,7 +151,7 @@ export function ContactUsForm() {
           aria-required="true"
           aria-invalid={!!form.formState.errors.name}
           className={cn(
-            'h-10 rounded-md shadow-sm',
+            'h-10 rounded-md',
             form.formState.errors.name &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
@@ -180,7 +180,7 @@ export function ContactUsForm() {
           aria-required="true"
           aria-invalid={!!form.formState.errors.email}
           className={cn(
-            'h-10 rounded-md shadow-sm',
+            'h-10 rounded-md',
             form.formState.errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
@@ -202,7 +202,7 @@ export function ContactUsForm() {
             {...form.register('companyName')}
             aria-invalid={!!form.formState.errors.companyName}
             className={cn(
-              'h-10 rounded-md shadow-sm',
+              'h-10 rounded-md',
               form.formState.errors.companyName &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
@@ -235,7 +235,7 @@ export function ContactUsForm() {
             })}
             aria-invalid={!!form.formState.errors.phoneNumber}
             className={cn(
-              'h-10 rounded-md shadow-sm',
+              'h-10 rounded-md',
               form.formState.errors.phoneNumber &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
@@ -256,7 +256,7 @@ export function ContactUsForm() {
           {...form.register('message')}
           aria-invalid={!!form.formState.errors.message}
           className={cn(
-            'min-h-28 rounded-md shadow-sm',
+            'min-h-28 rounded-md',
             form.formState.errors.message &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
@@ -276,7 +276,7 @@ export function ContactUsForm() {
         variant="brand"
         size="lg"
         disabled={contactUsMutation.isPending}
-        className="mt-2 h-10 w-full rounded-md shadow-sm"
+        className="mt-2 h-10 w-full rounded-md"
       >
         {contactUsMutation.isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
