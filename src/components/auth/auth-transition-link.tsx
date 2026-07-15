@@ -1,7 +1,6 @@
 'use client';
 
 import { Link, useRouter } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth/auth-client';
 import type { ComponentProps, MouseEvent } from 'react';
 
 type Props = Omit<ComponentProps<typeof Link>, 'href'> & {
@@ -35,28 +34,6 @@ export function AuthTransitionLink({ href, onClick, target, ...props }: Props) {
     window.dispatchEvent(
       new CustomEvent('auth-panel-leave', { detail: { href } }),
     );
-
-    if (href === '/login') {
-      try {
-        const session = await authClient.getSession({
-          query: {
-            disableCookieCache: true,
-            disableRefresh: true,
-          },
-        });
-        const role =
-          session.data?.user && 'role' in session.data.user
-            ? session.data.user.role
-            : undefined;
-
-        if (session.data?.user) {
-          router.push(role === 'admin' ? '/admin' : '/dashboard');
-          return;
-        }
-      } catch {
-        // Fall through to the login page when the session check is unavailable.
-      }
-    }
 
     window.setTimeout(
       () => {
