@@ -57,7 +57,7 @@ export function AuthBrandPanel() {
   }, [pathname]);
 
   return (
-    <section className="relative hidden min-h-svh overflow-hidden lg:flex">
+    <section className="relative hidden h-full overflow-hidden lg:flex">
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: "url('/login/bg_login.webp')" }}
