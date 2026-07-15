@@ -19,6 +19,7 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { type VariantProps, cva } from 'class-variance-authority';
+import { useTranslations } from 'next-intl';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 import {
@@ -257,9 +258,10 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
+  const t = useTranslations('Sidebar');
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === 'collapsed';
-  const label = isCollapsed ? 'Buka panel' : 'Tutup Panel';
+  const label = isCollapsed ? t('openPanel') : t('closePanel');
   const Icon = isCollapsed
     ? MdKeyboardDoubleArrowRight
     : MdKeyboardDoubleArrowLeft;

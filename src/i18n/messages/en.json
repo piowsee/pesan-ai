@@ -428,7 +428,9 @@
     "chat": "Chat",
     "customers": "Customers",
     "navigation": "Navigation",
-    "waba": "WABA"
+    "waba": "WABA",
+    "openPanel": "Open panel",
+    "closePanel": "Close panel"
   },
   "ProfileMenu": {
     "openProfile": "Open profile",

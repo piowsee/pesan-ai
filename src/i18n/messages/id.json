@@ -428,7 +428,9 @@
     "chat": "Obrolan",
     "customers": "Pelanggan",
     "navigation": "Navigasi",
-    "waba": "WABA"
+    "waba": "WABA",
+    "openPanel": "Buka panel",
+    "closePanel": "Tutup Panel"
   },
   "ProfileMenu": {
     "openProfile": "Buka profil",
