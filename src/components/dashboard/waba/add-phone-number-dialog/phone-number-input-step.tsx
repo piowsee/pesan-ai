@@ -69,6 +69,10 @@ export function PhoneNumberInputStep({
     },
   });
 
+  const fullPhoneNumber = form.watch('fullPhoneNumber');
+  const watchedName = form.watch('name');
+  const isFormFilled = !!fullPhoneNumber?.trim() && !!watchedName?.trim();
+
   async function onPhoneSubmit(values: AddPhoneNumberFormValues) {
     try {
       const parsed = parsePhoneNumber(values.fullPhoneNumber)!;
@@ -185,7 +189,11 @@ export function PhoneNumberInputStep({
           >
             {t('cancel')}
           </Button>
-          <Button type="submit" variant="brand" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="brand"
+            disabled={isSubmitting || !isFormFilled}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" data-icon="inline-start" />

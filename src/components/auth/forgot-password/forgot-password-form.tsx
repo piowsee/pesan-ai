@@ -64,6 +64,9 @@ export function ForgotPasswordForm() {
     },
   });
 
+  const email = form.watch('email');
+  const isFormFilled = !!email?.trim();
+
   async function onSubmit(values: ForgotPasswordFormValues) {
     setIsPending(true);
     setFormError(null);
@@ -141,7 +144,7 @@ export function ForgotPasswordForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
+        disabled={isPending || !isFormFilled}
         className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (

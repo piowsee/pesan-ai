@@ -96,6 +96,10 @@ export function ContactUsForm() {
     },
   });
 
+  const name = form.watch('name');
+  const email = form.watch('email');
+  const isFormFilled = !!name?.trim() && !!email?.trim();
+
   async function onSubmit(values: ContactUsFormValues) {
     setFormError(null);
 
@@ -275,7 +279,7 @@ export function ContactUsForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={contactUsMutation.isPending}
+        disabled={contactUsMutation.isPending || !isFormFilled}
         className="mt-2 h-10 w-full rounded-md"
       >
         {contactUsMutation.isPending ? (

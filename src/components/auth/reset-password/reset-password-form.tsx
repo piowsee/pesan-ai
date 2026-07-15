@@ -83,6 +83,10 @@ export function ResetPasswordForm() {
     },
   });
 
+  const password = form.watch('password');
+  const confirmPassword = form.watch('confirmPassword');
+  const isFormFilled = !!password?.trim() && !!confirmPassword?.trim();
+
   async function onSubmit(values: ResetPasswordFormValues) {
     if (!token) {
       setFormError(errors.invalidToken);
@@ -243,7 +247,7 @@ export function ResetPasswordForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
+        disabled={isPending || !isFormFilled}
         className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (

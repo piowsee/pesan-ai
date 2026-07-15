@@ -418,6 +418,14 @@ function SecuritySettingsPanel({
     },
   });
 
+  const currentPassword = form.watch('currentPassword');
+  const newPassword = form.watch('newPassword');
+  const confirmPassword = form.watch('confirmPassword');
+  const isFormFilled =
+    !!currentPassword?.trim() &&
+    !!newPassword?.trim() &&
+    !!confirmPassword?.trim();
+
   useEffect(() => {
     if (!wasMountedRef.current) {
       wasMountedRef.current = true;
@@ -563,7 +571,7 @@ function SecuritySettingsPanel({
             type="submit"
             variant="brand"
             size="lg"
-            disabled={isChangingPassword}
+            disabled={isChangingPassword || !isFormFilled}
           >
             {isChangingPassword ? (
               <Loader2 className="animate-spin" data-icon="inline-start" />

@@ -73,6 +73,10 @@ export function LoginForm() {
     },
   });
 
+  const email = form.watch('email');
+  const password = form.watch('password');
+  const isFormFilled = !!email?.trim() && !!password?.trim();
+
   async function onSubmit(values: LoginFormValues) {
     setIsPending(true);
     setFormError(null);
@@ -182,7 +186,7 @@ export function LoginForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
+        disabled={isPending || !isFormFilled}
         className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (
