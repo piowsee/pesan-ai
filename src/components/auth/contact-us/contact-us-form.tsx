@@ -1,11 +1,11 @@
 'use client';
 
+import { AuthTransitionLink } from '@/components/auth/auth-transition-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useContactUs } from '@/hooks/use-contact-us';
-import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
@@ -75,6 +75,7 @@ type ContactUsFormValues = {
 export function ContactUsForm() {
   const commonT = useTranslations('Auth.forms.common');
   const t = useTranslations('Auth.forms.contactUs');
+  const switchT = useTranslations('Auth.panelSwitch');
   const labels = t.raw('labels') as ContactUsFormLabels;
   const errors = t.raw('errors') as ContactUsFormErrors;
 
@@ -121,7 +122,9 @@ export function ContactUsForm() {
           </p>
         </div>
         <Button asChild variant="brand" size="lg" className="h-10 w-full">
-          <Link href="/login">{labels.backToLogin}</Link>
+          <AuthTransitionLink href="/login">
+            {labels.backToLogin}
+          </AuthTransitionLink>
         </Button>
       </div>
     );
@@ -281,14 +284,15 @@ export function ContactUsForm() {
         {contactUsMutation.isPending ? labels.submitting : labels.submit}
       </Button>
 
-      <Button
-        asChild
-        variant="outline"
-        size="lg"
-        className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
-      >
-        <Link href="/login">{labels.backToLogin}</Link>
-      </Button>
+      <p className="mt-2 text-center text-sm leading-6 text-muted-foreground">
+        {switchT('loginPrompt')}{' '}
+        <AuthTransitionLink
+          href="/login"
+          className="font-semibold text-brand underline-offset-4 transition-colors hover:text-brand/80 hover:underline"
+        >
+          {switchT('loginAction')}
+        </AuthTransitionLink>
+      </p>
     </form>
   );
 }

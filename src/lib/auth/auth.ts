@@ -47,6 +47,7 @@ export const auth = betterAuth({
   }),
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
+    cookiePrefix: 'pesan-ai',
   },
   session: {
     cookieCache: {

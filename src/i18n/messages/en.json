@@ -108,7 +108,14 @@
   },
   "Auth": {
     "brandPanel": {
-      "headline": "Boost your business efficiency through WhatsApp chat automation with AI support."
+      "headline": "Boost your business efficiency through WhatsApp chat automation with AI support.",
+      "contactHeadline": "Get in touch with our team to find the perfect WhatsApp automation solution for your business."
+    },
+    "panelSwitch": {
+      "contactPrompt": "Need an account?",
+      "contactAction": "Contact us",
+      "loginPrompt": "Already have an account?",
+      "loginAction": "Login here"
     },
     "pages": {
       "login": {
@@ -421,7 +428,9 @@
     "chat": "Chat",
     "customers": "Customers",
     "navigation": "Navigation",
-    "waba": "WABA"
+    "waba": "WABA",
+    "openPanel": "Open panel",
+    "closePanel": "Close panel"
   },
   "ProfileMenu": {
     "openProfile": "Open profile",
