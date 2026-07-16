@@ -6,9 +6,12 @@ import {
   TokenExchangeResponse,
   WabaDetails,
   WabaMetaResponse,
+} from '@/types/waba';
+import {
+  WhatsAppBusinessProfileUpdateRequest,
   WhatsappBusinessProfile,
   WhatsappBusinessProfileMetaResponse,
-} from '@/types/waba';
+} from '@/types/whatsapp-business-profile';
 import { type BetterFetchOption, createFetch } from '@better-fetch/fetch';
 
 const GRAPH_API_VERSION = 'v25.0';
@@ -312,6 +315,33 @@ export const MetaFetchService = {
     }
 
     return data.data?.[0]?.business_profile ?? null;
+  },
+
+  async updateBusinessProfile(params: {
+    phoneNumberId: string;
+    token: string;
+    data: WhatsAppBusinessProfileUpdateRequest;
+  }): Promise<{ success: boolean }> {
+    const { phoneNumberId, token, data } = params;
+    const { data: responseData, error } = await fetchMeta<{ success: boolean }>(
+      `/${phoneNumberId}/whatsapp_business_profile`,
+      {
+        action: 'MetaFetchService.updateBusinessProfile',
+        method: 'POST',
+        auth: getBearerAuth(token),
+        body: data,
+      },
+    );
+
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
+        `Failed to update business profile for ${phoneNumberId}`,
+      );
+      throw new ApiError(message, 502);
+    }
+
+    return { success: responseData.success ?? true };
   },
 
   async getMediaUrl(params: {

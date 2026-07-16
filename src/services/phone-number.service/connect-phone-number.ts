@@ -33,7 +33,7 @@ export const ConnectPhoneNumberService = {
   }): Promise<{ success: boolean }> {
     const { phoneNumberId, wabaId, userId, codeMethod, language } = params;
 
-    const { systemUserToken } = await this._getSystemUserToken({
+    const { systemUserToken } = await this._getSystemUserTokenByMetaId({
       wabaId,
       userId,
     });
@@ -74,10 +74,11 @@ export const ConnectPhoneNumberService = {
   }): Promise<{ success: boolean }> {
     const { phoneNumberId, wabaId, userId, code } = params;
 
-    const { wabaDbId, systemUserToken } = await this._getSystemUserToken({
-      wabaId,
-      userId,
-    });
+    const { wabaDbId, systemUserToken } =
+      await this._getSystemUserTokenByMetaId({
+        wabaId,
+        userId,
+      });
 
     logger.info('Verifying code for phone number', {
       phoneNumberId,
@@ -155,7 +156,7 @@ export const ConnectPhoneNumberService = {
   }): Promise<{ phoneNumberId: string }> {
     const { wabaId, userId, countryCode, phoneNumber, name } = params;
 
-    const { systemUserToken } = await this._getSystemUserToken({
+    const { systemUserToken } = await this._getSystemUserTokenByMetaId({
       wabaId,
       userId,
     });
@@ -182,7 +183,7 @@ export const ConnectPhoneNumberService = {
     return randomInt(0, 1_000_000).toString().padStart(6, '0');
   },
 
-  async _getSystemUserToken(params: {
+  async _getSystemUserTokenByMetaId(params: {
     wabaId: string; // Meta WABA ID.
     userId: string;
   }): Promise<{ wabaDbId: string; systemUserToken: string }> {

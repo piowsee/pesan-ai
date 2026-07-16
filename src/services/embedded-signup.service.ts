@@ -7,7 +7,8 @@ import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
-import { PhoneNumberMetaResponse, WhatsappBusinessProfile } from '@/types/waba';
+import { PhoneNumberMetaResponse } from '@/types/waba';
+import { WhatsappBusinessProfile } from '@/types/whatsapp-business-profile';
 import { randomInt } from 'node:crypto';
 
 const COEXISTENCE_SIGNUP_EVENT = 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';

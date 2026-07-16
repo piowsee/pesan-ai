@@ -1,5 +1,5 @@
 import prisma from '@/lib/server/prisma';
-import { WhatsappBusinessProfile } from '@/types/waba';
+import { WhatsappBusinessProfile } from '@/types/whatsapp-business-profile';
 
 export const BusinessProfileRepository = {
   async upsertBusinessProfile(params: {
@@ -35,6 +35,16 @@ export const BusinessProfileRepository = {
           },
         },
       },
+      include: { businessProfile: true },
     });
+  },
+
+  async getBusinessProfile(phoneNumberId: string) {
+    return prisma.phoneNumber
+      .findUnique({
+        where: { phoneNumberId },
+        include: { businessProfile: true },
+      })
+      .then((pn) => pn?.businessProfile || null);
   },
 };
