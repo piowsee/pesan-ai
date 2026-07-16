@@ -144,23 +144,22 @@ export function ChatDetail({
         </div>
       </div>
 
-      <div className="z-10 shrink-0 bg-transparent flex flex-col">
+      <div className="z-10 flex shrink-0 flex-col bg-background">
         {conversation.adminTakeover && (
-          <div className="bg-brand/10 p-3 mx-4 lg:mx-6 mb-2 rounded-md flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center justify-between border border-brand/20 shadow-sm text-sm">
-            <span className="text-foreground/80 font-medium">
+          <div className="flex w-full flex-col justify-between gap-3 bg-emerald-50 px-4 py-3 text-sm dark:bg-emerald-950/35 sm:flex-row sm:items-center sm:gap-4">
+            <span className="font-medium text-emerald-950 dark:text-emerald-100">
               {t('takeoverPrompt')}
             </span>
             <Button
-              variant="outline"
-              size="sm"
+              variant="ghost"
               onClick={() => setIsCloseDialogOpen(true)}
               disabled={pendingTakeoverConversationId === conversation.id}
-              className="shrink-0 bg-background"
+              className="h-10 px-4 gap-1.5 shrink-0 text-emerald-600 hover:bg-transparent hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400"
             >
               {pendingTakeoverConversationId === conversation.id ? (
-                <LoaderCircleIcon className="size-4 animate-spin mr-2" />
+                <LoaderCircleIcon className="size-4 animate-spin" />
               ) : (
-                <CheckCircleIcon className="size-4 mr-2" />
+                <CheckCircleIcon className="size-4" />
               )}
               {t('closeConversation')}
             </Button>
@@ -169,15 +168,15 @@ export function ChatDetail({
                 open={isCloseDialogOpen}
                 onOpenChange={setIsCloseDialogOpen}
               >
-                <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
+                <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border p-0 shadow-xl sm:max-w-md">
                   <AlertDialogHeader className="px-5 pt-5 pb-4">
                     <div className="flex items-start gap-3">
-                      <CheckCircleIcon className="mt-0.5 size-6 shrink-0 text-brand" />
+                      <CheckCircleIcon className="mt-0.5 size-6 shrink-0 text-emerald-600 dark:text-emerald-500" />
                       <div className="min-w-0 text-left">
-                        <AlertDialogTitle className="text-base font-semibold text-brand">
+                        <AlertDialogTitle className="text-base font-semibold">
                           {t('closeDialogTitle')}
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                        <AlertDialogDescription className="mt-1 text-sm leading-relaxed text-muted-foreground">
                           {t('closeDialogDesc', {
                             name: conversation.displayName,
                           })}
@@ -187,19 +186,16 @@ export function ChatDetail({
                   </AlertDialogHeader>
 
                   <div className="px-5">
-                    <div className="h-px bg-brand/20" />
+                    <div className="h-px bg-border" />
                   </div>
 
                   <div className="flex flex-col px-5 py-4">
                     <AlertDialogFooter className="mx-0 mb-0 gap-2 border-t-0 bg-transparent p-0">
-                      <AlertDialogCancel
-                        variant="ghost"
-                        className="text-brand hover:bg-brand/5 hover:text-brand"
-                      >
+                      <AlertDialogCancel variant="ghost">
                         {t('cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
-                        variant="brand"
+                        className="!bg-emerald-600 !text-white hover:!bg-emerald-700 dark:!bg-emerald-600 dark:hover:!bg-emerald-700"
                         onClick={() => {
                           onToggleTakeover(conversation.id, false);
                           setIsCloseDialogOpen(false);

@@ -17,7 +17,7 @@ export function ChatSidebarToolbar({
 }) {
   const t = useTranslations('Chat.sidebar');
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex flex-col gap-3 px-4 pt-2 pb-4">
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input

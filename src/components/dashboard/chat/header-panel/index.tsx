@@ -22,8 +22,8 @@ export function ChatWorkspaceHeader({
   selectedPhoneNumberId,
 }: ChatWorkspaceHeaderProps) {
   return (
-    <div className="relative z-10 shrink-0 border-b bg-background">
-      <div className="flex h-14 items-center gap-3 px-4">
+    <div className="relative z-10 shrink-0 bg-background">
+      <div className="flex items-center gap-2.5 px-4 pt-4 pb-2">
         <WabaSwitcher
           wabas={wabas}
           activeWabaId={activeWabaId}

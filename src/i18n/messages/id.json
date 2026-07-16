@@ -669,7 +669,7 @@
       "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
       "attach": "Lampirkan media",
       "placeholderMedia": "Tambahkan keterangan...",
-      "placeholder": "Pesan...",
+      "placeholder": "Ketik pesan Anda...",
       "placeholderTemplate": "Pesan templat diwajibkan",
       "send": "Kirim"
     },

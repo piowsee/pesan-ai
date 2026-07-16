@@ -103,13 +103,13 @@ export function ContactInfoPanel({
     <aside
       className={cn('flex h-full w-full flex-col bg-background', className)}
     >
-      <div className="flex h-15 shrink-0 items-center justify-start gap-2.5 px-6 sm:px-7">
+      <div className="flex h-18 shrink-0 items-center justify-start gap-2.5 bg-background px-6 sm:px-7">
         {onClose ? (
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="-ml-2 hidden size-8 shrink-0 cursor-pointer text-muted-foreground hover:text-brand lg:flex"
+            className="-ml-2 hidden size-8 shrink-0 cursor-pointer text-muted-foreground hover:bg-transparent hover:text-brand lg:flex"
           >
             <XIcon className="size-5" />
             <span className="sr-only">{t('close')}</span>
@@ -121,7 +121,7 @@ export function ContactInfoPanel({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="-ml-2 shrink-0 cursor-pointer lg:hidden"
+            className="-ml-2 shrink-0 cursor-pointer hover:bg-transparent lg:hidden"
           >
             <ArrowLeftIcon className="size-5" />
             <span className="sr-only">{t('back')}</span>

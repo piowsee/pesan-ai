@@ -669,7 +669,7 @@
       "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
       "attach": "Attach media",
       "placeholderMedia": "Add a caption...",
-      "placeholder": "Message...",
+      "placeholder": "Type your message...",
       "placeholderTemplate": "Template message required",
       "send": "Send"
     },

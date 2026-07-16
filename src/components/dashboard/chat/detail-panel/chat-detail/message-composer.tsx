@@ -298,7 +298,7 @@ export function MessageComposer({
   }
 
   return (
-    <div className="w-full shrink-0 bg-transparent pb-3">
+    <div className="w-full shrink-0 bg-transparent">
       {!conversation.canSendFreeform ? (
         <div className="mx-4 my-2 flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10">
           <AlertTriangleIcon className="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -343,8 +343,8 @@ export function MessageComposer({
         onChange={handleFileChange}
       />
 
-      <div className="flex items-end bg-transparent px-4 py-1">
-        <div className="flex min-h-14 flex-1 items-end gap-1 rounded-2xl border bg-background px-2 py-2 shadow-sm transition-[border-color,box-shadow] focus-within:ring-2 focus-within:ring-brand/80">
+      <div className="flex items-end bg-transparent px-4 pt-0 pb-3">
+        <div className="flex min-h-14 max-h-36 flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-background px-2 py-2 shadow-sm transition-[border-color,box-shadow] focus-within:ring-2 focus-within:ring-brand/80">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -362,7 +362,7 @@ export function MessageComposer({
               side="top"
               align="start"
               sideOffset={8}
-              className="w-64 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
+              className="w-max min-w-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
             >
               <DropdownMenuGroup className="p-2">
                 {mediaPickerOptions.map((option) => {
@@ -372,7 +372,7 @@ export function MessageComposer({
                     <DropdownMenuItem
                       key={option.type}
                       onSelect={() => openFilePicker(option.type)}
-                      className="min-h-11 cursor-pointer gap-3 rounded-md px-3 py-2.5 text-foreground/60 focus:bg-brand/5 focus:!text-brand focus:**:!text-brand"
+                      className="min-h-11 cursor-pointer gap-3 whitespace-nowrap rounded-md px-3 py-2.5 text-foreground/60 focus:bg-brand/5 focus:!text-brand focus:**:!text-brand"
                     >
                       <Icon />
                       {t(

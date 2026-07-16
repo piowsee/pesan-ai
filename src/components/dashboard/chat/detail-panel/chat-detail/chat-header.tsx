@@ -19,14 +19,14 @@ export function ChatHeader({
 }) {
   const t = useTranslations('Chat.header');
   return (
-    <div className="flex h-15 w-full shrink-0 items-center bg-background px-4">
+    <div className="flex h-18 w-full shrink-0 items-center border-b border-border/60 bg-background px-4">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {showBackButton && onBack ? (
           <Button
             variant="ghost"
             size="icon"
             onClick={onBack}
-            className="lg:hidden shrink-0 -ml-2 cursor-pointer"
+            className="lg:hidden shrink-0 -ml-2 cursor-pointer hover:bg-transparent"
           >
             <ArrowLeftIcon className="size-5" />
             <span className="sr-only">{t('back')}</span>

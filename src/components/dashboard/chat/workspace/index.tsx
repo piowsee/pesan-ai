@@ -57,19 +57,14 @@ function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
 
 export function ChatWorkspaceSkeleton() {
   return (
-    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 border-b bg-background">
-        <div className="flex h-14 items-center gap-3 px-4">
-          <Skeleton className="h-5 w-40 rounded-md" />
-          <Skeleton className="h-5 w-28 rounded-md" />
+    <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
+      <div className="flex h-full w-full shrink-0 flex-col border-r bg-background lg:w-95">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+          <Skeleton className="h-10 w-40 rounded-lg" />
+          <Skeleton className="h-10 w-28 rounded-lg" />
         </div>
-      </div>
 
-      <div
-        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
-        style={{ contain: 'strict' }}
-      >
-        <div className="hidden h-full w-95 shrink-0 border-r bg-background lg:flex lg:flex-col">
+        <div className="min-h-0 flex-1">
           <div className="flex flex-col gap-3 px-4 py-4">
             <Skeleton className="h-9 w-full rounded-full" />
             <div className="flex items-center gap-2">
@@ -91,36 +86,36 @@ export function ChatWorkspaceSkeleton() {
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="flex min-w-0 flex-1 flex-col bg-background">
-          <div className="border-b bg-background px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Skeleton className="size-11 shrink-0 rounded-full" />
-              <div className="flex flex-col gap-2">
-                <Skeleton className="h-4 w-40 rounded-md" />
-                <Skeleton className="h-3 w-32 rounded-md" />
+      <div className="hidden min-w-0 flex-1 flex-col bg-background lg:flex">
+        <div className="flex h-18 shrink-0 items-center border-b border-border/60 px-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="size-10 shrink-0 rounded-full" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-40 rounded-md" />
+              <Skeleton className="h-3 w-32 rounded-md" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 px-4 py-4 lg:px-6">
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={index}
+                className={
+                  index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
+                }
+              >
+                <Skeleton className="h-20 w-[min(24rem,75%)] rounded-[20px]" />
               </div>
-            </div>
+            ))}
           </div>
+        </div>
 
-          <div className="flex-1 px-4 py-4 lg:px-6">
-            <div className="flex flex-col gap-4">
-              {Array.from({ length: 7 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={
-                    index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
-                  }
-                >
-                  <Skeleton className="h-20 w-[min(24rem,75%)] rounded-[20px]" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="shrink-0 px-4 py-4 lg:px-6">
-            <Skeleton className="h-16 w-full rounded-[18px]" />
-          </div>
+        <div className="shrink-0 px-4 py-4 lg:px-6">
+          <Skeleton className="h-16 w-full rounded-[18px]" />
         </div>
       </div>
     </div>
@@ -664,118 +659,125 @@ export function ChatWorkspace() {
   }
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-      <ChatWorkspaceHeader
-        wabas={wabas}
-        activeWabaId={activeWaba?.id}
-        phoneNumbers={phoneNumbers}
-        selectedPhoneNumberId={selectedPhoneNumberId}
-        onSelectWaba={(wabaId) => {
-          pushChatRoute({
-            wabaId,
-            keys: CHAT_LIST_PARAM_KEYS,
-            updates: { panel: undefined },
-          });
-        }}
-        onPhoneNumberChange={(value) => {
-          replaceChatSearchState({ phoneNumberId: value });
-        }}
-      />
-
-      <div
-        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
-        style={{ contain: 'strict' }}
-      >
-        <ChatConversationPane
-          searchValue={searchValue}
-          onSearchChange={(value) => {
-            replaceChatSearchState({ q: value.trim() ? value : undefined });
-          }}
-          filter={filter}
-          onFilterChange={(value) => {
-            replaceChatSearchState({
-              filter: value === 'all' ? undefined : value,
-            });
-          }}
-          conversations={filteredConversations}
-          activeConversationId={selectedConversationId}
-          isLoading={shouldShowConversationListSkeleton}
-          isError={Boolean(activeWabaId) && isConversationsError}
-          errorMessage={conversationsError?.message}
-          onRetry={() => {
-            if (activeWabaId) {
-              void refetch();
-            }
-          }}
-          onSelectConversation={handleSelectConversation}
-          onToggleTakeover={handleToggleTakeover}
-          pendingTakeoverConversationId={pendingTakeoverConversationId}
-          showMobileDetail={showMobileDetail}
-          emptyTitle={
-            activeWabaId ? t('empty.noConversations') : t('empty.selectWaba')
-          }
-          emptyDescription={
-            activeWabaId
-              ? t('empty.noConversationsDesc')
-              : t('empty.selectWabaDesc')
-          }
-        />
-
-        <ChatDetailPane
-          selectedConversationId={selectedConversationId}
-          conversation={selectedConversation}
-          activeWabaId={activeWabaId}
-          messages={messages}
-          isLoading={isConversationsLoading || isMessagesLoading}
-          hasNextPage={Boolean(hasNextPage)}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadOlder={() => {
-            if (hasNextPage) {
-              void fetchNextPage();
-            }
-          }}
-          localSendScrollSignal={localSendScrollSignal}
-          initialUnreadCount={selectedInitialUnreadCount}
-          onSend={handleSendMessage}
-          onSendMedia={handleSendMediaMessage}
-          showMobileDetail={showMobileDetail}
-          isContactInfoOpen={isContactInfoOpen}
-          onBack={() => {
+    <div
+      className="relative flex h-full w-full min-w-0 overflow-hidden bg-background"
+      style={{ contain: 'strict' }}
+    >
+      <div className="relative z-10 flex h-full w-full shrink-0 flex-col bg-background lg:w-95">
+        <ChatWorkspaceHeader
+          wabas={wabas}
+          activeWabaId={activeWaba?.id}
+          phoneNumbers={phoneNumbers}
+          selectedPhoneNumberId={selectedPhoneNumberId}
+          onSelectWaba={(wabaId) => {
             pushChatRoute({
-              wabaId: activeWabaId,
+              wabaId,
               keys: CHAT_LIST_PARAM_KEYS,
               updates: { panel: undefined },
             });
           }}
-          onContactAreaClick={() => {
-            replaceChatSearchState({
-              panel: isContactInfoOpen ? undefined : 'contact',
-            });
+          onPhoneNumberChange={(value) => {
+            replaceChatSearchState({ phoneNumberId: value });
           }}
-          onToggleTakeover={handleToggleTakeover}
-          pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
 
-        <ChatContactPanel
-          conversation={selectedConversation}
-          isOpen={isContactInfoOpen}
-          draft={selectedContactDraft}
-          onDraftChange={(draft) => {
-            if (!selectedConversation) {
-              return;
+        <div className="relative min-h-0 flex-1">
+          <ChatConversationPane
+            searchValue={searchValue}
+            onSearchChange={(value) => {
+              replaceChatSearchState({ q: value.trim() ? value : undefined });
+            }}
+            filter={filter}
+            onFilterChange={(value) => {
+              replaceChatSearchState({
+                filter: value === 'all' ? undefined : value,
+              });
+            }}
+            conversations={filteredConversations}
+            activeConversationId={selectedConversationId}
+            isLoading={shouldShowConversationListSkeleton}
+            isError={Boolean(activeWabaId) && isConversationsError}
+            errorMessage={conversationsError?.message}
+            onRetry={() => {
+              if (activeWabaId) {
+                void refetch();
+              }
+            }}
+            onSelectConversation={handleSelectConversation}
+            onToggleTakeover={handleToggleTakeover}
+            pendingTakeoverConversationId={pendingTakeoverConversationId}
+            showMobileDetail={showMobileDetail}
+            emptyTitle={
+              activeWabaId ? t('empty.noConversations') : t('empty.selectWaba')
             }
+            emptyDescription={
+              activeWabaId
+                ? t('empty.noConversationsDesc')
+                : t('empty.selectWabaDesc')
+            }
+          />
+        </div>
 
-            setContactDetailsByConversation((prev) => ({
-              ...prev,
-              [selectedConversation.id]: draft,
-            }));
-          }}
-          onClose={() => {
-            replaceChatSearchState({ panel: undefined });
-          }}
-          showMobileBackButton={showMobileDetail}
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-0 right-0 z-20 hidden w-px bg-border lg:block"
         />
       </div>
+
+      <ChatDetailPane
+        selectedConversationId={selectedConversationId}
+        conversation={selectedConversation}
+        activeWabaId={activeWabaId}
+        messages={messages}
+        isLoading={isConversationsLoading || isMessagesLoading}
+        hasNextPage={Boolean(hasNextPage)}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadOlder={() => {
+          if (hasNextPage) {
+            void fetchNextPage();
+          }
+        }}
+        localSendScrollSignal={localSendScrollSignal}
+        initialUnreadCount={selectedInitialUnreadCount}
+        onSend={handleSendMessage}
+        onSendMedia={handleSendMediaMessage}
+        showMobileDetail={showMobileDetail}
+        isContactInfoOpen={isContactInfoOpen}
+        onBack={() => {
+          pushChatRoute({
+            wabaId: activeWabaId,
+            keys: CHAT_LIST_PARAM_KEYS,
+            updates: { panel: undefined },
+          });
+        }}
+        onContactAreaClick={() => {
+          replaceChatSearchState({
+            panel: isContactInfoOpen ? undefined : 'contact',
+          });
+        }}
+        onToggleTakeover={handleToggleTakeover}
+        pendingTakeoverConversationId={pendingTakeoverConversationId}
+      />
+
+      <ChatContactPanel
+        conversation={selectedConversation}
+        isOpen={isContactInfoOpen}
+        draft={selectedContactDraft}
+        onDraftChange={(draft) => {
+          if (!selectedConversation) {
+            return;
+          }
+
+          setContactDetailsByConversation((prev) => ({
+            ...prev,
+            [selectedConversation.id]: draft,
+          }));
+        }}
+        onClose={() => {
+          replaceChatSearchState({ panel: undefined });
+        }}
+        showMobileBackButton={showMobileDetail}
+      />
     </div>
   );
 }
