@@ -74,6 +74,7 @@ export function ChatDetail({
   onContactAreaClick,
   onToggleTakeover,
   pendingTakeoverConversationId,
+  isContactInfoOpen,
 }: {
   conversation?: ChatConversation;
   wabaId?: string;
@@ -94,6 +95,7 @@ export function ChatDetail({
     nextAdminTakeover: boolean,
   ) => void;
   pendingTakeoverConversationId?: string;
+  isContactInfoOpen?: boolean;
 }) {
   const t = useTranslations('Chat.detail');
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
@@ -121,6 +123,7 @@ export function ChatDetail({
           showBackButton={showBackButton}
           onBack={onBack}
           onContactAreaClick={onContactAreaClick}
+          isContactInfoOpen={isContactInfoOpen}
         />
       </div>
 

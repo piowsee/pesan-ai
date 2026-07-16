@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { FaWhatsappSquare } from 'react-icons/fa';
+import { FaWhatsapp } from 'react-icons/fa';
 
 function getPredefinedLabels(t: ReturnType<typeof useTranslations>) {
   return [
@@ -173,9 +173,9 @@ export function ContactInfoPanel({
               {formatLastSeen(conversation.lastCustomerMessageAt)}
             </p>
 
-            <div className="mt-4 flex items-start gap-2 text-sm text-foreground">
-              <PhoneCallIcon className="mt-0.5 size-4 text-muted-foreground" />
-              <div>
+            <div className="mt-4 flex items-center gap-3 text-sm text-foreground">
+              <PhoneCallIcon className="size-5 shrink-0 text-blue-500" />
+              <div className="flex flex-col justify-center">
                 <p className="text-xs text-muted-foreground">
                   {t('connectedVia')}
                 </p>
@@ -185,16 +185,13 @@ export function ContactInfoPanel({
               </div>
             </div>
 
-            <div className="mt-4 flex items-start gap-2 text-sm text-foreground">
+            <div className="mt-4 flex items-center gap-3 text-sm text-foreground">
               {conversation.messagingProduct === 'whatsapp' ? (
-                <div className="relative mt-0.5 flex items-center justify-center">
-                  <div className="absolute size-[80%] rounded-sm bg-white" />
-                  <FaWhatsappSquare className="relative z-10 size-4 text-[#25D366]" />
-                </div>
+                <FaWhatsapp className="size-6 shrink-0 text-[#25D366]" />
               ) : (
-                <PhoneCallIcon className="mt-0.5 size-4 text-muted-foreground" />
+                <PhoneCallIcon className="size-5 shrink-0 text-blue-500" />
               )}
-              <div>
+              <div className="flex flex-col justify-center">
                 <p className="text-xs text-muted-foreground">
                   {t('connectedPlatforms')}
                 </p>
@@ -208,8 +205,8 @@ export function ContactInfoPanel({
           <div className="mx-6 h-px bg-border sm:mx-7" />
 
           <section className="px-6 py-6 sm:px-7">
-            <Label className="flex items-center gap-2 text-sm font-medium leading-normal text-foreground">
-              <TagIcon className="size-4 text-muted-foreground" />
+            <Label className="flex items-center gap-2.5 text-sm font-medium leading-normal text-foreground">
+              <TagIcon className="size-5 text-purple-500" />
               {t('customerLabel')}
             </Label>
 
@@ -226,28 +223,31 @@ export function ContactInfoPanel({
                   }
                 }}
               >
-                <SelectTrigger className="h-10 w-full rounded-lg bg-background text-sm focus:ring-brand/80">
+                <SelectTrigger
+                  className="w-full rounded-lg bg-background text-foreground focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none"
+                  size="lg"
+                >
                   <SelectValue placeholder={t('selectLabel')} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl border-border/50 shadow-lg p-1.5">
                   {predefinedLabels.map((labelOption) => (
                     <SelectItem
                       key={labelOption.value}
                       value={labelOption.value}
+                      className="cursor-pointer rounded-lg py-2.5 focus:bg-brand/5 focus:text-brand my-0.5"
                     >
-                      <div className="flex items-center gap-2">
-                        <labelOption.Icon
-                          className={cn('size-4', labelOption.color)}
-                        />
-                        <span>{labelOption.label}</span>
-                      </div>
+                      <labelOption.Icon
+                        className={cn('size-4', labelOption.color)}
+                      />
+                      <span className="truncate">{labelOption.label}</span>
                     </SelectItem>
                   ))}
-                  <SelectItem value="_custom_">
-                    <div className="flex items-center gap-2">
-                      <TagIcon className="size-4" />
-                      <span>{t('customLabel')}</span>
-                    </div>
+                  <SelectItem
+                    value="_custom_"
+                    className="cursor-pointer rounded-lg py-2.5 focus:bg-brand/5 focus:text-brand my-0.5"
+                  >
+                    <TagIcon className="size-4 text-purple-500" />
+                    <span className="truncate">{t('customLabel')}</span>
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -261,16 +261,16 @@ export function ContactInfoPanel({
                   }}
                   autoFocus
                   placeholder={t('typeLabel')}
-                  className="block h-10 w-full rounded-lg bg-background px-3 py-0 text-sm text-foreground shadow-none"
+                  className="block h-10 w-full rounded-lg bg-background px-3 py-0 text-sm text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               )}
             </div>
 
             <Label
               htmlFor={'contact-notes-' + conversation.id}
-              className="mt-6 flex items-center gap-2 text-sm font-medium leading-normal text-foreground"
+              className="mt-6 flex items-center gap-2.5 text-sm font-medium leading-normal text-foreground"
             >
-              <StickyNoteIcon className="size-4 text-muted-foreground" />
+              <StickyNoteIcon className="size-5 text-amber-500" />
               {t('internalNotes')}
             </Label>
             <Textarea
@@ -281,7 +281,7 @@ export function ContactInfoPanel({
               }}
               placeholder={t('addNote')}
               rows={2}
-              className="mt-3 block min-h-0 w-full resize-none rounded-lg bg-background px-3 py-2 text-sm text-foreground [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
+              className="mt-3 block min-h-0 w-full resize-none rounded-lg bg-background px-3 py-2 text-sm text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
             />
 
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">

@@ -1,9 +1,15 @@
 import { ConversationAvatar } from '@/components/dashboard/chat/conversation-avatar';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatLastSeen } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
-import { ArrowLeftIcon } from 'lucide-react';
+import { ArrowLeftIcon, CircleAlertIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export function ChatHeader({
@@ -11,13 +17,16 @@ export function ChatHeader({
   showBackButton,
   onBack,
   onContactAreaClick,
+  isContactInfoOpen,
 }: {
   conversation: ChatConversation;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;
+  isContactInfoOpen?: boolean;
 }) {
   const t = useTranslations('Chat.header');
+  const tContact = useTranslations('Chat.contact');
   return (
     <div className="flex h-18 w-full shrink-0 items-center border-b border-border/60 bg-background px-4">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -60,6 +69,29 @@ export function ChatHeader({
             </div>
           </div>
         </Button>
+
+        {!isContactInfoOpen && onContactAreaClick && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="unstyled"
+                  size="icon"
+                  onClick={onContactAreaClick}
+                  className="shrink-0 text-muted-foreground hover:bg-transparent hover:text-brand mr-2"
+                >
+                  <CircleAlertIcon className="size-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                sideOffset={8}
+                className="bg-white text-black border-none font-medium shadow-md [&_svg]:!hidden"
+              >
+                <p>{tContact('title')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     </div>
   );

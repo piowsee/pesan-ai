@@ -72,6 +72,7 @@ export function ChatDetailPane({
           onContactAreaClick={onContactAreaClick}
           onToggleTakeover={onToggleTakeover}
           pendingTakeoverConversationId={pendingTakeoverConversationId}
+          isContactInfoOpen={isContactInfoOpen}
         />
       ) : (
         <div className="flex h-full flex-1 items-center justify-center bg-background">
