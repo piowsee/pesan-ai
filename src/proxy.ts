@@ -10,7 +10,9 @@ const localePrefixRegex = /^\/(id|en)(?=\/|$)/;
 const intlMiddleware = createIntlMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
+  const sessionCookie = getSessionCookie(request, {
+    cookiePrefix: 'pesan-ai',
+  });
 
   const pathName = request.nextUrl.pathname;
   const localePrefix =
@@ -28,28 +30,34 @@ export async function proxy(request: NextRequest) {
   }
 
   // Expired-session returns clear auth cookies here; valid login redirects use a fresh session check in the login page.
-  if (
-    sessionCookie &&
-    isLoginRoute &&
-    request.nextUrl.searchParams.get('session_expired') === 'true'
-  ) {
-    const response = intlMiddleware(request);
+  if (sessionCookie && isLoginRoute) {
+    if (request.nextUrl.searchParams.get('session_expired') === 'true') {
+      const response = intlMiddleware(request);
 
-    const cookieOptions = {
-      path: '/',
-      maxAge: 0,
-      expires: new Date(0),
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax' as const,
-    };
+      const cookieOptions = {
+        path: '/',
+        maxAge: 0,
+        expires: new Date(0),
+        httpOnly: true,
+        secure: isProd,
+        sameSite: 'lax' as const,
+      };
 
-    const prefix = isProd ? '__Secure-' : '';
+      const prefix = isProd ? '__Secure-' : '';
 
-    response.cookies.set(`${prefix}pesan-ai.session_token`, '', cookieOptions);
-    response.cookies.set(`${prefix}pesan-ai.session_data`, '', cookieOptions);
+      response.cookies.set(
+        `${prefix}pesan-ai.session_token`,
+        '',
+        cookieOptions,
+      );
+      response.cookies.set(`${prefix}pesan-ai.session_data`, '', cookieOptions);
 
-    return response;
+      return response;
+    } else {
+      return NextResponse.redirect(
+        new URL(`${localePrefix}/dashboard`, request.url),
+      );
+    }
   }
 
   return intlMiddleware(request);
