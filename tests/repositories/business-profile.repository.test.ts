@@ -161,4 +161,41 @@ describe('BusinessProfileRepository Integration', { tags: ['db'] }, () => {
       });
     });
   });
+
+  describe('getBusinessProfile', () => {
+    it('returns null if phone number has no business profile', async () => {
+      const profile =
+        await BusinessProfileRepository.getBusinessProfile(TEST_PHONE_ID);
+      expect(profile).toBeNull();
+    });
+
+    it('returns the business profile if it exists', async () => {
+      await BusinessProfileRepository.upsertBusinessProfile({
+        phoneNumberDbId,
+        businessProfile: {
+          messaging_product: 'whatsapp',
+          address: 'Test Address',
+          description: 'Test description',
+          vertical: 'BEAUTY',
+          about: 'Test about',
+          email: 'profile-create@example.com',
+          websites: ['https://test.example.com'],
+          profile_picture_url: 'https://test.example.com/pic.jpg',
+        },
+      });
+
+      const profile =
+        await BusinessProfileRepository.getBusinessProfile(TEST_PHONE_ID);
+      expect(profile).toMatchObject({
+        messagingProduct: 'whatsapp',
+        address: 'Test Address',
+        description: 'Test description',
+        vertical: 'BEAUTY',
+        about: 'Test about',
+        email: 'profile-create@example.com',
+        websites: ['https://test.example.com'],
+        profilePictureUrl: 'https://test.example.com/pic.jpg',
+      });
+    });
+  });
 });

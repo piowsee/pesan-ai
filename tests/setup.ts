@@ -66,6 +66,7 @@ vi.mock('@/repositories/contact.repository', () => ({
 vi.mock('@/repositories/business-profile.repository', () => ({
   BusinessProfileRepository: {
     upsertBusinessProfile: vi.fn(),
+    getBusinessProfile: vi.fn(),
   },
 }));
 
@@ -189,6 +190,8 @@ vi.mock('@/services/phone-number.service', () => ({
     verifyAndRegister: vi.fn(),
     createPhoneNumber: vi.fn(),
     _generateRegistrationPin: vi.fn(),
+    getWhatsAppBusinessProfile: vi.fn(),
+    updateWhatsAppBusinessProfile: vi.fn(),
   },
 }));
 
@@ -225,6 +228,7 @@ vi.mock('@/services/meta-fetch.service', () => ({
     fetchWabaDetails: vi.fn(),
     fetchPhoneNumberDetails: vi.fn(),
     fetchBusinessProfile: vi.fn(),
+    updateBusinessProfile: vi.fn(),
     registerPhoneNumber: vi.fn(),
     deregisterPhoneNumber: vi.fn(),
     setPhoneNumberPin: vi.fn(),
