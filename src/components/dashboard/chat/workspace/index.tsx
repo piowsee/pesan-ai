@@ -58,7 +58,7 @@ function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
 export function ChatWorkspaceSkeleton() {
   return (
     <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 border-b border-brand/15 bg-background">
+      <div className="shrink-0 border-b bg-background">
         <div className="flex h-14 items-center gap-3 px-4">
           <Skeleton className="h-5 w-40 rounded-md" />
           <Skeleton className="h-5 w-28 rounded-md" />
@@ -69,7 +69,7 @@ export function ChatWorkspaceSkeleton() {
         className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
         style={{ contain: 'strict' }}
       >
-        <div className="hidden h-full w-95 shrink-0 border-r border-brand/10 bg-background lg:flex lg:flex-col">
+        <div className="hidden h-full w-95 shrink-0 border-r bg-background lg:flex lg:flex-col">
           <div className="flex flex-col gap-3 px-4 py-4">
             <Skeleton className="h-9 w-full rounded-full" />
             <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export function ChatWorkspaceSkeleton() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col bg-brand/5">
+        <div className="flex min-w-0 flex-1 flex-col bg-background">
           <div className="border-b bg-background px-6 py-4">
             <div className="flex items-center gap-4">
               <Skeleton className="size-11 shrink-0 rounded-full" />

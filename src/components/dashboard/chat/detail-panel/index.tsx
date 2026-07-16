@@ -74,7 +74,7 @@ export function ChatDetailPane({
           pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
       ) : (
-        <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
+        <div className="flex h-full flex-1 items-center justify-center bg-background">
           <ChatEmptyState
             title={t('emptyTitle')}
             description={t('emptyDesc')}

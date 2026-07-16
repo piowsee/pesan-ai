@@ -56,12 +56,12 @@ function MessageBubbleSkeleton({ index }: { index: number }) {
       <Bubble
         align={isOutgoing ? 'end' : 'start'}
         className="max-w-[85%]"
-        variant={isOutgoing ? 'tinted' : 'muted'}
+        variant={isOutgoing ? 'tinted' : 'surface'}
       >
         <BubbleContent
           className={cn(
             'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
-            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm',
+            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm border-transparent',
           )}
         >
           <div className="flex max-w-full flex-col gap-1.5">
@@ -74,7 +74,7 @@ function MessageBubbleSkeleton({ index }: { index: number }) {
           <div
             className={cn(
               'mt-1.5 flex items-center justify-end gap-1',
-              isOutgoing ? 'text-primary/70' : 'text-muted-foreground/70',
+              isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
             )}
           >
             <Skeleton className="h-2.5 w-10 rounded-full" />
@@ -321,7 +321,7 @@ export function MessageTimeline({
             ? messages.map((group) => (
                 <div key={group.date} className="flex flex-col gap-4">
                   <div className="flex justify-center my-2">
-                    <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand/70 uppercase tracking-wider backdrop-blur-sm">
+                    <span className="rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
                       {new Date(group.date).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'long',
@@ -362,7 +362,7 @@ export function MessageTimeline({
             aria-label={`Jump to ${belowViewportMessageCount} messages below`}
           >
             <ChevronDownIcon className="size-5" />
-            <Badge className="absolute -top-1.5 -right-1.5 min-w-5 justify-center rounded-full px-1.5 py-0 text-[10px] leading-4 shadow-sm">
+            <Badge className="absolute -top-1.5 -right-1.5 min-w-5 justify-center rounded-full bg-brand px-1.5 py-0 text-[10px] leading-4 text-brand-foreground shadow-sm">
               {belowViewportMessageCount > 99
                 ? '99+'
                 : belowViewportMessageCount}

@@ -114,7 +114,7 @@ export function ChatDetail({
   }
 
   return (
-    <section className="relative flex h-full w-full flex-col bg-brand/5 dark:bg-brand/10">
+    <section className="relative flex h-full w-full flex-col bg-background">
       <div className="bg-background">
         <ChatHeader
           conversation={conversation}
@@ -169,16 +169,26 @@ export function ChatDetail({
                 open={isCloseDialogOpen}
                 onOpenChange={setIsCloseDialogOpen}
               >
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('closeDialogTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t('closeDialogDesc', { name: conversation.displayName })}
-                    </AlertDialogDescription>
+                <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-xl ring-0 sm:max-w-md">
+                  <AlertDialogHeader className="flex flex-row items-start gap-3 p-5 text-left">
+                    <CheckCircleIcon className="mt-0.5 size-6 shrink-0 text-brand" />
+                    <div className="min-w-0">
+                      <AlertDialogTitle className="font-semibold text-foreground">
+                        {t('closeDialogTitle')}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="mt-1 text-foreground/65">
+                        {t('closeDialogDesc', {
+                          name: conversation.displayName,
+                        })}
+                      </AlertDialogDescription>
+                    </div>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                  <AlertDialogFooter className="m-0 border-t bg-background p-4">
+                    <AlertDialogCancel className="text-foreground/60 hover:bg-brand/5 hover:text-brand">
+                      {t('cancel')}
+                    </AlertDialogCancel>
                     <AlertDialogAction
+                      variant="brand"
                       onClick={() => {
                         onToggleTakeover(conversation.id, false);
                         setIsCloseDialogOpen(false);

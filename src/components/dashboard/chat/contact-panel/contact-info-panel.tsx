@@ -109,7 +109,7 @@ export function ContactInfoPanel({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="-ml-2 size-8 shrink-0 cursor-pointer text-brand/70 hover:text-brand hidden lg:flex"
+            className="-ml-2 hidden size-8 shrink-0 cursor-pointer text-muted-foreground hover:text-brand lg:flex"
           >
             <XIcon className="size-5" />
             <span className="sr-only">{t('close')}</span>
@@ -123,12 +123,12 @@ export function ContactInfoPanel({
             onClick={onClose}
             className="-ml-2 shrink-0 cursor-pointer lg:hidden"
           >
-            <ArrowLeftIcon className="size-5 text-brand" />
+            <ArrowLeftIcon className="size-5" />
             <span className="sr-only">{t('back')}</span>
           </Button>
         ) : null}
 
-        <h3 className="text-base font-semibold tracking-tight text-brand">
+        <h3 className="text-base font-semibold tracking-tight text-foreground">
           {t('title')}
         </h3>
       </div>
@@ -140,15 +140,14 @@ export function ContactInfoPanel({
               <ConversationAvatar
                 conversation={conversation}
                 size="lg"
-                avatarClassName="border-brand/25"
-                fallbackClassName="bg-brand/15 text-brand"
+                avatarClassName="border-border"
               />
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-base font-semibold text-foreground">
                   {conversation.displayName}
                 </p>
-                <p className="truncate text-sm text-brand/80">
+                <p className="truncate text-sm text-muted-foreground">
                   {conversation.contactIdentifier}
                 </p>
               </div>
@@ -163,10 +162,10 @@ export function ContactInfoPanel({
             </div>
           </div>
 
-          <div className="mx-6 mt-6 h-px bg-brand/15 sm:mx-7" />
+          <div className="mx-6 mt-6 h-px bg-border sm:mx-7" />
 
           <section className="px-6 py-6 sm:px-7">
-            <p className="text-xs font-medium text-brand/80">
+            <p className="text-xs font-medium text-muted-foreground">
               {t('lastActivity')}
             </p>
             <p className="mt-1 text-sm text-foreground">
@@ -174,21 +173,23 @@ export function ContactInfoPanel({
             </p>
 
             <div className="mt-4 flex items-start gap-2 text-sm text-foreground">
-              <PhoneCallIcon className="mt-0.5 size-4 text-brand/75" />
+              <PhoneCallIcon className="mt-0.5 size-4 text-muted-foreground" />
               <div>
-                <p className="text-xs text-brand/80">{t('connectedVia')}</p>
-                <p className="font-medium text-brand">
+                <p className="text-xs text-muted-foreground">
+                  {t('connectedVia')}
+                </p>
+                <p className="font-medium text-foreground">
                   {conversation.phoneNumber.displayPhoneNumber}
                 </p>
               </div>
             </div>
           </section>
 
-          <div className="mx-6 h-px bg-brand/15 sm:mx-7" />
+          <div className="mx-6 h-px bg-border sm:mx-7" />
 
           <section className="px-6 py-6 sm:px-7">
             <Label className="flex items-center gap-2 text-sm font-medium leading-normal text-foreground">
-              <TagIcon className="size-4 text-brand/75" />
+              <TagIcon className="size-4 text-muted-foreground" />
               {t('customerLabel')}
             </Label>
 
@@ -205,7 +206,7 @@ export function ContactInfoPanel({
                   }
                 }}
               >
-                <SelectTrigger className="h-10 w-full rounded-lg border-brand/15 bg-brand/5 focus:ring-brand/35 text-sm transition-colors hover:bg-brand/10">
+                <SelectTrigger className="h-10 w-full rounded-lg bg-background text-sm focus:ring-brand/80">
                   <SelectValue placeholder={t('selectLabel')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,7 +224,7 @@ export function ContactInfoPanel({
                     </SelectItem>
                   ))}
                   <SelectItem value="_custom_">
-                    <div className="flex items-center gap-2 text-brand">
+                    <div className="flex items-center gap-2">
                       <TagIcon className="size-4" />
                       <span>{t('customLabel')}</span>
                     </div>
@@ -240,7 +241,7 @@ export function ContactInfoPanel({
                   }}
                   autoFocus
                   placeholder={t('typeLabel')}
-                  className="block h-10 w-full rounded-lg border border-brand/15 bg-brand/5 px-3 py-0 text-sm text-foreground shadow-none outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35"
+                  className="block h-10 w-full rounded-lg bg-background px-3 py-0 text-sm text-foreground shadow-none"
                 />
               )}
             </div>
@@ -249,7 +250,7 @@ export function ContactInfoPanel({
               htmlFor={'contact-notes-' + conversation.id}
               className="mt-6 flex items-center gap-2 text-sm font-medium leading-normal text-foreground"
             >
-              <StickyNoteIcon className="size-4 text-brand/75" />
+              <StickyNoteIcon className="size-4 text-muted-foreground" />
               {t('internalNotes')}
             </Label>
             <Textarea
@@ -260,10 +261,10 @@ export function ContactInfoPanel({
               }}
               placeholder={t('addNote')}
               rows={2}
-              className="mt-3 block min-h-0 w-full resize-none rounded-lg border border-brand/15 bg-brand/5 px-3 py-2 text-sm text-foreground outline-none ring-offset-background transition placeholder:text-brand/60 focus-visible:ring-2 focus-visible:ring-brand/35 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
+              className="mt-3 block min-h-0 w-full resize-none rounded-lg bg-background px-3 py-2 text-sm text-foreground [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
             />
 
-            <p className="mt-3 text-xs text-brand/70 leading-relaxed">
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
               {t('noteWarning')}
             </p>
           </section>

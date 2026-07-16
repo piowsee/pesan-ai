@@ -89,7 +89,6 @@ export function ConversationListItem({
           conversation={conversation}
           size="md"
           className="mt-0.5"
-          fallbackClassName="bg-primary/5 text-primary"
         />
 
         <div className="min-w-0 flex-1 overflow-hidden">
@@ -101,7 +100,7 @@ export function ConversationListItem({
               className={cn(
                 'shrink-0 text-xs',
                 hasUnread
-                  ? 'font-semibold text-primary'
+                  ? 'font-semibold text-brand'
                   : 'text-muted-foreground',
               )}
             >

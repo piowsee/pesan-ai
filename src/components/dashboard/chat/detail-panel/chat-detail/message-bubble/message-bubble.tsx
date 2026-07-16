@@ -161,12 +161,12 @@ function MessageBubble({ message, wabaId }: MessageBubbleProps) {
       <Bubble
         align={isOutgoing ? 'end' : 'start'}
         className="max-w-[85%]"
-        variant={isOutgoing ? 'tinted' : 'muted'}
+        variant={isOutgoing ? 'tinted' : 'surface'}
       >
         <BubbleContent
           className={cn(
             'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
-            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm',
+            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm border-transparent',
           )}
         >
           <MessageBubbleContent
@@ -178,7 +178,7 @@ function MessageBubble({ message, wabaId }: MessageBubbleProps) {
           <div
             className={cn(
               'mt-1.5 flex items-center justify-end gap-1 text-[11px]',
-              isOutgoing ? 'text-primary/70' : 'text-muted-foreground/70',
+              isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
             )}
           >
             <span>{formatMessageTimestamp(message.timestamp)}</span>
