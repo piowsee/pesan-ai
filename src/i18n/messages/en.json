@@ -708,6 +708,7 @@
       "takeover": "Takeover",
       "lastActivity": "Last activity",
       "connectedVia": "Connected via admin",
+      "connectedPlatforms": "Connected platforms",
       "customerLabel": "Customer label",
       "selectLabel": "Select customer label...",
       "customLabel": "Custom label...",

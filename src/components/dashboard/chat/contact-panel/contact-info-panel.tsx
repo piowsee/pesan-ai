@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { FaWhatsappSquare } from 'react-icons/fa';
 
 function getPredefinedLabels(t: ReturnType<typeof useTranslations>) {
   return [
@@ -180,6 +181,25 @@ export function ContactInfoPanel({
                 </p>
                 <p className="font-medium text-foreground">
                   {conversation.phoneNumber.displayPhoneNumber}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 text-sm text-foreground">
+              {conversation.messagingProduct === 'whatsapp' ? (
+                <div className="relative mt-0.5 flex items-center justify-center">
+                  <div className="absolute size-[80%] rounded-sm bg-white" />
+                  <FaWhatsappSquare className="relative z-10 size-4 text-[#25D366]" />
+                </div>
+              ) : (
+                <PhoneCallIcon className="mt-0.5 size-4 text-muted-foreground" />
+              )}
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {t('connectedPlatforms')}
+                </p>
+                <p className="font-medium text-foreground capitalize">
+                  {conversation.messagingProduct}
                 </p>
               </div>
             </div>

@@ -708,6 +708,7 @@
       "takeover": "Pengambilalihan",
       "lastActivity": "Aktivitas terakhir",
       "connectedVia": "Terhubung via admin",
+      "connectedPlatforms": "Platform terhubung",
       "customerLabel": "Label pelanggan",
       "selectLabel": "Pilih label pelanggan...",
       "customLabel": "Label kustom...",
