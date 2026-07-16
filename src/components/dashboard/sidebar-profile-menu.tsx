@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { MdUnfoldMore } from 'react-icons/md';
 
 const DOCS_URL = 'https://piowsee.github.io/pesan-ai/introduction.html';
 
@@ -70,9 +71,13 @@ export function SidebarProfileMenu({ user }: { user: User }) {
           {user.name?.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-      <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+      <span className="min-w-0 flex-1 truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
         {user.name}
       </span>
+      <MdUnfoldMore
+        aria-hidden="true"
+        className="shrink-0 text-brand/80 group-data-[collapsible=icon]:hidden"
+      />
     </SidebarMenuButton>
   );
 
