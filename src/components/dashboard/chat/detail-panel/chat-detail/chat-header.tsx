@@ -42,20 +42,16 @@ export function ChatHeader({
             onContactAreaClick ? 'cursor-pointer' : 'cursor-default',
           )}
         >
-          <ConversationAvatar
-            conversation={conversation}
-            size="sm"
-            fallbackClassName="bg-brand/15 text-brand"
-          />
+          <ConversationAvatar conversation={conversation} size="sm" />
 
           <div className="min-w-0 flex flex-col justify-center text-left">
             <h2 className="truncate text-[15px] font-semibold tracking-tight text-foreground">
               {conversation.displayName}
             </h2>
-            <div className="mt-0.5 flex items-center gap-1.5 text-[13px] text-brand/80">
+            <div className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted-foreground">
               <span className="truncate">{conversation.contactIdentifier}</span>
               <span
-                className="mx-1 size-1 rounded-full bg-brand/45"
+                className="mx-1 size-1 rounded-full bg-muted-foreground/45"
                 aria-hidden="true"
               />
               <span className="truncate">

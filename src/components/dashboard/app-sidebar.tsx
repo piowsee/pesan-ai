@@ -72,7 +72,7 @@ export function AppSidebar({ user }: { user: User | null }) {
                     draggable={false}
                   />
                 </div>
-                <div className="grid min-w-0 flex-1 text-left text-sm leading-tight text-brand">
+                <div className="grid min-w-0 flex-1 text-left text-sm leading-tight text-foreground">
                   <span className="truncate text-lg font-bold tracking-tight select-none">
                     pesan-ai
                   </span>
@@ -81,8 +81,8 @@ export function AppSidebar({ user }: { user: User | null }) {
               <SidebarTrigger
                 className={cn(
                   pathname.startsWith('/dashboard/chat')
-                    ? 'bg-transparent text-brand'
-                    : 'text-brand',
+                    ? 'bg-transparent text-foreground'
+                    : 'text-foreground',
                   'absolute top-0 right-0 size-10! shrink-0 bg-transparent transition-colors hover:bg-transparent active:bg-transparent aria-expanded:bg-transparent [&_svg]:!size-5',
                 )}
               />
@@ -93,7 +93,7 @@ export function AppSidebar({ user }: { user: User | null }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="truncate font-semibold whitespace-nowrap text-brand/70 transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="truncate font-semibold whitespace-nowrap text-muted-foreground transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
             {t('navigation')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -110,7 +110,7 @@ export function AppSidebar({ user }: { user: User | null }) {
                     }
                     tooltip={item.title}
                     variant="activePrimary"
-                    className="h-10 px-0 text-[15px] text-brand hover:text-brand data-active:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 [&_svg]:size-5"
+                    className="h-10 px-0 text-[15px] text-foreground/60 hover:text-brand data-active:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-0 [&_svg]:size-5"
                   >
                     <Link href={item.url}>
                       <span className="flex size-10 shrink-0 items-center justify-center">

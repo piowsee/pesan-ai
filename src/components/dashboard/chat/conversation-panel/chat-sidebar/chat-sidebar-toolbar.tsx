@@ -19,12 +19,12 @@ export function ChatSidebarToolbar({
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-brand/70" />
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder={t('search')}
-          className="h-9 border border-brand/20 bg-brand/5 pl-9 placeholder:text-brand/60"
+          className="h-9 bg-background pl-9"
         />
       </div>
 
@@ -35,7 +35,7 @@ export function ChatSidebarToolbar({
           className={
             filter === 'all'
               ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
-              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
+              : 'h-8 cursor-pointer rounded-full px-3 text-foreground/60 hover:bg-brand/5 hover:text-brand'
           }
           onClick={() => onFilterChange('all')}
         >
@@ -47,7 +47,7 @@ export function ChatSidebarToolbar({
           className={
             filter === 'admin'
               ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
-              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
+              : 'h-8 cursor-pointer rounded-full px-3 text-foreground/60 hover:bg-brand/5 hover:text-brand'
           }
           onClick={() => onFilterChange('admin')}
         >
@@ -59,7 +59,7 @@ export function ChatSidebarToolbar({
           className={
             filter === 'bot'
               ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
-              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
+              : 'h-8 cursor-pointer rounded-full px-3 text-foreground/60 hover:bg-brand/5 hover:text-brand'
           }
           onClick={() => onFilterChange('bot')}
         >

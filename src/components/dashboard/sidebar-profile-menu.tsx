@@ -62,7 +62,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
   const triggerButton = (
     <SidebarMenuButton
       size="lg"
-      className="h-10 w-full cursor-pointer gap-3 px-2 text-brand hover:bg-primary/5 hover:text-brand focus-visible:ring-0 data-open:bg-transparent data-open:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0"
+      className="h-10 w-full cursor-pointer gap-3 px-2 text-foreground/60 hover:bg-brand/5 hover:text-brand focus-visible:ring-0 data-open:bg-brand/5 data-open:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0"
     >
       <Avatar className="size-8 rounded-full">
         <AvatarImage src={user.image ?? undefined} alt={user.name} />
@@ -75,7 +75,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
       </span>
       <MdUnfoldMore
         aria-hidden="true"
-        className="shrink-0 text-brand/80 group-data-[collapsible=icon]:hidden"
+        className="shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden"
       />
     </SidebarMenuButton>
   );
@@ -100,7 +100,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
           side="top"
           align="start"
           sideOffset={10}
-          className="w-60 rounded-lg border border-brand/20 p-0 shadow-lg"
+          className="w-60 rounded-lg border p-0 text-foreground shadow-lg"
         >
           <div className="flex items-center gap-3 px-4 py-4">
             <Avatar className="size-10 rounded-full">
@@ -110,21 +110,23 @@ export function SidebarProfileMenu({ user }: { user: User }) {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-brand">
+              <p className="truncate text-sm font-semibold text-foreground">
                 {user.name}
               </p>
-              <p className="truncate text-xs text-brand">{user.email}</p>
+              <p className="truncate text-xs text-foreground/70">
+                {user.email}
+              </p>
             </div>
           </div>
 
           <div className="px-4">
-            <div className="h-px bg-brand/20" />
+            <div className="h-px bg-border" />
           </div>
 
           <div className="p-2">
             <DropdownMenuGroup>
               <DropdownMenuItem
-                className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand"
                 onSelect={() => {
                   setIsMenuOpen(false);
                   setIsProfileOpen(true);
@@ -136,7 +138,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
 
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger
-                  className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand data-open:bg-primary/5 data-open:text-brand"
+                  className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand data-open:bg-brand/10 data-open:text-brand"
                   onClick={() => openSettings('general')}
                 >
                   <Settings />
@@ -144,18 +146,18 @@ export function SidebarProfileMenu({ user }: { user: User }) {
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent
                   sideOffset={8}
-                  className="relative w-44 rounded-lg border border-brand/20 p-1.5 shadow-lg before:absolute before:top-0 before:-left-2 before:h-full before:w-2 before:content-['']"
+                  className="relative w-44 rounded-lg border p-1.5 text-foreground shadow-lg before:absolute before:top-0 before:-left-2 before:h-full before:w-2 before:content-['']"
                 >
                   <DropdownMenuGroup className="flex flex-col gap-1">
                     <DropdownMenuItem
-                      className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                      className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand"
                       onSelect={() => openSettings('general')}
                     >
                       <Settings />
                       <span>{t('general')}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                      className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand"
                       onSelect={() => openSettings('security')}
                     >
                       <LockKeyhole />
@@ -167,7 +169,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
 
               <DropdownMenuItem
                 asChild
-                className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand"
                 onSelect={() => setIsMenuOpen(false)}
               >
                 <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
@@ -179,7 +181,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
           </div>
 
           <div className="px-4">
-            <div className="h-px bg-brand/20" />
+            <div className="h-px bg-border" />
           </div>
 
           <div className="p-2">

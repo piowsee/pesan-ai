@@ -58,6 +58,9 @@ export function ConversationActionsMenu({
   const takeoverActionLabel = conversation.adminTakeover
     ? 'Close conversation'
     : 'Take over';
+  const ConfirmationIcon = conversation.adminTakeover
+    ? CheckCircleIcon
+    : UserRoundCheckIcon;
   const actions: ConversationMenuAction[] = [
     {
       id: 'toggle-takeover',
@@ -104,8 +107,12 @@ export function ConversationActionsMenu({
             <MoreHorizontalIcon data-icon="inline-start" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuGroup>
+        <DropdownMenuContent
+          align="end"
+          sideOffset={8}
+          className="w-56 rounded-lg border bg-background p-0 text-foreground shadow-lg"
+        >
+          <DropdownMenuGroup className="p-2">
             {actions.map((action) => {
               const ActionIcon = action.icon;
 
@@ -114,6 +121,7 @@ export function ConversationActionsMenu({
                   key={action.id}
                   disabled={action.disabled}
                   onSelect={() => selectAction(action)}
+                  className="min-h-10 cursor-pointer gap-3 rounded-md px-3 py-2 text-foreground/60 focus:bg-brand/5 focus:text-brand"
                 >
                   <ActionIcon className={action.iconClassName} />
                   {action.label}
@@ -131,21 +139,41 @@ export function ConversationActionsMenu({
             if (!open) setActionAwaitingConfirmation(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {actionAwaitingConfirmation.confirmation.title}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {actionAwaitingConfirmation.confirmation.description}
-              </AlertDialogDescription>
+          <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
+            <AlertDialogHeader className="px-5 pt-5 pb-4">
+              <div className="flex items-start gap-3">
+                <ConfirmationIcon className="mt-0.5 size-6 shrink-0 text-brand" />
+                <div className="min-w-0 text-left">
+                  <AlertDialogTitle className="text-base font-semibold text-brand">
+                    {actionAwaitingConfirmation.confirmation.title}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                    {actionAwaitingConfirmation.confirmation.description}
+                  </AlertDialogDescription>
+                </div>
+              </div>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={actionAwaitingConfirmation.execute}>
-                {actionAwaitingConfirmation.confirmation.actionLabel}
-              </AlertDialogAction>
-            </AlertDialogFooter>
+
+            <div className="px-5">
+              <div className="h-px bg-brand/20" />
+            </div>
+
+            <div className="flex flex-col px-5 py-4">
+              <AlertDialogFooter className="mx-0 mb-0 gap-2 border-t-0 bg-transparent p-0">
+                <AlertDialogCancel
+                  variant="ghost"
+                  className="text-brand hover:bg-brand/5 hover:text-brand"
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="brand"
+                  onClick={actionAwaitingConfirmation.execute}
+                >
+                  {actionAwaitingConfirmation.confirmation.actionLabel}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </div>
           </AlertDialogContent>
         </AlertDialog>
       ) : null}

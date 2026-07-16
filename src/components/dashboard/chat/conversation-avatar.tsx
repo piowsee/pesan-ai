@@ -34,7 +34,10 @@ export function ConversationAvatar({
     <div className={cn('relative shrink-0', className)}>
       <Avatar className={cn('border', avatarSize, avatarClassName)}>
         <AvatarFallback
-          className={cn('text-sm font-medium', fallbackClassName)}
+          className={cn(
+            'bg-brand text-sm font-medium text-brand-foreground',
+            fallbackClassName,
+          )}
         >
           {conversation.displayName.charAt(0).toUpperCase()}
         </AvatarFallback>
