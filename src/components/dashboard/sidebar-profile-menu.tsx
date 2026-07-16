@@ -27,10 +27,9 @@ import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
 import {
   CircleQuestionMark,
-  Globe,
+  LockKeyhole,
   LogOut,
   Settings,
-  ShieldCheck,
   UserRound,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -152,14 +151,14 @@ export function SidebarProfileMenu({ user }: { user: User }) {
                       className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
                       onSelect={() => openSettings('general')}
                     >
-                      <Globe />
+                      <Settings />
                       <span>{t('general')}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
                       onSelect={() => openSettings('security')}
                     >
-                      <ShieldCheck />
+                      <LockKeyhole />
                       <span>{t('security')}</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
