@@ -139,29 +139,41 @@ export function ConversationActionsMenu({
             if (!open) setActionAwaitingConfirmation(null);
           }}
         >
-          <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-xl ring-0 sm:max-w-md">
-            <AlertDialogHeader className="flex flex-row items-start gap-3 p-5 text-left">
-              <ConfirmationIcon className="mt-0.5 size-6 shrink-0 text-brand" />
-              <div className="min-w-0">
-                <AlertDialogTitle className="font-semibold text-foreground">
-                  {actionAwaitingConfirmation.confirmation.title}
-                </AlertDialogTitle>
-                <AlertDialogDescription className="mt-1 text-foreground/65">
-                  {actionAwaitingConfirmation.confirmation.description}
-                </AlertDialogDescription>
+          <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
+            <AlertDialogHeader className="px-5 pt-5 pb-4">
+              <div className="flex items-start gap-3">
+                <ConfirmationIcon className="mt-0.5 size-6 shrink-0 text-brand" />
+                <div className="min-w-0 text-left">
+                  <AlertDialogTitle className="text-base font-semibold text-brand">
+                    {actionAwaitingConfirmation.confirmation.title}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                    {actionAwaitingConfirmation.confirmation.description}
+                  </AlertDialogDescription>
+                </div>
               </div>
             </AlertDialogHeader>
-            <AlertDialogFooter className="m-0 border-t bg-background p-4">
-              <AlertDialogCancel className="text-foreground/60 hover:bg-brand/5 hover:text-brand">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                variant="brand"
-                onClick={actionAwaitingConfirmation.execute}
-              >
-                {actionAwaitingConfirmation.confirmation.actionLabel}
-              </AlertDialogAction>
-            </AlertDialogFooter>
+
+            <div className="px-5">
+              <div className="h-px bg-brand/20" />
+            </div>
+
+            <div className="flex flex-col px-5 py-4">
+              <AlertDialogFooter className="mx-0 mb-0 gap-2 border-t-0 bg-transparent p-0">
+                <AlertDialogCancel
+                  variant="ghost"
+                  className="text-brand hover:bg-brand/5 hover:text-brand"
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="brand"
+                  onClick={actionAwaitingConfirmation.execute}
+                >
+                  {actionAwaitingConfirmation.confirmation.actionLabel}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </div>
           </AlertDialogContent>
         </AlertDialog>
       ) : null}
