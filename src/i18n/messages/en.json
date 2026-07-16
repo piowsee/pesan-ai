@@ -435,6 +435,7 @@
   "ProfileMenu": {
     "openProfile": "Open profile",
     "profile": "Profile",
+    "docs": "Help Center",
     "settings": "Settings",
     "general": "General",
     "security": "Security",

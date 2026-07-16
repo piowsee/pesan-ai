@@ -25,9 +25,18 @@ import {
 import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
-import { Globe, LogOut, Settings, ShieldCheck, UserRound } from 'lucide-react';
+import {
+  CircleQuestionMark,
+  Globe,
+  LogOut,
+  Settings,
+  ShieldCheck,
+  UserRound,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+
+const DOCS_URL = 'https://piowsee.github.io/pesan-ai/introduction.html';
 
 export function SidebarProfileMenu({ user }: { user: User }) {
   const router = useRouter();
@@ -151,6 +160,17 @@ export function SidebarProfileMenu({ user }: { user: User }) {
                   </DropdownMenuGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+
+              <DropdownMenuItem
+                asChild
+                className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-brand hover:bg-primary/5 focus:bg-primary/5 focus:text-brand"
+                onSelect={() => setIsMenuOpen(false)}
+              >
+                <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
+                  <CircleQuestionMark />
+                  <span>{t('docs')}</span>
+                </a>
+              </DropdownMenuItem>
             </DropdownMenuGroup>
           </div>
 
