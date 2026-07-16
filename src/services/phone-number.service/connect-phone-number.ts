@@ -6,7 +6,7 @@ import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { randomInt } from 'node:crypto';
 
-export const PhoneNumberService = {
+export const ConnectPhoneNumberService = {
   /**
    * Below is logics that responsible for the manual phone number verification and
    * registration flow (as opposed to the Embedded Signup automatic flow).
