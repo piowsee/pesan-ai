@@ -20,7 +20,7 @@ export function ChatEmptyState({
   return (
     <div
       className={cn(
-        'flex h-full flex-col items-center justify-center gap-4 rounded-[24px] border border-dashed border-border/70 bg-muted/20 px-6 py-10 text-center',
+        'flex h-full flex-col items-center justify-center gap-4 px-6 py-10 text-center',
         className,
       )}
     >
