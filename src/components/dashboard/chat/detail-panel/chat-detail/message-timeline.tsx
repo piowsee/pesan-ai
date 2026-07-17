@@ -451,7 +451,7 @@ export function MessageTimeline({
       <ScrollArea className="h-full px-2 lg:px-4">
         <div
           ref={contentRef}
-          className="flex min-h-full flex-col gap-4 px-2 pt-4 pb-6 lg:pb-8"
+          className="flex min-h-full flex-col gap-4 px-2 pt-4"
         >
           {hasNextPage ? (
             <div className="flex justify-center">
@@ -483,7 +483,7 @@ export function MessageTimeline({
 
           {!isLoading
             ? messages.map((group) => (
-                <div key={group.date} className="flex flex-col gap-4">
+                <div key={group.date} className="flex flex-col mb-4">
                   <div className="flex justify-center my-2">
                     <span className="rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
                       {new Date(group.date).toLocaleDateString('id-ID', {
@@ -493,26 +493,47 @@ export function MessageTimeline({
                       })}
                     </span>
                   </div>
-                  {group.messages.map((message) => (
-                    <div key={message.id} className="flex flex-col gap-4">
-                      {shouldRenderUnreadDivider({
-                        messageId: message.id,
-                        unreadBoundaryMessageId,
-                      }) ? (
-                        <div ref={unreadDividerRef}>
-                          <UnreadMessagesDivider />
-                        </div>
-                      ) : null}
+                  {group.messages.map((message, index) => {
+                    const previousMessage = group.messages[index - 1];
+                    const nextMessage = group.messages[index + 1];
+                    const isFirstInGroup =
+                      previousMessage?.direction !== message.direction;
+                    const isSameSenderAsNext =
+                      nextMessage?.direction === message.direction;
+
+                    return (
                       <div
-                        data-message-id={message.id}
-                        data-unread-message={
-                          unreadMessageIds.has(message.id) ? 'true' : undefined
-                        }
+                        key={message.id}
+                        className={cn(
+                          'flex flex-col',
+                          isSameSenderAsNext ? 'mb-[6px]' : 'mb-[10px]',
+                        )}
                       >
-                        <MessageBubble message={message} wabaId={wabaId} />
+                        {shouldRenderUnreadDivider({
+                          messageId: message.id,
+                          unreadBoundaryMessageId,
+                        }) ? (
+                          <div ref={unreadDividerRef} className="mb-4">
+                            <UnreadMessagesDivider />
+                          </div>
+                        ) : null}
+                        <div
+                          data-message-id={message.id}
+                          data-unread-message={
+                            unreadMessageIds.has(message.id)
+                              ? 'true'
+                              : undefined
+                          }
+                        >
+                          <MessageBubble
+                            message={message}
+                            wabaId={wabaId}
+                            isFirstInGroup={isFirstInGroup}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ))
             : null}

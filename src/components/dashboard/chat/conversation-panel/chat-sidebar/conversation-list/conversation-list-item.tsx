@@ -72,9 +72,7 @@ export function ConversationListItem({
         'group flex w-full min-w-0 overflow-hidden transition-all',
         isActive
           ? 'bg-brand/10 hover:bg-brand/10'
-          : hasUnread
-            ? 'bg-brand/5 hover:bg-brand/8'
-            : 'bg-transparent hover:bg-brand/5',
+          : 'bg-transparent hover:bg-brand/5',
       )}
     >
       <Button
