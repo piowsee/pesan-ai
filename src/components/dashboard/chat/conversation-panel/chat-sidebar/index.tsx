@@ -16,8 +16,6 @@ export function ChatSidebar({
   errorMessage,
   onRetry,
   onSelectConversation,
-  onToggleTakeover,
-  pendingTakeoverConversationId,
   emptyTitle,
   emptyDescription,
 }: {
@@ -33,11 +31,6 @@ export function ChatSidebar({
   errorMessage?: string;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
-  onToggleTakeover: (
-    conversationId: string,
-    nextAdminTakeover: boolean,
-  ) => void;
-  pendingTakeoverConversationId?: string;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
@@ -59,8 +52,6 @@ export function ChatSidebar({
           errorMessage={errorMessage}
           onRetry={onRetry}
           onSelectConversation={onSelectConversation}
-          onToggleTakeover={onToggleTakeover}
-          pendingTakeoverConversationId={pendingTakeoverConversationId}
           emptyTitle={emptyTitle}
           emptyDescription={emptyDescription}
         />

@@ -1,5 +1,4 @@
 import { ConversationAvatar } from '@/components/dashboard/chat/conversation-avatar';
-import { ConversationActionsMenu } from '@/components/dashboard/chat/conversation-panel/chat-sidebar/conversation-list/conversation-actions-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,7 +21,7 @@ const mediaPreviewIcons = {
 } satisfies Record<MediaPreviewMessageType, LucideIcon>;
 
 export function getConversationStatusLabel(adminTakeover: boolean) {
-  return adminTakeover ? 'Admin' : 'Bot';
+  return adminTakeover ? 'Admin' : 'AI Agent';
 }
 
 export function shouldHighlightAdminConversation(params: {
@@ -36,15 +35,11 @@ export function shouldHighlightAdminConversation(params: {
 export function ConversationListItem({
   conversation,
   isActive,
-  isTakeoverPending,
   onSelect,
-  onToggleTakeover,
 }: {
   conversation: ChatConversation;
   isActive: boolean;
-  isTakeoverPending?: boolean;
   onSelect: () => void;
-  onToggleTakeover: (nextAdminTakeover: boolean) => void;
 }) {
   const unreadCount = Number(conversation.unreadCount ?? 0);
   const hasUnread = Number.isFinite(unreadCount) && unreadCount > 0;
@@ -147,14 +142,6 @@ export function ConversationListItem({
           </div>
         </div>
       </Button>
-
-      <div className="flex shrink-0 items-center pr-3">
-        <ConversationActionsMenu
-          conversation={conversation}
-          isTakeoverPending={isTakeoverPending}
-          onToggleTakeover={onToggleTakeover}
-        />
-      </div>
     </div>
   );
 }

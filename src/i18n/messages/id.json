@@ -631,7 +631,7 @@
   "Chat": {
     "takeover": {
       "enabled": "Pengambilalihan admin diaktifkan",
-      "disabled": "Percakapan dikembalikan ke bot",
+      "disabled": "Percakapan dikembalikan ke Agen AI",
       "error": "Gagal memperbarui status pengambilalihan"
     },
     "empty": {
@@ -644,7 +644,7 @@
       "search": "Cari nomor atau nama",
       "filterAll": "Semua",
       "filterAdmin": "Admin",
-      "filterBot": "Bot",
+      "filterBot": "Agen AI",
       "allPhones": "Semua Telepon"
     },
     "header": {
@@ -653,10 +653,14 @@
     "detail": {
       "emptyTitle": "Pilih percakapan",
       "emptyDesc": "Pilih utas pelanggan dari kotak masuk untuk meninjau riwayat pesan dan melanjutkan percakapan.",
-      "takeoverPrompt": "Selesai membantu pelanggan ini? Tutup percakapan agar bot dapat mengambil alih.",
-      "closeConversation": "Tutup percakapan",
-      "closeDialogTitle": "Tutup percakapan ini?",
-      "closeDialogDesc": "Bot akan melanjutkan penanganan pesan baru dari {name}.",
+      "agentActivePrompt": "Agen AI sedang aktif menangani percakapan ini! Anda dapat mengambil alih kapan saja melalui tombol di bawah.",
+      "takeoverPrompt": "Agen AI sedang dijeda. Kembalikan percakapan ke Agen AI jika Anda sudah selesai.",
+      "returnToAgent": "Kembalikan ke Agen AI",
+      "returnDialogTitle": "Kembalikan percakapan ini ke Agen AI?",
+      "returnDialogDesc": "Agen AI akan melanjutkan penanganan pesan baru dari {name}.",
+      "takeoverButton": "Ambil Alih Percakapan",
+      "takeoverDialogTitle": "Ambil alih percakapan ini?",
+      "takeoverDialogDesc": "Agen AI akan berhenti membalas {name} sampai Anda mengembalikan percakapan ini ke Agen AI.",
       "cancel": "Batal"
     },
     "composer": {

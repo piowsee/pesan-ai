@@ -704,8 +704,6 @@ export function ChatWorkspace() {
               }
             }}
             onSelectConversation={handleSelectConversation}
-            onToggleTakeover={handleToggleTakeover}
-            pendingTakeoverConversationId={pendingTakeoverConversationId}
             showMobileDetail={showMobileDetail}
             emptyTitle={
               activeWabaId ? t('empty.noConversations') : t('empty.selectWaba')

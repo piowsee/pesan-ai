@@ -631,7 +631,7 @@
   "Chat": {
     "takeover": {
       "enabled": "Admin takeover enabled",
-      "disabled": "Conversation returned to bot",
+      "disabled": "Conversation returned to AI Agent",
       "error": "Failed to update takeover status"
     },
     "empty": {
@@ -644,7 +644,7 @@
       "search": "Search number or name",
       "filterAll": "All",
       "filterAdmin": "Admin",
-      "filterBot": "Bot",
+      "filterBot": "AI Agent",
       "allPhones": "All Phones"
     },
     "header": {
@@ -653,10 +653,14 @@
     "detail": {
       "emptyTitle": "Select a conversation",
       "emptyDesc": "Choose a customer thread from the inbox to review message history and continue the conversation.",
-      "takeoverPrompt": "Finished assisting this customer? Close the conversation to let the bot take over.",
-      "closeConversation": "Close conversation",
-      "closeDialogTitle": "Close this conversation?",
-      "closeDialogDesc": "The bot will resume handling new messages from {name}.",
+      "agentActivePrompt": "AI Agent is actively handling this conversation! You can take over anytime using the button below.",
+      "takeoverPrompt": "AI Agent is currently paused. Return the conversation to AI Agent when you're finished.",
+      "returnToAgent": "Return to AI Agent",
+      "returnDialogTitle": "Return this conversation to AI Agent?",
+      "returnDialogDesc": "The AI Agent will resume handling new messages from {name}.",
+      "takeoverButton": "Take Over Conversation",
+      "takeoverDialogTitle": "Take over this conversation?",
+      "takeoverDialogDesc": "The AI Agent will stop replying to {name} until you return this conversation to the AI Agent.",
       "cancel": "Cancel"
     },
     "composer": {

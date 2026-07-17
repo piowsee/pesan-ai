@@ -13,11 +13,6 @@ interface ChatConversationPaneProps {
   errorMessage?: string;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
-  onToggleTakeover: (
-    conversationId: string,
-    nextAdminTakeover: boolean,
-  ) => void;
-  pendingTakeoverConversationId?: string;
   showMobileDetail: boolean;
   emptyTitle: string;
   emptyDescription: string;
@@ -36,8 +31,6 @@ export function ChatConversationPane({
   onRetry,
   onSearchChange,
   onSelectConversation,
-  onToggleTakeover,
-  pendingTakeoverConversationId,
   searchValue,
   showMobileDetail,
 }: ChatConversationPaneProps) {
@@ -57,8 +50,6 @@ export function ChatConversationPane({
         errorMessage={errorMessage}
         onRetry={onRetry}
         onSelectConversation={onSelectConversation}
-        onToggleTakeover={onToggleTakeover}
-        pendingTakeoverConversationId={pendingTakeoverConversationId}
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
       />
