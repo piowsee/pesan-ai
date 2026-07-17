@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { MessageGroup } from '@/hooks/use-message';
+import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import {
   LoaderCircleIcon,
@@ -155,15 +156,36 @@ export function ChatDetail({
         {conversation.adminTakeover ? (
           <>
             {/* Banner: Return to AI Agent */}
-            <div className="flex min-h-[56px] w-full flex-col justify-between gap-3 bg-amber-50 px-4 py-2.5 text-sm dark:bg-amber-950/35 sm:flex-row sm:items-center sm:gap-4">
-              <span className="font-medium text-amber-950 dark:text-amber-100">
-                {t('takeoverPrompt')}
+            <div
+              className={cn(
+                'flex min-h-[56px] w-full flex-col justify-between gap-3 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-4',
+                conversation.canSendFreeform
+                  ? 'bg-amber-50 dark:bg-amber-950/35'
+                  : 'bg-red-50 dark:bg-red-950/35',
+              )}
+            >
+              <span
+                className={cn(
+                  'font-medium',
+                  conversation.canSendFreeform
+                    ? 'text-amber-950 dark:text-amber-100'
+                    : 'text-red-950 dark:text-red-100',
+                )}
+              >
+                {conversation.canSendFreeform
+                  ? t('takeoverPrompt')
+                  : t('takeoverExpiredPrompt')}
               </span>
               <Button
                 variant="ghost"
                 onClick={() => setIsReturnDialogOpen(true)}
                 disabled={isPending}
-                className="h-9 px-4 gap-1.5 shrink-0 text-amber-700 hover:bg-transparent hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400"
+                className={cn(
+                  'h-9 shrink-0 gap-1.5 px-4 hover:bg-transparent',
+                  conversation.canSendFreeform
+                    ? 'text-amber-700 hover:text-amber-800 dark:text-amber-500 dark:hover:text-amber-400'
+                    : 'text-red-700 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400',
+                )}
               >
                 {isPending ? (
                   <LoaderCircleIcon className="size-4 animate-spin" />
@@ -232,9 +254,25 @@ export function ChatDetail({
         ) : (
           <>
             {/* Banner: AI Agent is active */}
-            <div className="flex min-h-[56px] w-full flex-col justify-center gap-3 bg-emerald-50 px-4 py-3 text-sm dark:bg-emerald-950/35 sm:flex-row sm:items-center sm:justify-start sm:gap-4">
-              <span className="font-medium text-emerald-950 dark:text-emerald-100">
-                {t('agentActivePrompt')}
+            <div
+              className={cn(
+                'flex min-h-[56px] w-full flex-col justify-center gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-start sm:gap-4',
+                conversation.canSendFreeform
+                  ? 'bg-emerald-50 dark:bg-emerald-950/35'
+                  : 'bg-red-50 dark:bg-red-950/35',
+              )}
+            >
+              <span
+                className={cn(
+                  'font-medium',
+                  conversation.canSendFreeform
+                    ? 'text-emerald-950 dark:text-emerald-100'
+                    : 'text-red-950 dark:text-red-100',
+                )}
+              >
+                {conversation.canSendFreeform
+                  ? t('agentActivePrompt')
+                  : t('agentActiveExpiredPrompt')}
               </span>
             </div>
 
@@ -242,7 +280,7 @@ export function ChatDetail({
             <div className="flex items-center justify-center px-4 pb-3 pt-0">
               <Button
                 onClick={() => setIsTakeoverDialogOpen(true)}
-                disabled={isPending}
+                disabled={isPending || !conversation.canSendFreeform}
                 className="h-14 w-full gap-2.5 rounded-2xl bg-brand text-base font-semibold text-brand-foreground shadow-sm transition-colors hover:bg-brand/90"
               >
                 {isPending ? (

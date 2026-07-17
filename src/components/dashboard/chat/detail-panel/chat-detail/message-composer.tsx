@@ -13,7 +13,6 @@ import { CHAT_MESSAGE_CHARACTER_LIMIT } from '@/lib/chat/chat';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import {
-  AlertTriangleIcon,
   FileTextIcon,
   ImageIcon,
   MusicIcon,
@@ -299,20 +298,6 @@ export function MessageComposer({
 
   return (
     <div className="w-full shrink-0 bg-transparent">
-      {!conversation.canSendFreeform ? (
-        <div className="mx-4 my-2 flex items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10">
-          <AlertTriangleIcon className="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-              {t('templateRequired')}
-            </p>
-            <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/80">
-              {t('templateDesc')}
-            </p>
-          </div>
-        </div>
-      ) : null}
-
       {selectedMedia ? (
         <MediaPreview
           selectedMedia={selectedMedia}
