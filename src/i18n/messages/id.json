@@ -699,7 +699,9 @@
     "list": {
       "errorTitle": "Tidak dapat memuat obrolan",
       "errorDesc": "Kotak masuk tidak dapat dimuat saat ini.",
-      "retry": "Coba lagi"
+      "retry": "Coba lagi",
+      "statusAdmin": "Butuh Admin",
+      "statusAiAgent": "AI Agent Aktif"
     },
     "contact": {
       "label": {

@@ -699,7 +699,9 @@
     "list": {
       "errorTitle": "Unable to load chats",
       "errorDesc": "The inbox could not be loaded right now.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "statusAdmin": "Needs Admin",
+      "statusAiAgent": "AI Agent Active"
     },
     "contact": {
       "label": {
