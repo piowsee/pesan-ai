@@ -239,7 +239,7 @@ export function ChatDetail({
             </div>
 
             {/* Big red Take Over button replacing the composer */}
-            <div className="flex items-center justify-center px-4 pb-3 pt-2">
+            <div className="flex items-center justify-center px-4 pb-3 pt-0">
               <Button
                 onClick={() => setIsTakeoverDialogOpen(true)}
                 disabled={isPending}

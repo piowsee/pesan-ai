@@ -155,10 +155,14 @@ export function ContactInfoPanel({
 
               <div className="flex shrink-0 flex-col items-end gap-1.5">
                 {conversation.adminTakeover ? (
-                  <Badge className="border-emerald-400/35 bg-emerald-500/10 px-1.5 py-0 text-[10px] font-medium text-emerald-700">
+                  <Badge className="border-amber-400/35 bg-amber-500/10 px-1.5 py-0 text-[10px] font-medium text-amber-700 dark:text-amber-500">
                     {t('takeover')}
                   </Badge>
-                ) : null}
+                ) : (
+                  <Badge className="border-emerald-400/35 bg-emerald-500/10 px-1.5 py-0 text-[10px] font-medium text-emerald-700 dark:text-emerald-500">
+                    {t('agentActive')}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
