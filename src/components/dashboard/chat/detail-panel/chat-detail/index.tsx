@@ -69,6 +69,9 @@ export function ChatDetail({
   onLoadOlder,
   localSendScrollSignal,
   initialUnreadCount,
+  unreadCount,
+  onClearUnread,
+  onUnreadMessagesViewed,
   onSend,
   onSendMedia,
   showBackButton,
@@ -87,6 +90,9 @@ export function ChatDetail({
   onLoadOlder: () => void;
   localSendScrollSignal: number;
   initialUnreadCount: number;
+  unreadCount: number;
+  onClearUnread: () => void;
+  onUnreadMessagesViewed: (viewedCount: number) => void;
   onSend: (content: string) => void;
   onSendMedia: (input: { file: File; caption?: string }) => void;
   showBackButton: boolean;
@@ -148,6 +154,9 @@ export function ChatDetail({
             onLoadOlderAction={onLoadOlder}
             localSendScrollSignal={localSendScrollSignal}
             initialUnreadCount={initialUnreadCount}
+            unreadCount={unreadCount}
+            onClearUnreadAction={onClearUnread}
+            onUnreadMessagesViewedAction={onUnreadMessagesViewed}
           />
         </div>
       </div>

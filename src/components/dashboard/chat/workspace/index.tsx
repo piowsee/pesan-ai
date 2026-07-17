@@ -9,7 +9,7 @@ import {
   captureUnreadDividerSnapshot,
   clearUnreadDividerSnapshot,
   getUnreadDividerInitialCount,
-  hasUnreadDividerSnapshot,
+  removeUnreadDividerSnapshot,
 } from '@/components/dashboard/chat/shared/unread-divider';
 import {
   CHAT_BASE_PARAM_KEYS,
@@ -28,6 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import {
   useConversations,
+  useDecrementConversationUnreadCount,
   useMarkAsRead,
   useUpdateAdminTakeover,
 } from '@/hooks/use-conversations';
@@ -498,18 +499,17 @@ export function ChatWorkspace() {
         notes: '',
       })
     : { label: '', notes: '' };
-  const hasSelectedUnreadDividerSnapshot = hasUnreadDividerSnapshot({
-    conversationId: selectedConversationId,
-    snapshotByConversation: initialUnreadCountByConversation,
-  });
   const selectedInitialUnreadCount = getUnreadDividerInitialCount({
     conversationId: selectedConversationId,
     conversationUnreadCount: selectedConversation?.unreadCount,
     snapshotByConversation: initialUnreadCountByConversation,
   });
+  const selectedUnreadCount = Number(selectedConversation?.unreadCount ?? 0);
 
   const showMobileDetail = Boolean(selectedConversationId);
   const { mutate: markAsRead } = useMarkAsRead();
+  const decrementConversationUnreadCount =
+    useDecrementConversationUnreadCount();
   const {
     mutate: updateAdminTakeover,
     isPending: isUpdatingAdminTakeover,
@@ -526,6 +526,15 @@ export function ChatWorkspace() {
       );
       const unreadCount = Number(conversation?.unreadCount ?? 0);
 
+      if (selectedConversationId && selectedConversationId !== conversationId) {
+        setInitialUnreadCountByConversation((current) =>
+          removeUnreadDividerSnapshot({
+            conversationId: selectedConversationId,
+            snapshotByConversation: current,
+          }),
+        );
+      }
+
       setInitialUnreadCountByConversation((current) =>
         captureUnreadDividerSnapshot({
           conversationId,
@@ -540,45 +549,9 @@ export function ChatWorkspace() {
         keys: CHAT_DETAIL_PARAM_KEYS,
         updates: { panel: undefined },
       });
-
-      if (activeWabaId && unreadCount > 0) {
-        markAsRead({ wabaId: activeWabaId, convId: conversationId });
-      }
     },
-    [activeWabaId, allConversations, markAsRead, pushChatRoute],
+    [activeWabaId, allConversations, pushChatRoute, selectedConversationId],
   );
-
-  useEffect(() => {
-    if (
-      !activeWabaId ||
-      !selectedConversation ||
-      hasSelectedUnreadDividerSnapshot
-    ) {
-      return;
-    }
-
-    const unreadCount = Number(selectedConversation.unreadCount ?? 0);
-    if (unreadCount <= 0) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setInitialUnreadCountByConversation((current) => ({
-        ...current,
-        [selectedConversation.id]: unreadCount,
-      }));
-      markAsRead({ wabaId: activeWabaId, convId: selectedConversation.id });
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [
-    activeWabaId,
-    markAsRead,
-    hasSelectedUnreadDividerSnapshot,
-    selectedConversation,
-  ]);
 
   const handleToggleTakeover = useCallback(
     (conversationId: string, nextAdminTakeover: boolean) => {
@@ -610,16 +583,65 @@ export function ChatWorkspace() {
   const { mutate: sendMessage } = useSendMessage();
   const { mutate: sendMediaMessage } = useSendMediaMessage();
 
+  const handleClearUnread = useCallback(() => {
+    if (!selectedConversationId || !activeWabaId) {
+      return;
+    }
+
+    setInitialUnreadCountByConversation((current) =>
+      clearUnreadDividerSnapshot({
+        conversationId: selectedConversationId,
+        snapshotByConversation: current,
+      }),
+    );
+
+    if (selectedUnreadCount > 0) {
+      markAsRead({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+      });
+    }
+  }, [activeWabaId, markAsRead, selectedConversationId, selectedUnreadCount]);
+
+  const handleUnreadMessagesViewed = useCallback(
+    (viewedCount: number) => {
+      if (
+        !selectedConversationId ||
+        !activeWabaId ||
+        selectedUnreadCount <= 0 ||
+        viewedCount <= 0
+      ) {
+        return;
+      }
+
+      if (viewedCount >= selectedUnreadCount) {
+        markAsRead({
+          wabaId: activeWabaId,
+          convId: selectedConversationId,
+        });
+        return;
+      }
+
+      decrementConversationUnreadCount({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+        viewedCount,
+      });
+    },
+    [
+      activeWabaId,
+      decrementConversationUnreadCount,
+      markAsRead,
+      selectedConversationId,
+      selectedUnreadCount,
+    ],
+  );
+
   const handleSendMessage = useCallback(
     (content: string) => {
       if (!selectedConversationId || !activeWabaId) return;
 
-      setInitialUnreadCountByConversation((current) =>
-        clearUnreadDividerSnapshot({
-          conversationId: selectedConversationId,
-          snapshotByConversation: current,
-        }),
-      );
+      handleClearUnread();
       setLocalSendScrollSignal((value) => value + 1);
       sendMessage({
         wabaId: activeWabaId,
@@ -627,19 +649,14 @@ export function ChatWorkspace() {
         content,
       });
     },
-    [activeWabaId, selectedConversationId, sendMessage],
+    [activeWabaId, handleClearUnread, selectedConversationId, sendMessage],
   );
 
   const handleSendMediaMessage = useCallback(
     ({ caption, file }: { file: File; caption?: string }) => {
       if (!selectedConversationId || !activeWabaId) return;
 
-      setInitialUnreadCountByConversation((current) =>
-        clearUnreadDividerSnapshot({
-          conversationId: selectedConversationId,
-          snapshotByConversation: current,
-        }),
-      );
+      handleClearUnread();
       setLocalSendScrollSignal((value) => value + 1);
       sendMediaMessage({
         wabaId: activeWabaId,
@@ -648,7 +665,7 @@ export function ChatWorkspace() {
         caption,
       });
     },
-    [activeWabaId, selectedConversationId, sendMediaMessage],
+    [activeWabaId, handleClearUnread, selectedConversationId, sendMediaMessage],
   );
 
   const isWaitingForInitialWaba = isWabasLoading && !data;
@@ -737,11 +754,22 @@ export function ChatWorkspace() {
         }}
         localSendScrollSignal={localSendScrollSignal}
         initialUnreadCount={selectedInitialUnreadCount}
+        unreadCount={selectedUnreadCount}
+        onClearUnread={handleClearUnread}
+        onUnreadMessagesViewed={handleUnreadMessagesViewed}
         onSend={handleSendMessage}
         onSendMedia={handleSendMediaMessage}
         showMobileDetail={showMobileDetail}
         isContactInfoOpen={isContactInfoOpen}
         onBack={() => {
+          if (selectedConversationId) {
+            setInitialUnreadCountByConversation((current) =>
+              removeUnreadDividerSnapshot({
+                conversationId: selectedConversationId,
+                snapshotByConversation: current,
+              }),
+            );
+          }
           pushChatRoute({
             wabaId: activeWabaId,
             keys: CHAT_LIST_PARAM_KEYS,

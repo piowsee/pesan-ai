@@ -3,6 +3,10 @@ import type { ChatMessage } from '@/types/chat';
 
 export interface RealtimeContextType {
   setViewingConversationId: (id: string | undefined) => void;
+  setViewingConversationAtBottom: (
+    conversationId: string,
+    isAtBottom: boolean | undefined,
+  ) => void;
   activate: () => void;
 }
 
