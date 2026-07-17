@@ -19,6 +19,7 @@ import {
   ArrowLeftIcon,
   BellIcon,
   CheckCircleIcon,
+  ClockIcon,
   PhoneCallIcon,
   StarIcon,
   StickyNoteIcon,
@@ -170,15 +171,24 @@ export function ContactInfoPanel({
           <div className="mx-6 mt-6 h-px bg-border sm:mx-7" />
 
           <section className="px-6 py-6 sm:px-7">
-            <p className="text-xs font-medium text-muted-foreground">
-              {t('lastActivity')}
-            </p>
-            <p className="mt-1 text-sm text-foreground">
-              {formatLastSeen(conversation.lastCustomerMessageAt)}
-            </p>
+            <div className="flex items-center gap-3 text-sm text-foreground">
+              <div className="flex w-6 shrink-0 items-center justify-center">
+                <ClockIcon className="size-5 text-muted-foreground" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <p className="text-xs text-muted-foreground">
+                  {t('lastActivity')}
+                </p>
+                <p className="font-medium text-foreground">
+                  {formatLastSeen(conversation.lastCustomerMessageAt)}
+                </p>
+              </div>
+            </div>
 
             <div className="mt-4 flex items-center gap-3 text-sm text-foreground">
-              <PhoneCallIcon className="size-5 shrink-0 text-blue-500" />
+              <div className="flex w-6 shrink-0 items-center justify-center">
+                <PhoneCallIcon className="size-5 text-blue-500" />
+              </div>
               <div className="flex flex-col justify-center">
                 <p className="text-xs text-muted-foreground">
                   {t('connectedVia')}
@@ -190,11 +200,13 @@ export function ContactInfoPanel({
             </div>
 
             <div className="mt-4 flex items-center gap-3 text-sm text-foreground">
-              {conversation.messagingProduct === 'whatsapp' ? (
-                <FaWhatsapp className="size-6 shrink-0 text-[#25D366]" />
-              ) : (
-                <PhoneCallIcon className="size-5 shrink-0 text-blue-500" />
-              )}
+              <div className="flex w-6 shrink-0 items-center justify-center">
+                {conversation.messagingProduct === 'whatsapp' ? (
+                  <FaWhatsapp className="size-6 text-[#25D366]" />
+                ) : (
+                  <PhoneCallIcon className="size-5 text-blue-500" />
+                )}
+              </div>
               <div className="flex flex-col justify-center">
                 <p className="text-xs text-muted-foreground">
                   {t('connectedPlatforms')}

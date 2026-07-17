@@ -51,12 +51,14 @@ export function WabaSwitcher({
         <Button
           variant="unstyled"
           type="button"
-          className="flex h-10 max-w-44 cursor-pointer items-center gap-1.5 rounded-lg border border-brand/10 bg-background px-3 text-left text-foreground/70 shadow-xs hover:border-brand/20 hover:text-brand focus-visible:text-brand data-[state=open]:border-brand/20 data-[state=open]:text-brand"
+          className="flex h-10 w-full cursor-pointer items-center justify-between gap-1.5 rounded-lg border border-brand/10 bg-background px-3 text-left text-foreground/70 shadow-xs hover:border-brand/20 hover:text-brand focus-visible:text-brand data-[state=open]:border-brand/20 data-[state=open]:text-brand"
         >
-          <FaWhatsapp className="size-3.5 shrink-0" />
-          <div className="min-w-0">
-            <div className="truncate text-xs font-semibold">
-              {activeWaba ? getWabaLabel(activeWaba) : t('select')}
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <FaWhatsapp className="size-3.5 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-semibold">
+                {activeWaba ? getWabaLabel(activeWaba) : t('select')}
+              </div>
             </div>
           </div>
           <ChevronDownIcon className="size-3 shrink-0" />

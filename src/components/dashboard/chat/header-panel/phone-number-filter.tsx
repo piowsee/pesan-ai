@@ -66,7 +66,7 @@ export function PhoneNumberFilter({
           variant="unstyled"
           type="button"
           disabled={disabled}
-          className="flex h-10 max-w-40 cursor-pointer items-center gap-1.5 rounded-lg border border-brand/10 bg-background px-3 text-left text-foreground/70 shadow-xs hover:border-brand/20 hover:text-brand focus-visible:text-brand data-[state=open]:border-brand/20 data-[state=open]:text-brand disabled:text-muted-foreground"
+          className="flex h-10 w-full cursor-pointer items-center justify-between gap-1.5 rounded-lg border border-brand/10 bg-background px-3 text-left text-foreground/70 shadow-xs hover:border-brand/20 hover:text-brand focus-visible:text-brand data-[state=open]:border-brand/20 data-[state=open]:text-brand disabled:text-muted-foreground"
         >
           <PhoneIcon className="size-3.5 shrink-0" />
           <span className="truncate text-xs font-semibold">
