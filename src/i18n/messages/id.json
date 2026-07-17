@@ -682,7 +682,9 @@
     "timeline": {
       "loading": "Memuat pesan",
       "loadOlder": "Muat pesan lebih lama",
-      "empty": "Belum ada pesan untuk percakapan ini."
+      "empty": "Belum ada pesan untuk percakapan ini.",
+      "today": "Hari ini",
+      "yesterday": "Kemarin"
     },
     "status": {
       "sending": "Mengirim",

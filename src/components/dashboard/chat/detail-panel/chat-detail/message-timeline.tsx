@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import type { MessageGroup } from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import { ChevronDownIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
@@ -123,6 +123,15 @@ export function MessageTimeline({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const unreadDividerRef = useRef<HTMLDivElement>(null);
+  const loadOlderSentinelRef = useRef<HTMLDivElement>(null);
+  const loadOlderScrollSnapshotRef = useRef<
+    | {
+        scrollHeight: number;
+        scrollTop: number;
+      }
+    | undefined
+  >(undefined);
+  const isLoadOlderRequestedRef = useRef(false);
   const previousConversationIdRef = useRef<string | undefined>(undefined);
   const previousMessageCountRef = useRef(0);
   const previousLocalSendScrollSignalRef = useRef(localSendScrollSignal);
@@ -186,6 +195,69 @@ export function MessageTimeline({
       ) as HTMLDivElement | null,
     [],
   );
+
+  const requestOlderMessages = useCallback(() => {
+    const viewport = getViewport();
+
+    if (
+      !viewport ||
+      !hasNextPage ||
+      isFetchingNextPage ||
+      isLoadOlderRequestedRef.current
+    ) {
+      return;
+    }
+
+    loadOlderScrollSnapshotRef.current = {
+      scrollHeight: viewport.scrollHeight,
+      scrollTop: viewport.scrollTop,
+    };
+    isLoadOlderRequestedRef.current = true;
+    shouldStickToBottomRef.current = false;
+    setIsNearBottom(false);
+    onLoadOlderAction();
+  }, [getViewport, hasNextPage, isFetchingNextPage, onLoadOlderAction]);
+
+  useEffect(() => {
+    const viewport = getViewport();
+    const sentinel = loadOlderSentinelRef.current;
+
+    if (!viewport || !sentinel || !hasNextPage) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          requestOlderMessages();
+        }
+      },
+      { root: viewport, threshold: 0.1 },
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [getViewport, hasNextPage, requestOlderMessages]);
+
+  useLayoutEffect(() => {
+    if (isFetchingNextPage) {
+      return;
+    }
+
+    const viewport = getViewport();
+    const snapshot = loadOlderScrollSnapshotRef.current;
+
+    if (viewport && snapshot) {
+      const addedHeight = viewport.scrollHeight - snapshot.scrollHeight;
+      viewport.scrollTop = snapshot.scrollTop + Math.max(0, addedHeight);
+    }
+
+    loadOlderScrollSnapshotRef.current = undefined;
+    isLoadOlderRequestedRef.current = false;
+  }, [getViewport, isFetchingNextPage, messageCount]);
 
   useEffect(() => {
     if (!conversationId) {
@@ -454,24 +526,15 @@ export function MessageTimeline({
           className="flex min-h-full flex-col gap-4 px-2 pt-4"
         >
           {hasNextPage ? (
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLoadOlderAction}
-                disabled={isFetchingNextPage}
-              >
-                {isFetchingNextPage ? (
-                  <Spinner data-icon="inline-start" />
-                ) : (
-                  <ChevronUpIcon data-icon="inline-start" />
-                )}
-                {t('loadOlder')}
-              </Button>
+            <div
+              ref={loadOlderSentinelRef}
+              className="flex h-10 items-center justify-center"
+              aria-label={t('loading')}
+              aria-live="polite"
+            >
+              <Spinner className="text-muted-foreground" />
             </div>
           ) : null}
-
-          {isFetchingNextPage ? <MessageTimelineSkeleton count={3} /> : null}
 
           {isLoading ? <MessageTimelineSkeleton /> : null}
 
@@ -482,60 +545,84 @@ export function MessageTimeline({
           ) : null}
 
           {!isLoading
-            ? messages.map((group) => (
-                <div key={group.date} className="flex flex-col mb-4">
-                  <div className="flex justify-center my-2">
-                    <span className="rounded-full bg-background px-3 py-1 text-xs font-medium text-foreground uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
-                      {new Date(group.date).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  {group.messages.map((message, index) => {
-                    const previousMessage = group.messages[index - 1];
-                    const nextMessage = group.messages[index + 1];
-                    const isFirstInGroup =
-                      previousMessage?.direction !== message.direction;
-                    const isSameSenderAsNext =
-                      nextMessage?.direction === message.direction;
+            ? messages.map((group) => {
+                const groupDate = new Date(group.date);
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
 
-                    return (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          'flex flex-col',
-                          isSameSenderAsNext ? 'mb-[6px]' : 'mb-[10px]',
-                        )}
-                      >
-                        {shouldRenderUnreadDivider({
-                          messageId: message.id,
-                          unreadBoundaryMessageId,
-                        }) ? (
-                          <div ref={unreadDividerRef} className="mb-4">
-                            <UnreadMessagesDivider />
-                          </div>
-                        ) : null}
+                let dateLabel = '';
+                if (
+                  groupDate.getDate() === today.getDate() &&
+                  groupDate.getMonth() === today.getMonth() &&
+                  groupDate.getFullYear() === today.getFullYear()
+                ) {
+                  dateLabel = t('today');
+                } else if (
+                  groupDate.getDate() === yesterday.getDate() &&
+                  groupDate.getMonth() === yesterday.getMonth() &&
+                  groupDate.getFullYear() === yesterday.getFullYear()
+                ) {
+                  dateLabel = t('yesterday');
+                } else {
+                  dateLabel = groupDate.toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                  });
+                }
+
+                return (
+                  <div key={group.date} className="flex flex-col mb-4">
+                    <div className="sticky top-2 z-10 flex justify-center my-2">
+                      <span className="rounded-full bg-background/95 backdrop-blur px-2.5 py-0.5 text-[11px] font-medium text-foreground uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
+                        {dateLabel}
+                      </span>
+                    </div>
+                    {group.messages.map((message, index) => {
+                      const previousMessage = group.messages[index - 1];
+                      const nextMessage = group.messages[index + 1];
+                      const isFirstInGroup =
+                        previousMessage?.direction !== message.direction;
+                      const isSameSenderAsNext =
+                        nextMessage?.direction === message.direction;
+
+                      return (
                         <div
-                          data-message-id={message.id}
-                          data-unread-message={
-                            unreadMessageIds.has(message.id)
-                              ? 'true'
-                              : undefined
-                          }
+                          key={message.id}
+                          className={cn(
+                            'flex flex-col',
+                            isSameSenderAsNext ? 'mb-[6px]' : 'mb-[10px]',
+                          )}
                         >
-                          <MessageBubble
-                            message={message}
-                            wabaId={wabaId}
-                            isFirstInGroup={isFirstInGroup}
-                          />
+                          {shouldRenderUnreadDivider({
+                            messageId: message.id,
+                            unreadBoundaryMessageId,
+                          }) ? (
+                            <div ref={unreadDividerRef} className="mb-4">
+                              <UnreadMessagesDivider />
+                            </div>
+                          ) : null}
+                          <div
+                            data-message-id={message.id}
+                            data-unread-message={
+                              unreadMessageIds.has(message.id)
+                                ? 'true'
+                                : undefined
+                            }
+                          >
+                            <MessageBubble
+                              message={message}
+                              wabaId={wabaId}
+                              isFirstInGroup={isFirstInGroup}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))
+                      );
+                    })}
+                  </div>
+                );
+              })
             : null}
         </div>
       </ScrollArea>

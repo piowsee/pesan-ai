@@ -682,7 +682,9 @@
     "timeline": {
       "loading": "Loading messages",
       "loadOlder": "Load older messages",
-      "empty": "No messages yet for this conversation."
+      "empty": "No messages yet for this conversation.",
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "status": {
       "sending": "Sending",
