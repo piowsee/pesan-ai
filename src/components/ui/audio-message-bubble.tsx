@@ -13,99 +13,7 @@ interface AudioMessageBubbleProps {
   waveColor?: string;
   className?: string;
   getFreshAudioSrc?: () => Promise<string>;
-}
-
-type WindowWithWebkitAudioContext = Window & {
-  webkitAudioContext?: typeof AudioContext;
-};
-
-const waveformBarCount = 32;
-const fallbackWaveformBars = Array.from({ length: waveformBarCount }, () => 12);
-const waveformCache = new Map<string, Promise<WaveformData>>();
-
-type WaveformData = {
-  duration: number;
-  bars: number[];
-};
-
-function getAudioContextConstructor() {
-  return (
-    window.AudioContext ??
-    (window as WindowWithWebkitAudioContext).webkitAudioContext
-  );
-}
-
-function sampleWaveform(audioBuffer: AudioBuffer, barCount = waveformBarCount) {
-  const channelData = Array.from(
-    { length: audioBuffer.numberOfChannels },
-    (_, channelIndex) => audioBuffer.getChannelData(channelIndex),
-  );
-  const samplesPerBar = Math.max(1, Math.floor(audioBuffer.length / barCount));
-  const amplitudes = Array.from({ length: barCount }, (_, barIndex) => {
-    const start = barIndex * samplesPerBar;
-    const end = Math.min(start + samplesPerBar, audioBuffer.length);
-    let sumSquares = 0;
-    let sampleCount = 0;
-
-    for (let sampleIndex = start; sampleIndex < end; sampleIndex += 1) {
-      const mixedSample =
-        channelData.reduce(
-          (sum, channel) => sum + Math.abs(channel[sampleIndex] ?? 0),
-          0,
-        ) / channelData.length;
-      sumSquares += mixedSample * mixedSample;
-      sampleCount += 1;
-    }
-
-    return sampleCount > 0 ? Math.sqrt(sumSquares / sampleCount) : 0;
-  });
-  const maxAmplitude = Math.max(...amplitudes, 0.01);
-
-  return amplitudes.map((amplitude) => {
-    const normalizedAmplitude = amplitude / maxAmplitude;
-    return Math.max(6, Math.round(6 + normalizedAmplitude * 22));
-  });
-}
-
-async function createWaveformData(audioSrc: string): Promise<WaveformData> {
-  const cachedWaveform = waveformCache.get(audioSrc);
-  if (cachedWaveform) {
-    return cachedWaveform;
-  }
-
-  const waveformPromise = (async () => {
-    const AudioContextConstructor = getAudioContextConstructor();
-    if (!AudioContextConstructor) {
-      throw new Error('Audio decoding is not supported in this browser.');
-    }
-
-    const response = await fetch(audioSrc);
-    if (!response.ok) {
-      throw new Error('Failed to load audio waveform.');
-    }
-
-    const audioContext = new AudioContextConstructor();
-    try {
-      const audioBuffer = await audioContext.decodeAudioData(
-        await response.arrayBuffer(),
-      );
-
-      return {
-        duration: audioBuffer.duration,
-        bars: sampleWaveform(audioBuffer),
-      };
-    } finally {
-      await audioContext.close().catch(() => undefined);
-    }
-  })();
-
-  waveformCache.set(audioSrc, waveformPromise);
-
-  waveformPromise.catch(() => {
-    waveformCache.delete(audioSrc);
-  });
-
-  return waveformPromise;
+  metadata?: React.ReactNode;
 }
 
 function formatDuration(seconds: number | null) {
@@ -120,28 +28,6 @@ function formatDuration(seconds: number | null) {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-function getWaveformBarState({
-  barCount,
-  index,
-  progress,
-}: {
-  barCount: number;
-  index: number;
-  progress: number;
-}) {
-  const currentBarPosition = (progress / 100) * barCount;
-
-  if (index + 1 <= currentBarPosition) {
-    return 'played';
-  }
-
-  if (index < currentBarPosition) {
-    return 'current';
-  }
-
-  return 'pending';
-}
-
 export default function AudioMessageBubble({
   audioSrc,
   duration,
@@ -149,73 +35,112 @@ export default function AudioMessageBubble({
   waveColor,
   className,
   getFreshAudioSrc,
+  metadata,
 }: AudioMessageBubbleProps) {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = React.useState(false);
-  const [progress, setProgress] = React.useState(0);
+  const isPlayingRef = React.useRef(false); // To keep track synchronously for rAF
+  const isDraggingRef = React.useRef(false);
+  const animationRef = React.useRef<number>(0);
+
+  const progressTrackRef = React.useRef<HTMLDivElement>(null);
+  const progressSliderRef = React.useRef<HTMLDivElement>(null);
+  const thumbRef = React.useRef<HTMLDivElement>(null);
+  const timeDisplayRef = React.useRef<HTMLSpanElement>(null);
+
   const [resolvedDuration, setResolvedDuration] = React.useState<number | null>(
     duration ?? null,
   );
-  const [waveformBars, setWaveformBars] =
-    React.useState<number[]>(fallbackWaveformBars);
-  const [isWaveformLoading, setIsWaveformLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    let isMounted = true;
+  const updateProgressUI = React.useCallback((percent: number) => {
+    if (progressTrackRef.current) {
+      progressTrackRef.current.style.width = `${percent}%`;
+    }
+    progressSliderRef.current?.setAttribute(
+      'aria-valuenow',
+      Math.round(percent).toString(),
+    );
+    if (thumbRef.current) {
+      // Keep it centered on the current percentage using calc
+      thumbRef.current.style.left = `calc(${percent}% - 0.375rem)`;
+    }
+  }, []);
 
-    setWaveformBars(fallbackWaveformBars);
-    setIsWaveformLoading(true);
-
-    createWaveformData(audioSrc)
-      .then((waveform) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setWaveformBars(waveform.bars);
-        setResolvedDuration((current) => current ?? waveform.duration);
-        setIsWaveformLoading(false);
-      })
-      .catch(() => {
-        if (isMounted) {
-          setWaveformBars(fallbackWaveformBars);
-          setIsWaveformLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [audioSrc]);
+  const updateTimeUI = React.useCallback((time: number | null) => {
+    if (timeDisplayRef.current) {
+      timeDisplayRef.current.textContent = formatDuration(time);
+    }
+  }, []);
 
   React.useEffect(() => {
     const audio = new Audio(audioSrc);
     audio.preload = 'metadata';
     audioRef.current = audio;
     setIsPlaying(false);
-    setProgress(0);
+    isPlayingRef.current = false;
+    isDraggingRef.current = false;
+    updateProgressUI(0);
     setResolvedDuration(duration ?? null);
 
     const handleLoadedMetadata = () => {
       setResolvedDuration((current) => current ?? audio.duration);
     };
 
-    const handleTimeUpdate = () => {
-      if (!audio.duration || !Number.isFinite(audio.duration)) {
-        setProgress(0);
-        return;
+    const runRenderLoop = () => {
+      if (!isDraggingRef.current) {
+        if (!audio.duration || !Number.isFinite(audio.duration)) {
+          updateProgressUI(0);
+          updateTimeUI(0);
+        } else {
+          updateProgressUI((audio.currentTime / audio.duration) * 100);
+          updateTimeUI(audio.currentTime);
+        }
       }
+      if (isPlayingRef.current) {
+        animationRef.current = requestAnimationFrame(runRenderLoop);
+      }
+    };
 
-      setProgress((audio.currentTime / audio.duration) * 100);
+    const handleTimeUpdate = () => {
+      // timeupdate is still useful when not playing loop (e.g., seeking while paused)
+      if (!isPlayingRef.current && !isDraggingRef.current) {
+        if (!audio.duration || !Number.isFinite(audio.duration)) {
+          updateProgressUI(0);
+          updateTimeUI(audio.duration ?? null);
+        } else {
+          updateProgressUI((audio.currentTime / audio.duration) * 100);
+          // If paused, keep displaying the full duration base on user instruction
+          updateTimeUI(audio.duration);
+        }
+      }
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setProgress(0);
+      isPlayingRef.current = false;
+      updateProgressUI(0);
+      updateTimeUI(audio.duration ?? null);
       audio.currentTime = 0;
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-    const handlePause = () => setIsPlaying(false);
-    const handlePlay = () => setIsPlaying(true);
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+      updateTimeUI(audio.duration ?? null);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+      updateTimeUI(audio.currentTime);
+      animationRef.current = requestAnimationFrame(runRenderLoop);
+    };
 
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -225,6 +150,9 @@ export default function AudioMessageBubble({
 
     return () => {
       audio.pause();
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
@@ -232,7 +160,7 @@ export default function AudioMessageBubble({
       audio.removeEventListener('play', handlePlay);
       audioRef.current = null;
     };
-  }, [audioSrc, duration]);
+  }, [audioSrc, duration, updateProgressUI, updateTimeUI]);
 
   const togglePlay = async () => {
     const audio = audioRef.current;
@@ -255,18 +183,53 @@ export default function AudioMessageBubble({
 
     await audio.play().catch(() => {
       setIsPlaying(false);
+      isPlayingRef.current = false;
     });
   };
 
-  const seekAudio = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
     if (!audio?.duration || !Number.isFinite(audio.duration)) {
       return;
     }
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    audio.currentTime = (clickX / rect.width) * audio.duration;
+    isDraggingRef.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    handlePointerMove(event);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+
+    const audio = audioRef.current;
+    if (!audio?.duration || !Number.isFinite(audio.duration)) {
+      return;
+    }
+
+    const slider = event.currentTarget;
+    const rect = slider.getBoundingClientRect();
+    let clickX = event.clientX - rect.left;
+    clickX = Math.max(0, Math.min(clickX, rect.width));
+
+    const percent = (clickX / rect.width) * 100;
+
+    // Update local UI immediately for zero latency feeling
+    updateProgressUI(percent);
+    updateTimeUI((percent / 100) * audio.duration);
+
+    // Update audio state
+    audio.currentTime = (percent / 100) * audio.duration;
+  };
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+      // Ensure it displays total total duration when paused if we stop dragging
+      if (!isPlayingRef.current) {
+        updateTimeUI(audioRef.current?.duration ?? resolvedDuration ?? null);
+      }
+    }
   };
 
   const seekByKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -283,87 +246,91 @@ export default function AudioMessageBubble({
     const nextTime =
       event.key === 'ArrowLeft' ? audio.currentTime - 5 : audio.currentTime + 5;
     audio.currentTime = Math.min(Math.max(nextTime, 0), audio.duration);
+
+    if (!isPlayingRef.current) {
+      updateTimeUI(audio.duration);
+    } else {
+      updateTimeUI(audio.currentTime);
+    }
   };
 
   return (
     <div
       className={cn(
-        'flex min-w-56 items-center gap-3 rounded-xl bg-background/50 p-3 shadow-sm',
+        'flex h-14 w-76 max-w-[calc(100vw-3rem)] items-center gap-2 bg-transparent px-2',
         className,
       )}
       style={{ backgroundColor: bubbleColor }}
     >
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
-        className="size-9 rounded-full bg-background/80"
+        className="size-9 shrink-0 rounded-full bg-transparent text-brand shadow-none hover:bg-foreground/5 focus-visible:bg-foreground/5"
         onClick={togglePlay}
       >
-        {isPlaying ? <PauseIcon /> : <PlayIcon />}
+        {isPlaying ? (
+          <PauseIcon className="size-5" />
+        ) : (
+          <PlayIcon className="size-5 translate-x-px" />
+        )}
         <span className="sr-only">
           {isPlaying ? 'Pause audio' : 'Play audio'}
         </span>
       </Button>
 
-      <div
-        className="relative h-8 min-w-0 flex-1 cursor-pointer overflow-hidden rounded-sm"
-        onClick={seekAudio}
-        onKeyDown={seekByKeyboard}
-        role="slider"
-        aria-label="Audio progress"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress)}
-        tabIndex={0}
-      >
-        <div className="absolute inset-0 flex items-center justify-between gap-0.5 px-0.5">
-          {isWaveformLoading
-            ? fallbackWaveformBars.map((height, index) => (
-                <Skeleton
-                  key={index}
-                  className="w-0.5 rounded-sm"
-                  style={{ height }}
-                />
-              ))
-            : waveformBars.map((height, index) => {
-                const state = getWaveformBarState({
-                  barCount: waveformBars.length,
-                  index,
-                  progress,
-                });
-                const opacity =
-                  state === 'played' ? 0.9 : state === 'current' ? 0.65 : 0.28;
-
-                return (
-                  <div
-                    key={`${height}-${index}`}
-                    className={cn(
-                      'w-0.5 rounded-sm transition-colors duration-150',
-                      state === 'played'
-                        ? 'bg-foreground/70'
-                        : state === 'current'
-                          ? 'bg-foreground/50'
-                          : 'bg-muted-foreground/25',
-                    )}
-                    style={{
-                      height,
-                      backgroundColor: waveColor,
-                      opacity: waveColor ? opacity : undefined,
-                    }}
-                  />
-                );
-              })}
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
+        <div
+          ref={progressSliderRef}
+          className="group/slider relative flex h-6 min-w-0 cursor-pointer items-center touch-none"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onKeyDown={seekByKeyboard}
+          role="slider"
+          aria-label="Audio progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={0}
+          tabIndex={0}
+        >
+          {/* Track container */}
+          <div className="relative h-1 w-full rounded-full bg-muted-foreground/20 transition-[height] group-hover/slider:h-1.5 group-focus-visible/slider:h-1.5">
+            {/* Active track */}
+            <div
+              ref={progressTrackRef}
+              className="absolute inset-y-0 left-0 rounded-full bg-brand/75 pointer-events-none"
+              style={{
+                width: `0%`,
+                backgroundColor: waveColor,
+              }}
+            />
+          </div>
+          {/* Thumb (buletan) */}
+          <div
+            ref={thumbRef}
+            className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-brand shadow-[0_1px_3px_rgba(0,0,0,0.15)] opacity-0 transition-[opacity,transform] scale-75 group-hover/slider:opacity-100 group-hover/slider:scale-100 group-focus-visible/slider:opacity-100 group-focus-visible/slider:scale-100 pointer-events-none"
+            style={{
+              left: `-0.375rem`,
+              backgroundColor: waveColor,
+            }}
+          />
+        </div>
+        <div className="flex min-h-3 items-end justify-between gap-2">
+          {!resolvedDuration ? (
+            <Skeleton className="h-2.5 w-7 shrink-0 bg-muted-foreground/20" />
+          ) : (
+            <span
+              ref={timeDisplayRef}
+              className="shrink-0 font-mono text-[10px] leading-none text-muted-foreground"
+            >
+              {formatDuration(resolvedDuration)}
+            </span>
+          )}
+          {metadata}
         </div>
       </div>
-
-      {isWaveformLoading && !resolvedDuration ? (
-        <Skeleton className="h-3 w-8 shrink-0" />
-      ) : (
-        <span className="shrink-0 font-mono text-xs text-muted-foreground">
-          {formatDuration(resolvedDuration)}
-        </span>
-      )}
     </div>
   );
 }

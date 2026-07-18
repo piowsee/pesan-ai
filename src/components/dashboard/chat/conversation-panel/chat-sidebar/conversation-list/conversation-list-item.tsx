@@ -11,16 +11,85 @@ import {
 import { formatConversationTimestamp } from '@/lib/chat/chat-format';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
-import type { LucideIcon } from 'lucide-react';
-import { FileTextIcon, ImageIcon, MusicIcon, VideoIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { IconType } from 'react-icons';
+import {
+  FaFileAudio,
+  FaFileExcel,
+  FaFileImage,
+  FaFileLines,
+  FaFilePdf,
+  FaFilePowerpoint,
+  FaFileVideo,
+  FaFileWord,
+} from 'react-icons/fa6';
 
-const mediaPreviewIcons = {
-  audio: MusicIcon,
-  document: FileTextIcon,
-  image: ImageIcon,
-  video: VideoIcon,
-} satisfies Record<MediaPreviewMessageType, LucideIcon>;
+type MediaPreviewVisual = {
+  Icon: IconType;
+  colorClassName: string;
+};
+
+const mediaPreviewVisuals = {
+  audio: { Icon: FaFileAudio, colorClassName: 'text-pink-500' },
+  image: { Icon: FaFileImage, colorClassName: 'text-violet-500' },
+  video: { Icon: FaFileVideo, colorClassName: 'text-cyan-600' },
+} satisfies Record<
+  Exclude<MediaPreviewMessageType, 'document'>,
+  MediaPreviewVisual
+>;
+
+function getDocumentPreviewVisual(
+  message: NonNullable<ChatConversation['lastMessage']>,
+): MediaPreviewVisual {
+  const filename = message.mediaFilename?.toLowerCase() ?? '';
+  const mimeType = message.mediaMimeType?.toLowerCase() ?? '';
+
+  if (filename.endsWith('.pdf') || mimeType === 'application/pdf') {
+    return { Icon: FaFilePdf, colorClassName: 'text-red-600' };
+  }
+
+  if (
+    /\.(xlsx?|csv)$/.test(filename) ||
+    mimeType.includes('spreadsheet') ||
+    mimeType.includes('excel') ||
+    mimeType === 'text/csv'
+  ) {
+    return { Icon: FaFileExcel, colorClassName: 'text-emerald-600' };
+  }
+
+  if (
+    /\.docx?$/.test(filename) ||
+    mimeType.includes('wordprocessing') ||
+    mimeType === 'application/msword'
+  ) {
+    return { Icon: FaFileWord, colorClassName: 'text-blue-600' };
+  }
+
+  if (
+    /\.pptx?$/.test(filename) ||
+    mimeType.includes('presentation') ||
+    mimeType.includes('powerpoint')
+  ) {
+    return { Icon: FaFilePowerpoint, colorClassName: 'text-orange-600' };
+  }
+
+  return { Icon: FaFileLines, colorClassName: 'text-slate-500' };
+}
+
+function getMediaPreviewVisual(
+  mediaType: MediaPreviewMessageType | null,
+  message: ChatConversation['lastMessage'],
+) {
+  if (!mediaType) {
+    return null;
+  }
+
+  if (mediaType === 'document') {
+    return message ? getDocumentPreviewVisual(message) : null;
+  }
+
+  return mediaPreviewVisuals[mediaType];
+}
 
 export function getConversationStatusLabel(
   adminTakeover: boolean,
@@ -61,9 +130,11 @@ export function ConversationListItem({
   const messagePreview = mediaPreviewType
     ? getMediaPreviewLabel(mediaPreviewType)
     : getMessagePreview(conversation.lastMessage);
-  const MediaPreviewIcon = mediaPreviewType
-    ? mediaPreviewIcons[mediaPreviewType]
-    : null;
+  const mediaPreviewVisual = getMediaPreviewVisual(
+    mediaPreviewType,
+    conversation.lastMessage,
+  );
+  const MediaPreviewIcon = mediaPreviewVisual?.Icon ?? null;
   const statusLabel = getConversationStatusLabel(conversation.adminTakeover, t);
 
   return (
@@ -103,16 +174,25 @@ export function ConversationListItem({
 
           <div className="mt-0.5 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden">
             <p
-              className="flex min-w-0 max-w-full items-center gap-1.5 truncate text-[13px] text-muted-foreground"
+              className="flex h-4 min-w-0 max-w-full items-center gap-0.5 truncate text-[13px] leading-4 text-muted-foreground"
               title={messagePreview}
             >
               {conversation.lastMessage?.direction === 'outgoing' && (
                 <MessageStatus status={conversation.lastMessage.status} />
               )}
               {MediaPreviewIcon ? (
-                <MediaPreviewIcon className="size-3.5 shrink-0" />
+                <span className="inline-flex size-4 shrink-0 items-center justify-center">
+                  <MediaPreviewIcon
+                    className={cn(
+                      'block size-3.5',
+                      mediaPreviewVisual?.colorClassName,
+                    )}
+                  />
+                </span>
               ) : null}
-              <span className="min-w-0 truncate">{messagePreview}</span>
+              <span className="min-w-0 truncate leading-4 translate-y-px">
+                {messagePreview}
+              </span>
             </p>
 
             <div className="flex min-w-fit shrink-0 items-center justify-end gap-1.5">

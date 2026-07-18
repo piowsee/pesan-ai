@@ -16,6 +16,7 @@ import { DocumentMessage } from './document-message';
 import { ImageMessage } from './image-message';
 import { MediaMessageSkeleton } from './media-message-skeleton';
 import { MediaPlaceholder } from './media-placeholder';
+import { MessageCaption } from './message-caption';
 import {
   getMediaTitle,
   isMediaMessageType,
@@ -31,6 +32,24 @@ type MessageBubbleProps = {
   wabaId?: string;
   isFirstInGroup?: boolean;
 };
+
+function MessageMetadata({ message }: { message: ChatMessage }) {
+  const isOutgoing = message.direction === 'outgoing';
+
+  return (
+    <div
+      className={cn(
+        'flex shrink-0 items-center justify-end gap-0.5 pr-0.5 text-[10px] leading-none tabular-nums',
+        isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
+      )}
+    >
+      <span>{formatMessageTimestamp(message.timestamp)}</span>
+      {isOutgoing ? (
+        <MessageStatus status={message.status} className="size-3.5" />
+      ) : null}
+    </div>
+  );
+}
 
 const mediaRenderers = {
   audio: AudioMessage,
@@ -57,6 +76,10 @@ function MessageBubbleContent({
 }) {
   const t = useTranslations('Chat.bubble');
   const mediaType = isMediaMessageType(message.type) ? message.type : null;
+  const metadata = <MessageMetadata message={message} />;
+  const floatingMetadata = (
+    <div className="absolute right-[11px] bottom-1.5">{metadata}</div>
+  );
   const canLoadMedia = Boolean(mediaType && wabaId && message.mediaObjectKey);
   const { data, error, isError, isStale, refetch } = useMessageMediaDownloadUrl(
     {
@@ -68,31 +91,47 @@ function MessageBubbleContent({
   );
 
   if (message.type === 'text') {
-    return <TextMessage message={message} />;
+    return (
+      <>
+        <TextMessage message={message} />
+        {floatingMetadata}
+      </>
+    );
   }
 
   if (message.type === 'media_placeholder') {
     return (
-      <MediaPlaceholder
-        icon={EyeOffIcon}
-        title="Media Expired"
-        description="This media is no longer available and cannot be downloaded or viewed."
-      />
+      <>
+        <MediaPlaceholder
+          icon={EyeOffIcon}
+          title="Media Expired"
+          description="This media is no longer available and cannot be downloaded or viewed."
+        />
+        {floatingMetadata}
+      </>
     );
   }
 
   if (message.type === 'errors' || message.type === 'error') {
     return (
-      <MediaPlaceholder
-        icon={AlertCircleIcon}
-        title="Error"
-        description="This message could not be processed due to an error."
-      />
+      <>
+        <MediaPlaceholder
+          icon={AlertCircleIcon}
+          title="Error"
+          description="This message could not be processed due to an error."
+        />
+        {floatingMetadata}
+      </>
     );
   }
 
   if (!mediaType) {
-    return <UnsupportedMessage type={message.type} />;
+    return (
+      <>
+        <UnsupportedMessage type={message.type} />
+        {floatingMetadata}
+      </>
+    );
   }
 
   const Renderer = mediaRenderers[mediaType];
@@ -101,31 +140,51 @@ function MessageBubbleContent({
   const localMediaUrl = message.localMediaUrl;
 
   if (localMediaUrl) {
-    return <Renderer message={message} downloadUrl={localMediaUrl} />;
+    return (
+      <Renderer
+        message={message}
+        downloadUrl={localMediaUrl}
+        metadata={metadata}
+      />
+    );
   }
 
   if (!canLoadMedia) {
     return (
-      <MediaPlaceholder
-        icon={icon}
-        title={title}
-        description={t('errorUnavailable')}
-      />
+      <>
+        <MediaPlaceholder
+          icon={icon}
+          title={title}
+          description={t('errorUnavailable')}
+        />
+        {floatingMetadata}
+      </>
     );
   }
 
   if (isError) {
     return (
-      <MediaPlaceholder
-        icon={icon}
-        title={title}
-        description={getMediaLoadErrorDescription(error, t('errorLoad'))}
-      />
+      <>
+        <MediaPlaceholder
+          icon={icon}
+          title={title}
+          description={getMediaLoadErrorDescription(error, t('errorLoad'))}
+        />
+        {floatingMetadata}
+      </>
     );
   }
 
   if (!data) {
-    return <MediaMessageSkeleton type={mediaType} />;
+    return (
+      <div className="flex flex-col gap-0.5">
+        <MediaMessageSkeleton
+          type={mediaType}
+          metadata={message.content ? null : metadata}
+        />
+        <MessageCaption content={message.content} metadata={metadata} />
+      </div>
+    );
   }
 
   const getFreshDownloadUrl = async () => {
@@ -143,6 +202,7 @@ function MessageBubbleContent({
       downloadUrl={data.downloadUrl}
       getFreshDownloadUrl={getFreshDownloadUrl}
       isDownloadUrlStale={isStale}
+      metadata={metadata}
     />
   );
 }
@@ -153,6 +213,7 @@ function MessageBubble({
   isFirstInGroup = true,
 }: MessageBubbleProps) {
   const isOutgoing = message.direction === 'outgoing';
+  const isMediaMessage = isMediaMessageType(message.type);
   const { ref, isInViewport } = useElementInViewport();
 
   return (
@@ -165,12 +226,13 @@ function MessageBubble({
     >
       <Bubble
         align={isOutgoing ? 'end' : 'start'}
-        className="max-w-[70%]"
+        className={isMediaMessage ? 'max-w-[calc(100vw-2rem)]' : 'max-w-[70%]'}
         variant={isOutgoing ? 'tinted' : 'surface'}
       >
         <BubbleContent
           className={cn(
-            'relative min-w-20 rounded-lg px-2.5 pt-1.5 pb-1.5',
+            'relative min-w-20 rounded-[8px]',
+            isMediaMessage ? 'p-[3px]' : 'px-2.5 pt-1.5 pb-1.5',
             isOutgoing
               ? isFirstInGroup
                 ? 'rounded-tr-none'
@@ -186,16 +248,6 @@ function MessageBubble({
             wabaId={wabaId}
             isInViewport={isInViewport}
           />
-
-          <div
-            className={cn(
-              'absolute bottom-1.5 right-2 flex items-center justify-end gap-1 text-[11px]',
-              isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
-            )}
-          >
-            <span>{formatMessageTimestamp(message.timestamp)}</span>
-            {isOutgoing ? <MessageStatus status={message.status} /> : null}
-          </div>
         </BubbleContent>
         {isFirstInGroup && isOutgoing && (
           <div

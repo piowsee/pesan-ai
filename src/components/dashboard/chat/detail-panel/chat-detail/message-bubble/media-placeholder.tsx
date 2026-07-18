@@ -10,7 +10,7 @@ function MediaPlaceholder({
   title: string;
 }) {
   return (
-    <div className="flex min-w-56 items-center gap-3 rounded-xl bg-background/50 p-3 text-sm">
+    <div className="flex h-14 w-[19rem] max-w-[calc(100vw-3rem)] items-center gap-2.5 bg-transparent px-2 pb-3 text-sm">
       <Icon className="size-5 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
         <p className="truncate font-medium">{title}</p>

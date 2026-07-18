@@ -634,16 +634,16 @@ export function MessageTimeline({
             animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
             exit={{ opacity: 0, filter: 'blur(4px)', scale: 0.9, y: 10 }}
             transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-            className="pointer-events-none absolute right-4 bottom-5 z-10 flex justify-end"
+            className="pointer-events-none absolute right-3 bottom-4 z-10 flex justify-end"
           >
             <Button
               type="button"
               size="icon"
               onClick={handleScrollToBottom}
-              className="pointer-events-auto relative size-12 rounded-full border border-brand/15 bg-background/95 text-foreground shadow-lg backdrop-blur-sm hover:bg-background"
+              className="pointer-events-auto relative size-12 rounded-full border border-brand/15 bg-background/95 text-foreground shadow-lg backdrop-blur hover:bg-background"
               aria-label="Scroll to bottom"
             >
-              <ChevronDownIcon className="size-5" />
+              <ChevronDownIcon className="size-6" />
               <AnimatePresence>
                 {unreadCount > 0 ? (
                   <motion.div
