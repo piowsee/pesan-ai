@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   type MediaPreviewMessageType,
-  getMediaPreviewLabel,
   getMessagePreview,
   isMediaPreviewMessageType,
 } from '@/lib/chat/chat';
@@ -127,9 +126,7 @@ export function ConversationListItem({
     isMediaPreviewMessageType(conversation.lastMessage.type)
       ? conversation.lastMessage.type
       : null;
-  const messagePreview = mediaPreviewType
-    ? getMediaPreviewLabel(mediaPreviewType)
-    : getMessagePreview(conversation.lastMessage);
+  const messagePreview = getMessagePreview(conversation.lastMessage);
   const mediaPreviewVisual = getMediaPreviewVisual(
     mediaPreviewType,
     conversation.lastMessage,
@@ -198,10 +195,10 @@ export function ConversationListItem({
             <div className="flex min-w-fit shrink-0 items-center justify-end gap-1.5">
               <Badge
                 className={cn(
-                  'px-1.5 py-0.5 text-[11px] font-semibold rounded-xs border hover:opacity-90',
+                  'px-2 py-0 text-[10px] font-medium rounded-full border hover:opacity-90',
                   conversation.adminTakeover
-                    ? 'border-amber-700/50 bg-amber-50 text-amber-700 dark:border-amber-500/50 dark:bg-amber-950/35 dark:text-amber-500'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/35 dark:text-emerald-100',
+                    ? 'border-amber-400/35 bg-amber-500/10 text-amber-700 dark:text-amber-500'
+                    : 'border-emerald-400/35 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500',
                 )}
               >
                 {statusLabel}

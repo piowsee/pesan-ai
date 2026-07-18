@@ -19,7 +19,10 @@ export function MessageStatus({
   if (status === 'sending') {
     return (
       <Loader2Icon
-        className={cn('size-3.5 animate-spin text-muted-foreground', className)}
+        className={cn(
+          'size-3.5 shrink-0 animate-spin text-muted-foreground',
+          className,
+        )}
         aria-label={t('sending')}
       />
     );
@@ -28,7 +31,7 @@ export function MessageStatus({
   if (status === 'read') {
     return (
       <CheckCheckIcon
-        className={cn('size-3.5 text-[#53bdeb]', className)}
+        className={cn('size-3.5 shrink-0 text-[#53bdeb]', className)}
         aria-label={t('read')}
       />
     );
@@ -37,7 +40,7 @@ export function MessageStatus({
   if (status === 'delivered') {
     return (
       <CheckCheckIcon
-        className={cn('size-3.5 text-muted-foreground', className)}
+        className={cn('size-3.5 shrink-0 text-muted-foreground', className)}
         aria-label={t('delivered')}
       />
     );
@@ -46,7 +49,7 @@ export function MessageStatus({
   if (status === 'failed') {
     return (
       <AlertCircleIcon
-        className={cn('size-3.5 text-destructive', className)}
+        className={cn('size-3.5 shrink-0 text-destructive', className)}
         aria-label={t('failed')}
       />
     );
@@ -54,7 +57,7 @@ export function MessageStatus({
 
   return (
     <CheckIcon
-      className={cn('size-3.5 text-muted-foreground', className)}
+      className={cn('size-3.5 shrink-0 text-muted-foreground', className)}
       aria-label={t('sent')}
     />
   );

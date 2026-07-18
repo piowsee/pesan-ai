@@ -287,23 +287,34 @@ export function MessageTimeline({
     });
   }, [getViewport]);
 
-  const scrollToBottom = useCallback(() => {
-    const viewport = getViewport();
+  const scrollToBottom = useCallback(
+    (options?: { smooth?: boolean }) => {
+      const viewport = getViewport();
 
-    if (!viewport) {
-      return;
-    }
+      if (!viewport) {
+        return;
+      }
 
-    const applyScroll = () => {
-      viewport.scrollTop = viewport.scrollHeight;
-      shouldStickToBottomRef.current = true;
-      setIsNearBottom(true);
-      setHasInitialScrollCompleted(true);
-    };
+      const applyScroll = () => {
+        if (options?.smooth) {
+          viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        } else {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+        shouldStickToBottomRef.current = true;
+        setIsNearBottom(true);
+        setHasInitialScrollCompleted(true);
+      };
 
-    applyScroll();
-    requestAnimationFrame(applyScroll);
-  }, [getViewport]);
+      if (options?.smooth) {
+        applyScroll();
+      } else {
+        applyScroll();
+        requestAnimationFrame(applyScroll);
+      }
+    },
+    [getViewport],
+  );
 
   useEffect(() => {
     const viewport = getViewport();
@@ -515,7 +526,7 @@ export function MessageTimeline({
   const handleScrollToBottom = useCallback(() => {
     setSessionUnreadBoundaryMessageId(null);
     onClearUnreadAction();
-    scrollToBottom();
+    scrollToBottom({ smooth: true });
   }, [onClearUnreadAction, scrollToBottom]);
 
   return (
@@ -634,7 +645,7 @@ export function MessageTimeline({
             animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
             exit={{ opacity: 0, filter: 'blur(4px)', scale: 0.9, y: 10 }}
             transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-            className="pointer-events-none absolute right-3 bottom-4 z-10 flex justify-end"
+            className="pointer-events-none absolute right-3 bottom-4 z-50 flex justify-end"
           >
             <Button
               type="button"
