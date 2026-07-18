@@ -180,6 +180,9 @@ async function confirmUploadedMediaMessage({
   key,
   wabaId,
 }: SendMediaMessageData & { key: string }) {
+  const mimeType = getNormalizedMimeType(file);
+  const mediaType = getMediaTypeFromMimeType(mimeType);
+
   const response = await fetch('/api/media/upload/confirm', {
     method: 'POST',
     headers: {
@@ -190,7 +193,7 @@ async function confirmUploadedMediaMessage({
       convId,
       key,
       caption,
-      filename: file.name,
+      ...(mediaType === 'document' ? { filename: file.name } : {}),
     }),
   });
 
@@ -212,7 +215,7 @@ async function uploadAndConfirmMediaMessage(data: SendMediaMessageData) {
   const uploadUrl = await fetchMediaUploadUrl({
     wabaId: data.wabaId,
     convId: data.convId,
-    contentType: data.file.type,
+    contentType: getNormalizedMimeType(data.file),
   });
 
   await uploadFileToObjectStorage({ file: data.file, uploadUrl });
@@ -222,10 +225,29 @@ async function uploadAndConfirmMediaMessage(data: SendMediaMessageData) {
 
 // ─── Grouping Helper ───────────────────────────────────────────────
 
-function getMediaTypeFromFile(file: File): ChatMediaType {
-  if (file.type.startsWith('image/')) return 'image';
-  if (file.type.startsWith('audio/')) return 'audio';
-  if (file.type.startsWith('video/')) return 'video';
+function getNormalizedMimeType(file: File): string {
+  const extension = file.name.split('.').pop()?.toLowerCase();
+
+  switch (extension) {
+    case 'm4a':
+      return 'audio/mp4';
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'aac':
+      return 'audio/aac';
+    case 'amr':
+      return 'audio/amr';
+    case '3gp':
+      return 'video/3gpp';
+    default:
+      return file.type || 'application/octet-stream';
+  }
+}
+
+function getMediaTypeFromMimeType(mimeType: string): ChatMediaType {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('audio/')) return 'audio';
+  if (mimeType.startsWith('video/')) return 'video';
 
   return 'document';
 }
@@ -741,16 +763,17 @@ export function useSendMediaMessage() {
         convId,
         queryClient,
       });
+      const mimeType = getNormalizedMimeType(file);
       const optimisticMessage: ChatMessage = {
         id: optimisticId,
         messageId: null,
         conversationId: convId,
         direction: 'outgoing',
         source: 'admin',
-        type: getMediaTypeFromFile(file),
+        type: getMediaTypeFromMimeType(mimeType),
         content: caption?.trim() || null,
         mediaObjectKey: null,
-        mediaMimeType: file.type,
+        mediaMimeType: mimeType,
         mediaFilename: file.name,
         mediaSize: file.size,
         status: 'sending',
