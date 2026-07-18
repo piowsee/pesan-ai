@@ -30,8 +30,6 @@ export function ConversationList({
   errorMessage,
   onRetry,
   onSelectConversation,
-  onToggleTakeover,
-  pendingTakeoverConversationId,
   emptyTitle = 'No conversations found',
   emptyDescription = 'Try another WABA, adjust the filters, or wait for new customer messages.',
 }: {
@@ -42,11 +40,6 @@ export function ConversationList({
   errorMessage?: string;
   onRetry: () => void;
   onSelectConversation: (conversationId: string) => void;
-  onToggleTakeover: (
-    conversationId: string,
-    nextAdminTakeover: boolean,
-  ) => void;
-  pendingTakeoverConversationId?: string;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
@@ -91,13 +84,7 @@ export function ConversationList({
               key={conversation.id}
               conversation={conversation}
               isActive={conversation.id === activeConversationId}
-              isTakeoverPending={
-                pendingTakeoverConversationId === conversation.id
-              }
               onSelect={() => onSelectConversation(conversation.id)}
-              onToggleTakeover={(nextAdminTakeover) =>
-                onToggleTakeover(conversation.id, nextAdminTakeover)
-              }
             />
           ))}
         </div>

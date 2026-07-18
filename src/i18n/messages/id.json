@@ -631,7 +631,7 @@
   "Chat": {
     "takeover": {
       "enabled": "Pengambilalihan admin diaktifkan",
-      "disabled": "Percakapan dikembalikan ke bot",
+      "disabled": "Percakapan dikembalikan ke Agen AI",
       "error": "Gagal memperbarui status pengambilalihan"
     },
     "empty": {
@@ -644,7 +644,7 @@
       "search": "Cari nomor atau nama",
       "filterAll": "Semua",
       "filterAdmin": "Admin",
-      "filterBot": "Bot",
+      "filterBot": "Agen AI",
       "allPhones": "Semua Telepon"
     },
     "header": {
@@ -653,10 +653,16 @@
     "detail": {
       "emptyTitle": "Pilih percakapan",
       "emptyDesc": "Pilih utas pelanggan dari kotak masuk untuk meninjau riwayat pesan dan melanjutkan percakapan.",
-      "takeoverPrompt": "Selesai membantu pelanggan ini? Tutup percakapan agar bot dapat mengambil alih.",
-      "closeConversation": "Tutup percakapan",
-      "closeDialogTitle": "Tutup percakapan ini?",
-      "closeDialogDesc": "Bot akan melanjutkan penanganan pesan baru dari {name}.",
+      "agentActivePrompt": "Agen AI sedang aktif menangani percakapan ini! Anda dapat mengambil alih kapan saja melalui tombol di bawah.",
+      "agentActiveExpiredPrompt": "Percakapan kedaluwarsa karena tidak ada balasan dari pelanggan selama 24 jam terakhir. Agen AI tetap aktif, namun Anda tidak dapat mengambil alih saat ini.",
+      "takeoverPrompt": "Agen AI sedang dijeda. Kembalikan percakapan ke Agen AI jika Anda sudah selesai.",
+      "takeoverExpiredPrompt": "Percakapan kedaluwarsa karena tidak ada balasan dari pelanggan selama 24 jam terakhir. Anda tidak dapat mengirim pesan, silakan kembalikan percakapan ke Agen AI agar pesan pelanggan selanjutnya dapat dibalas secara otomatis.",
+      "returnToAgent": "Kembalikan ke Agen AI",
+      "returnDialogTitle": "Kembalikan percakapan ini ke Agen AI?",
+      "returnDialogDesc": "Agen AI akan melanjutkan penanganan pesan baru dari {name}.",
+      "takeoverButton": "Ambil Alih Percakapan",
+      "takeoverDialogTitle": "Ambil alih percakapan ini?",
+      "takeoverDialogDesc": "Agen AI akan berhenti membalas {name} sampai Anda mengembalikan percakapan ini ke Agen AI.",
       "cancel": "Batal"
     },
     "composer": {
@@ -669,14 +675,16 @@
       "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
       "attach": "Lampirkan media",
       "placeholderMedia": "Tambahkan keterangan...",
-      "placeholder": "Pesan...",
+      "placeholder": "Ketik pesan Anda...",
       "placeholderTemplate": "Pesan templat diwajibkan",
       "send": "Kirim"
     },
     "timeline": {
       "loading": "Memuat pesan",
       "loadOlder": "Muat pesan lebih lama",
-      "empty": "Belum ada pesan untuk percakapan ini."
+      "empty": "Belum ada pesan untuk percakapan ini.",
+      "today": "Hari ini",
+      "yesterday": "Kemarin"
     },
     "status": {
       "sending": "Mengirim",
@@ -693,7 +701,9 @@
     "list": {
       "errorTitle": "Tidak dapat memuat obrolan",
       "errorDesc": "Kotak masuk tidak dapat dimuat saat ini.",
-      "retry": "Coba lagi"
+      "retry": "Coba lagi",
+      "statusAdmin": "Butuh Admin",
+      "statusAiAgent": "AI Agent Aktif"
     },
     "contact": {
       "label": {
@@ -705,9 +715,11 @@
       "close": "Tutup",
       "back": "Kembali ke percakapan",
       "title": "Info kontak",
-      "takeover": "Pengambilalihan",
+      "takeover": "Kontrol Admin",
+      "agentActive": "Agen AI Aktif",
       "lastActivity": "Aktivitas terakhir",
       "connectedVia": "Terhubung via admin",
+      "connectedPlatforms": "Platform terhubung",
       "customerLabel": "Label pelanggan",
       "selectLabel": "Pilih label pelanggan...",
       "customLabel": "Label kustom...",

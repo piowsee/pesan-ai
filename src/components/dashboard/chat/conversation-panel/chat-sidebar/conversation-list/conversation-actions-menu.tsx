@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import {
   CheckCircleIcon,
@@ -121,7 +122,13 @@ export function ConversationActionsMenu({
                   key={action.id}
                   disabled={action.disabled}
                   onSelect={() => selectAction(action)}
-                  className="min-h-10 cursor-pointer gap-3 rounded-md px-3 py-2 text-foreground/60 focus:bg-brand/5 focus:text-brand"
+                  className={cn(
+                    'min-h-10 cursor-pointer gap-3 rounded-md px-3 py-2',
+                    action.id === 'toggle-takeover' &&
+                      conversation.adminTakeover
+                      ? 'text-emerald-600 focus:bg-emerald-50 focus:text-emerald-700 dark:text-emerald-500 dark:focus:bg-emerald-950 dark:focus:text-emerald-400'
+                      : 'text-foreground/60 focus:bg-brand/5 focus:text-brand',
+                  )}
                 >
                   <ActionIcon className={action.iconClassName} />
                   {action.label}
@@ -139,15 +146,22 @@ export function ConversationActionsMenu({
             if (!open) setActionAwaitingConfirmation(null);
           }}
         >
-          <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 text-brand shadow-xl sm:max-w-md">
+          <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border p-0 shadow-xl sm:max-w-md">
             <AlertDialogHeader className="px-5 pt-5 pb-4">
               <div className="flex items-start gap-3">
-                <ConfirmationIcon className="mt-0.5 size-6 shrink-0 text-brand" />
+                <ConfirmationIcon
+                  className={cn(
+                    'mt-0.5 size-6 shrink-0',
+                    conversation.adminTakeover
+                      ? 'text-emerald-600 dark:text-emerald-500'
+                      : 'text-brand',
+                  )}
+                />
                 <div className="min-w-0 text-left">
-                  <AlertDialogTitle className="text-base font-semibold text-brand">
+                  <AlertDialogTitle className="text-base font-semibold">
                     {actionAwaitingConfirmation.confirmation.title}
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="mt-1 text-sm leading-relaxed text-brand">
+                  <AlertDialogDescription className="mt-1 text-sm leading-relaxed text-muted-foreground">
                     {actionAwaitingConfirmation.confirmation.description}
                   </AlertDialogDescription>
                 </div>
@@ -155,19 +169,18 @@ export function ConversationActionsMenu({
             </AlertDialogHeader>
 
             <div className="px-5">
-              <div className="h-px bg-brand/20" />
+              <div className="h-px bg-border" />
             </div>
 
             <div className="flex flex-col px-5 py-4">
               <AlertDialogFooter className="mx-0 mb-0 gap-2 border-t-0 bg-transparent p-0">
-                <AlertDialogCancel
-                  variant="ghost"
-                  className="text-brand hover:bg-brand/5 hover:text-brand"
-                >
-                  Cancel
-                </AlertDialogCancel>
+                <AlertDialogCancel variant="ghost">Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  variant="brand"
+                  className={
+                    conversation.adminTakeover
+                      ? '!bg-emerald-600 !text-white hover:!bg-emerald-700 dark:!bg-emerald-600 dark:hover:!bg-emerald-700'
+                      : '!bg-brand !text-white hover:!bg-brand/90'
+                  }
                   onClick={actionAwaitingConfirmation.execute}
                 >
                   {actionAwaitingConfirmation.confirmation.actionLabel}

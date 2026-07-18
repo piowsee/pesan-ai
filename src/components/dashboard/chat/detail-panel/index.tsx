@@ -16,6 +16,9 @@ interface ChatDetailPaneProps {
   onLoadOlder: () => void;
   localSendScrollSignal: number;
   initialUnreadCount: number;
+  unreadCount: number;
+  onClearUnread: () => void;
+  onUnreadMessagesViewed: (viewedCount: number) => void;
   onSend: (content: string) => void;
   onSendMedia: (input: { file: File; caption?: string }) => void;
   showMobileDetail: boolean;
@@ -34,6 +37,7 @@ export function ChatDetailPane({
   conversation,
   hasNextPage,
   initialUnreadCount,
+  unreadCount,
   isContactInfoOpen,
   isFetchingNextPage,
   isLoading,
@@ -41,9 +45,11 @@ export function ChatDetailPane({
   messages,
   onBack,
   onContactAreaClick,
+  onClearUnread,
   onLoadOlder,
   onSend,
   onSendMedia,
+  onUnreadMessagesViewed,
   selectedConversationId,
   showMobileDetail,
   onToggleTakeover,
@@ -65,6 +71,9 @@ export function ChatDetailPane({
           onLoadOlder={onLoadOlder}
           localSendScrollSignal={localSendScrollSignal}
           initialUnreadCount={initialUnreadCount}
+          unreadCount={unreadCount}
+          onClearUnread={onClearUnread}
+          onUnreadMessagesViewed={onUnreadMessagesViewed}
           onSend={onSend}
           onSendMedia={onSendMedia}
           showBackButton={showMobileDetail}
@@ -72,6 +81,7 @@ export function ChatDetailPane({
           onContactAreaClick={onContactAreaClick}
           onToggleTakeover={onToggleTakeover}
           pendingTakeoverConversationId={pendingTakeoverConversationId}
+          isContactInfoOpen={isContactInfoOpen}
         />
       ) : (
         <div className="flex h-full flex-1 items-center justify-center bg-background">

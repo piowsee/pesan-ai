@@ -28,7 +28,7 @@ export function MessageStatus({
   if (status === 'read') {
     return (
       <CheckCheckIcon
-        className={cn('size-3.5 text-brand', className)}
+        className={cn('size-3.5 text-[#53bdeb]', className)}
         aria-label={t('read')}
       />
     );

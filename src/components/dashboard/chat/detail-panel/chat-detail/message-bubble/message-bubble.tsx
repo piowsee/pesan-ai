@@ -29,6 +29,7 @@ import { VideoMessage } from './video-message';
 type MessageBubbleProps = {
   message: ChatMessage;
   wabaId?: string;
+  isFirstInGroup?: boolean;
 };
 
 const mediaRenderers = {
@@ -146,7 +147,11 @@ function MessageBubbleContent({
   );
 }
 
-function MessageBubble({ message, wabaId }: MessageBubbleProps) {
+function MessageBubble({
+  message,
+  wabaId,
+  isFirstInGroup = true,
+}: MessageBubbleProps) {
   const isOutgoing = message.direction === 'outgoing';
   const { ref, isInViewport } = useElementInViewport();
 
@@ -160,13 +165,20 @@ function MessageBubble({ message, wabaId }: MessageBubbleProps) {
     >
       <Bubble
         align={isOutgoing ? 'end' : 'start'}
-        className="max-w-[85%]"
+        className="max-w-[70%]"
         variant={isOutgoing ? 'tinted' : 'surface'}
       >
         <BubbleContent
           className={cn(
-            'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
-            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm border-transparent',
+            'relative min-w-20 rounded-lg px-2.5 pt-1.5 pb-1.5',
+            isOutgoing
+              ? isFirstInGroup
+                ? 'rounded-tr-none'
+                : ''
+              : cn(
+                  'border border-border/20 shadow-sm',
+                  isFirstInGroup ? 'rounded-tl-none' : '',
+                ),
           )}
         >
           <MessageBubbleContent
@@ -177,7 +189,7 @@ function MessageBubble({ message, wabaId }: MessageBubbleProps) {
 
           <div
             className={cn(
-              'mt-1.5 flex items-center justify-end gap-1 text-[11px]',
+              'absolute bottom-1.5 right-2 flex items-center justify-end gap-1 text-[11px]',
               isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
             )}
           >
@@ -185,6 +197,27 @@ function MessageBubble({ message, wabaId }: MessageBubbleProps) {
             {isOutgoing ? <MessageStatus status={message.status} /> : null}
           </div>
         </BubbleContent>
+        {isFirstInGroup && isOutgoing && (
+          <div
+            data-slot="bubble-content"
+            className="absolute top-0 -right-[7px] w-[8px] h-[12px] z-10"
+            style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+          />
+        )}
+        {isFirstInGroup && !isOutgoing && (
+          <svg
+            className="absolute top-0 -left-[7px] w-[8px] h-[12px] z-10 overflow-visible"
+            viewBox="0 0 8 12"
+          >
+            <path d="M 8 0 L 0 0 L 8 12" className="fill-background" />
+            <path
+              d="M 8 0 L 0 0 L 8 12"
+              className="stroke-border/40"
+              fill="none"
+              strokeWidth="1"
+            />
+          </svg>
+        )}
       </Bubble>
     </div>
   );

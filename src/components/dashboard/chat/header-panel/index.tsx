@@ -22,20 +22,27 @@ export function ChatWorkspaceHeader({
   selectedPhoneNumberId,
 }: ChatWorkspaceHeaderProps) {
   return (
-    <div className="relative z-10 shrink-0 border-b bg-background">
-      <div className="flex h-14 items-center gap-3 px-4">
-        <WabaSwitcher
-          wabas={wabas}
-          activeWabaId={activeWabaId}
-          onSelectWaba={onSelectWaba}
-        />
-
-        <PhoneNumberFilter
-          disabled={!activeWabaId}
-          phoneNumbers={phoneNumbers}
-          selectedPhoneNumberId={selectedPhoneNumberId}
-          onPhoneNumberChange={onPhoneNumberChange}
-        />
+    <div className="relative z-10 shrink-0 bg-background">
+      <div className="flex items-center gap-2.5 px-4 pt-4 pb-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <div className="min-w-0 flex-1">
+            <WabaSwitcher
+              wabas={wabas}
+              activeWabaId={activeWabaId}
+              onSelectWaba={onSelectWaba}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <PhoneNumberFilter
+              disabled={!activeWabaId}
+              phoneNumbers={phoneNumbers}
+              selectedPhoneNumberId={selectedPhoneNumberId}
+              onPhoneNumberChange={onPhoneNumberChange}
+            />
+          </div>
+        </div>
+        {/* Placeholder for future square button */}
+        <div className="size-10 shrink-0" />
       </div>
     </div>
   );
