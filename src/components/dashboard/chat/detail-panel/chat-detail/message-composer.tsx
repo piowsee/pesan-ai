@@ -543,12 +543,51 @@ function getActiveFormats(
   return active;
 }
 
+const defaultComposerFocusExclusionSelector = [
+  'input:not([type="hidden"])',
+  'select',
+  'textarea',
+  '[contenteditable="true"]',
+  '[role="combobox"]',
+  '[role="searchbox"]',
+  '[role="textbox"]',
+  '[data-composer-focus-exempt]',
+].join(',');
+
+function shouldPreserveCurrentFocus(
+  activeElement: Element | null,
+  composerElement: HTMLTextAreaElement | null,
+) {
+  if (
+    !activeElement ||
+    activeElement === document.body ||
+    activeElement === document.documentElement ||
+    activeElement === composerElement
+  ) {
+    return false;
+  }
+
+  return Boolean(activeElement.closest(defaultComposerFocusExclusionSelector));
+}
+
+function isPrintableComposerKey(event: KeyboardEvent) {
+  return (
+    event.key.length === 1 &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.isComposing
+  );
+}
+
 export function MessageComposer({
   conversation,
+  focusRequest = 0,
   onSendAction,
   onSendMediaAction,
 }: {
   conversation: ChatConversation;
+  focusRequest?: number;
   onSendAction: (content: string) => void;
   onSendMediaAction: (input: SendMediaMessageInput) => void;
 }) {
@@ -615,6 +654,64 @@ export function MessageComposer({
   useEffect(() => {
     syncOverlayScroll();
   }, [draft]);
+
+  useEffect(() => {
+    if (focusRequest === 0 || !conversation.canSendFreeform) {
+      return;
+    }
+
+    textareaRef.current?.focus({ preventScroll: true });
+  }, [conversation.canSendFreeform, focusRequest]);
+
+  useEffect(() => {
+    if (!conversation.canSendFreeform) {
+      return;
+    }
+
+    const frameId = requestAnimationFrame(() => {
+      const composerElement = textareaRef.current;
+
+      if (shouldPreserveCurrentFocus(document.activeElement, composerElement)) {
+        return;
+      }
+
+      composerElement?.focus({ preventScroll: true });
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [conversation.canSendFreeform, conversation.id]);
+
+  useEffect(() => {
+    if (!conversation.canSendFreeform) {
+      return;
+    }
+
+    const handleDefaultComposerTyping = (event: KeyboardEvent) => {
+      const composerElement = textareaRef.current;
+
+      if (
+        event.defaultPrevented ||
+        !composerElement ||
+        document.activeElement === composerElement ||
+        shouldPreserveCurrentFocus(document.activeElement, composerElement) ||
+        !isPrintableComposerKey(event)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      composerElement.focus({ preventScroll: true });
+      document.execCommand('insertText', false, event.key);
+      setIsFormatToolbarDismissed(false);
+      setIsBlockToolbarDismissed(false);
+    };
+
+    document.addEventListener('keydown', handleDefaultComposerTyping);
+
+    return () => {
+      document.removeEventListener('keydown', handleDefaultComposerTyping);
+    };
+  }, [conversation.canSendFreeform]);
 
   useEffect(() => {
     resetTextarea();

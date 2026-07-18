@@ -26,8 +26,31 @@ import {
   UserRoundCheckIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 import { TbArrowLoopLeft } from 'react-icons/tb';
+
+const composerFocusExclusionSelector = [
+  'a[href]',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  '[contenteditable="true"]',
+  '[role="button"]',
+  '[role="combobox"]',
+  '[role="link"]',
+  '[role="menuitem"]',
+  '[role="textbox"]',
+  '[data-composer-focus-exempt]',
+].join(',');
+
+function shouldFocusComposerFromChatArea(target: EventTarget | null) {
+  if (!(target instanceof Element)) {
+    return true;
+  }
+
+  return !target.closest(composerFocusExclusionSelector);
+}
 
 function MessageHistorySkeleton() {
   return (
@@ -108,6 +131,7 @@ export function ChatDetail({
   const t = useTranslations('Chat.detail');
   const [isTakeoverDialogOpen, setIsTakeoverDialogOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
+  const [composerFocusRequest, setComposerFocusRequest] = useState(0);
 
   if (isLoading && !conversation) {
     return <ChatDetailSkeleton />;
@@ -125,6 +149,23 @@ export function ChatDetail({
   }
 
   const isPending = pendingTakeoverConversationId === conversation.id;
+  const requestComposerFocusFromChatArea = (
+    event: MouseEvent<HTMLDivElement>,
+  ) => {
+    if (
+      event.button !== 0 ||
+      event.defaultPrevented ||
+      !conversation.adminTakeover ||
+      !conversation.canSendFreeform ||
+      isTakeoverDialogOpen ||
+      isReturnDialogOpen ||
+      !shouldFocusComposerFromChatArea(event.target)
+    ) {
+      return;
+    }
+
+    setComposerFocusRequest((value) => value + 1);
+  };
 
   return (
     <section className="relative flex h-full w-full flex-col bg-background">
@@ -140,6 +181,7 @@ export function ChatDetail({
 
       <div
         className="flex-1 w-full min-h-0 relative bg-cover bg-center"
+        onMouseDownCapture={requestComposerFocusFromChatArea}
         style={{ backgroundImage: 'var(--chat-bg, none)' }}
       >
         <div className="absolute inset-0">
@@ -256,6 +298,7 @@ export function ChatDetail({
             <MessageComposer
               key={conversation.id}
               conversation={conversation}
+              focusRequest={composerFocusRequest}
               onSendAction={onSend}
               onSendMediaAction={onSendMedia}
             />
