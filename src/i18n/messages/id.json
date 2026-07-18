@@ -677,6 +677,14 @@
       "placeholderMedia": "Tambahkan keterangan...",
       "placeholder": "Ketik pesan Anda...",
       "placeholderTemplate": "Pesan templat diwajibkan",
+      "closeFormatToolbar": "Tutup",
+      "formatBold": "Tebal",
+      "formatItalic": "Miring",
+      "formatStrikethrough": "Coret",
+      "formatCode": "Kode inline",
+      "formatBulletedList": "Daftar poin",
+      "formatNumberedList": "Daftar nomor",
+      "formatQuote": "Kutipan",
       "send": "Kirim"
     },
     "timeline": {

@@ -677,6 +677,14 @@
       "placeholderMedia": "Add a caption...",
       "placeholder": "Type your message...",
       "placeholderTemplate": "Template message required",
+      "closeFormatToolbar": "Close",
+      "formatBold": "Bold",
+      "formatItalic": "Italic",
+      "formatStrikethrough": "Strikethrough",
+      "formatCode": "Inline code",
+      "formatBulletedList": "Bulleted list",
+      "formatNumberedList": "Numbered list",
+      "formatQuote": "Quote",
       "send": "Send"
     },
     "timeline": {

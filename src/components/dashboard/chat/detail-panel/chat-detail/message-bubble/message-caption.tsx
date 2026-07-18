@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { WhatsAppText } from '../whatsapp-text';
+
 function MessageCaption({
   content,
   metadata,
@@ -13,10 +15,7 @@ function MessageCaption({
 
   return (
     <div className="relative min-h-7 px-1.5 pt-1 pb-1">
-      <p className="whitespace-pre-wrap wrap-anywhere text-[14px] leading-relaxed">
-        {content}
-        <span className="inline-block h-1 w-16" />
-      </p>
+      <WhatsAppText content={content} trailingSpacerClassName="w-16" />
       <div className="absolute right-2 bottom-1.5">{metadata}</div>
     </div>
   );
