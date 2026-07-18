@@ -57,12 +57,6 @@ interface MediaDownloadUrlResponse {
   expiresIn: number;
 }
 
-interface MediaDownloadUrlParams {
-  wabaId: string;
-  convId: string;
-  key: string;
-}
-
 interface MediaUploadUrlResponse {
   key: string;
   url: string;
@@ -70,13 +64,6 @@ interface MediaUploadUrlResponse {
   fields: Record<string, string>;
   maxSizeBytes: number;
   expiresIn: number;
-}
-
-interface SendMediaMessageData {
-  wabaId: string;
-  convId: string;
-  file: File;
-  caption?: string;
 }
 
 type ChatMediaType = 'audio' | 'document' | 'image' | 'video';
@@ -103,36 +90,24 @@ async function fetchMessages(
   return json.data;
 }
 
-async function fetchMediaDownloadUrl({
+async function fetchMediaUploadUrls({
   wabaId,
   convId,
-  key,
-}: MediaDownloadUrlParams): Promise<MediaDownloadUrlResponse> {
-  const searchParams = new URLSearchParams({ wabaId, convId, key });
-  const response = await fetch(`/api/media/download/url?${searchParams}`);
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(
-      extractJSendErrorMessage(body) ?? 'Failed to load media preview',
-    );
-  }
-
-  const json = await response.json();
-  return json.data;
-}
-
-async function fetchMediaUploadUrl({
-  wabaId,
-  convId,
-  contentType,
+  contentTypes,
 }: {
   wabaId: string;
   convId: string;
-  contentType: string;
-}): Promise<MediaUploadUrlResponse> {
-  const searchParams = new URLSearchParams({ wabaId, convId, contentType });
-  const response = await fetch(`/api/media/upload/url?${searchParams}`);
+  contentTypes: string[];
+}): Promise<MediaUploadUrlResponse[]> {
+  const response = await fetch('/api/media/upload/url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      wabaId,
+      convId,
+      files: contentTypes.map((contentType) => ({ contentType })),
+    }),
+  });
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -173,15 +148,25 @@ async function uploadFileToObjectStorage({
   }
 }
 
-async function confirmUploadedMediaMessage({
-  caption,
-  convId,
-  file,
-  key,
+async function confirmUploadedMediaMessages({
   wabaId,
-}: SendMediaMessageData & { key: string }) {
-  const mimeType = getNormalizedMimeType(file);
-  const mediaType = getMediaTypeFromMimeType(mimeType);
+  convId,
+  files,
+}: {
+  wabaId: string;
+  convId: string;
+  files: Array<{ key: string; file: File; caption?: string }>;
+}) {
+  const payloadFiles = files.map(({ key, caption, file }) => {
+    const mimeType = getNormalizedMimeType(file);
+    const mediaType = getMediaTypeFromMimeType(mimeType);
+
+    return {
+      key,
+      caption,
+      ...(mediaType === 'document' ? { filename: file.name } : {}),
+    };
+  });
 
   const response = await fetch('/api/media/upload/confirm', {
     method: 'POST',
@@ -191,9 +176,7 @@ async function confirmUploadedMediaMessage({
     body: JSON.stringify({
       wabaId,
       convId,
-      key,
-      caption,
-      ...(mediaType === 'document' ? { filename: file.name } : {}),
+      files: payloadFiles,
     }),
   });
 
@@ -205,22 +188,46 @@ async function confirmUploadedMediaMessage({
   }
 
   const json = await response.json();
-  return json.data as {
+  return json.data as Array<{
     message: ChatMessage;
     conversation: RawConversation;
-  };
+  }>;
 }
 
-async function uploadAndConfirmMediaMessage(data: SendMediaMessageData) {
-  const uploadUrl = await fetchMediaUploadUrl({
+interface SendMediaMessageBatchData {
+  wabaId: string;
+  convId: string;
+  files: Array<{ file: File; caption?: string }>;
+}
+
+async function uploadAndConfirmMediaMessages(data: SendMediaMessageBatchData) {
+  const contentTypes = data.files.map(({ file }) =>
+    getNormalizedMimeType(file),
+  );
+
+  const uploadUrls = await fetchMediaUploadUrls({
     wabaId: data.wabaId,
     convId: data.convId,
-    contentType: getNormalizedMimeType(data.file),
+    contentTypes,
   });
 
-  await uploadFileToObjectStorage({ file: data.file, uploadUrl });
+  await Promise.all(
+    data.files.map((item, index) =>
+      uploadFileToObjectStorage({
+        file: item.file,
+        uploadUrl: uploadUrls[index]!,
+      }),
+    ),
+  );
 
-  return confirmUploadedMediaMessage({ ...data, key: uploadUrl.key });
+  return confirmUploadedMediaMessages({
+    wabaId: data.wabaId,
+    convId: data.convId,
+    files: data.files.map((item, index) => ({
+      ...item,
+      key: uploadUrls[index]!.key,
+    })),
+  });
 }
 
 // ─── Grouping Helper ───────────────────────────────────────────────
@@ -632,12 +639,19 @@ export function useMessageMediaDownloadUrl({
       convId ?? '',
       key ?? '',
     ),
-    queryFn: () =>
-      fetchMediaDownloadUrl({
-        wabaId: wabaId!,
-        convId: convId!,
-        key: key!,
-      }),
+    queryFn: async () => {
+      const response = await fetch('/api/media/download/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wabaId: wabaId!,
+          convId: convId!,
+          keys: [key!],
+        }),
+      });
+      const json = await response.json();
+      return json.data[0] as MediaDownloadUrlResponse;
+    },
     enabled: enabled && Boolean(wabaId && convId && key),
     staleTime: (query) => {
       const data = query.state.data as MediaDownloadUrlResponse | undefined;
@@ -753,68 +767,86 @@ export function useSendMediaMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: uploadAndConfirmMediaMessage,
-    onMutate: async ({ caption, convId, file }) => {
-      await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
-
-      const optimisticId = `optimistic-media-${Date.now()}`;
-      const localMediaUrl = URL.createObjectURL(file);
-      const timelineTimestamp = getOptimisticTimelineTimestamp({
-        convId,
-        queryClient,
-      });
-      const mimeType = getNormalizedMimeType(file);
-      const optimisticMessage: ChatMessage = {
-        id: optimisticId,
-        messageId: null,
-        conversationId: convId,
-        direction: 'outgoing',
-        source: 'admin',
-        type: getMediaTypeFromMimeType(mimeType),
-        content: caption?.trim() || null,
-        mediaObjectKey: null,
-        mediaMimeType: mimeType,
-        mediaFilename: file.name,
-        mediaSize: file.size,
-        status: 'sending',
-        errorMessage: null,
-        localMediaUrl,
-        timestamp: timelineTimestamp,
-        createdAt: timelineTimestamp,
-      };
-
-      insertOptimisticMessage({
-        convId,
-        message: optimisticMessage,
-        queryClient,
+    mutationFn: uploadAndConfirmMediaMessages,
+    onMutate: async (variables: SendMediaMessageBatchData) => {
+      await queryClient.cancelQueries({
+        queryKey: messageKeys.all(variables.convId),
       });
 
-      return { localMediaUrl, optimisticId };
+      const optimisticUpdates = variables.files.map((item, index) => {
+        const optimisticId = `optimistic-media-${Date.now()}-${index}`;
+        const localMediaUrl = URL.createObjectURL(item.file);
+        const mimeType = getNormalizedMimeType(item.file);
+
+        let timelineTimestamp = getOptimisticTimelineTimestamp({
+          convId: variables.convId,
+          queryClient,
+        });
+
+        // Add tiny ms offsets to prevent unique keys crashing each other if inserted same millisecond
+        if (index > 0) {
+          timelineTimestamp = new Date(
+            new Date(timelineTimestamp).getTime() + index,
+          ).toISOString();
+        }
+
+        const optimisticMessage: ChatMessage = {
+          id: optimisticId,
+          messageId: null,
+          conversationId: variables.convId,
+          direction: 'outgoing',
+          source: 'admin',
+          type: getMediaTypeFromMimeType(mimeType),
+          content: item.caption?.trim() || null,
+          mediaObjectKey: null,
+          mediaMimeType: mimeType,
+          mediaFilename: item.file.name,
+          mediaSize: item.file.size,
+          status: 'sending',
+          errorMessage: null,
+          localMediaUrl,
+          timestamp: timelineTimestamp,
+          createdAt: timelineTimestamp,
+        };
+
+        insertOptimisticMessage({
+          convId: variables.convId,
+          message: optimisticMessage,
+          queryClient,
+        });
+
+        return { localMediaUrl, optimisticId };
+      });
+
+      return { optimisticUpdates };
     },
-    onError: (err, { convId }, context) => {
+    onError: (err, variables, context) => {
       toast.error(err.message || 'Failed to send media');
 
-      markOptimisticMessageAsFailed({
-        convId,
-        errorMessage: err.message,
-        optimisticId: context?.optimisticId,
-        queryClient,
+      context?.optimisticUpdates.forEach((update) => {
+        markOptimisticMessageAsFailed({
+          convId: variables.convId,
+          errorMessage: err.message,
+          optimisticId: update.optimisticId,
+          queryClient,
+        });
       });
     },
-    onSuccess: ({ conversation, message }, { convId, wabaId }, context) => {
-      if (context?.localMediaUrl) {
-        // Keep the local media URL around in the confirmed message to prevent a
-        // visual flicker while the S3 download URL is being fetched in the background.
-        message.localMediaUrl = context.localMediaUrl;
-      }
+    onSuccess: (results, variables, context) => {
+      results.forEach((result, index) => {
+        const updateContext = context?.optimisticUpdates[index];
+        if (updateContext?.localMediaUrl) {
+          result.message.localMediaUrl = updateContext.localMediaUrl;
+        }
 
-      updateCachesWithConfirmedMessage({
-        conversation,
-        convId,
-        message,
-        optimisticId: context?.optimisticId,
-        queryClient,
-        wabaId,
+        updateCachesWithConfirmedMessage({
+          conversation: result.conversation,
+          convId: variables.convId,
+          message: result.message,
+          optimisticId: updateContext?.optimisticId,
+          queryClient,
+          wabaId: variables.wabaId,
+        });
       });
     },
   });

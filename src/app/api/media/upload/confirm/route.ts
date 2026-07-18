@@ -5,22 +5,20 @@ import { MessageService } from '@/services/message.service';
 
 /**
  * @route POST /api/media/upload/confirm
- * @body { wabaId: string, convId: string, key: string, caption?: string, filename?: string }
- * @response { status: 'success', data: { message, conversation } }
+ * @body { wabaId: string, convId: string, files: { key: string, caption?: string, filename?: string }[] }
+ * @response { status: 'success', data: [{ message, conversation }] }
  * @access Authenticated users
- * @description Confirms a direct upload, verifies the object exists, saves a media message, and emits realtime updates.
+ * @description Confirms a direct upload batch, verifies the objects exist, saves media messages, and emits realtime updates.
  */
 export const POST = withApiAuth(async ({ req, user }) => {
   const rawBody = await req.json();
   const validated = ConfirmS3UploadSchema.parse(rawBody);
 
-  const result = await MessageService.confirmUploadedMediaMessage({
+  const result = await MessageService.confirmUploadedMediaMessages({
     userId: user.id,
     wabaId: validated.wabaId,
     convId: validated.convId,
-    key: validated.key,
-    caption: validated.caption,
-    filename: validated.filename,
+    files: validated.files,
   });
 
   return jsend.success(result);

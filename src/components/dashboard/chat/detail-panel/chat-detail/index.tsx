@@ -117,7 +117,9 @@ export function ChatDetail({
   onClearUnread: () => void;
   onUnreadMessagesViewed: (viewedCount: number) => void;
   onSend: (content: string) => void;
-  onSendMedia: (input: { file: File; caption?: string }) => void;
+  onSendMedia: (input: {
+    files: Array<{ file: File; caption?: string }>;
+  }) => void;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;

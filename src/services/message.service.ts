@@ -268,19 +268,22 @@ export const MessageService = {
     return { message: savedMessage, conversation: safeConversation };
   },
 
-  async confirmUploadedMediaMessage(params: {
+  async confirmUploadedMediaMessages(params: {
     convId: string;
     wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     userId: string;
-    key: string;
-    caption?: string;
-    filename?: string;
+    files: Array<{
+      key: string;
+      caption?: string;
+      filename?: string;
+    }>;
   }) {
-    const { convId, wabaId, userId, key, caption, filename } = params;
-    logger.info('Confirming uploaded media message', {
+    const { convId, wabaId, userId, files } = params;
+    logger.info('Confirming uploaded media messages', {
       convId,
       wabaId,
       userId,
+      fileCount: files.length,
     });
 
     const conversationMeta =
@@ -298,53 +301,19 @@ export const MessageService = {
     assertWabaActive(phoneNumber.waba);
     assertFreeformWindowOpen(conversationMeta.lastCustomerMessageAt);
 
-    const uploadedMedia = await S3Service.verifyUploadedMedia({
-      userId,
-      wabaId,
-      convId,
-      key,
-    });
-    const { downloadUrl } = await S3Service.createPresignedDownloadUrl({
-      userId,
-      wabaId,
-      convId,
-      key: uploadedMedia.key,
-    });
-
     const phoneNumberId = phoneNumber.phoneNumberId; // admin's  Meta Phone Number Id
     const recipient = getMetaSendMessageRecipient(contact);
-
     const tokenToUse = decrypt(phoneNumber.waba?.systemUserToken || '');
 
     if (!tokenToUse) {
       throw new ApiError('WhatsApp token is missing or invalid', 403);
     }
 
-    const waResult = await MetaFetchService.sendMessage({
-      phoneNumberId,
-      token: tokenToUse,
-      ...recipient,
-      message: buildOutboundMediaMessage({
-        mediaType: uploadedMedia.mediaType,
-        link: downloadUrl,
-        caption,
-      }),
-    });
-    const savedMessage = await MessageRepository.saveMessage({
-      conversationId: convId,
-      direction: 'outgoing',
-      source: 'admin',
-      type: uploadedMedia.mediaType,
-      content: caption,
-      status: waResult.status,
-      messageId: waResult.messageId,
-      timestamp: new Date(),
-      mediaObjectKey: uploadedMedia.key,
-      mediaMimeType: uploadedMedia.mediaMimeType,
-      mediaFilename: filename ?? null,
-      mediaSize: uploadedMedia.mediaSize,
-    });
-    const message = normalizeMessageMediaSize(savedMessage);
+    const { downloadUrl, ...safeConversation } = {
+      downloadUrl: '',
+      ...flattenContactForEvent(conversationMeta),
+    };
+    void downloadUrl;
 
     if (!conversationMeta.adminTakeover) {
       await ConversationRepository.updateAdminTakeoverStatus({
@@ -352,24 +321,109 @@ export const MessageService = {
         adminTakeover: true,
       });
       conversationMeta.adminTakeover = true;
+      safeConversation.adminTakeover = true;
     }
 
-    const safeConversation = flattenContactForEvent(conversationMeta);
+    const results = [];
 
-    eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
-      ...message,
-      conversation: safeConversation,
-      userId,
-      wabaId: conversationMeta.phoneNumber.wabaId,
-    });
+    for (const { key, caption, filename } of files) {
+      const uploadedMedia = await S3Service.verifyUploadedMedia({
+        userId,
+        wabaId,
+        convId,
+        key,
+      });
 
-    logger.info('Uploaded media message saved successfully', {
-      convId,
-      wabaId,
-      userId,
-      key: uploadedMedia.key,
-    });
+      const [downloadPayload] = await S3Service.createPresignedDownloadUrls({
+        userId,
+        wabaId,
+        convId,
+        keys: [uploadedMedia.key],
+      });
 
-    return { message, conversation: safeConversation };
+      // Meta API silently drops captions for audio messages.
+      // If a user drafted text with an audio file, send it as a standalone text message first to prevent data loss.
+      if (caption && uploadedMedia.mediaType === 'audio') {
+        const waTextResult = await MetaFetchService.sendMessage({
+          phoneNumberId,
+          token: tokenToUse,
+          ...recipient,
+          message: { type: 'text', text: caption },
+        });
+
+        const savedTextMessage = await MessageRepository.saveMessage({
+          conversationId: convId,
+          direction: 'outgoing',
+          source: 'admin',
+          type: 'text',
+          content: caption,
+          status: waTextResult.status,
+          messageId: waTextResult.messageId,
+          timestamp: new Date(),
+        });
+
+        const textMessage = normalizeMessageMediaSize(savedTextMessage);
+        eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+          ...textMessage,
+          conversation: safeConversation,
+          userId,
+          wabaId: conversationMeta.phoneNumber.wabaId,
+        });
+
+        results.push({
+          message: textMessage,
+          conversation: safeConversation,
+        });
+      }
+
+      const waResult = await MetaFetchService.sendMessage({
+        phoneNumberId,
+        token: tokenToUse,
+        ...recipient,
+        message: buildOutboundMediaMessage({
+          mediaType: uploadedMedia.mediaType,
+          link: downloadPayload.downloadUrl,
+          caption,
+        }),
+      });
+
+      const savedMessage = await MessageRepository.saveMessage({
+        conversationId: convId,
+        direction: 'outgoing',
+        source: 'admin',
+        type: uploadedMedia.mediaType,
+        content: caption,
+        status: waResult.status,
+        messageId: waResult.messageId,
+        timestamp: new Date(),
+        mediaObjectKey: uploadedMedia.key,
+        mediaMimeType: uploadedMedia.mediaMimeType,
+        mediaFilename: filename ?? null,
+        mediaSize: uploadedMedia.mediaSize,
+      });
+
+      const message = normalizeMessageMediaSize(savedMessage);
+
+      eventBus.emit(getUserEvent(SSE_EVENTS.NEW_MESSAGE, userId), {
+        ...message,
+        conversation: safeConversation,
+        userId,
+        wabaId: conversationMeta.phoneNumber.wabaId,
+      });
+
+      logger.info('Uploaded media message saved successfully', {
+        convId,
+        wabaId,
+        userId,
+        key: uploadedMedia.key,
+      });
+
+      results.push({
+        message,
+        conversation: safeConversation,
+      });
+    }
+
+    return results;
   },
 };

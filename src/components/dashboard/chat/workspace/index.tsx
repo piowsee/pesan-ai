@@ -653,16 +653,16 @@ export function ChatWorkspace() {
   );
 
   const handleSendMediaMessage = useCallback(
-    ({ caption, file }: { file: File; caption?: string }) => {
-      if (!selectedConversationId || !activeWabaId) return;
+    ({ files }: { files: Array<{ file: File; caption?: string }> }) => {
+      if (!selectedConversationId || !activeWabaId || files.length === 0)
+        return;
 
       handleClearUnread();
       setLocalSendScrollSignal((value) => value + 1);
       sendMediaMessage({
         wabaId: activeWabaId,
         convId: selectedConversationId,
-        file,
-        caption,
+        files,
       });
     },
     [activeWabaId, handleClearUnread, selectedConversationId, sendMediaMessage],

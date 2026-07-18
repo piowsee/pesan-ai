@@ -4,27 +4,21 @@ import { CreateS3UploadUrlSchema } from '@/schemas/s3-upload.schema';
 import { S3Service } from '@/services/s3.service';
 
 /**
- * @route GET /api/media/upload/url
- * @query wabaId {string} internal WABA id
- * @query convId {string} conversation id
- * @query contentType {string} supported image, audio, video, or document MIME type
- * @response { status: 'success', data: { key, url, method, fields, maxSizeBytes, expiresIn } }
+ * @route POST /api/media/upload/url
+ * @body { wabaId: string, convId: string, files: { contentType: string }[] }
+ * @response { status: 'success', data: [{ key, url, method, fields, maxSizeBytes, expiresIn }] }
  * @access Authenticated users
- * @description Creates a presigned POST upload form for direct browser upload to object storage.
+ * @description Creates presigned POST upload forms for direct browser bulk uploads to object storage.
  */
-export const GET = withApiAuth(async ({ req, user }) => {
-  const { searchParams } = new URL(req.url);
-  const validated = CreateS3UploadUrlSchema.parse({
-    wabaId: searchParams.get('wabaId'),
-    convId: searchParams.get('convId'),
-    contentType: searchParams.get('contentType'),
-  });
+export const POST = withApiAuth(async ({ req, user }) => {
+  const rawBody = await req.json();
+  const validated = CreateS3UploadUrlSchema.parse(rawBody);
 
-  const result = await S3Service.createPresignedUploadUrl({
+  const result = await S3Service.createPresignedUploadUrls({
     userId: user.id,
     wabaId: validated.wabaId,
     convId: validated.convId,
-    contentType: validated.contentType,
+    files: validated.files,
   });
 
   return jsend.success(result);

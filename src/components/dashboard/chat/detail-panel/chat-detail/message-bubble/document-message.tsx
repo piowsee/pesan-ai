@@ -20,7 +20,7 @@ import { MessageCaption } from './message-caption';
 import { formatByteSize } from './message-utils';
 import type { MediaRendererProps } from './types';
 
-type DocumentVisual = {
+export type DocumentVisual = {
   Icon: IconType;
   colorClassName: string;
   label: string;
@@ -116,7 +116,7 @@ function getDocumentExtension({
   return mimeType ? (documentExtensionByMimeType[mimeType] ?? null) : null;
 }
 
-function getDocumentVisual(
+export function getDocumentVisual(
   message: Pick<
     MediaRendererProps['message'],
     'mediaFilename' | 'mediaMimeType'

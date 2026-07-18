@@ -20,7 +20,9 @@ interface ChatDetailPaneProps {
   onClearUnread: () => void;
   onUnreadMessagesViewed: (viewedCount: number) => void;
   onSend: (content: string) => void;
-  onSendMedia: (input: { file: File; caption?: string }) => void;
+  onSendMedia: (input: {
+    files: Array<{ file: File; caption?: string }>;
+  }) => void;
   showMobileDetail: boolean;
   isContactInfoOpen: boolean;
   onBack: () => void;
