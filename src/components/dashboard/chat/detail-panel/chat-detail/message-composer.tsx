@@ -37,6 +37,7 @@ import { useTranslations } from 'next-intl';
 import {
   type ChangeEvent,
   type ReactNode,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -621,8 +622,6 @@ export function MessageComposer({
   const [selectionRange, setSelectionRange] = useState<[number, number]>([
     0, 0,
   ]);
-  const [isFormatToolbarDismissed, setIsFormatToolbarDismissed] =
-    useState(false);
   const [isBlockToolbarDismissed, setIsBlockToolbarDismissed] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -671,6 +670,33 @@ export function MessageComposer({
     textareaRef.current.style.height = '40px';
     textareaRef.current.style.overflowY = 'hidden';
   };
+
+  const replaceTextareaRange = useCallback(
+    ({
+      replacement,
+      start,
+      end,
+      selectionStart,
+      selectionEnd,
+    }: {
+      replacement: string;
+      start: number;
+      end: number;
+      selectionStart: number;
+      selectionEnd: number;
+    }) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      textarea.setSelectionRange(start, end);
+      // `insertText` preserves the textarea undo stack and inserts plain text, not HTML.
+      // codeql[js/xss-through-dom]
+      document.execCommand('insertText', false, replacement);
+      textarea.setSelectionRange(selectionStart, selectionEnd);
+      setDraft(textarea.value);
+    },
+    [],
+  );
 
   useEffect(() => {
     syncOverlayScroll();
@@ -722,8 +748,13 @@ export function MessageComposer({
 
       event.preventDefault();
       composerElement.focus({ preventScroll: true });
-      document.execCommand('insertText', false, event.key);
-      setIsFormatToolbarDismissed(false);
+      replaceTextareaRange({
+        replacement: event.key,
+        start: composerElement.selectionStart,
+        end: composerElement.selectionEnd,
+        selectionStart: composerElement.selectionStart + event.key.length,
+        selectionEnd: composerElement.selectionStart + event.key.length,
+      });
       setIsBlockToolbarDismissed(false);
     };
 
@@ -732,7 +763,7 @@ export function MessageComposer({
     return () => {
       document.removeEventListener('keydown', handleDefaultComposerTyping);
     };
-  }, [conversation.canSendFreeform]);
+  }, [conversation.canSendFreeform, replaceTextareaRange]);
 
   useEffect(() => {
     resetTextarea();
@@ -749,7 +780,6 @@ export function MessageComposer({
     setDraft('');
     setSelectedMedia([]);
     setCaptionTargetIndex(-1);
-    setIsFormatToolbarDismissed(false);
     setIsBlockToolbarDismissed(false);
     clearSelectedMedia();
     resetTextarea();
@@ -834,11 +864,15 @@ export function MessageComposer({
       const newEnd = Math.max(newStart, end + totalDiff);
 
       // Programmatically select and replace the entire line span
-      textarea.setSelectionRange(targetStart, targetEnd);
-      document.execCommand('insertText', false, replacement);
+      replaceTextareaRange({
+        replacement,
+        start: targetStart,
+        end: targetEnd,
+        selectionStart: newStart,
+        selectionEnd: newEnd,
+      });
 
       // Restore user's exact original selection to retain active UI context
-      textarea.setSelectionRange(newStart, newEnd);
       setSelectionRange([textarea.selectionStart, textarea.selectionEnd]);
       resizeTextarea(textarea);
       return;
@@ -901,40 +935,50 @@ export function MessageComposer({
 
       if (isInside) {
         const replacementStr = peeledPrefix + stripped + peeledSuffix;
-        document.execCommand('insertText', false, replacementStr);
-        textarea.setSelectionRange(start, start + replacementStr.length);
+        replaceTextareaRange({
+          replacement: replacementStr,
+          start,
+          end,
+          selectionStart: start,
+          selectionEnd: start + replacementStr.length,
+        });
       } else if (isOutside) {
         const beforeMarkerIdx = value.lastIndexOf(marker, start - 1);
         const afterMarkerIdx = value.indexOf(marker, end);
 
-        textarea.setSelectionRange(
-          beforeMarkerIdx,
-          afterMarkerIdx + marker.length,
-        );
         const innerReplacement =
           value.slice(beforeMarkerIdx + marker.length, start) +
           selectedText +
           value.slice(end, afterMarkerIdx);
-        document.execCommand('insertText', false, innerReplacement);
 
-        textarea.setSelectionRange(start - marker.length, end - marker.length);
+        replaceTextareaRange({
+          replacement: innerReplacement,
+          start: beforeMarkerIdx,
+          end: afterMarkerIdx + marker.length,
+          selectionStart: start - marker.length,
+          selectionEnd: end - marker.length,
+        });
       } else {
         const replacementStr = `${marker}${selectedText}${marker}`;
-        document.execCommand('insertText', false, replacementStr);
         if (selectedText.length > 0) {
-          textarea.setSelectionRange(
-            start + marker.length,
-            start + marker.length + selectedText.length,
-          );
+          replaceTextareaRange({
+            replacement: replacementStr,
+            start,
+            end,
+            selectionStart: start + marker.length,
+            selectionEnd: start + marker.length + selectedText.length,
+          });
         } else {
-          textarea.setSelectionRange(
-            start + marker.length,
-            start + marker.length,
-          );
+          replaceTextareaRange({
+            replacement: replacementStr,
+            start,
+            end,
+            selectionStart: start + marker.length,
+            selectionEnd: start + marker.length,
+          });
         }
       }
     }
-    setIsFormatToolbarDismissed(false);
     setSelectionRange([textarea.selectionStart, textarea.selectionEnd]);
     resizeTextarea(textarea);
     return;
@@ -1019,17 +1063,25 @@ export function MessageComposer({
   const showFormatToolbar =
     conversation.canSendFreeform &&
     draft.length > 0 &&
-    ((!isSelectionActive && !isFormatToolbarDismissed) ||
-      (isSelectionActive && !isBlockToolbarDismissed));
+    isSelectionActive &&
+    !isBlockToolbarDismissed;
 
   const insertTextAtSelection = (text: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
     textarea.focus();
-    // Native insertText preserves general undo/redo stack
-    document.execCommand('insertText', false, text);
-    setIsFormatToolbarDismissed(false);
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextSelection = start + text.length;
+
+    replaceTextareaRange({
+      replacement: text,
+      start,
+      end,
+      selectionStart: nextSelection,
+      selectionEnd: nextSelection,
+    });
     setIsBlockToolbarDismissed(false);
     resizeTextarea(textarea);
   };
@@ -1050,9 +1102,13 @@ export function MessageComposer({
     const continuedPrefix = getContinuedLinePrefix(line);
 
     if (continuedPrefix === '') {
-      // Select the prefix region and delete it via insertText to support undo/redo
-      textarea.setSelectionRange(lineStart, lineEnd);
-      document.execCommand('insertText', false, '');
+      replaceTextareaRange({
+        replacement: '',
+        start: lineStart,
+        end: lineEnd,
+        selectionStart: lineStart,
+        selectionEnd: lineStart,
+      });
       resizeTextarea(textarea);
       return;
     }
@@ -1190,13 +1246,7 @@ export function MessageComposer({
               selectionRange[1],
             )}
             getLabel={(key) => t(key)}
-            onCloseAction={() => {
-              if (isSelectionActive) {
-                setIsBlockToolbarDismissed(true);
-              } else {
-                setIsFormatToolbarDismissed(true);
-              }
-            }}
+            onCloseAction={() => setIsBlockToolbarDismissed(true)}
             onFormatAction={applyTextFormat}
           />
         ) : null}
@@ -1341,9 +1391,6 @@ export function MessageComposer({
               onChange={(event) => {
                 const nextDraft = event.target.value;
                 setDraft(nextDraft);
-                if (!nextDraft) {
-                  setIsFormatToolbarDismissed(false);
-                }
                 resizeTextarea(event.currentTarget);
               }}
               onScroll={syncOverlayScroll}
