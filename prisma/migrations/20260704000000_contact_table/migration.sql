@@ -18,12 +18,6 @@ CREATE UNIQUE INDEX "contact_phoneNumberId_bsuid_key" ON "contact"("phoneNumberI
 -- CreateIndex
 CREATE UNIQUE INDEX "contact_phoneNumberId_customerPhone_key" ON "contact"("phoneNumberId", "customerPhone");
 
--- CreateIndex
-CREATE INDEX "idx_contact_customer_username" ON "contact"("customerUsername");
-
--- CreateIndex
-CREATE INDEX "idx_conversations_contact_id" ON "conversation"("contactId");
-
 -- AddForeignKey
 ALTER TABLE "contact" ADD CONSTRAINT "contact_phoneNumberId_fkey" FOREIGN KEY ("phoneNumberId") REFERENCES "phone_number"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

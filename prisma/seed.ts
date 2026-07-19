@@ -203,10 +203,7 @@ async function main() {
 
     const conversation = await tx.conversation.upsert({
       where: {
-        unique_conversation: {
-          phoneNumberId: phoneNumber.id,
-          contactId: contact.id,
-        },
+        contactId: contact.id,
       },
       update: {},
       create: {

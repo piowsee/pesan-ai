@@ -150,10 +150,7 @@ export const ConversationRepository = {
 
       const conversation = await tx.conversation.upsert({
         where: {
-          unique_conversation: {
-            phoneNumberId,
-            contactId: contact.id,
-          },
+          contactId: contact.id,
         },
         update: {},
         create: {
