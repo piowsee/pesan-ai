@@ -126,14 +126,15 @@ function buildOutboundMediaMessage(params: {
   mediaType: UploadMediaType;
   link: string;
   caption?: string | null;
+  filename?: string | null;
 }): MetaOutboundMessage {
-  const { mediaType, link, caption } = params;
+  const { mediaType, link, caption, filename } = params;
 
   switch (mediaType) {
     case 'audio':
       return { type: 'audio', link };
     case 'document':
-      return { type: 'document', link, caption };
+      return { type: 'document', link, caption, filename };
     case 'image':
       return { type: 'image', link, caption };
     case 'video':
@@ -384,6 +385,7 @@ export const MessageService = {
           mediaType: uploadedMedia.mediaType,
           link: downloadPayload.downloadUrl,
           caption,
+          filename,
         }),
       });
 
