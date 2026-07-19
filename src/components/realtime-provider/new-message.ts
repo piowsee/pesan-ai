@@ -74,7 +74,18 @@ export function applyRealtimeMessageToMessagePage(
     return {
       ...page,
       messages: page.messages.map((message) =>
-        message.id === realtimeMessage.id ? realtimeMessage : message,
+        message.id === realtimeMessage.id
+          ? {
+              ...realtimeMessage,
+              optimisticId: message.optimisticId,
+              ...(message.optimisticId
+                ? {
+                    timestamp: message.timestamp,
+                    createdAt: message.createdAt,
+                  }
+                : {}),
+            }
+          : message,
       ),
     };
   }

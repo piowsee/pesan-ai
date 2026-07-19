@@ -29,6 +29,7 @@ export interface ChatMessage {
   localMediaUrl?: string | null;
   timestamp: string;
   createdAt: string;
+  optimisticId?: string;
 }
 
 export interface ChatConversation {

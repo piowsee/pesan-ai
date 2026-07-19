@@ -273,6 +273,8 @@ function getCachedMessages({
   );
 }
 
+const optimisticTimestampCounters: Record<string, number> = {};
+
 function getOptimisticTimelineTimestamp({
   convId,
   queryClient,
@@ -290,11 +292,17 @@ function getOptimisticTimelineTimestamp({
     0,
   );
 
-  if (latestMessageTime > 0) {
-    return new Date(latestMessageTime + 1).toISOString();
+  let nextTime = latestMessageTime > 0 ? latestMessageTime + 1 : Date.now();
+
+  if (
+    optimisticTimestampCounters[convId] &&
+    nextTime <= optimisticTimestampCounters[convId]
+  ) {
+    nextTime = optimisticTimestampCounters[convId] + 1;
   }
 
-  return new Date().toISOString();
+  optimisticTimestampCounters[convId] = nextTime;
+  return new Date(nextTime).toISOString();
 }
 
 function updateConversationListCache({
@@ -483,27 +491,70 @@ function replaceOptimisticMessageWithConfirmedMessage({
         pages: old.pages.map((page, index) => {
           if (index !== 0) return page;
 
-          const removedOptimisticMessage = optimisticId
-            ? page.messages.some((message) => message.id === optimisticId)
+          const hasOptimistic = optimisticId
+            ? page.messages.some((msg) => msg.id === optimisticId)
             : false;
-          const filteredMessages = optimisticId
-            ? page.messages.filter((message) => message.id !== optimisticId)
-            : page.messages;
-          const alreadyHasConfirmedMessage = filteredMessages.some(
-            (message) => message.id === confirmedMessage.id,
+          const hasSSEDuplicate = page.messages.some(
+            (msg) => msg.id === confirmedMessage.id,
           );
 
-          if (alreadyHasConfirmedMessage) {
+          if (hasOptimistic && hasSSEDuplicate) {
+            // SSE arrived before the API response.
+            // The SSE duplicate may have already received status updates
+            // (sent → delivered → read), so we must preserve its most
+            // advanced status instead of regressing to the API response status.
+            const sseDuplicate = page.messages.find(
+              (msg) => msg.id === confirmedMessage.id,
+            );
+            const mergedMessage: ChatMessage = {
+              ...confirmedMessage,
+              status: sseDuplicate?.status ?? confirmedMessage.status,
+              errorMessage:
+                sseDuplicate?.errorMessage ?? confirmedMessage.errorMessage,
+            };
+
+            // Replace the optimistic entry IN-PLACE (preserving position & React key),
+            // then remove the SSE-inserted duplicate.
             return {
               ...page,
-              messages: filteredMessages,
-              total: removedOptimisticMessage ? page.total - 1 : page.total,
+              messages: page.messages
+                .map((msg) => (msg.id === optimisticId ? mergedMessage : msg))
+                .filter((msg) =>
+                  msg.id === confirmedMessage.id &&
+                  msg.optimisticId !== confirmedMessage.optimisticId
+                    ? false
+                    : true,
+                ),
+              total: page.total - 1,
             };
           }
 
+          if (hasOptimistic) {
+            // API responded before SSE. Replace optimistic in-place.
+            return {
+              ...page,
+              messages: page.messages.map((msg) =>
+                msg.id === optimisticId ? confirmedMessage : msg,
+              ),
+            };
+          }
+
+          if (hasSSEDuplicate) {
+            // No optimistic to replace (edge case), just merge into existing.
+            return {
+              ...page,
+              messages: page.messages.map((msg) =>
+                msg.id === confirmedMessage.id
+                  ? { ...msg, ...confirmedMessage }
+                  : msg,
+              ),
+            };
+          }
+
+          // Neither exists, just prepend.
           return {
             ...page,
-            messages: [confirmedMessage, ...filteredMessages],
+            messages: [confirmedMessage, ...page.messages],
           };
         }),
       };
@@ -664,6 +715,29 @@ export function useMessageMediaDownloadUrl({
 
 // ─── Mutation Hook ──────────────────────────────────────────────────
 
+const conversationQueues: Record<string, Promise<unknown>> = {};
+
+function enqueueConversationTask<T>(
+  convId: string,
+  task: () => Promise<T>,
+): Promise<T> {
+  const previousQueue = conversationQueues[convId] ?? Promise.resolve();
+
+  return new Promise<T>((resolve, reject) => {
+    const nextQueue = previousQueue.then(async () => {
+      try {
+        const result = await task();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    // Catch errors so the queue doesn't stick in a rejected state for future tasks
+    conversationQueues[convId] = nextQueue.catch(() => {});
+  });
+}
+
 interface SendMessageData {
   wabaId: string;
   convId: string;
@@ -680,34 +754,36 @@ export function useSendMessage() {
 
   return useMutation({
     mutationFn: async ({ wabaId, convId, content }: SendMessageData) => {
-      const response = await fetch(
-        `/api/waba/${wabaId}/conversation/${convId}/message`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+      return enqueueConversationTask(convId, async () => {
+        const response = await fetch(
+          `/api/waba/${wabaId}/conversation/${convId}/message`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: content }),
           },
-          body: JSON.stringify({ message: content }),
-        },
-      );
+        );
 
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        const message = body?.data?.message ?? 'Failed to send message';
-        throw new Error(message);
-      }
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          const message = body?.data?.message ?? 'Failed to send message';
+          throw new Error(message);
+        }
 
-      const json = await response.json();
-      return json.data as {
-        message: ChatMessage;
-        conversation: RawConversation;
-      };
+        const json = await response.json();
+        return json.data as {
+          message: ChatMessage;
+          conversation: RawConversation;
+        };
+      });
     },
     onMutate: async ({ convId, content }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
 
-      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const timelineTimestamp = getOptimisticTimelineTimestamp({
         convId,
         queryClient,
@@ -737,7 +813,7 @@ export function useSendMessage() {
         queryClient,
       });
 
-      return { optimisticId };
+      return { optimisticId, timelineTimestamp };
     },
     onError: (err, { convId }, context) => {
       // Show error toast
@@ -751,6 +827,14 @@ export function useSendMessage() {
       });
     },
     onSuccess: ({ message, conversation }, { wabaId, convId }, context) => {
+      if (context?.optimisticId) {
+        message.optimisticId = context.optimisticId;
+      }
+      if (context?.timelineTimestamp) {
+        message.timestamp = context.timelineTimestamp;
+        message.createdAt = context.timelineTimestamp;
+      }
+
       updateCachesWithConfirmedMessage({
         conversation,
         convId,
@@ -767,14 +851,18 @@ export function useSendMediaMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: uploadAndConfirmMediaMessages,
+    mutationFn: async (data: SendMediaMessageBatchData) => {
+      return enqueueConversationTask(data.convId, () =>
+        uploadAndConfirmMediaMessages(data),
+      );
+    },
     onMutate: async (variables: SendMediaMessageBatchData) => {
       await queryClient.cancelQueries({
         queryKey: messageKeys.all(variables.convId),
       });
 
       const optimisticUpdates = variables.files.map((item, index) => {
-        const optimisticId = `optimistic-media-${Date.now()}-${index}`;
+        const optimisticId = `optimistic-media-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`;
         const localMediaUrl = URL.createObjectURL(item.file);
         const mimeType = getNormalizedMimeType(item.file);
 
@@ -815,7 +903,7 @@ export function useSendMediaMessage() {
           queryClient,
         });
 
-        return { localMediaUrl, optimisticId };
+        return { localMediaUrl, optimisticId, timelineTimestamp };
       });
 
       return { optimisticUpdates };
@@ -837,6 +925,13 @@ export function useSendMediaMessage() {
         const updateContext = context?.optimisticUpdates[index];
         if (updateContext?.localMediaUrl) {
           result.message.localMediaUrl = updateContext.localMediaUrl;
+        }
+        if (updateContext?.optimisticId) {
+          result.message.optimisticId = updateContext.optimisticId;
+        }
+        if (updateContext?.timelineTimestamp) {
+          result.message.timestamp = updateContext.timelineTimestamp;
+          result.message.createdAt = updateContext.timelineTimestamp;
         }
 
         updateCachesWithConfirmedMessage({

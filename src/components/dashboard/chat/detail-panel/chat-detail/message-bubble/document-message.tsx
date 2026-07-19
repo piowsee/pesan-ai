@@ -1,4 +1,3 @@
-import { Spinner } from '@/components/ui/spinner';
 import type { MouseEvent } from 'react';
 import type { IconType } from 'react-icons';
 import {
@@ -172,7 +171,6 @@ function DocumentMessage({
   const { Icon, colorClassName, label } = getDocumentVisual(message);
   const title = message.mediaFilename || 'Document';
   const description = [label, size].filter(Boolean).join(' · ');
-  const isSending = message.status === 'sending';
 
   const handleOpenDocument = async (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isDownloadUrlStale || !getFreshDownloadUrl) {
@@ -208,7 +206,6 @@ function DocumentMessage({
           <span className="mt-1 flex min-h-3 items-end justify-between gap-2">
             <span className="flex min-w-0 items-center gap-1 text-[10px] leading-none text-muted-foreground">
               <span className="truncate">{description}</span>
-              {isSending ? <Spinner className="size-2.5" /> : null}
             </span>
             {!message.content ? metadata : null}
           </span>

@@ -600,7 +600,7 @@ export function MessageTimeline({
 
                       return (
                         <div
-                          key={message.id}
+                          key={message.optimisticId || message.id}
                           className={cn(
                             'flex flex-col',
                             isSameSenderAsNext ? 'mb-[6px]' : 'mb-[10px]',
