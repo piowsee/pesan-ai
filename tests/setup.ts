@@ -149,7 +149,7 @@ vi.mock('@/services/message.service', () => ({
   MessageService: {
     getMessagesPaginated: vi.fn(),
     sendAdminTextMessage: vi.fn(),
-    confirmUploadedMediaMessage: vi.fn(),
+    confirmUploadedMediaMessages: vi.fn(),
   },
 }));
 
@@ -216,8 +216,8 @@ vi.mock('@/services/webhook.service', () => ({
 
 vi.mock('@/services/s3.service', () => ({
   S3Service: {
-    createPresignedUploadUrl: vi.fn(),
-    createPresignedDownloadUrl: vi.fn(),
+    createPresignedUploadUrls: vi.fn(),
+    createPresignedDownloadUrls: vi.fn(),
     verifyUploadedMedia: vi.fn(),
     streamWhatsAppMediaToObjectStorage: vi.fn(),
   },

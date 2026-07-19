@@ -16,15 +16,17 @@ describe('POST /api/media/upload/confirm', { tags: ['backend'] }, () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',
     } as never);
-    vi.mocked(MessageService.confirmUploadedMediaMessage).mockResolvedValue({
-      message: {
-        id: 'msg-1',
-        mediaObjectKey: key,
-        mediaFilename: 'receipt.png',
-        type: 'image',
-      } as never,
-      conversation: { id: 'conv-1' } as never,
-    });
+    vi.mocked(MessageService.confirmUploadedMediaMessages).mockResolvedValue([
+      {
+        message: {
+          id: 'msg-1',
+          mediaObjectKey: key,
+          mediaFilename: 'receipt.png',
+          type: 'image',
+        } as never,
+        conversation: { id: 'conv-1' } as never,
+      },
+    ]);
 
     const response = await POST(
       new Request(url, {
@@ -32,9 +34,13 @@ describe('POST /api/media/upload/confirm', { tags: ['backend'] }, () => {
         body: JSON.stringify({
           wabaId: 'waba-1',
           convId: 'conv-1',
-          key,
-          caption: 'receipt',
-          filename: 'receipt.png',
+          files: [
+            {
+              key,
+              caption: 'receipt',
+              filename: 'receipt.png',
+            },
+          ],
         }),
       }),
       { params: Promise.resolve({}) } as never,
@@ -44,23 +50,29 @@ describe('POST /api/media/upload/confirm', { tags: ['backend'] }, () => {
     expect(response.status).toBe(200);
     expect(body).toEqual({
       status: 'success',
-      data: {
-        message: {
-          id: 'msg-1',
-          mediaObjectKey: key,
-          mediaFilename: 'receipt.png',
-          type: 'image',
+      data: [
+        {
+          message: {
+            id: 'msg-1',
+            mediaObjectKey: key,
+            mediaFilename: 'receipt.png',
+            type: 'image',
+          },
+          conversation: { id: 'conv-1' },
         },
-        conversation: { id: 'conv-1' },
-      },
+      ],
     });
-    expect(MessageService.confirmUploadedMediaMessage).toHaveBeenCalledWith({
+    expect(MessageService.confirmUploadedMediaMessages).toHaveBeenCalledWith({
       userId: 'user-1',
       wabaId: 'waba-1',
       convId: 'conv-1',
-      key,
-      caption: 'receipt',
-      filename: 'receipt.png',
+      files: [
+        {
+          key,
+          caption: 'receipt',
+          filename: 'receipt.png',
+        },
+      ],
     });
   });
 
@@ -75,7 +87,7 @@ describe('POST /api/media/upload/confirm', { tags: ['backend'] }, () => {
         body: JSON.stringify({
           wabaId: 'waba-1',
           convId: 'conv-1',
-          key: 'bad',
+          files: [{ key: 'bad' }],
         }),
       }),
       { params: Promise.resolve({}) } as never,
@@ -83,22 +95,26 @@ describe('POST /api/media/upload/confirm', { tags: ['backend'] }, () => {
     const body = await response.json();
 
     expect(response.status).toBe(400);
-    expect(body.data.key).toBeDefined();
-    expect(MessageService.confirmUploadedMediaMessage).not.toHaveBeenCalled();
+    expect(body.data.files).toBeDefined();
+    expect(MessageService.confirmUploadedMediaMessages).not.toHaveBeenCalled();
   });
 
   it('returns service ApiError responses', async () => {
     vi.mocked(AuthHelper.requireUser).mockResolvedValue({
       id: 'user-1',
     } as never);
-    vi.mocked(MessageService.confirmUploadedMediaMessage).mockRejectedValue(
+    vi.mocked(MessageService.confirmUploadedMediaMessages).mockRejectedValue(
       new ApiError('Uploaded object not found', 404),
     );
 
     const response = await POST(
       new Request(url, {
         method: 'POST',
-        body: JSON.stringify({ wabaId: 'waba-1', convId: 'conv-1', key }),
+        body: JSON.stringify({
+          wabaId: 'waba-1',
+          convId: 'conv-1',
+          files: [{ key }],
+        }),
       }),
       { params: Promise.resolve({}) } as never,
     );

@@ -32,7 +32,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
     vi.unstubAllGlobals();
   });
 
-  describe('createPresignedUploadUrl', () => {
+  describe('createPresignedUploadUrls', () => {
     it('generates a presigned POST form for an image with the image size limit', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
@@ -51,15 +51,15 @@ describe('S3Service', { tags: ['backend'] }, () => {
         },
       });
 
-      const result = await S3Service.createPresignedUploadUrl({
+      const result = await S3Service.createPresignedUploadUrls({
         userId: 'user-1',
         wabaId: 'waba-1',
         convId: 'conv-1',
-        contentType: 'image/png',
+        files: [{ contentType: 'image/png' }],
       });
       const presignOptions = vi.mocked(createPresignedPost).mock.calls[0]?.[1];
 
-      expect(result).toEqual({
+      expect(result[0]).toEqual({
         key: presignOptions?.Key,
         url: 'https://space.example/upload',
         method: 'POST',
@@ -109,15 +109,15 @@ describe('S3Service', { tags: ['backend'] }, () => {
         },
       });
 
-      const result = await S3Service.createPresignedUploadUrl({
+      const result = await S3Service.createPresignedUploadUrls({
         userId: 'user-1',
         wabaId: 'waba-1',
         convId: 'conv-1',
-        contentType: 'application/pdf',
+        files: [{ contentType: 'application/pdf' }],
       });
       const presignOptions = vi.mocked(createPresignedPost).mock.calls[0]?.[1];
 
-      expect(result.maxSizeBytes).toBe(100 * 1024 * 1024);
+      expect(result[0]?.maxSizeBytes).toBe(100 * 1024 * 1024);
       expect(presignOptions).toMatchObject({
         Fields: { 'Content-Type': 'application/pdf' },
         Conditions: [
@@ -138,11 +138,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        S3Service.createPresignedUploadUrl({
+        S3Service.createPresignedUploadUrls({
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          contentType: 'image/png',
+          files: [{ contentType: 'image/png' }],
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -162,11 +162,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        S3Service.createPresignedUploadUrl({
+        S3Service.createPresignedUploadUrls({
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          contentType: 'image/png',
+          files: [{ contentType: 'image/png' }],
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -186,11 +186,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        S3Service.createPresignedUploadUrl({
+        S3Service.createPresignedUploadUrls({
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          contentType: 'image/png',
+          files: [{ contentType: 'image/png' }],
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -206,11 +206,11 @@ describe('S3Service', { tags: ['backend'] }, () => {
       ).mockResolvedValue(null);
 
       await expect(
-        S3Service.createPresignedUploadUrl({
+        S3Service.createPresignedUploadUrls({
           userId: 'user-1',
           wabaId: 'waba-1',
           convId: 'conv-1',
-          contentType: 'image/png',
+          files: [{ contentType: 'image/png' }],
         }),
       ).rejects.toMatchObject({
         status: 404,
@@ -285,23 +285,24 @@ describe('S3Service', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('createPresignedDownloadUrl', () => {
+  describe('createPresignedDownloadUrls', () => {
     it('generates a presigned GET URL for an owned object key', async () => {
       vi.mocked(getSignedUrl).mockResolvedValue(
         'https://space.example/download?signature=abc',
       );
 
-      const result = await S3Service.createPresignedDownloadUrl({
+      const result = await S3Service.createPresignedDownloadUrls({
         userId: 'user-1',
         wabaId: 'waba-1',
         convId: 'conv-1',
-        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        keys: ['user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000'],
       });
       const command = vi.mocked(getSignedUrl).mock.calls[0]?.[1] as
         | { input?: Record<string, unknown> }
         | undefined;
 
-      expect(result).toEqual({
+      expect(result[0]).toEqual({
+        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
         downloadUrl: 'https://space.example/download?signature=abc',
         expiresIn: 1800,
       });
