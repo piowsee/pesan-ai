@@ -275,10 +275,7 @@ export const MessageRepository = {
       // 1. Upsert conversation
       const conversation = await tx.conversation.upsert({
         where: {
-          unique_conversation: {
-            phoneNumberId,
-            contactId: contact.id,
-          },
+          contactId: contact.id,
         },
         update: {
           unreadCount: { increment: 1 },
@@ -415,10 +412,7 @@ export const MessageRepository = {
       // Find existing conversation to check lastMessageAt and unreadCount
       const existingConversation = await tx.conversation.findUnique({
         where: {
-          unique_conversation: {
-            phoneNumberId,
-            contactId: contact.id,
-          },
+          contactId: contact.id,
         },
       });
 
@@ -428,10 +422,7 @@ export const MessageRepository = {
 
       const conversation = await tx.conversation.upsert({
         where: {
-          unique_conversation: {
-            phoneNumberId,
-            contactId: contact.id,
-          },
+          contactId: contact.id,
         },
         update: {
           ...(isLatest && {
@@ -560,10 +551,7 @@ export const MessageRepository = {
 
         const conversation = await tx.conversation.upsert({
           where: {
-            unique_conversation: {
-              phoneNumberId,
-              contactId: contact.id,
-            },
+            contactId: contact.id,
           },
           update: {
             unreadCount: shouldIncrementUnread ? { increment: 1 } : undefined,
@@ -765,10 +753,7 @@ export const MessageRepository = {
 
         let conversation = await tx.conversation.findUnique({
           where: {
-            unique_conversation: {
-              phoneNumberId,
-              contactId: contact.id,
-            },
+            contactId: contact.id,
           },
         });
 
@@ -792,10 +777,7 @@ export const MessageRepository = {
 
         conversation = await tx.conversation.upsert({
           where: {
-            unique_conversation: {
-              phoneNumberId,
-              contactId: contact.id,
-            },
+            contactId: contact.id,
           },
           update: {
             unreadCount:

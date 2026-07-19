@@ -167,7 +167,7 @@ model Contact {
   phoneNumberId    String
   phoneNumber      PhoneNumber @relation(fields: [phoneNumberId], references: [id])
 
-  conversations Conversation[]
+  conversation Conversation?
 
   @@unique([phoneNumberId, bsuid])
   @@unique([phoneNumberId, customerPhone])
@@ -177,7 +177,7 @@ model Contact {
 
 model Conversation {
   id                    String    @id @default(cuid())
-  contactId             String
+  contactId             String    @unique
   messagingProduct      String    @default("whatsapp") // literal "whatsapp"
   adminTakeover         Boolean   @default(false) // Admin has taken over (bot paused)
   lastMessageAt         DateTime?
@@ -194,7 +194,6 @@ model Conversation {
 
   messages Message[]
 
-  @@unique([phoneNumberId, contactId], name: "unique_conversation")
   @@index([lastMessageAt], name: "idx_conversations_last_message")
   @@index([contactId], name: "idx_conversations_contact_id")
   @@map("conversation")

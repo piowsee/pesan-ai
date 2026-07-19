@@ -19,7 +19,7 @@ CREATE TABLE "conversation" (
 CREATE INDEX "idx_conversations_last_message" ON "conversation"("lastMessageAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "conversation_phoneNumberId_contactId_key" ON "conversation"("phoneNumberId", "contactId");
+CREATE UNIQUE INDEX "conversation_contactId_key" ON "conversation"("contactId");
 
 -- AddForeignKey
 ALTER TABLE "conversation" ADD CONSTRAINT "conversation_phoneNumberId_fkey" FOREIGN KEY ("phoneNumberId") REFERENCES "phone_number"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
