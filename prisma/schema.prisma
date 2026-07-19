@@ -171,7 +171,6 @@ model Contact {
 
   @@unique([phoneNumberId, bsuid])
   @@unique([phoneNumberId, customerPhone])
-  @@index([customerUsername], name: "idx_contact_customer_username")
   @@map("contact")
 }
 
@@ -194,8 +193,7 @@ model Conversation {
 
   messages Message[]
 
-  @@index([lastMessageAt], name: "idx_conversations_last_message")
-  @@index([contactId], name: "idx_conversations_contact_id")
+  @@index([phoneNumberId, lastMessageAt(sort: Desc)], name: "idx_conversations_phone_last_message")
   @@map("conversation")
 }
 
