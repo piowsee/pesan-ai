@@ -12,7 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
-import type { MessageGroup } from '@/hooks/use-message';
+import type {
+  MediaDownloadUrlResponse,
+  MessageGroup,
+} from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
 import { ChevronDownIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -30,6 +33,11 @@ export function MessageTimeline({
   conversationId,
   wabaId,
   messages,
+  mediaDownloadUrls,
+  mediaDownloadUrlsError,
+  isMediaDownloadUrlsError,
+  areMediaDownloadUrlsStale,
+  onRefreshMediaDownloadUrls,
   isLoading,
   hasNextPage,
   isFetchingNextPage,
@@ -43,6 +51,13 @@ export function MessageTimeline({
   conversationId?: string;
   wabaId?: string;
   messages: MessageGroup[];
+  mediaDownloadUrls: Record<string, MediaDownloadUrlResponse>;
+  mediaDownloadUrlsError: unknown;
+  isMediaDownloadUrlsError: boolean;
+  areMediaDownloadUrlsStale: boolean;
+  onRefreshMediaDownloadUrls: () => Promise<
+    Record<string, MediaDownloadUrlResponse> | undefined
+  >;
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
@@ -587,6 +602,21 @@ export function MessageTimeline({
                             <MessageBubble
                               message={message}
                               wabaId={wabaId}
+                              mediaDownloadUrl={
+                                message.mediaObjectKey
+                                  ? mediaDownloadUrls[message.mediaObjectKey]
+                                  : undefined
+                              }
+                              mediaDownloadUrlsError={mediaDownloadUrlsError}
+                              isMediaDownloadUrlsError={
+                                isMediaDownloadUrlsError
+                              }
+                              areMediaDownloadUrlsStale={
+                                areMediaDownloadUrlsStale
+                              }
+                              onRefreshMediaDownloadUrls={
+                                onRefreshMediaDownloadUrls
+                              }
                               isFirstInGroup={isFirstInGroup}
                             />
                           </div>

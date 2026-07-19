@@ -19,8 +19,8 @@ import {
 export const messageKeys = {
   root: ['messages'] as const,
   all: (convId: string) => ['messages', convId] as const,
-  mediaDownloadUrl: (wabaId: string, convId: string, key: string) =>
-    ['messages', convId, 'media-download-url', wabaId, key] as const,
+  mediaDownloadUrls: (wabaId: string, convId: string, keys: string[]) =>
+    ['messages', convId, 'media-download-urls', wabaId, keys] as const,
 };
 
 const MEDIA_DOWNLOAD_URL_EXPIRES_IN_FALLBACK_MS = 30 * 60 * 1000;
@@ -52,7 +52,8 @@ interface MessagePageCache {
   limit: number;
 }
 
-interface MediaDownloadUrlResponse {
+export interface MediaDownloadUrlResponse {
+  key: string;
   downloadUrl: string;
   expiresIn: number;
 }
@@ -67,6 +68,12 @@ interface MediaUploadUrlResponse {
 }
 
 type ChatMediaType = 'audio' | 'document' | 'image' | 'video';
+const downloadableMediaMessageTypes = new Set<string>([
+  'audio',
+  'document',
+  'image',
+  'video',
+]);
 
 // ─── API Functions ───────────────────────────────────────────────────
 
@@ -113,6 +120,36 @@ async function fetchMediaUploadUrls({
     const body = await response.json().catch(() => null);
     throw new Error(
       extractJSendErrorMessage(body) ?? 'Failed to prepare media upload',
+    );
+  }
+
+  const json = await response.json();
+  return json.data;
+}
+
+async function fetchMediaDownloadUrls({
+  wabaId,
+  convId,
+  keys,
+}: {
+  wabaId: string;
+  convId: string;
+  keys: string[];
+}): Promise<MediaDownloadUrlResponse[]> {
+  const response = await fetch('/api/media/download/url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      wabaId,
+      convId,
+      keys,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(
+      extractJSendErrorMessage(body) ?? 'Failed to prepare media downloads',
     );
   }
 
@@ -651,6 +688,28 @@ export function groupMessagesByDate(messages: ChatMessage[]): MessageGroup[] {
   return groups;
 }
 
+export function getMediaObjectKeysFromMessageGroups(
+  groups: MessageGroup[],
+): string[] {
+  const keys = new Set<string>();
+
+  for (const group of groups) {
+    for (const message of group.messages) {
+      if (
+        message.localMediaUrl ||
+        !message.mediaObjectKey ||
+        !downloadableMediaMessageTypes.has(message.type)
+      ) {
+        continue;
+      }
+
+      keys.add(message.mediaObjectKey);
+    }
+  }
+
+  return Array.from(keys).sort();
+}
+
 // ─── Hook ────────────────────────────────────────────────────────────
 
 /**
@@ -689,40 +748,35 @@ export function useMessages(
   });
 }
 
-export function useMessageMediaDownloadUrl({
+export function useMessageMediaDownloadUrls({
   wabaId,
   convId,
-  key,
+  keys,
   enabled = true,
 }: {
   wabaId?: string;
   convId?: string;
-  key?: string | null;
+  keys: string[];
   enabled?: boolean;
 }) {
   return useQuery({
-    queryKey: messageKeys.mediaDownloadUrl(
-      wabaId ?? '',
-      convId ?? '',
-      key ?? '',
-    ),
-    queryFn: async () => {
-      const response = await fetch('/api/media/download/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wabaId: wabaId!,
-          convId: convId!,
-          keys: [key!],
-        }),
-      });
-      const json = await response.json();
-      return json.data[0] as MediaDownloadUrlResponse;
-    },
-    enabled: enabled && Boolean(wabaId && convId && key),
+    queryKey: messageKeys.mediaDownloadUrls(wabaId ?? '', convId ?? '', keys),
+    queryFn: () =>
+      fetchMediaDownloadUrls({ wabaId: wabaId!, convId: convId!, keys }),
+    enabled: enabled && Boolean(wabaId && convId && keys.length > 0),
+    select: (data) =>
+      data.reduce<Record<string, MediaDownloadUrlResponse>>((result, item) => {
+        result[item.key] = item;
+        return result;
+      }, {}),
     staleTime: (query) => {
-      const data = query.state.data as MediaDownloadUrlResponse | undefined;
-      return getMediaDownloadUrlStaleTime(data?.expiresIn);
+      const data = query.state.data as
+        | Record<string, MediaDownloadUrlResponse>
+        | undefined;
+      const shortestExpiresIn = data
+        ? Math.min(...Object.values(data).map((item) => item.expiresIn))
+        : undefined;
+      return getMediaDownloadUrlStaleTime(shortestExpiresIn);
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

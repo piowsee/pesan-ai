@@ -15,7 +15,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import type { MessageGroup } from '@/hooks/use-message';
+import type {
+  MediaDownloadUrlResponse,
+  MessageGroup,
+} from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import {
@@ -125,6 +128,11 @@ export function ChatDetail({
   conversation,
   wabaId,
   messages,
+  mediaDownloadUrls,
+  mediaDownloadUrlsError,
+  isMediaDownloadUrlsError,
+  areMediaDownloadUrlsStale,
+  onRefreshMediaDownloadUrls,
   isConversationLoading,
   isMessagesLoading,
   hasNextPage,
@@ -147,6 +155,13 @@ export function ChatDetail({
   conversation?: ChatConversation;
   wabaId?: string;
   messages: MessageGroup[];
+  mediaDownloadUrls: Record<string, MediaDownloadUrlResponse>;
+  mediaDownloadUrlsError: unknown;
+  isMediaDownloadUrlsError: boolean;
+  areMediaDownloadUrlsStale: boolean;
+  onRefreshMediaDownloadUrls: () => Promise<
+    Record<string, MediaDownloadUrlResponse> | undefined
+  >;
   isConversationLoading: boolean;
   isMessagesLoading: boolean;
   hasNextPage: boolean;
@@ -235,6 +250,11 @@ export function ChatDetail({
             conversationId={conversation.id}
             wabaId={wabaId}
             messages={messages}
+            mediaDownloadUrls={mediaDownloadUrls}
+            mediaDownloadUrlsError={mediaDownloadUrlsError}
+            isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+            areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+            onRefreshMediaDownloadUrls={onRefreshMediaDownloadUrls}
             isLoading={shouldShowInitialSpinner}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}

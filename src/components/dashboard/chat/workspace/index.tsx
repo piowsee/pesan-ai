@@ -34,6 +34,8 @@ import {
 } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
+  getMediaObjectKeysFromMessageGroups,
+  useMessageMediaDownloadUrls,
   useMessages,
   useSendMediaMessage,
   useSendMessage,
@@ -489,6 +491,26 @@ export function ChatWorkspace() {
   ]);
 
   const messages = useMemo(() => groupedMessages ?? [], [groupedMessages]);
+  const mediaObjectKeys = useMemo(
+    () => getMediaObjectKeysFromMessageGroups(messages),
+    [messages],
+  );
+  const {
+    data: mediaDownloadUrls = {},
+    error: mediaDownloadUrlsError,
+    isError: isMediaDownloadUrlsError,
+    isStale: areMediaDownloadUrlsStale,
+    refetch: refetchMediaDownloadUrls,
+  } = useMessageMediaDownloadUrls({
+    wabaId: activeWabaId,
+    convId: selectedConversationId,
+    keys: mediaObjectKeys,
+    enabled: !isMessagesLoading,
+  });
+  const refreshMediaDownloadUrls = useCallback(
+    async () => (await refetchMediaDownloadUrls()).data,
+    [refetchMediaDownloadUrls],
+  );
   const shouldShowConversationListSkeleton =
     Boolean(activeWabaId) &&
     (isConversationsLoading || isConversationsPlaceholderData);
@@ -744,6 +766,11 @@ export function ChatWorkspace() {
         conversation={selectedConversation}
         activeWabaId={activeWabaId}
         messages={messages}
+        mediaDownloadUrls={mediaDownloadUrls}
+        mediaDownloadUrlsError={mediaDownloadUrlsError}
+        isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+        areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+        onRefreshMediaDownloadUrls={refreshMediaDownloadUrls}
         isConversationLoading={isConversationsLoading}
         isMessagesLoading={isMessagesLoading}
         hasNextPage={Boolean(hasNextPage)}

@@ -1,6 +1,9 @@
 import { ChatDetail } from '@/components/dashboard/chat/detail-panel/chat-detail';
 import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
-import type { MessageGroup } from '@/hooks/use-message';
+import type {
+  MediaDownloadUrlResponse,
+  MessageGroup,
+} from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -10,6 +13,13 @@ interface ChatDetailPaneProps {
   conversation?: ChatConversation;
   selectedConversationId?: string;
   messages: MessageGroup[];
+  mediaDownloadUrls: Record<string, MediaDownloadUrlResponse>;
+  mediaDownloadUrlsError: unknown;
+  isMediaDownloadUrlsError: boolean;
+  areMediaDownloadUrlsStale: boolean;
+  onRefreshMediaDownloadUrls: () => Promise<
+    Record<string, MediaDownloadUrlResponse> | undefined
+  >;
   isConversationLoading: boolean;
   isMessagesLoading: boolean;
   hasNextPage: boolean;
@@ -47,6 +57,11 @@ export function ChatDetailPane({
   isMessagesLoading,
   localSendScrollSignal,
   messages,
+  mediaDownloadUrls,
+  mediaDownloadUrlsError,
+  isMediaDownloadUrlsError,
+  areMediaDownloadUrlsStale,
+  onRefreshMediaDownloadUrls,
   onBack,
   onContactAreaClick,
   onClearUnread,
@@ -69,6 +84,11 @@ export function ChatDetailPane({
           conversation={conversation}
           wabaId={activeWabaId}
           messages={messages}
+          mediaDownloadUrls={mediaDownloadUrls}
+          mediaDownloadUrlsError={mediaDownloadUrlsError}
+          isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+          areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+          onRefreshMediaDownloadUrls={onRefreshMediaDownloadUrls}
           isConversationLoading={isConversationLoading}
           isMessagesLoading={isMessagesLoading}
           hasNextPage={hasNextPage}
