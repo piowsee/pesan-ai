@@ -545,7 +545,23 @@ function replaceOptimisticMessageWithConfirmedMessage({
               ...page,
               messages: page.messages.map((msg) =>
                 msg.id === confirmedMessage.id
-                  ? { ...msg, ...confirmedMessage }
+                  ? {
+                      ...msg,
+                      ...confirmedMessage,
+                      optimisticId:
+                        msg.optimisticId ?? confirmedMessage.optimisticId,
+                      localMediaUrl:
+                        msg.localMediaUrl ?? confirmedMessage.localMediaUrl,
+                      status: msg.status,
+                      errorMessage:
+                        msg.errorMessage ?? confirmedMessage.errorMessage,
+                      timestamp: msg.optimisticId
+                        ? msg.timestamp
+                        : confirmedMessage.timestamp,
+                      createdAt: msg.optimisticId
+                        ? msg.createdAt
+                        : confirmedMessage.createdAt,
+                    }
                   : msg,
               ),
             };

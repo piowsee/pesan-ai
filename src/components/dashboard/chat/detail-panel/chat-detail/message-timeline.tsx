@@ -9,10 +9,8 @@ import {
 } from '@/components/dashboard/chat/shared/unread-divider';
 import { useRealtime } from '@/components/realtime-provider';
 import { Badge } from '@/components/ui/badge';
-import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import type { MessageGroup } from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
@@ -27,69 +25,6 @@ import {
   useRef,
   useState,
 } from 'react';
-
-const MESSAGE_BUBBLE_SKELETON_LINES = [
-  { first: 'w-44', second: 'w-60' },
-  { first: 'w-36', second: undefined },
-  { first: 'w-56', second: 'w-48' },
-  { first: 'w-40', second: 'w-52' },
-] as const;
-
-function MessageBubbleSkeleton({ index }: { index: number }) {
-  const isOutgoing = index % 2 === 1;
-  const lines =
-    MESSAGE_BUBBLE_SKELETON_LINES[index % MESSAGE_BUBBLE_SKELETON_LINES.length];
-
-  return (
-    <div
-      className={cn(
-        'flex min-w-0 w-full',
-        isOutgoing ? 'justify-end' : 'justify-start',
-      )}
-    >
-      <Bubble
-        align={isOutgoing ? 'end' : 'start'}
-        className="max-w-[85%]"
-        variant={isOutgoing ? 'tinted' : 'surface'}
-      >
-        <BubbleContent
-          className={cn(
-            'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
-            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm border-transparent',
-          )}
-        >
-          <div className="flex max-w-full flex-col gap-1.5">
-            <Skeleton className={cn('h-3.5 rounded-full', lines.first)} />
-            {lines.second ? (
-              <Skeleton className={cn('h-3.5 rounded-full', lines.second)} />
-            ) : null}
-          </div>
-
-          <div
-            className={cn(
-              'mt-1.5 flex items-center justify-end gap-1',
-              isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
-            )}
-          >
-            <Skeleton className="h-2.5 w-10 rounded-full" />
-            {isOutgoing ? <Skeleton className="size-3 rounded-full" /> : null}
-          </div>
-        </BubbleContent>
-      </Bubble>
-    </div>
-  );
-}
-
-export function MessageTimelineSkeleton({ count = 6 }: { count?: number }) {
-  const t = useTranslations('Chat.timeline');
-  return (
-    <div className="flex flex-col gap-4 px-2 py-3" aria-label={t('loading')}>
-      {Array.from({ length: count }).map((_, index) => (
-        <MessageBubbleSkeleton key={index} index={index} />
-      ))}
-    </div>
-  );
-}
 
 export function MessageTimeline({
   conversationId,
@@ -144,6 +79,7 @@ export function MessageTimeline({
   const [sessionUnreadBoundaryMessageId, setSessionUnreadBoundaryMessageId] =
     useState<string | null | undefined>(undefined);
   const flattenedMessages = messages.flatMap((group) => group.messages);
+
   const messageCount = flattenedMessages.length;
   const latestMessageId = flattenedMessages[messageCount - 1]?.id;
   const initialUnreadBoundaryMessageId = getUnreadBoundaryMessageId({
@@ -198,11 +134,18 @@ export function MessageTimeline({
 
   const requestOlderMessages = useCallback(() => {
     const viewport = getViewport();
+    const distanceFromBottom = viewport
+      ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
+      : 0;
 
     if (
       !viewport ||
+      isLoading ||
+      !hasInitialScrollCompleted ||
       !hasNextPage ||
       isFetchingNextPage ||
+      viewport.scrollTop > 96 ||
+      distanceFromBottom <= 96 ||
       isLoadOlderRequestedRef.current
     ) {
       return;
@@ -216,13 +159,26 @@ export function MessageTimeline({
     shouldStickToBottomRef.current = false;
     setIsNearBottom(false);
     onLoadOlderAction();
-  }, [getViewport, hasNextPage, isFetchingNextPage, onLoadOlderAction]);
+  }, [
+    getViewport,
+    hasInitialScrollCompleted,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    onLoadOlderAction,
+  ]);
 
   useEffect(() => {
     const viewport = getViewport();
     const sentinel = loadOlderSentinelRef.current;
 
-    if (!viewport || !sentinel || !hasNextPage) {
+    if (
+      !viewport ||
+      !sentinel ||
+      isLoading ||
+      !hasInitialScrollCompleted ||
+      !hasNextPage
+    ) {
       return;
     }
 
@@ -240,7 +196,13 @@ export function MessageTimeline({
     return () => {
       observer.disconnect();
     };
-  }, [getViewport, hasNextPage, requestOlderMessages]);
+  }, [
+    getViewport,
+    hasInitialScrollCompleted,
+    hasNextPage,
+    isLoading,
+    requestOlderMessages,
+  ]);
 
   useLayoutEffect(() => {
     if (isFetchingNextPage) {
@@ -536,18 +498,18 @@ export function MessageTimeline({
           ref={contentRef}
           className="flex min-h-full flex-col gap-4 px-2 pt-4"
         >
-          {hasNextPage ? (
+          {hasNextPage || isFetchingNextPage ? (
             <div
-              ref={loadOlderSentinelRef}
+              ref={hasNextPage ? loadOlderSentinelRef : undefined}
               className="flex h-10 items-center justify-center"
               aria-label={t('loading')}
               aria-live="polite"
             >
-              <Spinner className="text-muted-foreground" />
+              {isFetchingNextPage ? (
+                <Spinner className="text-muted-foreground" />
+              ) : null}
             </div>
           ) : null}
-
-          {isLoading ? <MessageTimelineSkeleton /> : null}
 
           {!isLoading && messages.length === 0 ? (
             <div className="flex flex-1 items-center justify-center px-6 py-12 text-sm text-muted-foreground">

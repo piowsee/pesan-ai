@@ -744,7 +744,8 @@ export function ChatWorkspace() {
         conversation={selectedConversation}
         activeWabaId={activeWabaId}
         messages={messages}
-        isLoading={isConversationsLoading || isMessagesLoading}
+        isConversationLoading={isConversationsLoading}
+        isMessagesLoading={isMessagesLoading}
         hasNextPage={Boolean(hasNextPage)}
         isFetchingNextPage={isFetchingNextPage}
         onLoadOlder={() => {

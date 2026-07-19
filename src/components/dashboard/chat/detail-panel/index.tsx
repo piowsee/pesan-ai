@@ -10,7 +10,8 @@ interface ChatDetailPaneProps {
   conversation?: ChatConversation;
   selectedConversationId?: string;
   messages: MessageGroup[];
-  isLoading: boolean;
+  isConversationLoading: boolean;
+  isMessagesLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
@@ -42,7 +43,8 @@ export function ChatDetailPane({
   unreadCount,
   isContactInfoOpen,
   isFetchingNextPage,
-  isLoading,
+  isConversationLoading,
+  isMessagesLoading,
   localSendScrollSignal,
   messages,
   onBack,
@@ -67,7 +69,8 @@ export function ChatDetailPane({
           conversation={conversation}
           wabaId={activeWabaId}
           messages={messages}
-          isLoading={isLoading}
+          isConversationLoading={isConversationLoading}
+          isMessagesLoading={isMessagesLoading}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           onLoadOlder={onLoadOlder}

@@ -78,6 +78,8 @@ export function applyRealtimeMessageToMessagePage(
           ? {
               ...realtimeMessage,
               optimisticId: message.optimisticId,
+              localMediaUrl:
+                message.localMediaUrl ?? realtimeMessage.localMediaUrl,
               ...(message.optimisticId
                 ? {
                     timestamp: message.timestamp,
@@ -90,10 +92,76 @@ export function applyRealtimeMessageToMessagePage(
     };
   }
 
+  const optimisticMessageIndex = page.messages.findIndex((message) =>
+    isMatchingOptimisticOutgoingMessage(message, realtimeMessage),
+  );
+
+  if (optimisticMessageIndex !== -1) {
+    const optimisticMessage = page.messages[optimisticMessageIndex]!;
+
+    return {
+      ...page,
+      messages: page.messages.map((message, index) =>
+        index === optimisticMessageIndex
+          ? mergeRealtimeMessageIntoOptimisticMessage(
+              optimisticMessage,
+              realtimeMessage,
+            )
+          : message,
+      ),
+    };
+  }
+
   return {
     ...page,
     messages: [realtimeMessage, ...page.messages],
     total: page.total + 1,
+  };
+}
+
+function isOptimisticOutgoingMessage(message: ChatMessage): boolean {
+  return (
+    message.direction === 'outgoing' &&
+    message.status === 'sending' &&
+    message.id.startsWith('optimistic-')
+  );
+}
+
+function isMatchingOptimisticOutgoingMessage(
+  optimisticMessage: ChatMessage,
+  realtimeMessage: ChatMessage,
+): boolean {
+  if (
+    !isOptimisticOutgoingMessage(optimisticMessage) ||
+    realtimeMessage.direction !== 'outgoing' ||
+    optimisticMessage.type !== realtimeMessage.type ||
+    optimisticMessage.content !== realtimeMessage.content
+  ) {
+    return false;
+  }
+
+  if (optimisticMessage.type === 'text') {
+    return true;
+  }
+
+  return (
+    optimisticMessage.mediaFilename === realtimeMessage.mediaFilename &&
+    optimisticMessage.mediaMimeType === realtimeMessage.mediaMimeType &&
+    optimisticMessage.mediaSize === realtimeMessage.mediaSize
+  );
+}
+
+function mergeRealtimeMessageIntoOptimisticMessage(
+  optimisticMessage: ChatMessage,
+  realtimeMessage: ChatMessage,
+): ChatMessage {
+  return {
+    ...realtimeMessage,
+    optimisticId: optimisticMessage.optimisticId ?? optimisticMessage.id,
+    localMediaUrl:
+      optimisticMessage.localMediaUrl ?? realtimeMessage.localMediaUrl,
+    timestamp: optimisticMessage.timestamp,
+    createdAt: optimisticMessage.createdAt,
   };
 }
 
