@@ -423,17 +423,18 @@
     "home": "Back to Home"
   },
   "Sidebar": {
-    "home": "Home",
-    "wabaManagement": "WABA Management",
+    "home": "Overview",
+    "wabaManagement": "Connect App",
     "chat": "Chat",
     "customers": "Customers",
     "navigation": "Navigation",
+    "workspace": "Business",
+    "customer": "Customer",
     "waba": "WABA",
-    "openPanel": "Open panel",
+    "pinPanel": "Pin panel",
     "closePanel": "Close panel"
   },
   "ProfileMenu": {
-    "openProfile": "Open profile",
     "profile": "Profile",
     "docs": "Help Center",
     "settings": "Settings",

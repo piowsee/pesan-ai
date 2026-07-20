@@ -16,12 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { SidebarMenuButton } from '@/components/ui/sidebar';
 import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
@@ -40,8 +35,6 @@ const DOCS_URL = 'https://piowsee.github.io/pesan-ai/introduction.html';
 
 export function SidebarProfileMenu({ user }: { user: User }) {
   const router = useRouter();
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -62,20 +55,20 @@ export function SidebarProfileMenu({ user }: { user: User }) {
   const triggerButton = (
     <SidebarMenuButton
       size="lg"
-      className="h-10 w-full cursor-pointer gap-3 px-2 text-foreground/60 hover:bg-brand/5 hover:text-brand focus-visible:ring-0 data-open:bg-brand/5 data-open:text-brand group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0"
+      className="h-10 w-full cursor-pointer justify-start gap-2 px-0 text-foreground/60 transition-colors duration-200 ease-out hover:bg-transparent hover:text-brand focus-visible:ring-0 data-open:bg-transparent data-open:text-brand group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0!"
     >
-      <Avatar className="size-8 rounded-full">
+      <Avatar className="mx-1 size-8 rounded-full">
         <AvatarImage src={user.image ?? undefined} alt={user.name} />
         <AvatarFallback className="rounded-full bg-brand text-brand-foreground">
           {user.name?.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+      <span className="min-w-0 max-w-32 flex-1 truncate text-sm font-semibold opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0">
         {user.name}
       </span>
       <MdUnfoldMore
         aria-hidden="true"
-        className="shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden"
+        className="max-w-4 shrink-0 overflow-hidden text-muted-foreground opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0"
       />
     </SidebarMenuButton>
   );
@@ -83,18 +76,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
   return (
     <>
       <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        {isCollapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="right" align="center">
-              {t('openProfile')}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
-        )}
+        <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
 
         <DropdownMenuContent
           side="top"

@@ -423,17 +423,18 @@
     "home": "Kembali ke Beranda"
   },
   "Sidebar": {
-    "home": "Beranda",
-    "wabaManagement": "Manajemen WABA",
+    "home": "Ringkasan",
+    "wabaManagement": "Hubungkan App",
     "chat": "Obrolan",
     "customers": "Pelanggan",
     "navigation": "Navigasi",
+    "workspace": "Bisnis",
+    "customer": "Pelanggan",
     "waba": "WABA",
-    "openPanel": "Buka panel",
-    "closePanel": "Tutup Panel"
+    "pinPanel": "Pin panel",
+    "closePanel": "Close panel"
   },
   "ProfileMenu": {
-    "openProfile": "Buka profil",
     "profile": "Profil",
     "docs": "Pusat Bantuan",
     "settings": "Pengaturan",
