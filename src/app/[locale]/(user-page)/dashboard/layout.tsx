@@ -28,7 +28,13 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider
-      style={{ '--sidebar-width-icon': '3.5rem' } as CSSProperties}
+      defaultOpen={false}
+      style={
+        {
+          '--sidebar-width': '16rem',
+          '--sidebar-width-icon': '4.25rem',
+        } as CSSProperties
+      }
     >
       <AppSidebar user={user} />
       <SidebarInset>
