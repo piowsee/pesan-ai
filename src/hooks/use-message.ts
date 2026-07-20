@@ -759,10 +759,47 @@ export function useMessageMediaDownloadUrls({
   keys: string[];
   enabled?: boolean;
 }) {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: messageKeys.mediaDownloadUrls(wabaId ?? '', convId ?? '', keys),
-    queryFn: () =>
-      fetchMediaDownloadUrls({ wabaId: wabaId!, convId: convId!, keys }),
+    queryFn: async () => {
+      const cacheKey = ['media-download-urls-cache', wabaId, convId];
+      const cached =
+        queryClient.getQueryData<
+          Record<string, MediaDownloadUrlResponse & { _expiresAt: number }>
+        >(cacheKey) || {};
+
+      const now = Date.now();
+      const keysToFetch = keys.filter((key) => {
+        const item = cached[key];
+        return !item || now >= item._expiresAt;
+      });
+
+      const newData = { ...cached };
+
+      if (keysToFetch.length > 0) {
+        const res = await fetchMediaDownloadUrls({
+          wabaId: wabaId!,
+          convId: convId!,
+          keys: keysToFetch,
+        });
+
+        res.forEach((item) => {
+          newData[item.key] = {
+            ...item,
+            _expiresAt:
+              now +
+              item.expiresIn * 1000 -
+              MEDIA_DOWNLOAD_URL_REFRESH_BUFFER_MS,
+          };
+        });
+
+        queryClient.setQueryData(cacheKey, newData);
+      }
+
+      return keys.map((key) => newData[key]!).filter(Boolean);
+    },
     enabled: enabled && Boolean(wabaId && convId && keys.length > 0),
     select: (data) =>
       data.reduce<Record<string, MediaDownloadUrlResponse>>((result, item) => {
@@ -948,17 +985,19 @@ export function useSendMediaMessage() {
           ).toISOString();
         }
 
+        const mediaType = getMediaTypeFromMimeType(mimeType);
+
         const optimisticMessage: ChatMessage = {
           id: optimisticId,
           messageId: null,
           conversationId: variables.convId,
           direction: 'outgoing',
           source: 'admin',
-          type: getMediaTypeFromMimeType(mimeType),
+          type: mediaType,
           content: item.caption?.trim() || null,
           mediaObjectKey: null,
           mediaMimeType: mimeType,
-          mediaFilename: item.file.name,
+          mediaFilename: mediaType === 'document' ? item.file.name : null,
           mediaSize: item.file.size,
           status: 'sending',
           errorMessage: null,
