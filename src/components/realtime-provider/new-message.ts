@@ -134,9 +134,14 @@ function isMatchingOptimisticOutgoingMessage(
   if (
     !isOptimisticOutgoingMessage(optimisticMessage) ||
     realtimeMessage.direction !== 'outgoing' ||
-    optimisticMessage.type !== realtimeMessage.type ||
-    optimisticMessage.content !== realtimeMessage.content
+    optimisticMessage.type !== realtimeMessage.type
   ) {
+    return false;
+  }
+
+  const optContent = optimisticMessage.content?.trim() || null;
+  const realContent = realtimeMessage.content?.trim() || null;
+  if (optContent !== realContent) {
     return false;
   }
 
@@ -144,11 +149,18 @@ function isMatchingOptimisticOutgoingMessage(
     return true;
   }
 
-  return (
-    optimisticMessage.mediaFilename === realtimeMessage.mediaFilename &&
-    optimisticMessage.mediaMimeType === realtimeMessage.mediaMimeType &&
-    optimisticMessage.mediaSize === realtimeMessage.mediaSize
-  );
+  const isSameSize = optimisticMessage.mediaSize === realtimeMessage.mediaSize;
+  const isSameMimeType =
+    optimisticMessage.mediaMimeType === realtimeMessage.mediaMimeType;
+
+  // The backend sets mediaFilename only for 'document' types.
+  // For other types (image, audio, video), the backend saves it as null,
+  // but the optimistic message might have it set to the local file name.
+  const isSameFilename =
+    optimisticMessage.type !== 'document' ||
+    optimisticMessage.mediaFilename === realtimeMessage.mediaFilename;
+
+  return isSameFilename && isSameMimeType && isSameSize;
 }
 
 function mergeRealtimeMessageIntoOptimisticMessage(
