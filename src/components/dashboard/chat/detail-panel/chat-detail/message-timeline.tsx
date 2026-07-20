@@ -9,12 +9,13 @@ import {
 } from '@/components/dashboard/chat/shared/unread-divider';
 import { useRealtime } from '@/components/realtime-provider';
 import { Badge } from '@/components/ui/badge';
-import { Bubble, BubbleContent } from '@/components/ui/bubble';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
-import type { MessageGroup } from '@/hooks/use-message';
+import type {
+  MediaDownloadUrlResponse,
+  MessageGroup,
+} from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
 import { ChevronDownIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -28,73 +29,15 @@ import {
   useState,
 } from 'react';
 
-const MESSAGE_BUBBLE_SKELETON_LINES = [
-  { first: 'w-44', second: 'w-60' },
-  { first: 'w-36', second: undefined },
-  { first: 'w-56', second: 'w-48' },
-  { first: 'w-40', second: 'w-52' },
-] as const;
-
-function MessageBubbleSkeleton({ index }: { index: number }) {
-  const isOutgoing = index % 2 === 1;
-  const lines =
-    MESSAGE_BUBBLE_SKELETON_LINES[index % MESSAGE_BUBBLE_SKELETON_LINES.length];
-
-  return (
-    <div
-      className={cn(
-        'flex min-w-0 w-full',
-        isOutgoing ? 'justify-end' : 'justify-start',
-      )}
-    >
-      <Bubble
-        align={isOutgoing ? 'end' : 'start'}
-        className="max-w-[85%]"
-        variant={isOutgoing ? 'tinted' : 'surface'}
-      >
-        <BubbleContent
-          className={cn(
-            'min-w-30 rounded-2xl border-border/40 px-3 py-2 shadow-sm',
-            isOutgoing ? 'rounded-tr-sm' : 'rounded-tl-sm border-transparent',
-          )}
-        >
-          <div className="flex max-w-full flex-col gap-1.5">
-            <Skeleton className={cn('h-3.5 rounded-full', lines.first)} />
-            {lines.second ? (
-              <Skeleton className={cn('h-3.5 rounded-full', lines.second)} />
-            ) : null}
-          </div>
-
-          <div
-            className={cn(
-              'mt-1.5 flex items-center justify-end gap-1',
-              isOutgoing ? 'text-brand/80' : 'text-muted-foreground/70',
-            )}
-          >
-            <Skeleton className="h-2.5 w-10 rounded-full" />
-            {isOutgoing ? <Skeleton className="size-3 rounded-full" /> : null}
-          </div>
-        </BubbleContent>
-      </Bubble>
-    </div>
-  );
-}
-
-export function MessageTimelineSkeleton({ count = 6 }: { count?: number }) {
-  const t = useTranslations('Chat.timeline');
-  return (
-    <div className="flex flex-col gap-4 px-2 py-3" aria-label={t('loading')}>
-      {Array.from({ length: count }).map((_, index) => (
-        <MessageBubbleSkeleton key={index} index={index} />
-      ))}
-    </div>
-  );
-}
-
 export function MessageTimeline({
   conversationId,
   wabaId,
   messages,
+  mediaDownloadUrls,
+  mediaDownloadUrlsError,
+  isMediaDownloadUrlsError,
+  areMediaDownloadUrlsStale,
+  onRefreshMediaDownloadUrls,
   isLoading,
   hasNextPage,
   isFetchingNextPage,
@@ -108,6 +51,13 @@ export function MessageTimeline({
   conversationId?: string;
   wabaId?: string;
   messages: MessageGroup[];
+  mediaDownloadUrls: Record<string, MediaDownloadUrlResponse>;
+  mediaDownloadUrlsError: unknown;
+  isMediaDownloadUrlsError: boolean;
+  areMediaDownloadUrlsStale: boolean;
+  onRefreshMediaDownloadUrls: () => Promise<
+    Record<string, MediaDownloadUrlResponse> | undefined
+  >;
   isLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
@@ -144,6 +94,7 @@ export function MessageTimeline({
   const [sessionUnreadBoundaryMessageId, setSessionUnreadBoundaryMessageId] =
     useState<string | null | undefined>(undefined);
   const flattenedMessages = messages.flatMap((group) => group.messages);
+
   const messageCount = flattenedMessages.length;
   const latestMessageId = flattenedMessages[messageCount - 1]?.id;
   const initialUnreadBoundaryMessageId = getUnreadBoundaryMessageId({
@@ -198,11 +149,18 @@ export function MessageTimeline({
 
   const requestOlderMessages = useCallback(() => {
     const viewport = getViewport();
+    const distanceFromBottom = viewport
+      ? viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight
+      : 0;
 
     if (
       !viewport ||
+      isLoading ||
+      !hasInitialScrollCompleted ||
       !hasNextPage ||
       isFetchingNextPage ||
+      viewport.scrollTop > 96 ||
+      distanceFromBottom <= 96 ||
       isLoadOlderRequestedRef.current
     ) {
       return;
@@ -216,13 +174,26 @@ export function MessageTimeline({
     shouldStickToBottomRef.current = false;
     setIsNearBottom(false);
     onLoadOlderAction();
-  }, [getViewport, hasNextPage, isFetchingNextPage, onLoadOlderAction]);
+  }, [
+    getViewport,
+    hasInitialScrollCompleted,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    onLoadOlderAction,
+  ]);
 
   useEffect(() => {
     const viewport = getViewport();
     const sentinel = loadOlderSentinelRef.current;
 
-    if (!viewport || !sentinel || !hasNextPage) {
+    if (
+      !viewport ||
+      !sentinel ||
+      isLoading ||
+      !hasInitialScrollCompleted ||
+      !hasNextPage
+    ) {
       return;
     }
 
@@ -240,7 +211,13 @@ export function MessageTimeline({
     return () => {
       observer.disconnect();
     };
-  }, [getViewport, hasNextPage, requestOlderMessages]);
+  }, [
+    getViewport,
+    hasInitialScrollCompleted,
+    hasNextPage,
+    isLoading,
+    requestOlderMessages,
+  ]);
 
   useLayoutEffect(() => {
     if (isFetchingNextPage) {
@@ -287,23 +264,34 @@ export function MessageTimeline({
     });
   }, [getViewport]);
 
-  const scrollToBottom = useCallback(() => {
-    const viewport = getViewport();
+  const scrollToBottom = useCallback(
+    (options?: { smooth?: boolean }) => {
+      const viewport = getViewport();
 
-    if (!viewport) {
-      return;
-    }
+      if (!viewport) {
+        return;
+      }
 
-    const applyScroll = () => {
-      viewport.scrollTop = viewport.scrollHeight;
-      shouldStickToBottomRef.current = true;
-      setIsNearBottom(true);
-      setHasInitialScrollCompleted(true);
-    };
+      const applyScroll = () => {
+        if (options?.smooth) {
+          viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+        } else {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+        shouldStickToBottomRef.current = true;
+        setIsNearBottom(true);
+        setHasInitialScrollCompleted(true);
+      };
 
-    applyScroll();
-    requestAnimationFrame(applyScroll);
-  }, [getViewport]);
+      if (options?.smooth) {
+        applyScroll();
+      } else {
+        applyScroll();
+        requestAnimationFrame(applyScroll);
+      }
+    },
+    [getViewport],
+  );
 
   useEffect(() => {
     const viewport = getViewport();
@@ -515,7 +503,7 @@ export function MessageTimeline({
   const handleScrollToBottom = useCallback(() => {
     setSessionUnreadBoundaryMessageId(null);
     onClearUnreadAction();
-    scrollToBottom();
+    scrollToBottom({ smooth: true });
   }, [onClearUnreadAction, scrollToBottom]);
 
   return (
@@ -525,18 +513,18 @@ export function MessageTimeline({
           ref={contentRef}
           className="flex min-h-full flex-col gap-4 px-2 pt-4"
         >
-          {hasNextPage ? (
+          {hasNextPage || isFetchingNextPage ? (
             <div
-              ref={loadOlderSentinelRef}
+              ref={hasNextPage ? loadOlderSentinelRef : undefined}
               className="flex h-10 items-center justify-center"
               aria-label={t('loading')}
               aria-live="polite"
             >
-              <Spinner className="text-muted-foreground" />
+              {isFetchingNextPage ? (
+                <Spinner className="text-muted-foreground" />
+              ) : null}
             </div>
           ) : null}
-
-          {isLoading ? <MessageTimelineSkeleton /> : null}
 
           {!isLoading && messages.length === 0 ? (
             <div className="flex flex-1 items-center justify-center px-6 py-12 text-sm text-muted-foreground">
@@ -589,7 +577,7 @@ export function MessageTimeline({
 
                       return (
                         <div
-                          key={message.id}
+                          key={message.optimisticId || message.id}
                           className={cn(
                             'flex flex-col',
                             isSameSenderAsNext ? 'mb-[6px]' : 'mb-[10px]',
@@ -614,6 +602,21 @@ export function MessageTimeline({
                             <MessageBubble
                               message={message}
                               wabaId={wabaId}
+                              mediaDownloadUrl={
+                                message.mediaObjectKey
+                                  ? mediaDownloadUrls[message.mediaObjectKey]
+                                  : undefined
+                              }
+                              mediaDownloadUrlsError={mediaDownloadUrlsError}
+                              isMediaDownloadUrlsError={
+                                isMediaDownloadUrlsError
+                              }
+                              areMediaDownloadUrlsStale={
+                                areMediaDownloadUrlsStale
+                              }
+                              onRefreshMediaDownloadUrls={
+                                onRefreshMediaDownloadUrls
+                              }
                               isFirstInGroup={isFirstInGroup}
                             />
                           </div>
@@ -634,16 +637,16 @@ export function MessageTimeline({
             animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, y: 0 }}
             exit={{ opacity: 0, filter: 'blur(4px)', scale: 0.9, y: 10 }}
             transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-            className="pointer-events-none absolute right-4 bottom-5 z-10 flex justify-end"
+            className="pointer-events-none absolute right-3 bottom-4 z-50 flex justify-end"
           >
             <Button
               type="button"
               size="icon"
               onClick={handleScrollToBottom}
-              className="pointer-events-auto relative size-12 rounded-full border border-brand/15 bg-background/95 text-foreground shadow-lg backdrop-blur-sm hover:bg-background"
+              className="pointer-events-auto relative size-12 rounded-full border border-brand/15 bg-background/95 text-foreground shadow-lg backdrop-blur hover:bg-background"
               aria-label="Scroll to bottom"
             >
-              <ChevronDownIcon className="size-5" />
+              <ChevronDownIcon className="size-6" />
               <AnimatePresence>
                 {unreadCount > 0 ? (
                   <motion.div

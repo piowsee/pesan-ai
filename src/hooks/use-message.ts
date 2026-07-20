@@ -19,8 +19,8 @@ import {
 export const messageKeys = {
   root: ['messages'] as const,
   all: (convId: string) => ['messages', convId] as const,
-  mediaDownloadUrl: (wabaId: string, convId: string, key: string) =>
-    ['messages', convId, 'media-download-url', wabaId, key] as const,
+  mediaDownloadUrls: (wabaId: string, convId: string, keys: string[]) =>
+    ['messages', convId, 'media-download-urls', wabaId, keys] as const,
 };
 
 const MEDIA_DOWNLOAD_URL_EXPIRES_IN_FALLBACK_MS = 30 * 60 * 1000;
@@ -52,15 +52,10 @@ interface MessagePageCache {
   limit: number;
 }
 
-interface MediaDownloadUrlResponse {
+export interface MediaDownloadUrlResponse {
+  key: string;
   downloadUrl: string;
   expiresIn: number;
-}
-
-interface MediaDownloadUrlParams {
-  wabaId: string;
-  convId: string;
-  key: string;
 }
 
 interface MediaUploadUrlResponse {
@@ -72,14 +67,13 @@ interface MediaUploadUrlResponse {
   expiresIn: number;
 }
 
-interface SendMediaMessageData {
-  wabaId: string;
-  convId: string;
-  file: File;
-  caption?: string;
-}
-
 type ChatMediaType = 'audio' | 'document' | 'image' | 'video';
+const downloadableMediaMessageTypes = new Set<string>([
+  'audio',
+  'document',
+  'image',
+  'video',
+]);
 
 // ─── API Functions ───────────────────────────────────────────────────
 
@@ -103,18 +97,29 @@ async function fetchMessages(
   return json.data;
 }
 
-async function fetchMediaDownloadUrl({
+async function fetchMediaUploadUrls({
   wabaId,
   convId,
-  key,
-}: MediaDownloadUrlParams): Promise<MediaDownloadUrlResponse> {
-  const searchParams = new URLSearchParams({ wabaId, convId, key });
-  const response = await fetch(`/api/media/download/url?${searchParams}`);
+  contentTypes,
+}: {
+  wabaId: string;
+  convId: string;
+  contentTypes: string[];
+}): Promise<MediaUploadUrlResponse[]> {
+  const response = await fetch('/api/media/upload/url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      wabaId,
+      convId,
+      files: contentTypes.map((contentType) => ({ contentType })),
+    }),
+  });
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(
-      extractJSendErrorMessage(body) ?? 'Failed to load media preview',
+      extractJSendErrorMessage(body) ?? 'Failed to prepare media upload',
     );
   }
 
@@ -122,22 +127,29 @@ async function fetchMediaDownloadUrl({
   return json.data;
 }
 
-async function fetchMediaUploadUrl({
+async function fetchMediaDownloadUrls({
   wabaId,
   convId,
-  contentType,
+  keys,
 }: {
   wabaId: string;
   convId: string;
-  contentType: string;
-}): Promise<MediaUploadUrlResponse> {
-  const searchParams = new URLSearchParams({ wabaId, convId, contentType });
-  const response = await fetch(`/api/media/upload/url?${searchParams}`);
+  keys: string[];
+}): Promise<MediaDownloadUrlResponse[]> {
+  const response = await fetch('/api/media/download/url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      wabaId,
+      convId,
+      keys,
+    }),
+  });
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(
-      extractJSendErrorMessage(body) ?? 'Failed to prepare media upload',
+      extractJSendErrorMessage(body) ?? 'Failed to prepare media downloads',
     );
   }
 
@@ -173,15 +185,25 @@ async function uploadFileToObjectStorage({
   }
 }
 
-async function confirmUploadedMediaMessage({
-  caption,
-  convId,
-  file,
-  key,
+async function confirmUploadedMediaMessages({
   wabaId,
-}: SendMediaMessageData & { key: string }) {
-  const mimeType = getNormalizedMimeType(file);
-  const mediaType = getMediaTypeFromMimeType(mimeType);
+  convId,
+  files,
+}: {
+  wabaId: string;
+  convId: string;
+  files: Array<{ key: string; file: File; caption?: string }>;
+}) {
+  const payloadFiles = files.map(({ key, caption, file }) => {
+    const mimeType = getNormalizedMimeType(file);
+    const mediaType = getMediaTypeFromMimeType(mimeType);
+
+    return {
+      key,
+      caption,
+      ...(mediaType === 'document' ? { filename: file.name } : {}),
+    };
+  });
 
   const response = await fetch('/api/media/upload/confirm', {
     method: 'POST',
@@ -191,9 +213,7 @@ async function confirmUploadedMediaMessage({
     body: JSON.stringify({
       wabaId,
       convId,
-      key,
-      caption,
-      ...(mediaType === 'document' ? { filename: file.name } : {}),
+      files: payloadFiles,
     }),
   });
 
@@ -205,22 +225,46 @@ async function confirmUploadedMediaMessage({
   }
 
   const json = await response.json();
-  return json.data as {
+  return json.data as Array<{
     message: ChatMessage;
     conversation: RawConversation;
-  };
+  }>;
 }
 
-async function uploadAndConfirmMediaMessage(data: SendMediaMessageData) {
-  const uploadUrl = await fetchMediaUploadUrl({
+interface SendMediaMessageBatchData {
+  wabaId: string;
+  convId: string;
+  files: Array<{ file: File; caption?: string }>;
+}
+
+async function uploadAndConfirmMediaMessages(data: SendMediaMessageBatchData) {
+  const contentTypes = data.files.map(({ file }) =>
+    getNormalizedMimeType(file),
+  );
+
+  const uploadUrls = await fetchMediaUploadUrls({
     wabaId: data.wabaId,
     convId: data.convId,
-    contentType: getNormalizedMimeType(data.file),
+    contentTypes,
   });
 
-  await uploadFileToObjectStorage({ file: data.file, uploadUrl });
+  await Promise.all(
+    data.files.map((item, index) =>
+      uploadFileToObjectStorage({
+        file: item.file,
+        uploadUrl: uploadUrls[index]!,
+      }),
+    ),
+  );
 
-  return confirmUploadedMediaMessage({ ...data, key: uploadUrl.key });
+  return confirmUploadedMediaMessages({
+    wabaId: data.wabaId,
+    convId: data.convId,
+    files: data.files.map((item, index) => ({
+      ...item,
+      key: uploadUrls[index]!.key,
+    })),
+  });
 }
 
 // ─── Grouping Helper ───────────────────────────────────────────────
@@ -266,6 +310,8 @@ function getCachedMessages({
   );
 }
 
+const optimisticTimestampCounters: Record<string, number> = {};
+
 function getOptimisticTimelineTimestamp({
   convId,
   queryClient,
@@ -283,11 +329,17 @@ function getOptimisticTimelineTimestamp({
     0,
   );
 
-  if (latestMessageTime > 0) {
-    return new Date(latestMessageTime + 1).toISOString();
+  let nextTime = latestMessageTime > 0 ? latestMessageTime + 1 : Date.now();
+
+  if (
+    optimisticTimestampCounters[convId] &&
+    nextTime <= optimisticTimestampCounters[convId]
+  ) {
+    nextTime = optimisticTimestampCounters[convId] + 1;
   }
 
-  return new Date().toISOString();
+  optimisticTimestampCounters[convId] = nextTime;
+  return new Date(nextTime).toISOString();
 }
 
 function updateConversationListCache({
@@ -476,27 +528,86 @@ function replaceOptimisticMessageWithConfirmedMessage({
         pages: old.pages.map((page, index) => {
           if (index !== 0) return page;
 
-          const removedOptimisticMessage = optimisticId
-            ? page.messages.some((message) => message.id === optimisticId)
+          const hasOptimistic = optimisticId
+            ? page.messages.some((msg) => msg.id === optimisticId)
             : false;
-          const filteredMessages = optimisticId
-            ? page.messages.filter((message) => message.id !== optimisticId)
-            : page.messages;
-          const alreadyHasConfirmedMessage = filteredMessages.some(
-            (message) => message.id === confirmedMessage.id,
+          const hasSSEDuplicate = page.messages.some(
+            (msg) => msg.id === confirmedMessage.id,
           );
 
-          if (alreadyHasConfirmedMessage) {
+          if (hasOptimistic && hasSSEDuplicate) {
+            // SSE arrived before the API response.
+            // The SSE duplicate may have already received status updates
+            // (sent → delivered → read), so we must preserve its most
+            // advanced status instead of regressing to the API response status.
+            const sseDuplicate = page.messages.find(
+              (msg) => msg.id === confirmedMessage.id,
+            );
+            const mergedMessage: ChatMessage = {
+              ...confirmedMessage,
+              status: sseDuplicate?.status ?? confirmedMessage.status,
+              errorMessage:
+                sseDuplicate?.errorMessage ?? confirmedMessage.errorMessage,
+            };
+
+            // Replace the optimistic entry IN-PLACE (preserving position & React key),
+            // then remove the SSE-inserted duplicate.
             return {
               ...page,
-              messages: filteredMessages,
-              total: removedOptimisticMessage ? page.total - 1 : page.total,
+              messages: page.messages
+                .map((msg) => (msg.id === optimisticId ? mergedMessage : msg))
+                .filter((msg) =>
+                  msg.id === confirmedMessage.id &&
+                  msg.optimisticId !== confirmedMessage.optimisticId
+                    ? false
+                    : true,
+                ),
+              total: page.total - 1,
             };
           }
 
+          if (hasOptimistic) {
+            // API responded before SSE. Replace optimistic in-place.
+            return {
+              ...page,
+              messages: page.messages.map((msg) =>
+                msg.id === optimisticId ? confirmedMessage : msg,
+              ),
+            };
+          }
+
+          if (hasSSEDuplicate) {
+            // No optimistic to replace (edge case), just merge into existing.
+            return {
+              ...page,
+              messages: page.messages.map((msg) =>
+                msg.id === confirmedMessage.id
+                  ? {
+                      ...msg,
+                      ...confirmedMessage,
+                      optimisticId:
+                        msg.optimisticId ?? confirmedMessage.optimisticId,
+                      localMediaUrl:
+                        msg.localMediaUrl ?? confirmedMessage.localMediaUrl,
+                      status: msg.status,
+                      errorMessage:
+                        msg.errorMessage ?? confirmedMessage.errorMessage,
+                      timestamp: msg.optimisticId
+                        ? msg.timestamp
+                        : confirmedMessage.timestamp,
+                      createdAt: msg.optimisticId
+                        ? msg.createdAt
+                        : confirmedMessage.createdAt,
+                    }
+                  : msg,
+              ),
+            };
+          }
+
+          // Neither exists, just prepend.
           return {
             ...page,
-            messages: [confirmedMessage, ...filteredMessages],
+            messages: [confirmedMessage, ...page.messages],
           };
         }),
       };
@@ -577,6 +688,28 @@ export function groupMessagesByDate(messages: ChatMessage[]): MessageGroup[] {
   return groups;
 }
 
+export function getMediaObjectKeysFromMessageGroups(
+  groups: MessageGroup[],
+): string[] {
+  const keys = new Set<string>();
+
+  for (const group of groups) {
+    for (const message of group.messages) {
+      if (
+        message.localMediaUrl ||
+        !message.mediaObjectKey ||
+        !downloadableMediaMessageTypes.has(message.type)
+      ) {
+        continue;
+      }
+
+      keys.add(message.mediaObjectKey);
+    }
+  }
+
+  return Array.from(keys).sort();
+}
+
 // ─── Hook ────────────────────────────────────────────────────────────
 
 /**
@@ -615,33 +748,72 @@ export function useMessages(
   });
 }
 
-export function useMessageMediaDownloadUrl({
+export function useMessageMediaDownloadUrls({
   wabaId,
   convId,
-  key,
+  keys,
   enabled = true,
 }: {
   wabaId?: string;
   convId?: string;
-  key?: string | null;
+  keys: string[];
   enabled?: boolean;
 }) {
+  const queryClient = useQueryClient();
+
   return useQuery({
-    queryKey: messageKeys.mediaDownloadUrl(
-      wabaId ?? '',
-      convId ?? '',
-      key ?? '',
-    ),
-    queryFn: () =>
-      fetchMediaDownloadUrl({
-        wabaId: wabaId!,
-        convId: convId!,
-        key: key!,
-      }),
-    enabled: enabled && Boolean(wabaId && convId && key),
+    queryKey: messageKeys.mediaDownloadUrls(wabaId ?? '', convId ?? '', keys),
+    queryFn: async () => {
+      const cacheKey = ['media-download-urls-cache', wabaId, convId];
+      const cached =
+        queryClient.getQueryData<
+          Record<string, MediaDownloadUrlResponse & { _expiresAt: number }>
+        >(cacheKey) || {};
+
+      const now = Date.now();
+      const keysToFetch = keys.filter((key) => {
+        const item = cached[key];
+        return !item || now >= item._expiresAt;
+      });
+
+      const newData = { ...cached };
+
+      if (keysToFetch.length > 0) {
+        const res = await fetchMediaDownloadUrls({
+          wabaId: wabaId!,
+          convId: convId!,
+          keys: keysToFetch,
+        });
+
+        res.forEach((item) => {
+          newData[item.key] = {
+            ...item,
+            _expiresAt:
+              now +
+              item.expiresIn * 1000 -
+              MEDIA_DOWNLOAD_URL_REFRESH_BUFFER_MS,
+          };
+        });
+
+        queryClient.setQueryData(cacheKey, newData);
+      }
+
+      return keys.map((key) => newData[key]!).filter(Boolean);
+    },
+    enabled: enabled && Boolean(wabaId && convId && keys.length > 0),
+    select: (data) =>
+      data.reduce<Record<string, MediaDownloadUrlResponse>>((result, item) => {
+        result[item.key] = item;
+        return result;
+      }, {}),
     staleTime: (query) => {
-      const data = query.state.data as MediaDownloadUrlResponse | undefined;
-      return getMediaDownloadUrlStaleTime(data?.expiresIn);
+      const data = query.state.data as
+        | Record<string, MediaDownloadUrlResponse>
+        | undefined;
+      const shortestExpiresIn = data
+        ? Math.min(...Object.values(data).map((item) => item.expiresIn))
+        : undefined;
+      return getMediaDownloadUrlStaleTime(shortestExpiresIn);
     },
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -649,6 +821,29 @@ export function useMessageMediaDownloadUrl({
 }
 
 // ─── Mutation Hook ──────────────────────────────────────────────────
+
+const conversationQueues: Record<string, Promise<unknown>> = {};
+
+function enqueueConversationTask<T>(
+  convId: string,
+  task: () => Promise<T>,
+): Promise<T> {
+  const previousQueue = conversationQueues[convId] ?? Promise.resolve();
+
+  return new Promise<T>((resolve, reject) => {
+    const nextQueue = previousQueue.then(async () => {
+      try {
+        const result = await task();
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    // Catch errors so the queue doesn't stick in a rejected state for future tasks
+    conversationQueues[convId] = nextQueue.catch(() => {});
+  });
+}
 
 interface SendMessageData {
   wabaId: string;
@@ -666,34 +861,36 @@ export function useSendMessage() {
 
   return useMutation({
     mutationFn: async ({ wabaId, convId, content }: SendMessageData) => {
-      const response = await fetch(
-        `/api/waba/${wabaId}/conversation/${convId}/message`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+      return enqueueConversationTask(convId, async () => {
+        const response = await fetch(
+          `/api/waba/${wabaId}/conversation/${convId}/message`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: content }),
           },
-          body: JSON.stringify({ message: content }),
-        },
-      );
+        );
 
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        const message = body?.data?.message ?? 'Failed to send message';
-        throw new Error(message);
-      }
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          const message = body?.data?.message ?? 'Failed to send message';
+          throw new Error(message);
+        }
 
-      const json = await response.json();
-      return json.data as {
-        message: ChatMessage;
-        conversation: RawConversation;
-      };
+        const json = await response.json();
+        return json.data as {
+          message: ChatMessage;
+          conversation: RawConversation;
+        };
+      });
     },
     onMutate: async ({ convId, content }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
 
-      const optimisticId = `optimistic-${Date.now()}`;
+      const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const timelineTimestamp = getOptimisticTimelineTimestamp({
         convId,
         queryClient,
@@ -723,7 +920,7 @@ export function useSendMessage() {
         queryClient,
       });
 
-      return { optimisticId };
+      return { optimisticId, timelineTimestamp };
     },
     onError: (err, { convId }, context) => {
       // Show error toast
@@ -737,6 +934,14 @@ export function useSendMessage() {
       });
     },
     onSuccess: ({ message, conversation }, { wabaId, convId }, context) => {
+      if (context?.optimisticId) {
+        message.optimisticId = context.optimisticId;
+      }
+      if (context?.timelineTimestamp) {
+        message.timestamp = context.timelineTimestamp;
+        message.createdAt = context.timelineTimestamp;
+      }
+
       updateCachesWithConfirmedMessage({
         conversation,
         convId,
@@ -753,68 +958,99 @@ export function useSendMediaMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: uploadAndConfirmMediaMessage,
-    onMutate: async ({ caption, convId, file }) => {
-      await queryClient.cancelQueries({ queryKey: messageKeys.all(convId) });
-
-      const optimisticId = `optimistic-media-${Date.now()}`;
-      const localMediaUrl = URL.createObjectURL(file);
-      const timelineTimestamp = getOptimisticTimelineTimestamp({
-        convId,
-        queryClient,
-      });
-      const mimeType = getNormalizedMimeType(file);
-      const optimisticMessage: ChatMessage = {
-        id: optimisticId,
-        messageId: null,
-        conversationId: convId,
-        direction: 'outgoing',
-        source: 'admin',
-        type: getMediaTypeFromMimeType(mimeType),
-        content: caption?.trim() || null,
-        mediaObjectKey: null,
-        mediaMimeType: mimeType,
-        mediaFilename: file.name,
-        mediaSize: file.size,
-        status: 'sending',
-        errorMessage: null,
-        localMediaUrl,
-        timestamp: timelineTimestamp,
-        createdAt: timelineTimestamp,
-      };
-
-      insertOptimisticMessage({
-        convId,
-        message: optimisticMessage,
-        queryClient,
-      });
-
-      return { localMediaUrl, optimisticId };
+    mutationFn: async (data: SendMediaMessageBatchData) => {
+      return enqueueConversationTask(data.convId, () =>
+        uploadAndConfirmMediaMessages(data),
+      );
     },
-    onError: (err, { convId }, context) => {
+    onMutate: async (variables: SendMediaMessageBatchData) => {
+      await queryClient.cancelQueries({
+        queryKey: messageKeys.all(variables.convId),
+      });
+
+      const optimisticUpdates = variables.files.map((item, index) => {
+        const optimisticId = `optimistic-media-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 8)}`;
+        const localMediaUrl = URL.createObjectURL(item.file);
+        const mimeType = getNormalizedMimeType(item.file);
+
+        let timelineTimestamp = getOptimisticTimelineTimestamp({
+          convId: variables.convId,
+          queryClient,
+        });
+
+        // Add tiny ms offsets to prevent unique keys crashing each other if inserted same millisecond
+        if (index > 0) {
+          timelineTimestamp = new Date(
+            new Date(timelineTimestamp).getTime() + index,
+          ).toISOString();
+        }
+
+        const mediaType = getMediaTypeFromMimeType(mimeType);
+
+        const optimisticMessage: ChatMessage = {
+          id: optimisticId,
+          messageId: null,
+          conversationId: variables.convId,
+          direction: 'outgoing',
+          source: 'admin',
+          type: mediaType,
+          content: item.caption?.trim() || null,
+          mediaObjectKey: null,
+          mediaMimeType: mimeType,
+          mediaFilename: mediaType === 'document' ? item.file.name : null,
+          mediaSize: item.file.size,
+          status: 'sending',
+          errorMessage: null,
+          localMediaUrl,
+          timestamp: timelineTimestamp,
+          createdAt: timelineTimestamp,
+        };
+
+        insertOptimisticMessage({
+          convId: variables.convId,
+          message: optimisticMessage,
+          queryClient,
+        });
+
+        return { localMediaUrl, optimisticId, timelineTimestamp };
+      });
+
+      return { optimisticUpdates };
+    },
+    onError: (err, variables, context) => {
       toast.error(err.message || 'Failed to send media');
 
-      markOptimisticMessageAsFailed({
-        convId,
-        errorMessage: err.message,
-        optimisticId: context?.optimisticId,
-        queryClient,
+      context?.optimisticUpdates.forEach((update) => {
+        markOptimisticMessageAsFailed({
+          convId: variables.convId,
+          errorMessage: err.message,
+          optimisticId: update.optimisticId,
+          queryClient,
+        });
       });
     },
-    onSuccess: ({ conversation, message }, { convId, wabaId }, context) => {
-      if (context?.localMediaUrl) {
-        // Keep the local media URL around in the confirmed message to prevent a
-        // visual flicker while the S3 download URL is being fetched in the background.
-        message.localMediaUrl = context.localMediaUrl;
-      }
+    onSuccess: (results, variables, context) => {
+      results.forEach((result, index) => {
+        const updateContext = context?.optimisticUpdates[index];
+        if (updateContext?.localMediaUrl) {
+          result.message.localMediaUrl = updateContext.localMediaUrl;
+        }
+        if (updateContext?.optimisticId) {
+          result.message.optimisticId = updateContext.optimisticId;
+        }
+        if (updateContext?.timelineTimestamp) {
+          result.message.timestamp = updateContext.timelineTimestamp;
+          result.message.createdAt = updateContext.timelineTimestamp;
+        }
 
-      updateCachesWithConfirmedMessage({
-        conversation,
-        convId,
-        message,
-        optimisticId: context?.optimisticId,
-        queryClient,
-        wabaId,
+        updateCachesWithConfirmedMessage({
+          conversation: result.conversation,
+          convId: variables.convId,
+          message: result.message,
+          optimisticId: updateContext?.optimisticId,
+          queryClient,
+          wabaId: variables.wabaId,
+        });
       });
     },
   });

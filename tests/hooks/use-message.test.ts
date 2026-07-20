@@ -1,4 +1,7 @@
-import { groupMessagesByDate } from '@/hooks/use-message';
+import {
+  getMediaObjectKeysFromMessageGroups,
+  groupMessagesByDate,
+} from '@/hooks/use-message';
 import type { ChatMessage } from '@/types/chat';
 import { describe, expect, it } from 'vitest';
 
@@ -51,6 +54,47 @@ describe('groupMessagesByDate', () => {
       'incoming-unread-1',
       'incoming-unread-2',
       'optimistic-outgoing',
+    ]);
+  });
+});
+
+describe('getMediaObjectKeysFromMessageGroups', () => {
+  it('deduplicates persisted media keys and skips local optimistic media', () => {
+    const groups = groupMessagesByDate([
+      createMessage({
+        id: 'text-message',
+        type: 'text',
+      }),
+      createMessage({
+        id: 'image-message',
+        type: 'image',
+        mediaMimeType: 'image/png',
+        mediaObjectKey: 'user-1/waba-1/conv-1/image',
+      }),
+      createMessage({
+        id: 'duplicate-image-message',
+        type: 'image',
+        mediaMimeType: 'image/png',
+        mediaObjectKey: 'user-1/waba-1/conv-1/image',
+      }),
+      createMessage({
+        id: 'document-message',
+        type: 'document',
+        mediaMimeType: 'application/pdf',
+        mediaObjectKey: 'user-1/waba-1/conv-1/document',
+      }),
+      createMessage({
+        id: 'optimistic-media',
+        type: 'image',
+        mediaMimeType: 'image/png',
+        mediaObjectKey: 'user-1/waba-1/conv-1/local',
+        localMediaUrl: 'blob:http://localhost/local',
+      }),
+    ]);
+
+    expect(getMediaObjectKeysFromMessageGroups(groups)).toEqual([
+      'user-1/waba-1/conv-1/document',
+      'user-1/waba-1/conv-1/image',
     ]);
   });
 });

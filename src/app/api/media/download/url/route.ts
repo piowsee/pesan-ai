@@ -4,27 +4,21 @@ import { CreateS3DownloadUrlSchema } from '@/schemas/s3-upload.schema';
 import { S3Service } from '@/services/s3.service';
 
 /**
- * @route GET /api/media/download/url
- * @query wabaId {string} internal WABA id
- * @query convId {string} conversation id
- * @query key {string} object storage media key
- * @response { status: 'success', data: { downloadUrl, expiresIn } }
+ * @route POST /api/media/download/url
+ * @body { wabaId: string, convId: string, keys: string[] }
+ * @response { status: 'success', data: [{ key, downloadUrl, expiresIn }] }
  * @access Authenticated users
- * @description Creates a presigned GET URL for a stored chat media object.
+ * @description Creates presigned GET urls for stored chat media objects in bulk.
  */
-export const GET = withApiAuth(async ({ req, user }) => {
-  const { searchParams } = new URL(req.url);
-  const validated = CreateS3DownloadUrlSchema.parse({
-    wabaId: searchParams.get('wabaId'),
-    convId: searchParams.get('convId'),
-    key: searchParams.get('key'),
-  });
+export const POST = withApiAuth(async ({ req, user }) => {
+  const rawBody = await req.json();
+  const validated = CreateS3DownloadUrlSchema.parse(rawBody);
 
-  const result = await S3Service.createPresignedDownloadUrl({
+  const result = await S3Service.createPresignedDownloadUrls({
     userId: user.id,
     wabaId: validated.wabaId,
     convId: validated.convId,
-    key: validated.key,
+    keys: validated.keys,
   });
 
   return jsend.success(result);

@@ -243,7 +243,7 @@ describe('MessageService', { tags: ['backend'] }, () => {
     });
   });
 
-  describe('confirmUploadedMediaMessage', () => {
+  describe('confirmUploadedMediaMessages', () => {
     it('verifies object storage, saves a media message, and emits realtime update', async () => {
       vi.mocked(
         ConversationRepository.getConversationMetaForSending,
@@ -264,10 +264,13 @@ describe('MessageService', { tags: ['backend'] }, () => {
         mediaMimeType: 'image/png',
         mediaSize: 123,
       });
-      vi.mocked(S3Service.createPresignedDownloadUrl).mockResolvedValue({
-        downloadUrl: 'https://space.example/download?signature=abc',
-        expiresIn: 1800,
-      });
+      vi.mocked(S3Service.createPresignedDownloadUrls).mockResolvedValue([
+        {
+          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          downloadUrl: 'https://space.example/download?signature=abc',
+          expiresIn: 1800,
+        },
+      ]);
       vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
         status: 'sent',
         messageId: 'wa-media-msg-1',
@@ -286,13 +289,17 @@ describe('MessageService', { tags: ['backend'] }, () => {
         timestamp: new Date('2026-06-30T07:00:00.000Z'),
       } as never);
 
-      const result = await MessageService.confirmUploadedMediaMessage({
+      const result = await MessageService.confirmUploadedMediaMessages({
         convId: 'conv-1',
         wabaId: 'waba-1',
         userId: 'user-1',
-        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
-        caption: 'caption',
-        filename: 'receipt.png',
+        files: [
+          {
+            key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+            caption: 'caption',
+            filename: 'receipt.png',
+          },
+        ],
       });
 
       expect(S3Service.verifyUploadedMedia).toHaveBeenCalledWith({
@@ -301,11 +308,11 @@ describe('MessageService', { tags: ['backend'] }, () => {
         convId: 'conv-1',
         key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
       });
-      expect(S3Service.createPresignedDownloadUrl).toHaveBeenCalledWith({
+      expect(S3Service.createPresignedDownloadUrls).toHaveBeenCalledWith({
         userId: 'user-1',
         wabaId: 'waba-1',
         convId: 'conv-1',
-        key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+        keys: ['user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000'],
       });
       expect(MetaFetchService.sendMessage).toHaveBeenCalledWith({
         phoneNumberId: 'pn-1',
@@ -340,8 +347,8 @@ describe('MessageService', { tags: ['backend'] }, () => {
         conversationId: 'conv-1',
         adminTakeover: true,
       });
-      expect(result.message.mediaSize).toBe(123);
-      expect(result.conversation.phoneNumber.waba).not.toHaveProperty(
+      expect(result[0]?.message.mediaSize).toBe(123);
+      expect(result[0]?.conversation.phoneNumber.waba).not.toHaveProperty(
         'systemUserToken',
       );
       expect(eventBus.emit).toHaveBeenCalledWith(
@@ -386,11 +393,15 @@ describe('MessageService', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        MessageService.confirmUploadedMediaMessage({
+        MessageService.confirmUploadedMediaMessages({
           convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
-          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          files: [
+            {
+              key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+            },
+          ],
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -418,11 +429,15 @@ describe('MessageService', { tags: ['backend'] }, () => {
       } as never);
 
       await expect(
-        MessageService.confirmUploadedMediaMessage({
+        MessageService.confirmUploadedMediaMessages({
           convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
-          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          files: [
+            {
+              key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+            },
+          ],
         }),
       ).rejects.toMatchObject({
         status: 409,
@@ -441,11 +456,15 @@ describe('MessageService', { tags: ['backend'] }, () => {
       ).mockResolvedValue(null);
 
       await expect(
-        MessageService.confirmUploadedMediaMessage({
+        MessageService.confirmUploadedMediaMessages({
           convId: 'conv-1',
           wabaId: 'waba-1',
           userId: 'user-1',
-          key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+          files: [
+            {
+              key: 'user-1/waba-1/conv-1/550e8400-e29b-41d4-a716-446655440000',
+            },
+          ],
         }),
       ).rejects.toThrow(ApiError);
 

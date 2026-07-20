@@ -1,9 +1,6 @@
 import { ChatHeader } from '@/components/dashboard/chat/detail-panel/chat-detail/chat-header';
 import { MessageComposer } from '@/components/dashboard/chat/detail-panel/chat-detail/message-composer';
-import {
-  MessageTimeline,
-  MessageTimelineSkeleton,
-} from '@/components/dashboard/chat/detail-panel/chat-detail/message-timeline';
+import { MessageTimeline } from '@/components/dashboard/chat/detail-panel/chat-detail/message-timeline';
 import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
 import {
   AlertDialog,
@@ -17,30 +14,99 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { MessageGroup } from '@/hooks/use-message';
+import { Spinner } from '@/components/ui/spinner';
+import type {
+  MediaDownloadUrlResponse,
+  MessageGroup,
+} from '@/hooks/use-message';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
 import {
   LoaderCircleIcon,
   MessageSquareIcon,
+  PlusIcon,
+  SendHorizontalIcon,
   UserRoundCheckIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { type MouseEvent, useState } from 'react';
 import { TbArrowLoopLeft } from 'react-icons/tb';
 
-function MessageHistorySkeleton() {
+const composerFocusExclusionSelector = [
+  'a[href]',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  '[contenteditable="true"]',
+  '[role="button"]',
+  '[role="combobox"]',
+  '[role="link"]',
+  '[role="menuitem"]',
+  '[role="textbox"]',
+  '[data-composer-focus-exempt]',
+].join(',');
+
+function shouldFocusComposerFromChatArea(target: EventTarget | null) {
+  if (!(target instanceof Element)) {
+    return true;
+  }
+
+  return !target.closest(composerFocusExclusionSelector);
+}
+
+function MessageLoadingIndicator() {
+  const t = useTranslations('Chat.timeline');
+
   return (
-    <div className="h-full w-full px-2 py-4 lg:px-4">
-      <MessageTimelineSkeleton count={7} />
+    <div
+      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-3 flex -translate-x-1/2 items-center justify-center"
+      aria-label={t('loading')}
+      aria-live="polite"
+    >
+      <Spinner className="size-6 text-brand" />
     </div>
   );
 }
 
-function ChatDetailSkeleton() {
+function MessageComposerPlaceholder() {
+  const t = useTranslations('Chat.composer');
+
   return (
-    <div className="flex h-full w-full flex-col bg-background/50">
-      <div className="bg-background px-6 py-4">
+    <div className="relative flex items-end bg-transparent px-4 pt-0 pb-3">
+      <div className="flex min-h-14 max-h-36 flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-background px-2 py-2 opacity-75 shadow-sm">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          disabled
+          className="size-10 shrink-0 rounded-full text-muted-foreground"
+        >
+          <PlusIcon />
+          <span className="sr-only">{t('attach')}</span>
+        </Button>
+        <div className="flex min-h-10 flex-1 items-center py-2.5 text-[15px] leading-tight text-muted-foreground/70">
+          {t('placeholder')}
+        </div>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          disabled
+          className="size-10 shrink-0 rounded-full text-muted-foreground/40"
+        >
+          <SendHorizontalIcon className="size-5" />
+          <span className="sr-only">{t('send')}</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ChatDetailLoadingShell() {
+  return (
+    <div className="flex h-full w-full flex-col bg-background">
+      <div className="flex h-18 w-full shrink-0 items-center border-b border-border/60 bg-background px-4">
         <div className="flex items-center gap-4">
           <Skeleton className="size-11 shrink-0 rounded-full" />
           <div className="flex flex-col gap-2">
@@ -49,11 +115,10 @@ function ChatDetailSkeleton() {
           </div>
         </div>
       </div>
-      <div className="min-h-0 flex-1">
-        <MessageHistorySkeleton />
-      </div>
-      <div className="border-t bg-background px-6 py-4">
-        <Skeleton className="h-16 rounded-[18px]" />
+      <div className="min-h-0 flex-1" />
+      <div className="relative z-10 flex shrink-0 flex-col bg-background">
+        <MessageLoadingIndicator />
+        <MessageComposerPlaceholder />
       </div>
     </div>
   );
@@ -63,7 +128,13 @@ export function ChatDetail({
   conversation,
   wabaId,
   messages,
-  isLoading,
+  mediaDownloadUrls,
+  mediaDownloadUrlsError,
+  isMediaDownloadUrlsError,
+  areMediaDownloadUrlsStale,
+  onRefreshMediaDownloadUrls,
+  isConversationLoading,
+  isMessagesLoading,
   hasNextPage,
   isFetchingNextPage,
   onLoadOlder,
@@ -84,7 +155,15 @@ export function ChatDetail({
   conversation?: ChatConversation;
   wabaId?: string;
   messages: MessageGroup[];
-  isLoading: boolean;
+  mediaDownloadUrls: Record<string, MediaDownloadUrlResponse>;
+  mediaDownloadUrlsError: unknown;
+  isMediaDownloadUrlsError: boolean;
+  areMediaDownloadUrlsStale: boolean;
+  onRefreshMediaDownloadUrls: () => Promise<
+    Record<string, MediaDownloadUrlResponse> | undefined
+  >;
+  isConversationLoading: boolean;
+  isMessagesLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
@@ -94,7 +173,9 @@ export function ChatDetail({
   onClearUnread: () => void;
   onUnreadMessagesViewed: (viewedCount: number) => void;
   onSend: (content: string) => void;
-  onSendMedia: (input: { file: File; caption?: string }) => void;
+  onSendMedia: (input: {
+    files: Array<{ file: File; caption?: string }>;
+  }) => void;
   showBackButton: boolean;
   onBack?: () => void;
   onContactAreaClick?: () => void;
@@ -108,9 +189,10 @@ export function ChatDetail({
   const t = useTranslations('Chat.detail');
   const [isTakeoverDialogOpen, setIsTakeoverDialogOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
+  const [composerFocusRequest, setComposerFocusRequest] = useState(0);
 
-  if (isLoading && !conversation) {
-    return <ChatDetailSkeleton />;
+  if (isConversationLoading && !conversation) {
+    return <ChatDetailLoadingShell />;
   }
 
   if (!conversation) {
@@ -125,6 +207,25 @@ export function ChatDetail({
   }
 
   const isPending = pendingTakeoverConversationId === conversation.id;
+  const hasMessages = messages.some((group) => group.messages.length > 0);
+  const shouldShowInitialSpinner = isMessagesLoading && !hasMessages;
+  const requestComposerFocusFromChatArea = (
+    event: MouseEvent<HTMLDivElement>,
+  ) => {
+    if (
+      event.button !== 0 ||
+      event.defaultPrevented ||
+      !conversation.adminTakeover ||
+      !conversation.canSendFreeform ||
+      isTakeoverDialogOpen ||
+      isReturnDialogOpen ||
+      !shouldFocusComposerFromChatArea(event.target)
+    ) {
+      return;
+    }
+
+    setComposerFocusRequest((value) => value + 1);
+  };
 
   return (
     <section className="relative flex h-full w-full flex-col bg-background">
@@ -140,6 +241,7 @@ export function ChatDetail({
 
       <div
         className="flex-1 w-full min-h-0 relative bg-cover bg-center"
+        onMouseDownCapture={requestComposerFocusFromChatArea}
         style={{ backgroundImage: 'var(--chat-bg, none)' }}
       >
         <div className="absolute inset-0">
@@ -148,7 +250,12 @@ export function ChatDetail({
             conversationId={conversation.id}
             wabaId={wabaId}
             messages={messages}
-            isLoading={isLoading}
+            mediaDownloadUrls={mediaDownloadUrls}
+            mediaDownloadUrlsError={mediaDownloadUrlsError}
+            isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+            areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+            onRefreshMediaDownloadUrls={onRefreshMediaDownloadUrls}
+            isLoading={shouldShowInitialSpinner}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             onLoadOlderAction={onLoadOlder}
@@ -161,7 +268,8 @@ export function ChatDetail({
         </div>
       </div>
 
-      <div className="z-10 flex shrink-0 flex-col bg-background">
+      <div className="relative z-10 flex shrink-0 flex-col bg-background">
+        {shouldShowInitialSpinner ? <MessageLoadingIndicator /> : null}
         {conversation.adminTakeover ? (
           <>
             {/* Banner: Return to AI Agent */}
@@ -256,6 +364,7 @@ export function ChatDetail({
             <MessageComposer
               key={conversation.id}
               conversation={conversation}
+              focusRequest={composerFocusRequest}
               onSendAction={onSend}
               onSendMediaAction={onSendMedia}
             />

@@ -67,18 +67,12 @@ function assertFreeformWindowOpen(lastCustomerMessageAt?: Date | null) {
   );
 }
 export const S3Service = {
-  async createPresignedUploadUrl(params: {
+  async createPresignedUploadUrls(params: {
     userId: string;
     wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     convId: string; // Internal DB Conversation.id.
-    contentType: string;
+    files: Array<{ contentType: string }>;
   }) {
-    const uploadConfig = getSupportedUploadConfig(params.contentType);
-
-    if (!uploadConfig) {
-      throw new ApiError('Unsupported upload content type', 400);
-    }
-
     const conversationMeta =
       await ConversationRepository.getConversationMetaForSending({
         convId: params.convId,
@@ -93,36 +87,46 @@ export const S3Service = {
     assertWabaActive(conversationMeta.phoneNumber.waba);
     assertFreeformWindowOpen(conversationMeta.lastCustomerMessageAt);
 
-    const objectKey = createObjectKey(params);
+    return Promise.all(
+      params.files.map(async (file) => {
+        const uploadConfig = getSupportedUploadConfig(file.contentType);
 
-    const { url, fields } = await createPresignedPost(s3Client, {
-      Bucket: s3BucketName,
-      Key: objectKey,
-      Fields: {
-        'Content-Type': params.contentType,
-      },
-      Conditions: [
-        ['eq', '$Content-Type', params.contentType],
-        ['content-length-range', 1, uploadConfig.maxSizeBytes],
-      ],
-      Expires: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
-    });
+        if (!uploadConfig) {
+          throw new ApiError('Unsupported upload content type', 400);
+        }
 
-    logger.info('Created S3 presigned POST URL', {
-      key: objectKey,
-      userId: params.userId,
-      wabaId: params.wabaId,
-      convId: params.convId,
-    });
+        const objectKey = createObjectKey(params);
 
-    return {
-      key: objectKey,
-      url,
-      method: 'POST' as const,
-      fields,
-      maxSizeBytes: uploadConfig.maxSizeBytes,
-      expiresIn: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
-    };
+        const { url, fields } = await createPresignedPost(s3Client, {
+          Bucket: s3BucketName,
+          Key: objectKey,
+          Fields: {
+            'Content-Type': file.contentType,
+          },
+          Conditions: [
+            ['eq', '$Content-Type', file.contentType],
+            ['content-length-range', 1, uploadConfig.maxSizeBytes],
+          ],
+          Expires: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
+        });
+
+        logger.info('Created S3 presigned POST URL', {
+          key: objectKey,
+          userId: params.userId,
+          wabaId: params.wabaId,
+          convId: params.convId,
+        });
+
+        return {
+          key: objectKey,
+          url,
+          method: 'POST' as const,
+          fields,
+          maxSizeBytes: uploadConfig.maxSizeBytes,
+          expiresIn: PRESIGNED_UPLOAD_EXPIRES_IN_SECONDS,
+        };
+      }),
+    );
   },
 
   async streamWhatsAppMediaToObjectStorage(params: {
@@ -241,30 +245,41 @@ export const S3Service = {
     };
   },
 
-  async createPresignedDownloadUrl(params: {
+  async createPresignedDownloadUrls(params: {
     userId: string;
     wabaId: string; // Internal DB WhatsappBusinessAccount.id.
     convId: string; // Internal DB Conversation.id.
-    key: string;
+    keys: string[];
   }) {
-    const objectKey = assertUserOwnsKey(params);
-    const command = new GetObjectCommand({
-      Bucket: s3BucketName,
-      Key: objectKey,
-    });
+    return Promise.all(
+      params.keys.map(async (key) => {
+        const objectKey = assertUserOwnsKey({
+          key,
+          userId: params.userId,
+          wabaId: params.wabaId,
+          convId: params.convId,
+        });
 
-    const downloadUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS,
-    });
+        const command = new GetObjectCommand({
+          Bucket: s3BucketName,
+          Key: objectKey,
+        });
 
-    logger.info('Created S3 presigned GET download url', {
-      key: objectKey,
-      userId: params.userId,
-    });
+        const downloadUrl = await getSignedUrl(s3Client, command, {
+          expiresIn: PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS,
+        });
 
-    return {
-      downloadUrl,
-      expiresIn: PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS,
-    };
+        logger.info('Created S3 presigned GET download url', {
+          key: objectKey,
+          userId: params.userId,
+        });
+
+        return {
+          key: objectKey,
+          downloadUrl,
+          expiresIn: PRESIGNED_DOWNLOAD_EXPIRES_IN_SECONDS,
+        };
+      }),
+    );
   },
 };

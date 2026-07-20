@@ -16,46 +16,58 @@ export function MessageStatus({
   className?: string;
 }) {
   const t = useTranslations('Chat.status');
-  if (status === 'sending') {
-    return (
-      <Loader2Icon
-        className={cn('size-3.5 animate-spin text-muted-foreground', className)}
-        aria-label={t('sending')}
-      />
-    );
-  }
 
-  if (status === 'read') {
-    return (
-      <CheckCheckIcon
-        className={cn('size-3.5 text-[#53bdeb]', className)}
-        aria-label={t('read')}
-      />
-    );
-  }
+  const icon = (() => {
+    if (status === 'sending') {
+      return (
+        <Loader2Icon
+          className={cn(
+            'size-3.5 shrink-0 animate-spin text-muted-foreground',
+            className,
+          )}
+          aria-label={t('sending')}
+        />
+      );
+    }
 
-  if (status === 'delivered') {
-    return (
-      <CheckCheckIcon
-        className={cn('size-3.5 text-muted-foreground', className)}
-        aria-label={t('delivered')}
-      />
-    );
-  }
+    if (status === 'read') {
+      return (
+        <CheckCheckIcon
+          className={cn('size-3.5 shrink-0 text-[#53bdeb]', className)}
+          aria-label={t('read')}
+        />
+      );
+    }
 
-  if (status === 'failed') {
+    if (status === 'delivered') {
+      return (
+        <CheckCheckIcon
+          className={cn('size-3.5 shrink-0 text-muted-foreground', className)}
+          aria-label={t('delivered')}
+        />
+      );
+    }
+
+    if (status === 'failed') {
+      return (
+        <AlertCircleIcon
+          className={cn('size-3.5 shrink-0 text-destructive', className)}
+          aria-label={t('failed')}
+        />
+      );
+    }
+
     return (
-      <AlertCircleIcon
-        className={cn('size-3.5 text-destructive', className)}
-        aria-label={t('failed')}
+      <CheckIcon
+        className={cn('size-3.5 shrink-0 text-muted-foreground', className)}
+        aria-label={t('sent')}
       />
     );
-  }
+  })();
 
   return (
-    <CheckIcon
-      className={cn('size-3.5 text-muted-foreground', className)}
-      aria-label={t('sent')}
-    />
+    <span key={status} className="inline-flex animate-in fade-in duration-300">
+      {icon}
+    </span>
   );
 }

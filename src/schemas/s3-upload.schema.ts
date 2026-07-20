@@ -99,7 +99,14 @@ const UploadPathSegmentSchema = z
 export const CreateS3UploadUrlSchema = z.object({
   wabaId: UploadPathSegmentSchema,
   convId: UploadPathSegmentSchema,
-  contentType: MediaContentTypeSchema,
+  files: z
+    .array(
+      z.object({
+        contentType: MediaContentTypeSchema,
+      }),
+    )
+    .min(1)
+    .max(10), // Limiting to max 10 concurrent uploads per batch for stability
 });
 
 const S3MediaObjectKeySchema = z
@@ -112,15 +119,21 @@ const S3MediaObjectKeySchema = z
 export const ConfirmS3UploadSchema = z.object({
   wabaId: UploadPathSegmentSchema,
   convId: UploadPathSegmentSchema,
-  key: S3MediaObjectKeySchema,
-  caption: z.string().trim().max(4096).optional(),
-  filename: z.string().trim().min(1).max(255).optional(),
+  files: z
+    .array(
+      z.object({
+        key: S3MediaObjectKeySchema,
+        caption: z.string().trim().max(4096).optional(),
+        filename: z.string().trim().min(1).max(255).optional(),
+      }),
+    )
+    .min(1),
 });
 
 export const CreateS3DownloadUrlSchema = z.object({
   wabaId: UploadPathSegmentSchema,
   convId: UploadPathSegmentSchema,
-  key: S3MediaObjectKeySchema,
+  keys: z.array(S3MediaObjectKeySchema).min(1),
 });
 
 export type CreateS3UploadUrlInput = z.infer<typeof CreateS3UploadUrlSchema>;
