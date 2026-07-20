@@ -16,7 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { User } from '@/types/user';
@@ -35,6 +35,7 @@ const DOCS_URL = 'https://piowsee.github.io/pesan-ai/introduction.html';
 
 export function SidebarProfileMenu({ user }: { user: User }) {
   const router = useRouter();
+  const { open, setHoverOpen } = useSidebar();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -55,7 +56,7 @@ export function SidebarProfileMenu({ user }: { user: User }) {
   const triggerButton = (
     <SidebarMenuButton
       size="lg"
-      className="h-10 w-full cursor-pointer justify-start gap-2 px-0 text-foreground/60 transition-colors duration-200 ease-out hover:bg-transparent hover:text-brand focus-visible:ring-0 data-open:bg-transparent data-open:text-brand group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0!"
+      className="h-10 w-full cursor-pointer justify-start gap-2 px-0 text-foreground/60 transition-colors duration-200 ease-out focus-visible:ring-0 data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0!"
     >
       <Avatar className="mx-1 size-8 rounded-full">
         <AvatarImage src={user.image ?? undefined} alt={user.name} />
@@ -68,21 +69,30 @@ export function SidebarProfileMenu({ user }: { user: User }) {
       </span>
       <MdUnfoldMore
         aria-hidden="true"
-        className="max-w-4 shrink-0 overflow-hidden text-muted-foreground opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0"
+        className="ml-auto mr-1 max-w-4 shrink-0 overflow-hidden text-muted-foreground opacity-100 transition-[max-width,opacity,margin] duration-200 ease-out group-data-[collapsible=icon]:mr-0 group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0"
       />
     </SidebarMenuButton>
   );
 
   return (
     <>
-      <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+      <DropdownMenu
+        modal={true}
+        open={isMenuOpen}
+        onOpenChange={(isOpen) => {
+          setIsMenuOpen(isOpen);
+          if (isOpen && !open) {
+            setHoverOpen(false);
+          }
+        }}
+      >
         <DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
 
         <DropdownMenuContent
           side="top"
           align="start"
           sideOffset={10}
-          className="w-60 rounded-lg border p-0 text-foreground shadow-lg"
+          className="w-56 rounded-lg border p-0 text-foreground shadow-lg"
         >
           <div className="flex items-center gap-3 px-4 py-4">
             <Avatar className="size-10 rounded-full">
@@ -128,9 +138,9 @@ export function SidebarProfileMenu({ user }: { user: User }) {
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent
                   sideOffset={8}
-                  className="relative w-44 rounded-lg border p-1.5 text-foreground shadow-lg before:absolute before:top-0 before:-left-2 before:h-full before:w-2 before:content-['']"
+                  className="relative w-32 rounded-lg border p-1 text-foreground shadow-lg before:absolute before:top-0 before:-left-2 before:h-full before:w-2 before:content-['']"
                 >
-                  <DropdownMenuGroup className="flex flex-col gap-1">
+                  <DropdownMenuGroup className="flex flex-col gap-0">
                     <DropdownMenuItem
                       className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand"
                       onSelect={() => openSettings('general')}

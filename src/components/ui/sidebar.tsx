@@ -235,6 +235,12 @@ function Sidebar({
       data-slot="sidebar"
       onMouseEnter={() => {
         if (!open) {
+          if (
+            typeof document !== 'undefined' &&
+            document.body.hasAttribute('data-scroll-locked')
+          ) {
+            return;
+          }
           setHoverOpen(true);
         }
       }}
