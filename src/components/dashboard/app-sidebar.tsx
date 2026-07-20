@@ -64,7 +64,7 @@ export function AppSidebar({ user }: { user: User | null }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="relative h-10 w-full pr-10 group-data-[collapsible=icon]:pr-0">
+            <div className="relative h-10 w-full pr-10 transition-[padding] duration-200 ease-out group-data-[collapsible=icon]:pr-0">
               <div className="flex h-full items-center gap-1 overflow-hidden">
                 <div className="pointer-events-none flex aspect-square size-10 shrink-0 items-center justify-center rounded-lg select-none">
                   <Image
@@ -87,7 +87,7 @@ export function AppSidebar({ user }: { user: User | null }) {
                   pathname.startsWith('/dashboard/chat')
                     ? 'bg-transparent text-foreground'
                     : 'text-foreground',
-                  'absolute top-0 right-0 size-10! shrink-0 bg-transparent transition-colors duration-200 ease-out hover:bg-transparent active:bg-transparent aria-expanded:bg-transparent group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 [&_svg]:size-4.5!',
+                  'absolute top-0 -right-2 size-10! shrink-0 bg-transparent transition-all duration-300 group-data-[collapsible=icon]:duration-75 ease-out hover:bg-transparent active:bg-transparent aria-expanded:bg-transparent group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 [&_svg]:size-4.5!',
                 )}
               />
             </div>
