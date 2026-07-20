@@ -162,7 +162,14 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // so the connection is persistent as long as the provider is mounted.
     const eventSource = new EventSource('/api/sse');
 
+    let isInitialConnect = true;
+
     const handleOpen = () => {
+      if (isInitialConnect) {
+        isInitialConnect = false;
+        return;
+      }
+
       void refetchRealtimeCache(queryClient, conversationKeys.root);
       void refetchRealtimeCache(queryClient, messageKeys.root);
     };
