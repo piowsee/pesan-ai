@@ -10,7 +10,7 @@ services:
     volumes:
       - pesanai_volume:/var/lib/postgresql
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     networks:
       - backend
     healthcheck:
@@ -36,7 +36,7 @@ services:
       SERVER_RESET_QUERY: DISCARD ALL
       AUTH_TYPE: scram-sha-256
     ports:
-      - '6432:6432'
+      - '127.0.0.1:6432:6432'
     networks:
       - backend
 
