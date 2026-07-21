@@ -6,9 +6,12 @@ import {
   TokenExchangeResponse,
   WabaDetails,
   WabaMetaResponse,
+} from '@/types/waba';
+import {
+  WhatsAppBusinessProfileUpdateRequest,
   WhatsappBusinessProfile,
   WhatsappBusinessProfileMetaResponse,
-} from '@/types/waba';
+} from '@/types/whatsapp-business-profile';
 import { type BetterFetchOption, createFetch } from '@better-fetch/fetch';
 
 const GRAPH_API_VERSION = 'v25.0';
@@ -262,21 +265,16 @@ export const MetaFetchService = {
       throw new ApiError(message, 502);
     }
 
-    return { businessName: data.name ?? null };
+    return { name: data.name ?? null };
   },
 
   async fetchPhoneNumberDetails(params: {
-    wabaId: string;
+    phoneNumberId: string;
     token: string;
-  }): Promise<PhoneNumberMetaResponse[]> {
-    const { wabaId, token } = params;
-    const { data, error } = await fetchMeta<
-      | {
-          data?: PhoneNumberMetaResponse[];
-        }
-      | PhoneNumberMetaResponse[]
-    >(
-      `/${wabaId}/phone_numbers?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
+  }): Promise<PhoneNumberMetaResponse> {
+    const { phoneNumberId, token } = params;
+    const { data, error } = await fetchMeta<PhoneNumberMetaResponse>(
+      `/${phoneNumberId}?fields=display_phone_number,verified_name,quality_rating,code_verification_status`,
       {
         action: 'MetaFetchService.fetchPhoneNumberDetails',
         auth: getBearerAuth(token),
@@ -286,12 +284,12 @@ export const MetaFetchService = {
     if (error) {
       const message = this._extractMetaErrorMessage(
         error,
-        `Failed to fetch phone numbers for ${wabaId}`,
+        `Failed to fetch phone number details for ${phoneNumberId}`,
       );
       throw new ApiError(message, 502);
     }
 
-    return Array.isArray(data) ? data : data.data || [];
+    return data;
   },
 
   async fetchBusinessProfile(params: {
@@ -317,6 +315,33 @@ export const MetaFetchService = {
     }
 
     return data.data?.[0]?.business_profile ?? null;
+  },
+
+  async updateBusinessProfile(params: {
+    phoneNumberId: string;
+    token: string;
+    data: WhatsAppBusinessProfileUpdateRequest;
+  }): Promise<{ success: boolean }> {
+    const { phoneNumberId, token, data } = params;
+    const { data: responseData, error } = await fetchMeta<{ success: boolean }>(
+      `/${phoneNumberId}/whatsapp_business_profile`,
+      {
+        action: 'MetaFetchService.updateBusinessProfile',
+        method: 'POST',
+        auth: getBearerAuth(token),
+        body: data,
+      },
+    );
+
+    if (error) {
+      const message = this._extractMetaErrorMessage(
+        error,
+        `Failed to update business profile for ${phoneNumberId}`,
+      );
+      throw new ApiError(message, 502);
+    }
+
+    return { success: responseData.success ?? true };
   },
 
   async getMediaUrl(params: {

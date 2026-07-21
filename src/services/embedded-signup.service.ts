@@ -1,3 +1,4 @@
+import { PhoneNumber } from '@/generated/prisma/client';
 import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
@@ -6,7 +7,8 @@ import { PhoneNumberRepository } from '@/repositories/phone-number.repository';
 import { SyncRequestRepository } from '@/repositories/sync-request.repository';
 import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
-import { PhoneNumberMetaResponse, WhatsappBusinessProfile } from '@/types/waba';
+import { PhoneNumberMetaResponse } from '@/types/waba';
+import { WhatsappBusinessProfile } from '@/types/whatsapp-business-profile';
 import { randomInt } from 'node:crypto';
 
 const COEXISTENCE_SIGNUP_EVENT = 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';
@@ -18,11 +20,6 @@ type PhoneRegistration = PhoneNumberMetaResponse & {
   registrationPin: string;
 };
 
-type FailedPhoneRegistration = {
-  error: unknown;
-  phoneNumberId?: string; // Meta Phone Number ID.
-};
-
 type BusinessProfileLookup = {
   businessProfile: WhatsappBusinessProfile;
   phoneNumberDbId: string; // Internal DB PhoneNumber.id.
@@ -30,11 +27,7 @@ type BusinessProfileLookup = {
 };
 
 type EmbeddedSignupResult = {
-  failedPhoneNumberIds: string[];
-  message: string | null;
-  phoneNumbers: Awaited<
-    ReturnType<typeof PhoneNumberRepository.upsertPhoneNumbers>
-  >;
+  phoneNumbers: PhoneNumber[];
   waba: Awaited<ReturnType<typeof WabaRepository.upsertWaba>>;
 };
 
@@ -51,39 +44,29 @@ export const EmbeddedSignUpService = {
     return randomInt(0, 1_000_000).toString().padStart(6, '0');
   },
 
-  _buildPhoneRegistrations(
-    phoneNumberDatas: PhoneNumberMetaResponse[],
-    existingPhoneNumbers: Array<{
-      phoneNumberId: string; // Meta Phone Number ID stored in DB.
+  _buildPhoneRegistration(
+    phoneNumberData: PhoneNumberMetaResponse,
+    existingPhoneNumber?: {
+      phoneNumberId: string;
       registrationPin: string | null;
-    }> = [],
-  ): PhoneRegistration[] {
-    const existingPhoneNumbersById = new Map(
-      existingPhoneNumbers.map((phoneNumber) => [
-        phoneNumber.phoneNumberId,
-        phoneNumber.registrationPin,
-      ]),
-    );
+    } | null,
+  ): PhoneRegistration {
+    const fallbackRegistrationPin = this._generateRegistrationPin();
+    const fallbackEncryptedRegistrationPin = encrypt(fallbackRegistrationPin);
+    const storedRegistrationPin = existingPhoneNumber?.registrationPin ?? null;
+    const decryptedStoredRegistrationPin = storedRegistrationPin
+      ? decrypt(storedRegistrationPin)
+      : null;
 
-    return phoneNumberDatas.map((phoneNumber) => {
-      const fallbackRegistrationPin = this._generateRegistrationPin();
-      const fallbackEncryptedRegistrationPin = encrypt(fallbackRegistrationPin);
-      const storedRegistrationPin =
-        existingPhoneNumbersById.get(phoneNumber.id) ?? null;
-      const decryptedStoredRegistrationPin = storedRegistrationPin
-        ? decrypt(storedRegistrationPin)
-        : null;
-
-      return {
-        ...phoneNumber,
-        registrationPin:
-          decryptedStoredRegistrationPin ?? fallbackRegistrationPin,
-        encryptedRegistrationPin:
-          storedRegistrationPin ?? fallbackEncryptedRegistrationPin,
-        fallbackRegistrationPin,
-        fallbackEncryptedRegistrationPin,
-      };
-    });
+    return {
+      ...phoneNumberData,
+      registrationPin:
+        decryptedStoredRegistrationPin ?? fallbackRegistrationPin,
+      encryptedRegistrationPin:
+        storedRegistrationPin ?? fallbackEncryptedRegistrationPin,
+      fallbackRegistrationPin,
+      fallbackEncryptedRegistrationPin,
+    };
   },
 
   async _recoverPhoneNumberRegistration(params: {
@@ -153,80 +136,33 @@ export const EmbeddedSignUpService = {
     }
   },
 
-  _buildPhoneRegistrationMessage(params: {
-    failedCount: number;
-    registeredCount: number;
-  }): string | null {
-    const { failedCount, registeredCount } = params;
+  async _fetchBusinessProfile(params: {
+    phoneNumber: PhoneNumber;
+    token: string;
+  }): Promise<BusinessProfileLookup | null> {
+    const { phoneNumber, token } = params;
+    try {
+      const businessProfile = await MetaFetchService.fetchBusinessProfile({
+        phoneNumberId: phoneNumber.phoneNumberId,
+        token,
+      });
 
-    if (failedCount === 0 && registeredCount > 0) {
+      if (!businessProfile) {
+        return null;
+      }
+
+      return {
+        phoneNumberDbId: phoneNumber.id,
+        phoneNumberId: phoneNumber.phoneNumberId,
+        businessProfile,
+      };
+    } catch (error) {
+      logError(error, {
+        action: 'Meta business profile lookup failed during signup',
+        phoneNumberId: phoneNumber.phoneNumberId,
+      });
       return null;
     }
-
-    if (failedCount > 0 && registeredCount > 0) {
-      return 'WhatsApp Business Account connected, but some phone numbers could not be registered.';
-    }
-
-    if (failedCount > 0) {
-      return 'WhatsApp Business Account connected, but no phone numbers could be registered.';
-    }
-
-    return 'WhatsApp Business Account connected successfully, but no phone numbers were returned by Meta.';
-  },
-
-  async _fetchBusinessProfiles(params: {
-    phoneNumbers: Awaited<
-      ReturnType<typeof PhoneNumberRepository.upsertPhoneNumbers>
-    >;
-    token: string;
-  }): Promise<BusinessProfileLookup[]> {
-    const { phoneNumbers, token } = params;
-    const businessProfileResults = await Promise.allSettled(
-      phoneNumbers.map(async (phoneNumber) => {
-        const businessProfile = await MetaFetchService.fetchBusinessProfile({
-          phoneNumberId: phoneNumber.phoneNumberId,
-          token,
-        });
-
-        if (!businessProfile) {
-          return null;
-        }
-
-        return {
-          phoneNumberDbId: phoneNumber.id,
-          phoneNumberId: phoneNumber.phoneNumberId,
-          businessProfile,
-        };
-      }),
-    );
-
-    const failedLookups = businessProfileResults.flatMap((result, index) =>
-      result.status === 'rejected'
-        ? [
-            {
-              phoneNumberId: phoneNumbers[index]?.phoneNumberId,
-              error: result.reason,
-            },
-          ]
-        : [],
-    );
-
-    if (failedLookups.length > 0) {
-      logError(
-        new Error('Some Meta business profile lookups failed during signup'),
-        {
-          action: 'Some Meta business profile lookups failed during signup',
-          failedPhoneNumberIds: failedLookups.map(
-            ({ phoneNumberId }) => phoneNumberId,
-          ),
-          failureCount: failedLookups.length,
-        },
-      );
-    }
-
-    return businessProfileResults.flatMap((result) =>
-      result.status === 'fulfilled' && result.value ? [result.value] : [],
-    );
   },
 
   /**
@@ -242,8 +178,9 @@ export const EmbeddedSignUpService = {
     event?: string;
     wabaId: string; // Meta WABA ID from Embedded Signup.
     userId: string;
+    phoneNumberId: string;
   }): Promise<EmbeddedSignupResult> {
-    const { code, event, wabaId, userId } = params;
+    const { code, event, wabaId, userId, phoneNumberId } = params;
     const existingWaba = await WabaRepository.findByMetaWabaId({ wabaId });
 
     if (existingWaba && existingWaba.userId !== userId) {
@@ -259,81 +196,50 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    const [wabaDetails, phoneNumberDatas] = await Promise.all([
+    const [wabaDetails, phoneNumberData] = await Promise.all([
       MetaFetchService.fetchWabaDetails({ wabaId, token: systemUserToken }),
       MetaFetchService.fetchPhoneNumberDetails({
-        wabaId,
+        phoneNumberId,
         token: systemUserToken,
       }),
     ]);
 
-    const existingPhoneNumbers =
-      await PhoneNumberRepository.findPhoneNumbersByMetaIds({
-        phoneNumberIds: phoneNumberDatas.map((phoneNumber) => phoneNumber.id),
-      });
-    const phoneRegistrations = this._buildPhoneRegistrations(
-      phoneNumberDatas,
-      existingPhoneNumbers,
+    const existingPhoneNumber =
+      await PhoneNumberRepository.findPhoneNumberByMetaId(phoneNumberData.id);
+    const phoneRegistration = this._buildPhoneRegistration(
+      phoneNumberData,
+      existingPhoneNumber,
     );
 
     const shouldRegisterPhoneNumbers = event !== COEXISTENCE_SIGNUP_EVENT;
-    let registrationPromise: Promise<PromiseSettledResult<PhoneRegistration>[]>;
+
+    let finalPhoneRegistration = phoneRegistration;
 
     if (shouldRegisterPhoneNumbers) {
-      registrationPromise = Promise.allSettled(
-        phoneRegistrations.map((phoneNumber) =>
-          this._registerPhoneNumberWithRecovery({
-            phoneNumber,
-            token: systemUserToken,
-          }),
-        ),
-      );
-    } else {
-      registrationPromise = Promise.resolve(
-        phoneRegistrations.map((phoneNumber) => ({
-          status: 'fulfilled' as const,
-          value: phoneNumber,
-        })),
-      );
-    }
-
-    const [registrationResults] = await Promise.all([
-      registrationPromise,
-      MetaFetchService.subscribeWabaApps({ wabaId, token: systemUserToken }),
-    ]);
-
-    const registeredPhoneNumbers = registrationResults.flatMap((result) =>
-      result.status === 'fulfilled' ? [result.value] : [],
-    );
-    const failedPhoneRegistrations =
-      registrationResults.flatMap<FailedPhoneRegistration>((result, index) =>
-        result.status === 'rejected'
-          ? [
-              {
-                phoneNumberId: phoneRegistrations[index]?.id,
-                error: result.reason,
-              },
-            ]
-          : [],
-      );
-
-    if (failedPhoneRegistrations.length > 0) {
-      logError(
-        new Error('Some Meta phone registrations failed during signup'),
-        {
-          action: 'Some Meta phone registrations failed during signup',
-          failedPhoneNumberIds: failedPhoneRegistrations.map(
-            ({ phoneNumberId }) => phoneNumberId,
-          ),
-          failureCount: failedPhoneRegistrations.length,
+      try {
+        finalPhoneRegistration = await this._registerPhoneNumberWithRecovery({
+          phoneNumber: phoneRegistration,
+          token: systemUserToken,
+        });
+      } catch (err) {
+        logError(err as Error, {
+          action: 'Meta phone registration failed during signup',
+          phoneNumberId: phoneRegistration.id,
           wabaId,
-        },
-      );
+        });
+        throw new ApiError(
+          'Phone number registration failed. Please try embedded signup again.',
+          502,
+        );
+      }
     }
+
+    await MetaFetchService.subscribeWabaApps({
+      wabaId,
+      token: systemUserToken,
+    });
 
     logger.info('Meta phone registration and app subscription completed', {
-      phoneNumberCount: registeredPhoneNumbers.length,
-      failedPhoneNumberCount: failedPhoneRegistrations.length,
       skippedPhoneRegistration: !shouldRegisterPhoneNumbers,
       wabaId,
     });
@@ -342,7 +248,7 @@ export const EmbeddedSignUpService = {
       wabaId, // Meta WABA ID.
       userId,
       systemUserToken: encrypt(systemUserToken),
-      businessName: wabaDetails.businessName,
+      name: wabaDetails.name,
     });
 
     logger.info('WABA upserted successfully', {
@@ -351,81 +257,72 @@ export const EmbeddedSignUpService = {
       userId,
     });
 
-    const phoneNumbers = await PhoneNumberRepository.upsertPhoneNumbers({
+    const phoneNumberDbRecord = await PhoneNumberRepository.upsertPhoneNumber({
       wabaDbId: waba.id, // Internal DB WhatsappBusinessAccount.id.
-      phoneNumberDatas: registeredPhoneNumbers.map((phoneNumber) => ({
-        id: phoneNumber.id,
-        display_phone_number: phoneNumber.display_phone_number,
-        verified_name: phoneNumber.verified_name ?? null,
-        code_verification_status: phoneNumber.code_verification_status ?? null,
-        quality_rating: phoneNumber.quality_rating ?? null,
-        error: phoneNumber.error,
-        registrationPin: phoneNumber.encryptedRegistrationPin,
-      })),
+      phoneNumberData: {
+        id: finalPhoneRegistration.id,
+        display_phone_number: finalPhoneRegistration.display_phone_number,
+        verified_name: finalPhoneRegistration.verified_name ?? null,
+        code_verification_status:
+          finalPhoneRegistration.code_verification_status ?? null,
+        quality_rating: finalPhoneRegistration.quality_rating ?? null,
+        registrationPin: finalPhoneRegistration.encryptedRegistrationPin,
+      },
     });
 
     logger.info('PhoneNumbers upserted successfully', {
-      count: phoneNumbers.length,
+      upserted: !!phoneNumberDbRecord,
       wabaId,
     });
 
-    const businessProfiles = await this._fetchBusinessProfiles({
-      phoneNumbers,
-      token: systemUserToken,
-    });
+    if (phoneNumberDbRecord) {
+      const businessProfile = await this._fetchBusinessProfile({
+        phoneNumber: phoneNumberDbRecord,
+        token: systemUserToken,
+      });
 
-    await BusinessProfileRepository.upsertBusinessProfiles(
-      businessProfiles.map(({ phoneNumberDbId, businessProfile }) => ({
-        phoneNumberDbId,
-        businessProfile,
-      })),
-    );
+      if (businessProfile) {
+        await BusinessProfileRepository.upsertBusinessProfile({
+          phoneNumberDbId: businessProfile.phoneNumberDbId,
+          businessProfile: businessProfile.businessProfile,
+        });
+      }
+    }
 
-    logger.info('Business profiles upserted successfully', {
-      count: businessProfiles.length,
+    logger.info('Business profile upserted successfully', {
+      upserted: !!phoneNumberDbRecord,
       wabaId,
     });
 
-    if (event === COEXISTENCE_SIGNUP_EVENT) {
+    if (event === COEXISTENCE_SIGNUP_EVENT && phoneNumberDbRecord) {
+      const syncTypes = ['history', 'smb_app_state_sync'] as const;
       await Promise.allSettled(
-        phoneNumbers.map(async (phoneNumber) => {
-          const syncTypes = ['history', 'smb_app_state_sync'] as const;
-          await Promise.allSettled(
-            syncTypes.map(async (syncType) => {
-              try {
-                const { request_id } = await MetaFetchService.syncRequest({
-                  phoneNumberId: phoneNumber.phoneNumberId,
-                  token: systemUserToken,
-                  sync_type: syncType,
-                });
-                await SyncRequestRepository.createSyncRequest({
-                  requestId: request_id,
-                  syncType,
-                  phoneNumberId: phoneNumber.id,
-                });
-              } catch (error) {
-                logError(error, {
-                  action: 'Failed to request and save sync history',
-                  phoneNumberId: phoneNumber.phoneNumberId,
-                  syncType,
-                });
-              }
-            }),
-          );
+        syncTypes.map(async (syncType) => {
+          try {
+            const { request_id } = await MetaFetchService.syncRequest({
+              phoneNumberId: phoneNumberDbRecord!.phoneNumberId,
+              token: systemUserToken,
+              sync_type: syncType,
+            });
+            await SyncRequestRepository.createSyncRequest({
+              requestId: request_id,
+              syncType,
+              phoneNumberId: phoneNumberDbRecord!.id,
+            });
+          } catch (error) {
+            logError(error, {
+              action: 'Failed to request and save sync history',
+              phoneNumberId: phoneNumberDbRecord!.phoneNumberId,
+              syncType,
+            });
+          }
         }),
       );
     }
 
     return {
       waba,
-      phoneNumbers,
-      failedPhoneNumberIds: failedPhoneRegistrations.flatMap(
-        ({ phoneNumberId }) => (phoneNumberId ? [phoneNumberId] : []),
-      ),
-      message: this._buildPhoneRegistrationMessage({
-        failedCount: failedPhoneRegistrations.length,
-        registeredCount: registeredPhoneNumbers.length,
-      }),
+      phoneNumbers: phoneNumberDbRecord ? [phoneNumberDbRecord] : [],
     };
   },
 };

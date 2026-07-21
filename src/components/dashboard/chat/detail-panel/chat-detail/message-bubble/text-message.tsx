@@ -1,10 +1,14 @@
+import { WhatsAppText } from '../whatsapp-text';
 import type { MessageRendererProps } from './types';
 
 function TextMessage({ message }: MessageRendererProps) {
   return (
-    <div className="whitespace-pre-wrap wrap-anywhere text-[15px] leading-relaxed">
-      {message.content ?? ''}
-    </div>
+    <WhatsAppText
+      content={message.content ?? ''}
+      trailingSpacerClassName={
+        message.direction === 'outgoing' ? 'w-[72px]' : 'w-[52px]'
+      }
+    />
   );
 }
 

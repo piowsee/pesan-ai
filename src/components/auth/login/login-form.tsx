@@ -1,7 +1,7 @@
 'use client';
 
+import { AuthTransitionLink } from '@/components/auth/auth-transition-link';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from '@/i18n/navigation';
@@ -12,13 +12,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 type LoginFormLabels = {
   password: string;
   forgotPassword: string;
-  contactUs: string;
   agreePrefix: string;
   terms: string;
   and: string;
@@ -45,16 +44,12 @@ function createLoginSchema(errors: LoginFormErrors) {
       .string()
       .min(1, errors.passwordRequired)
       .min(8, errors.passwordLength),
-    terms: z.boolean().refine((val) => val === true, {
-      message: errors.termsRequired,
-    }),
   });
 }
 
 type LoginFormValues = {
   email: string;
   password: string;
-  terms: boolean;
 };
 
 export function LoginForm() {
@@ -75,9 +70,12 @@ export function LoginForm() {
     defaultValues: {
       email: '',
       password: '',
-      terms: false,
     },
   });
+
+  const email = form.watch('email');
+  const password = form.watch('password');
+  const isFormFilled = !!email?.trim() && !!password?.trim();
 
   async function onSubmit(values: LoginFormValues) {
     setIsPending(true);
@@ -121,7 +119,7 @@ export function LoginForm() {
           {...form.register('email')}
           aria-invalid={!!form.formState.errors.email}
           className={cn(
-            'h-10 rounded-md shadow-sm',
+            'h-10 rounded-md',
             form.formState.errors.email &&
               'border-destructive focus-visible:ring-destructive/20',
           )}
@@ -144,7 +142,7 @@ export function LoginForm() {
             {...form.register('password')}
             aria-invalid={!!form.formState.errors.password}
             className={cn(
-              'h-10 rounded-md pr-10 shadow-sm',
+              'h-10 rounded-md pr-10',
               form.formState.errors.password &&
                 'border-destructive focus-visible:ring-destructive/20',
             )}
@@ -173,60 +171,13 @@ export function LoginForm() {
           </p>
         )}
         <div className="flex justify-end">
-          <Link
+          <AuthTransitionLink
             href="/forgot-password"
             className="text-sm font-medium text-brand underline-offset-4 transition-colors hover:underline"
           >
             {labels.forgotPassword}
-          </Link>
+          </AuthTransitionLink>
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <div className="flex items-start gap-3">
-          <Controller
-            control={form.control}
-            name="terms"
-            render={({ field }) => (
-              <Checkbox
-                id="terms"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className="mt-1 shrink-0 cursor-pointer"
-              />
-            )}
-          />
-          <Label
-            htmlFor="terms"
-            className="min-w-0 flex-1 text-sm leading-relaxed text-muted-foreground select-none"
-          >
-            {labels.agreePrefix}{' '}
-            <Link
-              href="/terms"
-              className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {labels.terms}
-            </Link>{' '}
-            {labels.and}{' '}
-            <Link
-              href="/privacy"
-              className="font-semibold text-brand underline-offset-4 hover:underline cursor-pointer"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {labels.privacy}
-            </Link>
-            .
-          </Label>
-        </div>
-
-        {form.formState.errors.terms && (
-          <p className="text-xs text-destructive">
-            {form.formState.errors.terms.message}
-          </p>
-        )}
       </div>
 
       {formError && <p className="text-xs text-destructive">{formError}</p>}
@@ -235,8 +186,8 @@ export function LoginForm() {
         type="submit"
         variant="brand"
         size="lg"
-        disabled={isPending}
-        className="mt-2 h-10 w-full rounded-md shadow-sm"
+        disabled={isPending || !isFormFilled}
+        className="mt-2 h-10 w-full rounded-md"
       >
         {isPending ? (
           <Loader2 className="animate-spin" data-icon="inline-start" />
@@ -244,14 +195,27 @@ export function LoginForm() {
         {isPending ? labels.submitting : labels.submit}
       </Button>
 
-      <Button
-        asChild
-        variant="outline"
-        size="lg"
-        className="h-10 w-full border-border/70 bg-background/70 px-3 shadow-sm hover:bg-muted/70"
-      >
-        <Link href="/contact-us">{labels.contactUs}</Link>
-      </Button>
+      <p className="mt-2 text-center text-sm leading-6 text-muted-foreground">
+        {labels.agreePrefix}{' '}
+        <Link
+          href="/terms"
+          className="font-semibold text-brand underline-offset-4 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {labels.terms}
+        </Link>{' '}
+        {labels.and}{' '}
+        <Link
+          href="/privacy"
+          className="font-semibold text-brand underline-offset-4 hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {labels.privacy}
+        </Link>
+        .
+      </p>
     </form>
   );
 }

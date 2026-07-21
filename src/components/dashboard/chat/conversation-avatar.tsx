@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import type { ChatConversation } from '@/types/chat';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsappSquare } from 'react-icons/fa';
 
 export interface ConversationAvatarProps {
   conversation: Pick<ChatConversation, 'displayName' | 'messagingProduct'>;
@@ -26,7 +26,7 @@ export function ConversationAvatar({
 
   const iconSize = {
     sm: 'size-4',
-    md: 'size-5',
+    md: 'size-4.5',
     lg: 'size-5', // size-5 is good for size-12 too
   }[size];
 
@@ -34,14 +34,20 @@ export function ConversationAvatar({
     <div className={cn('relative shrink-0', className)}>
       <Avatar className={cn('border', avatarSize, avatarClassName)}>
         <AvatarFallback
-          className={cn('text-sm font-medium', fallbackClassName)}
+          className={cn(
+            'bg-brand text-sm font-medium text-brand-foreground',
+            fallbackClassName,
+          )}
         >
           {conversation.displayName.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-      {conversation.messagingProduct === 'whatsapp' && (
-        <div className="absolute bottom-0 right-0 flex items-center justify-center rounded-full bg-background p-[2px]">
-          <FaWhatsapp className={cn('text-[#25D366]', iconSize)} />
+      {conversation.messagingProduct === 'whatsapp' && size === 'md' && (
+        <div className="absolute -bottom-0.5 -right-0 flex items-center justify-center">
+          <div className="absolute size-[80%] rounded-sm bg-white" />
+          <FaWhatsappSquare
+            className={cn('relative z-10 text-[#25D366]', iconSize)}
+          />
         </div>
       )}
     </div>

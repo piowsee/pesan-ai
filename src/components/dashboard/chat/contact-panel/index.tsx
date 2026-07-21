@@ -28,7 +28,7 @@ export function ChatContactPanel({
   }
 
   return (
-    <div className="absolute inset-0 z-30 flex flex-col bg-background lg:static lg:z-0 lg:w-95 lg:shrink-0 lg:overflow-hidden lg:border-l lg:border-brand/10">
+    <div className="absolute inset-0 z-30 flex flex-col bg-background lg:static lg:z-0 lg:w-90 lg:shrink-0 lg:overflow-hidden lg:border-l">
       <ContactInfoPanel
         conversation={conversation}
         label={draft.label}

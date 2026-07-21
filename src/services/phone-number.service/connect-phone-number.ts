@@ -6,7 +6,7 @@ import { WabaRepository } from '@/repositories/waba.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { randomInt } from 'node:crypto';
 
-export const PhoneNumberService = {
+export const ConnectPhoneNumberService = {
   /**
    * Below is logics that responsible for the manual phone number verification and
    * registration flow (as opposed to the Embedded Signup automatic flow).
@@ -33,7 +33,7 @@ export const PhoneNumberService = {
   }): Promise<{ success: boolean }> {
     const { phoneNumberId, wabaId, userId, codeMethod, language } = params;
 
-    const { systemUserToken } = await this._getSystemUserToken({
+    const { systemUserToken } = await this._getSystemUserTokenByMetaId({
       wabaId,
       userId,
     });
@@ -74,10 +74,11 @@ export const PhoneNumberService = {
   }): Promise<{ success: boolean }> {
     const { phoneNumberId, wabaId, userId, code } = params;
 
-    const { wabaDbId, systemUserToken } = await this._getSystemUserToken({
-      wabaId,
-      userId,
-    });
+    const { wabaDbId, systemUserToken } =
+      await this._getSystemUserTokenByMetaId({
+        wabaId,
+        userId,
+      });
 
     logger.info('Verifying code for phone number', {
       phoneNumberId,
@@ -109,14 +110,10 @@ export const PhoneNumberService = {
       wabaId,
     });
 
-    const phoneNumberDatas = await MetaFetchService.fetchPhoneNumberDetails({
-      wabaId,
+    const matchingPhone = await MetaFetchService.fetchPhoneNumberDetails({
+      phoneNumberId,
       token: systemUserToken,
-    });
-
-    const matchingPhone = phoneNumberDatas.find(
-      (pn) => pn.id === phoneNumberId,
-    );
+    }).catch(() => null);
 
     if (!matchingPhone) {
       logger.warn(
@@ -125,20 +122,18 @@ export const PhoneNumberService = {
       );
     }
 
-    await PhoneNumberRepository.upsertPhoneNumbers({
+    await PhoneNumberRepository.upsertPhoneNumber({
       wabaDbId: wabaDbId,
-      phoneNumberDatas: [
-        {
-          id: phoneNumberId,
-          display_phone_number:
-            matchingPhone?.display_phone_number ?? phoneNumberId,
-          verified_name: matchingPhone?.verified_name ?? null,
-          code_verification_status:
-            matchingPhone?.code_verification_status ?? null,
-          quality_rating: matchingPhone?.quality_rating ?? null,
-          registrationPin: encryptedPin,
-        },
-      ],
+      phoneNumberData: {
+        id: phoneNumberId,
+        display_phone_number:
+          matchingPhone?.display_phone_number ?? phoneNumberId,
+        verified_name: matchingPhone?.verified_name ?? null,
+        code_verification_status:
+          matchingPhone?.code_verification_status ?? null,
+        quality_rating: matchingPhone?.quality_rating ?? null,
+        registrationPin: encryptedPin,
+      },
     });
 
     logger.info('Phone number persisted in database', {
@@ -161,7 +156,7 @@ export const PhoneNumberService = {
   }): Promise<{ phoneNumberId: string }> {
     const { wabaId, userId, countryCode, phoneNumber, name } = params;
 
-    const { systemUserToken } = await this._getSystemUserToken({
+    const { systemUserToken } = await this._getSystemUserTokenByMetaId({
       wabaId,
       userId,
     });
@@ -188,7 +183,7 @@ export const PhoneNumberService = {
     return randomInt(0, 1_000_000).toString().padStart(6, '0');
   },
 
-  async _getSystemUserToken(params: {
+  async _getSystemUserTokenByMetaId(params: {
     wabaId: string; // Meta WABA ID.
     userId: string;
   }): Promise<{ wabaDbId: string; systemUserToken: string }> {

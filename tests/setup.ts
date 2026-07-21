@@ -65,7 +65,8 @@ vi.mock('@/repositories/contact.repository', () => ({
 
 vi.mock('@/repositories/business-profile.repository', () => ({
   BusinessProfileRepository: {
-    upsertBusinessProfiles: vi.fn(),
+    upsertBusinessProfile: vi.fn(),
+    getBusinessProfile: vi.fn(),
   },
 }));
 
@@ -100,9 +101,9 @@ vi.mock('@/repositories/waba.repository', () => ({
 vi.mock('@/repositories/phone-number.repository', () => ({
   PhoneNumberRepository: {
     findPhoneNumberByMetaId: vi.fn(),
-    findPhoneNumbersByMetaIds: vi.fn(),
+
     updateWabaWebhook: vi.fn(),
-    upsertPhoneNumbers: vi.fn(),
+    upsertPhoneNumber: vi.fn(),
   },
 }));
 
@@ -148,7 +149,7 @@ vi.mock('@/services/message.service', () => ({
   MessageService: {
     getMessagesPaginated: vi.fn(),
     sendAdminTextMessage: vi.fn(),
-    confirmUploadedMediaMessage: vi.fn(),
+    confirmUploadedMediaMessages: vi.fn(),
   },
 }));
 
@@ -189,6 +190,8 @@ vi.mock('@/services/phone-number.service', () => ({
     verifyAndRegister: vi.fn(),
     createPhoneNumber: vi.fn(),
     _generateRegistrationPin: vi.fn(),
+    getWhatsAppBusinessProfile: vi.fn(),
+    updateWhatsAppBusinessProfile: vi.fn(),
   },
 }));
 
@@ -213,8 +216,8 @@ vi.mock('@/services/webhook.service', () => ({
 
 vi.mock('@/services/s3.service', () => ({
   S3Service: {
-    createPresignedUploadUrl: vi.fn(),
-    createPresignedDownloadUrl: vi.fn(),
+    createPresignedUploadUrls: vi.fn(),
+    createPresignedDownloadUrls: vi.fn(),
     verifyUploadedMedia: vi.fn(),
     streamWhatsAppMediaToObjectStorage: vi.fn(),
   },
@@ -225,6 +228,7 @@ vi.mock('@/services/meta-fetch.service', () => ({
     fetchWabaDetails: vi.fn(),
     fetchPhoneNumberDetails: vi.fn(),
     fetchBusinessProfile: vi.fn(),
+    updateBusinessProfile: vi.fn(),
     registerPhoneNumber: vi.fn(),
     deregisterPhoneNumber: vi.fn(),
     setPhoneNumberPin: vi.fn(),

@@ -28,13 +28,12 @@ export default async function LocalizedLoginPage({ params }: Props) {
   }
 
   setRequestLocale(locale);
+
   const t = await getTranslations('Auth.pages.login');
 
   return (
-    <AuthCard
-      title={t('title')}
-      subtitle={t('subtitle')}
-      FormComponent={LoginForm}
-    />
+    <AuthCard title={t('title')} subtitle={t('subtitle')} formKey="login">
+      <LoginForm />
+    </AuthCard>
   );
 }

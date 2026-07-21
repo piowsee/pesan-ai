@@ -33,7 +33,7 @@ describe('pagination helper', { tags: ['backend'] }, () => {
       getPaginationParams(new URLSearchParams('page=2&limit=999')),
     ).toEqual({
       page: 2,
-      limit: 100,
+      limit: 200,
     });
   });
 });

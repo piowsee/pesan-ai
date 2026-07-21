@@ -9,7 +9,7 @@ export default async function AdminPage({
   const { locale } = await params;
   setRequestLocale(locale);
   return (
-    <div className="flex min-h-[calc(100svh-5rem)] items-center justify-center">
+    <div className="mx-auto flex min-h-[calc(100svh-4.5rem)] w-full max-w-5xl items-start justify-center pt-12 sm:pt-16">
       <AdminDashboardCard />
     </div>
   );

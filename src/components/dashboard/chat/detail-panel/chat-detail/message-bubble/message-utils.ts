@@ -9,6 +9,8 @@ import {
 
 import type { MediaMessageType } from './types';
 
+type VisualMediaOrientation = 'landscape' | 'portrait' | 'square';
+
 const mediaTypeIcons = {
   audio: MusicIcon,
   document: FileTextIcon,
@@ -41,4 +43,28 @@ function getMediaTitle(message: ChatMessage, fallback: string) {
   return message.mediaFilename || message.mediaMimeType || fallback;
 }
 
-export { formatByteSize, getMediaTitle, isMediaMessageType, mediaTypeIcons };
+function getVisualMediaOrientation(
+  width: number,
+  height: number,
+): VisualMediaOrientation {
+  const aspectRatio = width / height;
+
+  if (aspectRatio > 1.08) {
+    return 'landscape';
+  }
+
+  if (aspectRatio < 0.92) {
+    return 'portrait';
+  }
+
+  return 'square';
+}
+
+export {
+  formatByteSize,
+  getMediaTitle,
+  getVisualMediaOrientation,
+  isMediaMessageType,
+  mediaTypeIcons,
+};
+export type { VisualMediaOrientation };

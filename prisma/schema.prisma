@@ -90,9 +90,7 @@ model Verification {
 model WhatsappBusinessAccount {
   id                  String   @id @default(cuid())
   wabaId              String   @unique // Meta WABA ID — already indexed via @unique
-  businessName        String?
-  businessAddress     String?
-  businessDescription String?
+  name                String?
   systemUserToken     String
   status              String   @default("active") // active, disconnected, suspended
   qualityRating       String?  // GREEN, YELLOW, RED
@@ -133,6 +131,7 @@ model PhoneNumber {
 
   conversations Conversation[]
   syncRequests  SyncRequest[]
+  contacts      Contact[]
 
   @@index([wabaId], name: "idx_phone_number_wabaId")
   @@map("phone_number")
@@ -158,22 +157,26 @@ model BotWebhook {
 
 model Contact {
   id               String   @id @default(cuid())
-  bsuid            String?  @unique // WhatsApp Business-scoped user ID (BSUID / user_id), absent on some message echoes
-  customerPhone    String?  @unique
+  bsuid            String?  // WhatsApp Business-scoped user ID (BSUID / user_id), absent on some message echoes
+  customerPhone    String?  
   customerName     String?
   customerUsername String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  conversations Conversation[]
+  phoneNumberId    String
+  phoneNumber      PhoneNumber @relation(fields: [phoneNumberId], references: [id])
 
-  @@index([customerUsername], name: "idx_contact_customer_username")
+  conversation Conversation?
+
+  @@unique([phoneNumberId, bsuid])
+  @@unique([phoneNumberId, customerPhone])
   @@map("contact")
 }
 
 model Conversation {
   id                    String    @id @default(cuid())
-  contactId             String
+  contactId             String    @unique
   messagingProduct      String    @default("whatsapp") // literal "whatsapp"
   adminTakeover         Boolean   @default(false) // Admin has taken over (bot paused)
   lastMessageAt         DateTime?
@@ -190,9 +193,7 @@ model Conversation {
 
   messages Message[]
 
-  @@unique([phoneNumberId, contactId], name: "unique_conversation")
-  @@index([lastMessageAt], name: "idx_conversations_last_message")
-  @@index([contactId], name: "idx_conversations_contact_id")
+  @@index([phoneNumberId, lastMessageAt(sort: Desc)], name: "idx_conversations_phone_last_message")
   @@map("conversation")
 }
 

@@ -73,8 +73,8 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
       where: {
         OR: [
           { wabaId: 'test-upsert-waba-999' },
-          { businessName: { contains: 'Test-Waba-' } },
-          { businessName: 'Test Salon' },
+          { name: { contains: 'Test-Waba-' } },
+          { name: 'Test Salon' },
         ],
       },
     });
@@ -164,7 +164,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:mock-token',
-        businessName: 'Test-Waba-Status',
+        name: 'Test-Waba-Status',
       });
 
       const result = await WabaRepository.updateStatusByMetaWabaId({
@@ -189,11 +189,11 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:mock-token',
-        businessName: 'Test Salon',
+        name: 'Test Salon',
       });
 
       expect(result.wabaId).toBe(TEST_WABA_ID);
-      expect(result.businessName).toBe('Test Salon');
+      expect(result.name).toBe('Test Salon');
       expect(result.status).toBe('active');
     });
 
@@ -202,32 +202,32 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:old-token',
-        businessName: 'Original Name',
+        name: 'Original Name',
       });
 
       const updated = await WabaRepository.upsertWaba({
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:new-token',
-        businessName: 'Updated Name',
+        name: 'Updated Name',
       });
 
       expect(updated.systemUserToken).toBe('enc:new-token');
-      expect(updated.businessName).toBe('Updated Name');
+      expect(updated.name).toBe('Updated Name');
     });
 
-    it('preserves null businessName when not provided on create', async () => {
+    it('preserves null name when not provided on create', async () => {
       await WabaRepository.upsertWaba({
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:tok',
-        businessName: null,
+        name: null,
       });
 
       const result = await prisma.whatsappBusinessAccount.findUnique({
         where: { wabaId: TEST_WABA_ID },
       });
-      expect(result?.businessName).toBeNull();
+      expect(result?.name).toBeNull();
     });
 
     it('throws when the WABA already belongs to a different user', async () => {
@@ -235,7 +235,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
         wabaId: TEST_WABA_ID,
         userId,
         systemUserToken: 'enc:owner-token',
-        businessName: 'Owner Waba',
+        name: 'Owner Waba',
       });
 
       await expect(
@@ -243,7 +243,7 @@ describe('WabaRepository Integration', { tags: ['db'] }, () => {
           wabaId: TEST_WABA_ID,
           userId: anotherUserId,
           systemUserToken: 'enc:intruder-token',
-          businessName: 'Intruder Waba',
+          name: 'Intruder Waba',
         }),
       ).rejects.toMatchObject({
         status: 409,

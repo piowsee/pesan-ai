@@ -53,16 +53,16 @@ function EmptyState({
   hasFilters: boolean;
   onClearFilters: () => void;
 }) {
-  const t = useTranslations('Customers.empty');
+  const t = useTranslations('Customers.table');
   return (
     <div className="flex min-h-72 flex-col items-center justify-start gap-5 px-6 pt-8 pb-10 text-center">
       <UsersRound className="size-12 text-brand" />
       <div className="flex max-w-lg flex-col gap-2">
         <p className="text-xl font-semibold tracking-tight text-brand sm:text-2xl">
-          {hasFilters ? t('filteredTitle') : t('title')}
+          {hasFilters ? t('noMatch') : t('empty')}
         </p>
         <p className="text-sm leading-relaxed text-brand sm:text-base sm:leading-7">
-          {hasFilters ? t('filteredDescription') : t('description')}
+          {hasFilters ? t('noMatchDescription') : t('emptyDescription')}
         </p>
       </div>
       {hasFilters ? (
@@ -73,7 +73,7 @@ function EmptyState({
           onClick={onClearFilters}
         >
           <X data-icon="inline-start" />
-          {t('clearAction')}
+          {t('clearFilters')}
         </Button>
       ) : null}
     </div>

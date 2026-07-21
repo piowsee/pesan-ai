@@ -144,16 +144,13 @@ export const ConversationRepository = {
 
     const result = await prisma.$transaction(async (tx) => {
       const contact = await ContactRepository.upsertContact(
-        { bsuid, customerPhone, customerName, customerUsername },
+        { phoneNumberId, bsuid, customerPhone, customerName, customerUsername },
         tx,
       );
 
       const conversation = await tx.conversation.upsert({
         where: {
-          unique_conversation: {
-            phoneNumberId,
-            contactId: contact.id,
-          },
+          contactId: contact.id,
         },
         update: {},
         create: {

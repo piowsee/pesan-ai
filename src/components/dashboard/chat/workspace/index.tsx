@@ -9,7 +9,7 @@ import {
   captureUnreadDividerSnapshot,
   clearUnreadDividerSnapshot,
   getUnreadDividerInitialCount,
-  hasUnreadDividerSnapshot,
+  removeUnreadDividerSnapshot,
 } from '@/components/dashboard/chat/shared/unread-divider';
 import {
   CHAT_BASE_PARAM_KEYS,
@@ -28,11 +28,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useChatSSE } from '@/hooks/use-chat-sse';
 import {
   useConversations,
+  useDecrementConversationUnreadCount,
   useMarkAsRead,
   useUpdateAdminTakeover,
 } from '@/hooks/use-conversations';
 import { useDebounce } from '@/hooks/use-debounce';
 import {
+  getMediaObjectKeysFromMessageGroups,
+  useMessageMediaDownloadUrls,
   useMessages,
   useSendMediaMessage,
   useSendMessage,
@@ -57,25 +60,20 @@ function isChatSidebarFilter(value: string | null): value is ChatSidebarFilter {
 
 export function ChatWorkspaceSkeleton() {
   return (
-    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-      <div className="shrink-0 border-b border-brand/15 bg-background">
-        <div className="flex h-15 items-center px-4">
-          <Skeleton className="ml-4 h-8 w-40 rounded-md" />
+    <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
+      <div className="flex h-full w-full shrink-0 flex-col border-r bg-background lg:w-90">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+          <Skeleton className="h-10 w-40 rounded-lg" />
+          <Skeleton className="h-10 w-28 rounded-lg" />
         </div>
-      </div>
 
-      <div
-        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
-        style={{ contain: 'strict' }}
-      >
-        <div className="hidden h-full w-95 shrink-0 border-r border-brand/10 bg-background lg:flex lg:flex-col">
+        <div className="min-h-0 flex-1">
           <div className="flex flex-col gap-3 px-4 py-4">
             <Skeleton className="h-9 w-full rounded-full" />
             <div className="flex items-center gap-2">
               <Skeleton className="h-8 w-12 rounded-full" />
               <Skeleton className="h-8 w-16 rounded-full" />
               <Skeleton className="h-8 w-12 rounded-full" />
-              <Skeleton className="ml-auto h-8 w-28 rounded-full" />
             </div>
           </div>
 
@@ -91,36 +89,36 @@ export function ChatWorkspaceSkeleton() {
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="flex min-w-0 flex-1 flex-col bg-brand/5">
-          <div className="border-b bg-background px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Skeleton className="size-11 shrink-0 rounded-full" />
-              <div className="flex flex-col gap-2">
-                <Skeleton className="h-4 w-40 rounded-md" />
-                <Skeleton className="h-3 w-32 rounded-md" />
+      <div className="hidden min-w-0 flex-1 flex-col bg-background lg:flex">
+        <div className="flex h-18 shrink-0 items-center border-b border-border/60 px-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="size-10 shrink-0 rounded-full" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-40 rounded-md" />
+              <Skeleton className="h-3 w-32 rounded-md" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 px-4 py-4 lg:px-6">
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={index}
+                className={
+                  index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
+                }
+              >
+                <Skeleton className="h-20 w-[min(24rem,75%)] rounded-[20px]" />
               </div>
-            </div>
+            ))}
           </div>
+        </div>
 
-          <div className="flex-1 px-4 py-4 lg:px-6">
-            <div className="flex flex-col gap-4">
-              {Array.from({ length: 7 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={
-                    index % 2 === 0 ? 'flex justify-start' : 'flex justify-end'
-                  }
-                >
-                  <Skeleton className="h-20 w-[min(24rem,75%)] rounded-[20px]" />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="shrink-0 px-4 py-4 lg:px-6">
-            <Skeleton className="h-16 w-full rounded-[18px]" />
-          </div>
+        <div className="shrink-0 px-4 py-4 lg:px-6">
+          <Skeleton className="h-16 w-full rounded-[18px]" />
         </div>
       </div>
     </div>
@@ -339,13 +337,26 @@ export function ChatWorkspace() {
     refetch,
   } = useConversations(activeWabaId);
 
+  const inlineSelectedConversation = convData?.chats?.find(
+    (c) => c.id === selectedConversationId,
+  );
+  const selectedInitialUnreadCountForMessages = getUnreadDividerInitialCount({
+    conversationId: selectedConversationId,
+    conversationUnreadCount: inlineSelectedConversation?.unreadCount,
+    snapshotByConversation: initialUnreadCountByConversation,
+  });
+
   const {
     data: groupedMessages,
     isLoading: isMessagesLoading,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useMessages(activeWabaId, selectedConversationId);
+  } = useMessages(
+    activeWabaId,
+    selectedConversationId,
+    selectedInitialUnreadCountForMessages,
+  );
 
   useChatSSE({
     viewingConversationId: selectedConversationId,
@@ -480,6 +491,26 @@ export function ChatWorkspace() {
   ]);
 
   const messages = useMemo(() => groupedMessages ?? [], [groupedMessages]);
+  const mediaObjectKeys = useMemo(
+    () => getMediaObjectKeysFromMessageGroups(messages),
+    [messages],
+  );
+  const {
+    data: mediaDownloadUrls = {},
+    error: mediaDownloadUrlsError,
+    isError: isMediaDownloadUrlsError,
+    isStale: areMediaDownloadUrlsStale,
+    refetch: refetchMediaDownloadUrls,
+  } = useMessageMediaDownloadUrls({
+    wabaId: activeWabaId,
+    convId: selectedConversationId,
+    keys: mediaObjectKeys,
+    enabled: !isMessagesLoading,
+  });
+  const refreshMediaDownloadUrls = useCallback(
+    async () => (await refetchMediaDownloadUrls()).data,
+    [refetchMediaDownloadUrls],
+  );
   const shouldShowConversationListSkeleton =
     Boolean(activeWabaId) &&
     (isConversationsLoading || isConversationsPlaceholderData);
@@ -490,18 +521,17 @@ export function ChatWorkspace() {
         notes: '',
       })
     : { label: '', notes: '' };
-  const hasSelectedUnreadDividerSnapshot = hasUnreadDividerSnapshot({
-    conversationId: selectedConversationId,
-    snapshotByConversation: initialUnreadCountByConversation,
-  });
   const selectedInitialUnreadCount = getUnreadDividerInitialCount({
     conversationId: selectedConversationId,
     conversationUnreadCount: selectedConversation?.unreadCount,
     snapshotByConversation: initialUnreadCountByConversation,
   });
+  const selectedUnreadCount = Number(selectedConversation?.unreadCount ?? 0);
 
   const showMobileDetail = Boolean(selectedConversationId);
   const { mutate: markAsRead } = useMarkAsRead();
+  const decrementConversationUnreadCount =
+    useDecrementConversationUnreadCount();
   const {
     mutate: updateAdminTakeover,
     isPending: isUpdatingAdminTakeover,
@@ -518,6 +548,15 @@ export function ChatWorkspace() {
       );
       const unreadCount = Number(conversation?.unreadCount ?? 0);
 
+      if (selectedConversationId && selectedConversationId !== conversationId) {
+        setInitialUnreadCountByConversation((current) =>
+          removeUnreadDividerSnapshot({
+            conversationId: selectedConversationId,
+            snapshotByConversation: current,
+          }),
+        );
+      }
+
       setInitialUnreadCountByConversation((current) =>
         captureUnreadDividerSnapshot({
           conversationId,
@@ -532,45 +571,9 @@ export function ChatWorkspace() {
         keys: CHAT_DETAIL_PARAM_KEYS,
         updates: { panel: undefined },
       });
-
-      if (activeWabaId && unreadCount > 0) {
-        markAsRead({ wabaId: activeWabaId, convId: conversationId });
-      }
     },
-    [activeWabaId, allConversations, markAsRead, pushChatRoute],
+    [activeWabaId, allConversations, pushChatRoute, selectedConversationId],
   );
-
-  useEffect(() => {
-    if (
-      !activeWabaId ||
-      !selectedConversation ||
-      hasSelectedUnreadDividerSnapshot
-    ) {
-      return;
-    }
-
-    const unreadCount = Number(selectedConversation.unreadCount ?? 0);
-    if (unreadCount <= 0) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setInitialUnreadCountByConversation((current) => ({
-        ...current,
-        [selectedConversation.id]: unreadCount,
-      }));
-      markAsRead({ wabaId: activeWabaId, convId: selectedConversation.id });
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [
-    activeWabaId,
-    markAsRead,
-    hasSelectedUnreadDividerSnapshot,
-    selectedConversation,
-  ]);
 
   const handleToggleTakeover = useCallback(
     (conversationId: string, nextAdminTakeover: boolean) => {
@@ -602,16 +605,65 @@ export function ChatWorkspace() {
   const { mutate: sendMessage } = useSendMessage();
   const { mutate: sendMediaMessage } = useSendMediaMessage();
 
+  const handleClearUnread = useCallback(() => {
+    if (!selectedConversationId || !activeWabaId) {
+      return;
+    }
+
+    setInitialUnreadCountByConversation((current) =>
+      clearUnreadDividerSnapshot({
+        conversationId: selectedConversationId,
+        snapshotByConversation: current,
+      }),
+    );
+
+    if (selectedUnreadCount > 0) {
+      markAsRead({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+      });
+    }
+  }, [activeWabaId, markAsRead, selectedConversationId, selectedUnreadCount]);
+
+  const handleUnreadMessagesViewed = useCallback(
+    (viewedCount: number) => {
+      if (
+        !selectedConversationId ||
+        !activeWabaId ||
+        selectedUnreadCount <= 0 ||
+        viewedCount <= 0
+      ) {
+        return;
+      }
+
+      if (viewedCount >= selectedUnreadCount) {
+        markAsRead({
+          wabaId: activeWabaId,
+          convId: selectedConversationId,
+        });
+        return;
+      }
+
+      decrementConversationUnreadCount({
+        wabaId: activeWabaId,
+        convId: selectedConversationId,
+        viewedCount,
+      });
+    },
+    [
+      activeWabaId,
+      decrementConversationUnreadCount,
+      markAsRead,
+      selectedConversationId,
+      selectedUnreadCount,
+    ],
+  );
+
   const handleSendMessage = useCallback(
     (content: string) => {
       if (!selectedConversationId || !activeWabaId) return;
 
-      setInitialUnreadCountByConversation((current) =>
-        clearUnreadDividerSnapshot({
-          conversationId: selectedConversationId,
-          snapshotByConversation: current,
-        }),
-      );
+      handleClearUnread();
       setLocalSendScrollSignal((value) => value + 1);
       sendMessage({
         wabaId: activeWabaId,
@@ -619,28 +671,23 @@ export function ChatWorkspace() {
         content,
       });
     },
-    [activeWabaId, selectedConversationId, sendMessage],
+    [activeWabaId, handleClearUnread, selectedConversationId, sendMessage],
   );
 
   const handleSendMediaMessage = useCallback(
-    ({ caption, file }: { file: File; caption?: string }) => {
-      if (!selectedConversationId || !activeWabaId) return;
+    ({ files }: { files: Array<{ file: File; caption?: string }> }) => {
+      if (!selectedConversationId || !activeWabaId || files.length === 0)
+        return;
 
-      setInitialUnreadCountByConversation((current) =>
-        clearUnreadDividerSnapshot({
-          conversationId: selectedConversationId,
-          snapshotByConversation: current,
-        }),
-      );
+      handleClearUnread();
       setLocalSendScrollSignal((value) => value + 1);
       sendMediaMessage({
         wabaId: activeWabaId,
         convId: selectedConversationId,
-        file,
-        caption,
+        files,
       });
     },
-    [activeWabaId, selectedConversationId, sendMediaMessage],
+    [activeWabaId, handleClearUnread, selectedConversationId, sendMediaMessage],
   );
 
   const isWaitingForInitialWaba = isWabasLoading && !data;
@@ -651,118 +698,140 @@ export function ChatWorkspace() {
   }
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-background">
-      <ChatWorkspaceHeader
-        wabas={wabas}
-        activeWabaId={activeWaba?.id}
-        onSelectWaba={(wabaId) => {
-          pushChatRoute({
-            wabaId,
-            keys: CHAT_LIST_PARAM_KEYS,
-            updates: { panel: undefined },
-          });
-        }}
-      />
-
-      <div
-        className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
-        style={{ contain: 'strict' }}
-      >
-        <ChatConversationPane
-          searchValue={searchValue}
-          onSearchChange={(value) => {
-            replaceChatSearchState({ q: value.trim() ? value : undefined });
-          }}
-          filter={filter}
-          onFilterChange={(value) => {
-            replaceChatSearchState({
-              filter: value === 'all' ? undefined : value,
-            });
-          }}
+    <div
+      className="relative flex h-full w-full min-w-0 overflow-hidden bg-background"
+      style={{ contain: 'strict' }}
+    >
+      <div className="relative z-10 flex h-full w-full shrink-0 flex-col bg-background lg:w-90">
+        <ChatWorkspaceHeader
+          wabas={wabas}
+          activeWabaId={activeWaba?.id}
           phoneNumbers={phoneNumbers}
           selectedPhoneNumberId={selectedPhoneNumberId}
-          onPhoneNumberChange={(value) => {
-            replaceChatSearchState({ phoneNumberId: value });
-          }}
-          conversations={filteredConversations}
-          activeConversationId={selectedConversationId}
-          isLoading={shouldShowConversationListSkeleton}
-          isError={Boolean(activeWabaId) && isConversationsError}
-          errorMessage={conversationsError?.message}
-          onRetry={() => {
-            if (activeWabaId) {
-              void refetch();
-            }
-          }}
-          onSelectConversation={handleSelectConversation}
-          onToggleTakeover={handleToggleTakeover}
-          pendingTakeoverConversationId={pendingTakeoverConversationId}
-          showMobileDetail={showMobileDetail}
-          emptyTitle={
-            activeWabaId ? t('empty.noConversations') : t('empty.selectWaba')
-          }
-          emptyDescription={
-            activeWabaId
-              ? t('empty.noConversationsDesc')
-              : t('empty.selectWabaDesc')
-          }
-        />
-
-        <ChatDetailPane
-          selectedConversationId={selectedConversationId}
-          conversation={selectedConversation}
-          activeWabaId={activeWabaId}
-          messages={messages}
-          isLoading={isConversationsLoading || isMessagesLoading}
-          hasNextPage={Boolean(hasNextPage)}
-          isFetchingNextPage={isFetchingNextPage}
-          onLoadOlder={() => {
-            if (hasNextPage) {
-              void fetchNextPage();
-            }
-          }}
-          localSendScrollSignal={localSendScrollSignal}
-          initialUnreadCount={selectedInitialUnreadCount}
-          onSend={handleSendMessage}
-          onSendMedia={handleSendMediaMessage}
-          showMobileDetail={showMobileDetail}
-          isContactInfoOpen={isContactInfoOpen}
-          onBack={() => {
+          onSelectWaba={(wabaId) => {
             pushChatRoute({
-              wabaId: activeWabaId,
+              wabaId,
               keys: CHAT_LIST_PARAM_KEYS,
               updates: { panel: undefined },
             });
           }}
-          onContactAreaClick={() => {
-            replaceChatSearchState({
-              panel: isContactInfoOpen ? undefined : 'contact',
-            });
+          onPhoneNumberChange={(value) => {
+            replaceChatSearchState({ phoneNumberId: value });
           }}
-          onToggleTakeover={handleToggleTakeover}
-          pendingTakeoverConversationId={pendingTakeoverConversationId}
         />
 
-        <ChatContactPanel
-          conversation={selectedConversation}
-          isOpen={isContactInfoOpen}
-          draft={selectedContactDraft}
-          onDraftChange={(draft) => {
-            if (!selectedConversation) {
-              return;
+        <div className="relative min-h-0 flex-1">
+          <ChatConversationPane
+            searchValue={searchValue}
+            onSearchChange={(value) => {
+              replaceChatSearchState({ q: value.trim() ? value : undefined });
+            }}
+            filter={filter}
+            onFilterChange={(value) => {
+              replaceChatSearchState({
+                filter: value === 'all' ? undefined : value,
+              });
+            }}
+            conversations={filteredConversations}
+            activeConversationId={selectedConversationId}
+            isLoading={shouldShowConversationListSkeleton}
+            isError={Boolean(activeWabaId) && isConversationsError}
+            errorMessage={conversationsError?.message}
+            onRetry={() => {
+              if (activeWabaId) {
+                void refetch();
+              }
+            }}
+            onSelectConversation={handleSelectConversation}
+            showMobileDetail={showMobileDetail}
+            emptyTitle={
+              activeWabaId ? t('empty.noConversations') : t('empty.selectWaba')
             }
+            emptyDescription={
+              activeWabaId
+                ? t('empty.noConversationsDesc')
+                : t('empty.selectWabaDesc')
+            }
+          />
+        </div>
 
-            setContactDetailsByConversation((prev) => ({
-              ...prev,
-              [selectedConversation.id]: draft,
-            }));
-          }}
-          onClose={() => {
-            replaceChatSearchState({ panel: undefined });
-          }}
-          showMobileBackButton={showMobileDetail}
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-0 right-0 z-20 hidden w-px bg-border lg:block"
         />
       </div>
+
+      <ChatDetailPane
+        selectedConversationId={selectedConversationId}
+        conversation={selectedConversation}
+        activeWabaId={activeWabaId}
+        messages={messages}
+        mediaDownloadUrls={mediaDownloadUrls}
+        mediaDownloadUrlsError={mediaDownloadUrlsError}
+        isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+        areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+        onRefreshMediaDownloadUrls={refreshMediaDownloadUrls}
+        isConversationLoading={isConversationsLoading}
+        isMessagesLoading={isMessagesLoading}
+        hasNextPage={Boolean(hasNextPage)}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadOlder={() => {
+          if (hasNextPage) {
+            void fetchNextPage();
+          }
+        }}
+        localSendScrollSignal={localSendScrollSignal}
+        initialUnreadCount={selectedInitialUnreadCount}
+        unreadCount={selectedUnreadCount}
+        onClearUnread={handleClearUnread}
+        onUnreadMessagesViewed={handleUnreadMessagesViewed}
+        onSend={handleSendMessage}
+        onSendMedia={handleSendMediaMessage}
+        showMobileDetail={showMobileDetail}
+        isContactInfoOpen={isContactInfoOpen}
+        onBack={() => {
+          if (selectedConversationId) {
+            setInitialUnreadCountByConversation((current) =>
+              removeUnreadDividerSnapshot({
+                conversationId: selectedConversationId,
+                snapshotByConversation: current,
+              }),
+            );
+          }
+          pushChatRoute({
+            wabaId: activeWabaId,
+            keys: CHAT_LIST_PARAM_KEYS,
+            updates: { panel: undefined },
+          });
+        }}
+        onContactAreaClick={() => {
+          replaceChatSearchState({
+            panel: isContactInfoOpen ? undefined : 'contact',
+          });
+        }}
+        onToggleTakeover={handleToggleTakeover}
+        pendingTakeoverConversationId={pendingTakeoverConversationId}
+      />
+
+      <ChatContactPanel
+        conversation={selectedConversation}
+        isOpen={isContactInfoOpen}
+        draft={selectedContactDraft}
+        onDraftChange={(draft) => {
+          if (!selectedConversation) {
+            return;
+          }
+
+          setContactDetailsByConversation((prev) => ({
+            ...prev,
+            [selectedConversation.id]: draft,
+          }));
+        }}
+        onClose={() => {
+          replaceChatSearchState({ panel: undefined });
+        }}
+        showMobileBackButton={showMobileDetail}
+      />
     </div>
   );
 }

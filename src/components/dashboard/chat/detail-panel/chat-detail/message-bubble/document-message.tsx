@@ -1,37 +1,163 @@
-import { Spinner } from '@/components/ui/spinner';
-import { FileTextIcon } from 'lucide-react';
 import type { MouseEvent } from 'react';
+import type { IconType } from 'react-icons';
+import {
+  FaFile,
+  FaFileAudio,
+  FaFileCode,
+  FaFileCsv,
+  FaFileExcel,
+  FaFileImage,
+  FaFileLines,
+  FaFilePdf,
+  FaFilePowerpoint,
+  FaFileVideo,
+  FaFileWord,
+  FaFileZipper,
+} from 'react-icons/fa6';
 
 import { MessageCaption } from './message-caption';
 import { formatByteSize } from './message-utils';
 import type { MediaRendererProps } from './types';
 
-const documentTypeByMimeType: Record<string, string> = {
-  'application/msword': 'DOC',
-  'application/pdf': 'PDF',
-  'application/vnd.ms-excel': 'XLS',
-  'application/vnd.ms-powerpoint': 'PPT',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-    'PPTX',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-    'DOCX',
-  'text/plain': 'TXT',
+export type DocumentVisual = {
+  Icon: IconType;
+  colorClassName: string;
+  label: string;
 };
 
-function getDocumentType({
+const documentVisuals: Record<string, DocumentVisual> = {
+  pdf: { Icon: FaFilePdf, colorClassName: 'text-red-600', label: 'PDF' },
+  doc: { Icon: FaFileWord, colorClassName: 'text-blue-600', label: 'DOC' },
+  docx: { Icon: FaFileWord, colorClassName: 'text-blue-600', label: 'DOCX' },
+  xls: { Icon: FaFileExcel, colorClassName: 'text-emerald-600', label: 'XLS' },
+  xlsx: {
+    Icon: FaFileExcel,
+    colorClassName: 'text-emerald-600',
+    label: 'XLSX',
+  },
+  csv: { Icon: FaFileCsv, colorClassName: 'text-emerald-600', label: 'CSV' },
+  ppt: {
+    Icon: FaFilePowerpoint,
+    colorClassName: 'text-orange-600',
+    label: 'PPT',
+  },
+  pptx: {
+    Icon: FaFilePowerpoint,
+    colorClassName: 'text-orange-600',
+    label: 'PPTX',
+  },
+  txt: {
+    Icon: FaFileLines,
+    colorClassName: 'text-slate-500',
+    label: 'TXT',
+  },
+  md: {
+    Icon: FaFileLines,
+    colorClassName: 'text-slate-500',
+    label: 'MD',
+  },
+  zip: {
+    Icon: FaFileZipper,
+    colorClassName: 'text-amber-600',
+    label: 'ZIP',
+  },
+  rar: {
+    Icon: FaFileZipper,
+    colorClassName: 'text-amber-600',
+    label: 'RAR',
+  },
+  '7z': {
+    Icon: FaFileZipper,
+    colorClassName: 'text-amber-600',
+    label: '7Z',
+  },
+  json: {
+    Icon: FaFileCode,
+    colorClassName: 'text-indigo-500',
+    label: 'JSON',
+  },
+  xml: {
+    Icon: FaFileCode,
+    colorClassName: 'text-indigo-500',
+    label: 'XML',
+  },
+};
+
+const documentExtensionByMimeType: Record<string, string> = {
+  'application/msword': 'doc',
+  'application/pdf': 'pdf',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    'pptx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'docx',
+  'application/x-7z-compressed': '7z',
+  'application/x-rar-compressed': 'rar',
+  'application/zip': 'zip',
+  'text/csv': 'csv',
+  'text/plain': 'txt',
+};
+
+function getDocumentExtension({
   mediaFilename,
   mediaMimeType,
 }: Pick<MediaRendererProps['message'], 'mediaFilename' | 'mediaMimeType'>) {
-  const fileExtension = mediaFilename?.split('.').pop()?.trim();
+  const fileExtension = mediaFilename?.split('.').pop()?.trim().toLowerCase();
 
   if (fileExtension && fileExtension !== mediaFilename) {
-    return fileExtension.toUpperCase();
+    return fileExtension;
   }
 
   const mimeType = mediaMimeType?.split(';')[0]?.trim().toLowerCase();
 
-  return mimeType ? (documentTypeByMimeType[mimeType] ?? null) : null;
+  return mimeType ? (documentExtensionByMimeType[mimeType] ?? null) : null;
+}
+
+export function getDocumentVisual(
+  message: Pick<
+    MediaRendererProps['message'],
+    'mediaFilename' | 'mediaMimeType'
+  >,
+): DocumentVisual {
+  const extension = getDocumentExtension(message);
+
+  if (extension && documentVisuals[extension]) {
+    return documentVisuals[extension];
+  }
+
+  const mimeType = message.mediaMimeType?.toLowerCase() ?? '';
+
+  if (mimeType.startsWith('image/')) {
+    return {
+      Icon: FaFileImage,
+      colorClassName: 'text-violet-500',
+      label: extension?.toUpperCase() ?? 'IMAGE',
+    };
+  }
+
+  if (mimeType.startsWith('audio/')) {
+    return {
+      Icon: FaFileAudio,
+      colorClassName: 'text-pink-500',
+      label: extension?.toUpperCase() ?? 'AUDIO',
+    };
+  }
+
+  if (mimeType.startsWith('video/')) {
+    return {
+      Icon: FaFileVideo,
+      colorClassName: 'text-cyan-600',
+      label: extension?.toUpperCase() ?? 'VIDEO',
+    };
+  }
+
+  return {
+    Icon: extension ? FaFile : FaFileLines,
+    colorClassName: 'text-slate-500',
+    label: extension?.toUpperCase() ?? 'FILE',
+  };
 }
 
 function DocumentMessage({
@@ -39,12 +165,12 @@ function DocumentMessage({
   getFreshDownloadUrl,
   isDownloadUrlStale,
   message,
+  metadata,
 }: MediaRendererProps) {
   const size = formatByteSize(message.mediaSize);
-  const documentType = getDocumentType(message);
+  const { Icon, colorClassName, label } = getDocumentVisual(message);
   const title = message.mediaFilename || 'Document';
-  const description = [size, documentType].filter(Boolean).join(' · ');
-  const isSending = message.status === 'sending';
+  const description = [label, size].filter(Boolean).join(' · ');
 
   const handleOpenDocument = async (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isDownloadUrlStale || !getFreshDownloadUrl) {
@@ -64,28 +190,28 @@ function DocumentMessage({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-0.5 w-76 max-w-[calc(100vw-3rem)]">
       <a
         href={downloadUrl}
         target="_blank"
         rel="noreferrer"
         onClick={handleOpenDocument}
-        className="flex min-w-60 items-center gap-3 rounded-xl bg-background/50 p-3 text-sm transition-colors hover:bg-background/70"
+        className="flex h-14 w-full items-center gap-2.5 bg-transparent px-2 text-sm"
       >
-        <FileTextIcon className="size-5 shrink-0 text-muted-foreground" />
+        <Icon className={`size-7 shrink-0 ${colorClassName}`} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{title}</span>
-          {description || isSending ? (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              {description ? (
-                <span className="truncate">{description}</span>
-              ) : null}
-              {isSending ? <Spinner className="size-3" /> : null}
+          <span className="block truncate text-[13px] leading-4 font-medium">
+            {title}
+          </span>
+          <span className="mt-1 flex min-h-3 items-end justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-1 text-[10px] leading-none text-muted-foreground">
+              <span className="truncate">{description}</span>
             </span>
-          ) : null}
+            {!message.content ? metadata : null}
+          </span>
         </span>
       </a>
-      <MessageCaption content={message.content} />
+      <MessageCaption content={message.content} metadata={metadata} />
     </div>
   );
 }

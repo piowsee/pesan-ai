@@ -108,7 +108,14 @@
   },
   "Auth": {
     "brandPanel": {
-      "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI."
+      "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI.",
+      "contactHeadline": "Hubungi tim kami untuk menemukan solusi otomatisasi WhatsApp terbaik bagi bisnis Anda."
+    },
+    "panelSwitch": {
+      "contactPrompt": "Belum punya akun?",
+      "contactAction": "Hubungi kami",
+      "loginPrompt": "Sudah memiliki akun?",
+      "loginAction": "Login di sini"
     },
     "pages": {
       "login": {
@@ -138,7 +145,7 @@
           "password": "Kata Sandi",
           "forgotPassword": "Lupa kata sandi?",
           "contactUs": "Hubungi kami",
-          "agreePrefix": "Saya menyetujui",
+          "agreePrefix": "Dengan mendaftar, Anda menyetujui",
           "terms": "Syarat Layanan",
           "and": "dan",
           "privacy": "Kebijakan Privasi",
@@ -365,6 +372,50 @@
       "emailChangeSuccess": "Cek kotak masuk Anda, konfirmasi perubahan dari {currentEmail}. Lalu verifikasi dengan tautan yang dikirim ke {newEmail}."
     }
   },
+  "AccountSettingsDialog": {
+    "labels": {
+      "title": "Pengaturan",
+      "description": "Kelola preferensi workspace dan keamanan akun Anda.",
+      "tabs": {
+        "general": "Umum",
+        "security": "Keamanan"
+      }
+    },
+    "general": {
+      "title": "Umum",
+      "description": "Pilih bahasa yang digunakan di dashboard dan workspace chat Anda.",
+      "language": "Bahasa",
+      "languageDescription": "Untuk mengubah bahasa yang digunakan di dashboard dan workspace chat Anda."
+    },
+    "security": {
+      "labels": {
+        "title": "Keamanan",
+        "description": "Ubah kata sandi login atau kirim tautan reset ke email akun Anda.",
+        "currentPassword": "Kata sandi saat ini",
+        "newPassword": "Kata sandi baru",
+        "confirmPassword": "Konfirmasi kata sandi baru",
+        "forgotPassword": "Lupa kata sandi?",
+        "changePassword": "Ubah kata sandi",
+        "changePasswordDescription": "Untuk mengubah kata sandi login akun Anda atau meminta tautan reset melalui email.",
+        "changingPassword": "Mengubah...",
+        "hidePassword": "Sembunyikan kata sandi",
+        "showPassword": "Tampilkan kata sandi"
+      },
+      "errors": {
+        "currentPasswordRequired": "Kata sandi saat ini wajib diisi",
+        "newPasswordRequired": "Kata sandi baru wajib diisi",
+        "passwordLength": "Kata sandi minimal 8 karakter",
+        "confirmPasswordRequired": "Konfirmasi kata sandi wajib diisi",
+        "passwordMismatch": "Kata sandi tidak cocok",
+        "failedChangePassword": "Gagal mengubah kata sandi",
+        "failedSendReset": "Gagal mengirim tautan reset"
+      },
+      "messages": {
+        "passwordChanged": "Kata sandi berhasil diubah",
+        "resetLinkSent": "Tautan reset kata sandi telah dikirim ke email"
+      }
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "Ups, halaman yang kamu cari tidak tersedia.",
@@ -372,17 +423,23 @@
     "home": "Kembali ke Beranda"
   },
   "Sidebar": {
-    "home": "Beranda",
-    "wabaManagement": "Manajemen WABA",
+    "home": "Ringkasan",
+    "wabaManagement": "Hubungkan App",
     "chat": "Obrolan",
     "customers": "Pelanggan",
     "navigation": "Navigasi",
-    "waba": "WABA"
+    "workspace": "Bisnis",
+    "customer": "Pelanggan",
+    "waba": "WABA",
+    "pinPanel": "Pin panel",
+    "closePanel": "Close panel"
   },
   "ProfileMenu": {
-    "openProfile": "Buka profil",
     "profile": "Profil",
+    "docs": "Pusat Bantuan",
     "settings": "Pengaturan",
+    "general": "Umum",
+    "security": "Keamanan",
     "logout": "Keluar"
   },
   "DashboardHome": {
@@ -575,7 +632,7 @@
   "Chat": {
     "takeover": {
       "enabled": "Pengambilalihan admin diaktifkan",
-      "disabled": "Percakapan dikembalikan ke bot",
+      "disabled": "Percakapan dikembalikan ke Agen AI",
       "error": "Gagal memperbarui status pengambilalihan"
     },
     "empty": {
@@ -588,7 +645,7 @@
       "search": "Cari nomor atau nama",
       "filterAll": "Semua",
       "filterAdmin": "Admin",
-      "filterBot": "Bot",
+      "filterBot": "Agen AI",
       "allPhones": "Semua Telepon"
     },
     "header": {
@@ -597,10 +654,16 @@
     "detail": {
       "emptyTitle": "Pilih percakapan",
       "emptyDesc": "Pilih utas pelanggan dari kotak masuk untuk meninjau riwayat pesan dan melanjutkan percakapan.",
-      "takeoverPrompt": "Selesai membantu pelanggan ini? Tutup percakapan agar bot dapat mengambil alih.",
-      "closeConversation": "Tutup percakapan",
-      "closeDialogTitle": "Tutup percakapan ini?",
-      "closeDialogDesc": "Bot akan melanjutkan penanganan pesan baru dari {name}.",
+      "agentActivePrompt": "Agen AI sedang aktif menangani percakapan ini! Anda dapat mengambil alih kapan saja melalui tombol di bawah.",
+      "agentActiveExpiredPrompt": "Percakapan kedaluwarsa karena tidak ada balasan dari pelanggan selama 24 jam terakhir. Agen AI tetap aktif, namun Anda tidak dapat mengambil alih saat ini.",
+      "takeoverPrompt": "Agen AI sedang dijeda. Kembalikan percakapan ke Agen AI jika Anda sudah selesai.",
+      "takeoverExpiredPrompt": "Percakapan kedaluwarsa karena tidak ada balasan dari pelanggan selama 24 jam terakhir. Anda tidak dapat mengirim pesan, silakan kembalikan percakapan ke Agen AI agar pesan pelanggan selanjutnya dapat dibalas secara otomatis.",
+      "returnToAgent": "Kembalikan ke Agen AI",
+      "returnDialogTitle": "Kembalikan percakapan ini ke Agen AI?",
+      "returnDialogDesc": "Agen AI akan melanjutkan penanganan pesan baru dari {name}.",
+      "takeoverButton": "Ambil Alih Percakapan",
+      "takeoverDialogTitle": "Ambil alih percakapan ini?",
+      "takeoverDialogDesc": "Agen AI akan berhenti membalas {name} sampai Anda mengembalikan percakapan ini ke Agen AI.",
       "cancel": "Batal"
     },
     "composer": {
@@ -608,19 +671,31 @@
       "media": "Foto & video",
       "audio": "Audio",
       "removeMedia": "Hapus lampiran",
+      "audioCaptionNotSupported": "File audio tidak dapat diberi caption",
       "unsupportedFile": "Tipe file ini tidak didukung.",
+      "maxFilesExceeded": "Maksimal {max} file yang dapat dikirim sekaligus.",
       "templateRequired": "Penggunaan pesan templat diwajibkan",
       "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
       "attach": "Lampirkan media",
       "placeholderMedia": "Tambahkan keterangan...",
-      "placeholder": "Pesan...",
+      "placeholder": "Ketik pesan Anda...",
       "placeholderTemplate": "Pesan templat diwajibkan",
+      "closeFormatToolbar": "Tutup",
+      "formatBold": "Tebal",
+      "formatItalic": "Miring",
+      "formatStrikethrough": "Coret",
+      "formatCode": "Kode inline",
+      "formatBulletedList": "Daftar poin",
+      "formatNumberedList": "Daftar nomor",
+      "formatQuote": "Kutipan",
       "send": "Kirim"
     },
     "timeline": {
       "loading": "Memuat pesan",
       "loadOlder": "Muat pesan lebih lama",
-      "empty": "Belum ada pesan untuk percakapan ini."
+      "empty": "Belum ada pesan untuk percakapan ini.",
+      "today": "Hari ini",
+      "yesterday": "Kemarin"
     },
     "status": {
       "sending": "Mengirim",
@@ -637,7 +712,9 @@
     "list": {
       "errorTitle": "Tidak dapat memuat obrolan",
       "errorDesc": "Kotak masuk tidak dapat dimuat saat ini.",
-      "retry": "Coba lagi"
+      "retry": "Coba lagi",
+      "statusAdmin": "Butuh Admin",
+      "statusAiAgent": "AI Agent Aktif"
     },
     "contact": {
       "label": {
@@ -649,9 +726,11 @@
       "close": "Tutup",
       "back": "Kembali ke percakapan",
       "title": "Info kontak",
-      "takeover": "Pengambilalihan",
+      "takeover": "Kontrol Admin",
+      "agentActive": "Agen AI Aktif",
       "lastActivity": "Aktivitas terakhir",
       "connectedVia": "Terhubung via admin",
+      "connectedPlatforms": "Platform terhubung",
       "customerLabel": "Label pelanggan",
       "selectLabel": "Pilih label pelanggan...",
       "customLabel": "Label kustom...",
@@ -661,10 +740,16 @@
       "noteWarning": "Data label dan catatan saat ini disimpan sementara di tampilan obrolan."
     },
     "wabaSwitcher": {
+      "title": "Akun WhatsApp Business",
       "select": "Pilih WABA",
       "search": "Cari WABA atau nomor telepon",
       "noMatch": "Tidak ada WABA yang cocok dengan pencarian ini.",
       "noNumbers": "Tidak ada nomor yang terhubung"
+    },
+    "phoneFilter": {
+      "title": "Nomor Telepon",
+      "search": "Cari nomor telepon",
+      "noMatch": "Tidak ada nomor telepon yang cocok dengan pencarian ini."
     }
   },
   "Admin": {
@@ -687,6 +772,7 @@
       }
     },
     "AdminDashboardCard": {
+      "eyebrow": "Admin",
       "title": "Dashboard Admin",
       "description": "Pilih menu di bawah untuk mengelola sistem.",
       "navigation": {
@@ -706,7 +792,12 @@
     },
     "Header": {
       "logoAlt": "pesan.ai logo",
-      "brandName": "pesan-ai"
+      "brandName": "pesan.ai",
+      "navigation": {
+        "user": "Pengguna",
+        "webhook": "Webhook",
+        "waba": "WABA"
+      }
     },
     "CreateUserDialog": {
       "trigger": "Buat Pengguna",

@@ -1,28 +1,21 @@
 'use client';
 
+import { SingleSelectOption } from '@/components/dashboard/chat/header-panel/single-select-option';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { type Waba } from '@/hooks/use-wabas';
-import { cn } from '@/lib/utils';
-import { CheckIcon, ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, SearchIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { FaWhatsapp } from 'react-icons/fa6';
 
 function getWabaLabel(waba: Waba) {
-  return waba.businessName?.trim() || waba.wabaId;
+  return waba.name?.trim() || waba.wabaId;
 }
 
 export function WabaSwitcher({
@@ -58,72 +51,67 @@ export function WabaSwitcher({
         <Button
           variant="unstyled"
           type="button"
-          className="ml-4 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-left shadow-sm transition-colors hover:bg-muted/50"
+          className="flex h-10 w-full cursor-pointer items-center justify-between gap-1.5 rounded-lg border border-brand/10 bg-background px-3 text-left text-foreground/70 shadow-xs hover:border-brand/20 hover:text-brand focus-visible:text-brand data-[state=open]:border-brand/20 data-[state=open]:text-brand"
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="min-w-0">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <FaWhatsapp className="size-3.5 shrink-0" />
+            <div className="min-w-0 flex-1">
               <div className="truncate text-xs font-semibold">
                 {activeWaba ? getWabaLabel(activeWaba) : t('select')}
               </div>
             </div>
           </div>
-          <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-50" />
+          <ChevronDownIcon className="size-3 shrink-0" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[min(30rem,calc(100vw-2rem))] p-0"
+        className="w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
       >
-        <Command>
-          <CommandInput
+        <div className="px-3 pt-3 pb-2 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+          {t('title')}
+        </div>
+        <div className="relative px-3 pb-3">
+          <SearchIcon className="pointer-events-none absolute top-4.5 left-6 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
             value={query}
-            onValueChange={setQuery}
+            onChange={(event) => setQuery(event.target.value)}
             placeholder={t('search')}
+            className="h-9 bg-background py-1 pr-3 pl-9 text-xs shadow-none"
           />
-          <CommandList>
-            {filteredWabas.length === 0 ? (
-              <CommandEmpty>{t('noMatch')}</CommandEmpty>
-            ) : (
-              <CommandGroup className="p-1">
-                {filteredWabas.map((waba, index) => (
-                  <div key={waba.id}>
-                    {index > 0 ? <CommandSeparator /> : null}
-                    <CommandItem
-                      onSelect={() => {
-                        if (waba.id !== activeWabaId) {
-                          onSelectWaba(waba.id);
-                        }
-                        setOpen(false);
-                        setQuery('');
-                      }}
-                      className="justify-between cursor-pointer"
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate font-medium">
-                          {getWabaLabel(waba)}
-                        </div>
-                        <div className="truncate text-xs text-muted-foreground">
-                          {waba.phoneNumbers
-                            .map(
-                              (phoneNumber) => phoneNumber.displayPhoneNumber,
-                            )
-                            .join(', ') || t('noNumbers')}
-                        </div>
-                      </div>
-                      <CheckIcon
-                        className={cn(
-                          activeWabaId === waba.id
-                            ? 'opacity-100'
-                            : 'opacity-0',
-                        )}
-                      />
-                    </CommandItem>
-                  </div>
-                ))}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
+        </div>
+        <div className="max-h-72 overflow-y-auto px-2 pb-2">
+          {filteredWabas.length === 0 ? (
+            <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+              {t('noMatch')}
+            </p>
+          ) : (
+            filteredWabas.map((waba) => {
+              const isSelected = activeWabaId === waba.id;
+
+              return (
+                <SingleSelectOption
+                  key={waba.id}
+                  isSelected={isSelected}
+                  icon={<FaWhatsapp className="size-4" />}
+                  label={getWabaLabel(waba)}
+                  description={
+                    waba.phoneNumbers
+                      .map((phoneNumber) => phoneNumber.displayPhoneNumber)
+                      .join(', ') || t('noNumbers')
+                  }
+                  onSelect={() => {
+                    if (!isSelected) {
+                      onSelectWaba(waba.id);
+                    }
+                    setOpen(false);
+                    setQuery('');
+                  }}
+                />
+              );
+            })
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );

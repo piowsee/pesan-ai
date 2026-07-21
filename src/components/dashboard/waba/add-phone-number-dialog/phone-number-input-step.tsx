@@ -45,14 +45,14 @@ type AddPhoneNumberFormValues = {
 
 interface PhoneNumberInputStepProps {
   wabaId: string;
-  businessName: string | null;
+  name: string | null;
   onSuccess: (phoneNumberId: string) => void;
   onCancel: () => void;
 }
 
 export function PhoneNumberInputStep({
   wabaId,
-  businessName,
+  name,
   onSuccess,
   onCancel,
 }: PhoneNumberInputStepProps) {
@@ -65,9 +65,13 @@ export function PhoneNumberInputStep({
     resolver: zodResolver(addPhoneNumberSchema(validationErrors)),
     defaultValues: {
       fullPhoneNumber: '',
-      name: businessName || '',
+      name: name || '',
     },
   });
+
+  const fullPhoneNumber = form.watch('fullPhoneNumber');
+  const watchedName = form.watch('name');
+  const isFormFilled = !!fullPhoneNumber?.trim() && !!watchedName?.trim();
 
   async function onPhoneSubmit(values: AddPhoneNumberFormValues) {
     try {
@@ -114,7 +118,7 @@ export function PhoneNumberInputStep({
             <DialogDescription className="mt-1 text-sm leading-relaxed text-brand">
               {t('descriptionPrefix')}
               <span className="font-semibold">
-                {businessName || t('descriptionFallback')}
+                {name || t('descriptionFallback')}
               </span>
               .
             </DialogDescription>
@@ -185,7 +189,11 @@ export function PhoneNumberInputStep({
           >
             {t('cancel')}
           </Button>
-          <Button type="submit" variant="brand" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="brand"
+            disabled={isSubmitting || !isFormFilled}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" data-icon="inline-start" />

@@ -43,7 +43,7 @@ export function getMediaPreviewLabel(type: MediaPreviewMessageType) {
 }
 
 export function getMessagePreview(
-  message?: Pick<ChatMessage, 'type' | 'content'> | null,
+  message?: Pick<ChatMessage, 'type' | 'content' | 'mediaFilename'> | null,
 ) {
   if (!message) {
     return 'No messages yet';
@@ -54,6 +54,12 @@ export function getMessagePreview(
   }
 
   if (isMediaPreviewMessageType(message.type)) {
+    if (message.content?.trim()) {
+      return message.content.trim();
+    }
+    if (message.mediaFilename?.trim()) {
+      return message.mediaFilename.trim();
+    }
     return getMediaPreviewLabel(message.type);
   }
 

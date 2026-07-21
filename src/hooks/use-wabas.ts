@@ -29,7 +29,7 @@ export interface WebhookBasic {
 export interface Waba {
   id: string;
   wabaId: string;
-  businessName?: string | null;
+  name?: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;

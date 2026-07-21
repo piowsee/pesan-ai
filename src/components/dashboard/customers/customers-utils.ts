@@ -13,7 +13,7 @@ export type PhoneFilterOption = {
 };
 
 export function getWabaLabel(waba: Waba) {
-  return waba.businessName?.trim() || waba.wabaId;
+  return waba.name?.trim() || waba.wabaId;
 }
 
 export function getCustomerName(customer: CustomerContact, fallback: string) {

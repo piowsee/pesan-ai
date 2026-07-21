@@ -103,14 +103,14 @@ async function main() {
       update: {},
       create: {
         wabaId: '123456789012345',
-        businessName: 'Piowsee Salon',
+        name: 'Piowsee Salon',
         systemUserToken: 'EAAG...fake_token...',
         status: 'active',
         userId: user.id,
       },
     });
 
-    console.log('WABA created:', waba.businessName);
+    console.log('WABA created:', waba.name);
 
     // 3 Create Bot Webhook
     let webhook = await tx.botWebhook.findFirst({
@@ -183,12 +183,18 @@ async function main() {
     const customerName = 'Budi Santoso';
 
     const contact = await tx.contact.upsert({
-      where: { bsuid: customerBSUID },
+      where: {
+        phoneNumberId_bsuid: {
+          phoneNumberId: phoneNumber.id,
+          bsuid: customerBSUID,
+        },
+      },
       update: {
         customerPhone,
         customerName,
       },
       create: {
+        phoneNumberId: phoneNumber.id,
         bsuid: customerBSUID,
         customerPhone,
         customerName,
@@ -197,10 +203,7 @@ async function main() {
 
     const conversation = await tx.conversation.upsert({
       where: {
-        unique_conversation: {
-          phoneNumberId: phoneNumber.id,
-          contactId: contact.id,
-        },
+        contactId: contact.id,
       },
       update: {},
       create: {

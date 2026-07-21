@@ -10,7 +10,9 @@ const localePrefixRegex = /^\/(id|en)(?=\/|$)/;
 const intlMiddleware = createIntlMiddleware(routing);
 
 export async function proxy(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
+  const sessionCookie = getSessionCookie(request, {
+    cookiePrefix: 'pesan-ai',
+  });
 
   const pathName = request.nextUrl.pathname;
   const localePrefix =
@@ -27,10 +29,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
   }
 
-  // Auto-redirect authenticated users away from the login page
+  // Expired-session returns clear auth cookies here; valid login redirects use a fresh session check in the login page.
   if (sessionCookie && isLoginRoute) {
     if (request.nextUrl.searchParams.get('session_expired') === 'true') {
-      const response = NextResponse.next();
+      const response = intlMiddleware(request);
 
       const cookieOptions = {
         path: '/',
@@ -44,19 +46,18 @@ export async function proxy(request: NextRequest) {
       const prefix = isProd ? '__Secure-' : '';
 
       response.cookies.set(
-        `${prefix}better-auth.session_token`,
+        `${prefix}pesan-ai.session_token`,
         '',
         cookieOptions,
       );
-      response.cookies.set(
-        `${prefix}better-auth.session_data`,
-        '',
-        cookieOptions,
-      );
+      response.cookies.set(`${prefix}pesan-ai.session_data`, '', cookieOptions);
 
       return response;
+    } else {
+      return NextResponse.redirect(
+        new URL(`${localePrefix}/dashboard`, request.url),
+      );
     }
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return intlMiddleware(request);

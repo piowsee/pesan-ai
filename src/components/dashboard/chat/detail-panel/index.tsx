@@ -1,6 +1,9 @@
 import { ChatDetail } from '@/components/dashboard/chat/detail-panel/chat-detail';
 import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
-import type { MessageGroup } from '@/hooks/use-message';
+import type {
+  MediaDownloadUrlResponse,
+  MessageGroup,
+} from '@/hooks/use-message';
 import type { ChatConversation } from '@/types/chat';
 import { InboxIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -10,14 +13,27 @@ interface ChatDetailPaneProps {
   conversation?: ChatConversation;
   selectedConversationId?: string;
   messages: MessageGroup[];
-  isLoading: boolean;
+  mediaDownloadUrls: Record<string, MediaDownloadUrlResponse>;
+  mediaDownloadUrlsError: unknown;
+  isMediaDownloadUrlsError: boolean;
+  areMediaDownloadUrlsStale: boolean;
+  onRefreshMediaDownloadUrls: () => Promise<
+    Record<string, MediaDownloadUrlResponse> | undefined
+  >;
+  isConversationLoading: boolean;
+  isMessagesLoading: boolean;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadOlder: () => void;
   localSendScrollSignal: number;
   initialUnreadCount: number;
+  unreadCount: number;
+  onClearUnread: () => void;
+  onUnreadMessagesViewed: (viewedCount: number) => void;
   onSend: (content: string) => void;
-  onSendMedia: (input: { file: File; caption?: string }) => void;
+  onSendMedia: (input: {
+    files: Array<{ file: File; caption?: string }>;
+  }) => void;
   showMobileDetail: boolean;
   isContactInfoOpen: boolean;
   onBack: () => void;
@@ -34,16 +50,25 @@ export function ChatDetailPane({
   conversation,
   hasNextPage,
   initialUnreadCount,
+  unreadCount,
   isContactInfoOpen,
   isFetchingNextPage,
-  isLoading,
+  isConversationLoading,
+  isMessagesLoading,
   localSendScrollSignal,
   messages,
+  mediaDownloadUrls,
+  mediaDownloadUrlsError,
+  isMediaDownloadUrlsError,
+  areMediaDownloadUrlsStale,
+  onRefreshMediaDownloadUrls,
   onBack,
   onContactAreaClick,
+  onClearUnread,
   onLoadOlder,
   onSend,
   onSendMedia,
+  onUnreadMessagesViewed,
   selectedConversationId,
   showMobileDetail,
   onToggleTakeover,
@@ -59,12 +84,21 @@ export function ChatDetailPane({
           conversation={conversation}
           wabaId={activeWabaId}
           messages={messages}
-          isLoading={isLoading}
+          mediaDownloadUrls={mediaDownloadUrls}
+          mediaDownloadUrlsError={mediaDownloadUrlsError}
+          isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+          areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+          onRefreshMediaDownloadUrls={onRefreshMediaDownloadUrls}
+          isConversationLoading={isConversationLoading}
+          isMessagesLoading={isMessagesLoading}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           onLoadOlder={onLoadOlder}
           localSendScrollSignal={localSendScrollSignal}
           initialUnreadCount={initialUnreadCount}
+          unreadCount={unreadCount}
+          onClearUnread={onClearUnread}
+          onUnreadMessagesViewed={onUnreadMessagesViewed}
           onSend={onSend}
           onSendMedia={onSendMedia}
           showBackButton={showMobileDetail}
@@ -72,9 +106,10 @@ export function ChatDetailPane({
           onContactAreaClick={onContactAreaClick}
           onToggleTakeover={onToggleTakeover}
           pendingTakeoverConversationId={pendingTakeoverConversationId}
+          isContactInfoOpen={isContactInfoOpen}
         />
       ) : (
-        <div className="flex h-full flex-1 items-center justify-center bg-brand/5">
+        <div className="flex h-full flex-1 items-center justify-center bg-background">
           <ChatEmptyState
             title={t('emptyTitle')}
             description={t('emptyDesc')}

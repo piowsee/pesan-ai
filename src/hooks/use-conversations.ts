@@ -9,6 +9,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 // ─── Query Keys ──────────────────────────────────────────────────────
 
@@ -171,6 +172,64 @@ interface UpdateAdminTakeoverData {
 interface ConversationListCache {
   chats: ChatConversation[];
   total: number;
+}
+
+export function getRemainingUnreadCount({
+  currentUnreadCount,
+  viewedCount,
+}: {
+  currentUnreadCount: number;
+  viewedCount: number;
+}) {
+  return Math.max(0, currentUnreadCount - Math.max(0, viewedCount));
+}
+
+export function useDecrementConversationUnreadCount() {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    ({
+      convId,
+      viewedCount,
+      wabaId,
+    }: {
+      convId: string;
+      viewedCount: number;
+      wabaId: string;
+    }) => {
+      let previousUnreadCount = 0;
+      let remainingUnreadCount = 0;
+
+      queryClient.setQueryData<ConversationListCache>(
+        conversationKeys.all(wabaId),
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          return {
+            ...current,
+            chats: current.chats.map((chat) => {
+              if (chat.id !== convId) {
+                return chat;
+              }
+
+              previousUnreadCount = chat.unreadCount;
+              remainingUnreadCount = getRemainingUnreadCount({
+                currentUnreadCount: chat.unreadCount,
+                viewedCount,
+              });
+
+              return { ...chat, unreadCount: remainingUnreadCount };
+            }),
+          };
+        },
+      );
+
+      return { previousUnreadCount, remainingUnreadCount };
+    },
+    [queryClient],
+  );
 }
 
 export function useMarkAsRead() {

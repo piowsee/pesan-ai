@@ -74,7 +74,40 @@ export function applyRealtimeMessageToMessagePage(
     return {
       ...page,
       messages: page.messages.map((message) =>
-        message.id === realtimeMessage.id ? realtimeMessage : message,
+        message.id === realtimeMessage.id
+          ? {
+              ...realtimeMessage,
+              optimisticId: message.optimisticId,
+              localMediaUrl:
+                message.localMediaUrl ?? realtimeMessage.localMediaUrl,
+              ...(message.optimisticId
+                ? {
+                    timestamp: message.timestamp,
+                    createdAt: message.createdAt,
+                  }
+                : {}),
+            }
+          : message,
+      ),
+    };
+  }
+
+  const optimisticMessageIndex = page.messages.findIndex((message) =>
+    isMatchingOptimisticOutgoingMessage(message, realtimeMessage),
+  );
+
+  if (optimisticMessageIndex !== -1) {
+    const optimisticMessage = page.messages[optimisticMessageIndex]!;
+
+    return {
+      ...page,
+      messages: page.messages.map((message, index) =>
+        index === optimisticMessageIndex
+          ? mergeRealtimeMessageIntoOptimisticMessage(
+              optimisticMessage,
+              realtimeMessage,
+            )
+          : message,
       ),
     };
   }
@@ -83,6 +116,64 @@ export function applyRealtimeMessageToMessagePage(
     ...page,
     messages: [realtimeMessage, ...page.messages],
     total: page.total + 1,
+  };
+}
+
+function isOptimisticOutgoingMessage(message: ChatMessage): boolean {
+  return (
+    message.direction === 'outgoing' &&
+    message.status === 'sending' &&
+    message.id.startsWith('optimistic-')
+  );
+}
+
+function isMatchingOptimisticOutgoingMessage(
+  optimisticMessage: ChatMessage,
+  realtimeMessage: ChatMessage,
+): boolean {
+  if (
+    !isOptimisticOutgoingMessage(optimisticMessage) ||
+    realtimeMessage.direction !== 'outgoing' ||
+    optimisticMessage.type !== realtimeMessage.type
+  ) {
+    return false;
+  }
+
+  const optContent = optimisticMessage.content?.trim() || null;
+  const realContent = realtimeMessage.content?.trim() || null;
+  if (optContent !== realContent) {
+    return false;
+  }
+
+  if (optimisticMessage.type === 'text') {
+    return true;
+  }
+
+  const isSameSize = optimisticMessage.mediaSize === realtimeMessage.mediaSize;
+  const isSameMimeType =
+    optimisticMessage.mediaMimeType === realtimeMessage.mediaMimeType;
+
+  // The backend sets mediaFilename only for 'document' types.
+  // For other types (image, audio, video), the backend saves it as null,
+  // but the optimistic message might have it set to the local file name.
+  const isSameFilename =
+    optimisticMessage.type !== 'document' ||
+    optimisticMessage.mediaFilename === realtimeMessage.mediaFilename;
+
+  return isSameFilename && isSameMimeType && isSameSize;
+}
+
+function mergeRealtimeMessageIntoOptimisticMessage(
+  optimisticMessage: ChatMessage,
+  realtimeMessage: ChatMessage,
+): ChatMessage {
+  return {
+    ...realtimeMessage,
+    optimisticId: optimisticMessage.optimisticId ?? optimisticMessage.id,
+    localMediaUrl:
+      optimisticMessage.localMediaUrl ?? realtimeMessage.localMediaUrl,
+    timestamp: optimisticMessage.timestamp,
+    createdAt: optimisticMessage.createdAt,
   };
 }
 

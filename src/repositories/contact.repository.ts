@@ -23,27 +23,23 @@ export const ContactRepository = {
   }): Prisma.PhoneNumberWhereInput {
     const { userId, wabaIds, phoneNumbers } = params;
 
-    return {
-      waba: {
-        userId,
-        ...(wabaIds?.length ? { id: { in: wabaIds } } : {}),
-      },
-      ...(phoneNumbers?.length
-        ? {
-            displayPhoneNumber: {
-              in: phoneNumbers,
-            },
-          }
-        : {}),
+    const wabaFilter: Prisma.WhatsappBusinessAccountWhereInput = {
+      userId,
     };
-  },
 
-  _buildConversationFilter(
-    phoneNumberFilter: Prisma.PhoneNumberWhereInput,
-  ): Prisma.ConversationWhereInput {
-    return {
-      phoneNumber: phoneNumberFilter,
+    if (wabaIds && wabaIds.length > 0) {
+      wabaFilter.id = { in: wabaIds };
+    }
+
+    const filter: Prisma.PhoneNumberWhereInput = {
+      waba: wabaFilter,
     };
+
+    if (phoneNumbers && phoneNumbers.length > 0) {
+      filter.displayPhoneNumber = { in: phoneNumbers };
+    }
+
+    return filter;
   },
 
   _buildPagination(params: {
@@ -74,30 +70,26 @@ export const ContactRepository = {
       wabaIds,
       phoneNumbers,
     });
-    const conversationFilter = this._buildConversationFilter(phoneNumberFilter);
+
+    const contactFilter: Prisma.ContactWhereInput = {
+      phoneNumber: phoneNumberFilter,
+    };
+
     const pagination = this._buildPagination({ page, limit });
 
-    const customerContactQuery = prisma.conversation.findMany({
-      where: conversationFilter,
+    const customerContactQuery = prisma.contact.findMany({
+      where: contactFilter,
       select: {
-        contact: {
-          select: {
-            customerPhone: true,
-            customerName: true,
-            customerUsername: true,
-          },
-        },
+        customerPhone: true,
+        customerName: true,
+        customerUsername: true,
       },
-      distinct: ['contactId'],
-      orderBy: [{ lastMessageAt: 'desc' }, { contactId: 'asc' }],
+      orderBy: { updatedAt: 'desc' },
       ...pagination,
     });
 
     if (!pagination) {
-      const conversations = await customerContactQuery;
-      const customerContacts = conversations.map(
-        (conversation) => conversation.contact,
-      );
+      const customerContacts = await customerContactQuery;
 
       return {
         customerContacts,
@@ -105,24 +97,22 @@ export const ContactRepository = {
       };
     }
 
-    const [conversations, groupedContacts] = await Promise.all([
+    const [customerContacts, total] = await Promise.all([
       customerContactQuery,
-      prisma.conversation.groupBy({
-        by: ['contactId'],
-        where: conversationFilter,
+      prisma.contact.count({
+        where: contactFilter,
       }),
     ]);
 
     return {
-      customerContacts: conversations.map(
-        (conversation) => conversation.contact,
-      ),
-      total: groupedContacts.length,
+      customerContacts,
+      total,
     };
   },
 
   async upsertContact(
     params: {
+      phoneNumberId: string;
       customerPhone?: string | null;
       bsuid?: string | null;
       customerName?: string | null;
@@ -131,6 +121,7 @@ export const ContactRepository = {
     tx?: Prisma.TransactionClient,
   ) {
     const db = tx ?? prisma;
+    const { phoneNumberId } = params;
     const bsuid = params.bsuid?.trim() || undefined;
     const customerPhone = params.customerPhone?.trim() || undefined;
     const customerName = params.customerName?.trim() || undefined;
@@ -140,7 +131,9 @@ export const ContactRepository = {
       throw new Error('Cannot upsert a contact without a phone or BSUID');
     }
 
-    const data: Prisma.ContactUpdateInput = {};
+    const data: Prisma.ContactUpdateInput = {
+      phoneNumber: { connect: { id: phoneNumberId } },
+    };
     if (bsuid) data.bsuid = bsuid;
     if (customerPhone) data.customerPhone = customerPhone;
     if (customerName !== undefined) data.customerName = customerName;
@@ -148,9 +141,13 @@ export const ContactRepository = {
       data.customerUsername = customerUsername;
 
     const existingContact =
-      (bsuid ? await db.contact.findUnique({ where: { bsuid } }) : null) ??
+      (bsuid
+        ? await db.contact.findFirst({ where: { phoneNumberId, bsuid } })
+        : null) ??
       (customerPhone
-        ? await db.contact.findUnique({ where: { customerPhone } })
+        ? await db.contact.findFirst({
+            where: { phoneNumberId, customerPhone },
+          })
         : null);
 
     if (existingContact) {
@@ -160,13 +157,22 @@ export const ContactRepository = {
       });
     }
 
+    const createData: Prisma.ContactCreateInput = {
+      phoneNumber: { connect: { id: phoneNumberId } },
+      ...(bsuid && { bsuid }),
+      ...(customerPhone && { customerPhone }),
+      ...(customerName !== undefined && { customerName }),
+      ...(customerUsername !== undefined && { customerUsername }),
+    };
+
     return db.contact.create({
-      data: data as Prisma.ContactCreateInput,
+      data: createData,
     });
   },
 
   async upsertContactsBulk(
     contacts: Array<{
+      phoneNumberId: string;
       customerPhone?: string | null;
       bsuid?: string | null;
       customerName?: string | null;

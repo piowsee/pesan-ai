@@ -1,13 +1,5 @@
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/motion/tabs';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { ChatSidebarFilter } from '@/types/chat';
 import { SearchIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -17,89 +9,58 @@ export function ChatSidebarToolbar({
   onSearchChange,
   filter,
   onFilterChange,
-  phoneNumbers,
-  selectedPhoneNumberId,
-  onPhoneNumberChange,
 }: {
   searchValue: string;
   onSearchChange: (value: string) => void;
   filter: ChatSidebarFilter;
   onFilterChange: (value: ChatSidebarFilter) => void;
-  phoneNumbers: Array<{ id: string; displayPhoneNumber: string }>;
-  selectedPhoneNumberId?: string;
-  onPhoneNumberChange: (value?: string) => void;
 }) {
   const t = useTranslations('Chat.sidebar');
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-brand/70" />
-        <Input
-          value={searchValue}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={t('search')}
-          className="h-9 border border-brand/20 bg-brand/5 pl-9 placeholder:text-brand/60"
-        />
+    <div className="flex flex-col pt-2">
+      <div className="px-4 pb-1.5">
+        <div className="relative">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchValue}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder={t('search')}
+            className="h-9 bg-background pl-9"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button
-          variant={filter === 'all' ? 'secondary' : 'ghost'}
-          size="sm"
-          className={
-            filter === 'all'
-              ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
-              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
-          }
-          onClick={() => onFilterChange('all')}
+      <div className="flex items-center">
+        <Tabs
+          value={filter}
+          onValueChange={(v) => onFilterChange(v as ChatSidebarFilter)}
+          variant="underline"
+          className="w-full"
         >
-          {t('filterAll')}
-        </Button>
-        <Button
-          variant={filter === 'admin' ? 'secondary' : 'ghost'}
-          size="sm"
-          className={
-            filter === 'admin'
-              ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
-              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
-          }
-          onClick={() => onFilterChange('admin')}
-        >
-          {t('filterAdmin')}
-        </Button>
-        <Button
-          variant={filter === 'bot' ? 'secondary' : 'ghost'}
-          size="sm"
-          className={
-            filter === 'bot'
-              ? 'h-8 cursor-pointer rounded-full bg-brand/12 px-3 text-brand hover:bg-brand/12'
-              : 'h-8 cursor-pointer rounded-full px-3 text-brand/75 hover:bg-brand/8'
-          }
-          onClick={() => onFilterChange('bot')}
-        >
-          {t('filterBot')}
-        </Button>
-
-        <Select
-          value={selectedPhoneNumberId ?? 'all'}
-          onValueChange={(value: string) =>
-            onPhoneNumberChange(value === 'all' ? undefined : value)
-          }
-        >
-          <SelectTrigger className="ml-auto h-8 w-42.5 cursor-pointer gap-2 rounded-full border border-brand/20 bg-brand/5 px-3 text-brand transition-colors hover:bg-brand/10 [&>span]:block [&>span]:truncate">
-            <SelectValue placeholder={t('allPhones')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="all">{t('allPhones')}</SelectItem>
-              {phoneNumbers.map((phoneNumber) => (
-                <SelectItem key={phoneNumber.id} value={phoneNumber.id}>
-                  {phoneNumber.displayPhoneNumber}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+          <TabsList className="flex w-full px-4">
+            <TabsTrigger
+              value="all"
+              className="flex-1 cursor-pointer justify-center text-muted-foreground hover:text-foreground aria-selected:text-brand aria-selected:hover:text-brand"
+              indicatorClassName="bg-brand h-0.5"
+            >
+              {t('filterAll')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="admin"
+              className="flex-1 cursor-pointer justify-center text-muted-foreground hover:text-foreground aria-selected:text-brand aria-selected:hover:text-brand"
+              indicatorClassName="bg-brand h-0.5"
+            >
+              {t('filterAdmin')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="bot"
+              className="flex-1 cursor-pointer justify-center text-muted-foreground hover:text-foreground aria-selected:text-brand aria-selected:hover:text-brand"
+              indicatorClassName="bg-brand h-0.5"
+            >
+              {t('filterBot')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
     </div>
   );

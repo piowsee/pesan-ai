@@ -108,7 +108,14 @@
   },
   "Auth": {
     "brandPanel": {
-      "headline": "Boost your business efficiency through WhatsApp chat automation with AI support."
+      "headline": "Boost your business efficiency through WhatsApp chat automation with AI support.",
+      "contactHeadline": "Get in touch with our team to find the perfect WhatsApp automation solution for your business."
+    },
+    "panelSwitch": {
+      "contactPrompt": "Need an account?",
+      "contactAction": "Contact us",
+      "loginPrompt": "Already have an account?",
+      "loginAction": "Login here"
     },
     "pages": {
       "login": {
@@ -138,7 +145,7 @@
           "password": "Password",
           "forgotPassword": "Forgot password?",
           "contactUs": "Contact us",
-          "agreePrefix": "I agree to the",
+          "agreePrefix": "By signing up, you agree to our",
           "terms": "Terms of Service",
           "and": "and",
           "privacy": "Privacy Policy",
@@ -365,6 +372,50 @@
       "emailChangeSuccess": "Check your inboxes, confirm the change from {currentEmail}. Then verify with the link sent to {newEmail}."
     }
   },
+  "AccountSettingsDialog": {
+    "labels": {
+      "title": "Settings",
+      "description": "Manage your workspace preferences and account security.",
+      "tabs": {
+        "general": "General",
+        "security": "Security"
+      }
+    },
+    "general": {
+      "title": "General",
+      "description": "Choose the language used across your dashboard and chat workspace.",
+      "language": "Language",
+      "languageDescription": "Change the language used across your dashboard and chat workspace."
+    },
+    "security": {
+      "labels": {
+        "title": "Security",
+        "description": "Change your login password or send a reset link to your account email.",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "forgotPassword": "Forgot password?",
+        "changePassword": "Change password",
+        "changePasswordDescription": "Change your account login password or request a reset link by email.",
+        "changingPassword": "Changing...",
+        "hidePassword": "Hide password",
+        "showPassword": "Show password"
+      },
+      "errors": {
+        "currentPasswordRequired": "Current password is required",
+        "newPasswordRequired": "New password is required",
+        "passwordLength": "Password must be at least 8 characters",
+        "confirmPasswordRequired": "Confirm password is required",
+        "passwordMismatch": "Passwords do not match",
+        "failedChangePassword": "Failed to change password",
+        "failedSendReset": "Failed to send reset link"
+      },
+      "messages": {
+        "passwordChanged": "Password changed successfully",
+        "resetLinkSent": "Password reset link sent to email"
+      }
+    }
+  },
   "NotFoundPage": {
     "badge": "404",
     "title": "We couldn't find the page you were looking for.",
@@ -372,17 +423,23 @@
     "home": "Back to Home"
   },
   "Sidebar": {
-    "home": "Home",
-    "wabaManagement": "WABA Management",
+    "home": "Overview",
+    "wabaManagement": "Connect App",
     "chat": "Chat",
     "customers": "Customers",
     "navigation": "Navigation",
-    "waba": "WABA"
+    "workspace": "Business",
+    "customer": "Customer",
+    "waba": "WABA",
+    "pinPanel": "Pin panel",
+    "closePanel": "Close panel"
   },
   "ProfileMenu": {
-    "openProfile": "Open profile",
     "profile": "Profile",
+    "docs": "Help Center",
     "settings": "Settings",
+    "general": "General",
+    "security": "Security",
     "logout": "Logout"
   },
   "DashboardHome": {
@@ -575,7 +632,7 @@
   "Chat": {
     "takeover": {
       "enabled": "Admin takeover enabled",
-      "disabled": "Conversation returned to bot",
+      "disabled": "Conversation returned to AI Agent",
       "error": "Failed to update takeover status"
     },
     "empty": {
@@ -588,7 +645,7 @@
       "search": "Search number or name",
       "filterAll": "All",
       "filterAdmin": "Admin",
-      "filterBot": "Bot",
+      "filterBot": "AI Agent",
       "allPhones": "All Phones"
     },
     "header": {
@@ -597,10 +654,16 @@
     "detail": {
       "emptyTitle": "Select a conversation",
       "emptyDesc": "Choose a customer thread from the inbox to review message history and continue the conversation.",
-      "takeoverPrompt": "Finished assisting this customer? Close the conversation to let the bot take over.",
-      "closeConversation": "Close conversation",
-      "closeDialogTitle": "Close this conversation?",
-      "closeDialogDesc": "The bot will resume handling new messages from {name}.",
+      "agentActivePrompt": "AI Agent is actively handling this conversation! You can take over anytime using the button below.",
+      "agentActiveExpiredPrompt": "The conversation has expired because the customer hasn't replied in the last 24 hours. The AI Agent is still active, but you cannot take over right now.",
+      "takeoverPrompt": "AI Agent is currently paused. Return the conversation to AI Agent when you're finished.",
+      "takeoverExpiredPrompt": "The conversation has expired because the customer hasn't replied in the last 24 hours. You can no longer send messages, please return the conversation to AI Agent so future messages can be answered automatically.",
+      "returnToAgent": "Return to AI Agent",
+      "returnDialogTitle": "Return this conversation to AI Agent?",
+      "returnDialogDesc": "The AI Agent will resume handling new messages from {name}.",
+      "takeoverButton": "Take Over Conversation",
+      "takeoverDialogTitle": "Take over this conversation?",
+      "takeoverDialogDesc": "The AI Agent will stop replying to {name} until you return this conversation to the AI Agent.",
       "cancel": "Cancel"
     },
     "composer": {
@@ -608,19 +671,31 @@
       "media": "Photos & videos",
       "audio": "Audio",
       "removeMedia": "Remove attachment",
+      "audioCaptionNotSupported": "Audio files cannot have captions",
       "unsupportedFile": "This file type is not supported.",
-      "templateRequired": "Use template message required",
+      "maxFilesExceeded": "Maximum {max} files can be sent at once.",
+      "templateRequired": "Template message usage is required",
       "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
       "attach": "Attach media",
       "placeholderMedia": "Add a caption...",
-      "placeholder": "Message...",
+      "placeholder": "Type your message...",
       "placeholderTemplate": "Template message required",
+      "closeFormatToolbar": "Close",
+      "formatBold": "Bold",
+      "formatItalic": "Italic",
+      "formatStrikethrough": "Strikethrough",
+      "formatCode": "Inline code",
+      "formatBulletedList": "Bulleted list",
+      "formatNumberedList": "Numbered list",
+      "formatQuote": "Quote",
       "send": "Send"
     },
     "timeline": {
       "loading": "Loading messages",
       "loadOlder": "Load older messages",
-      "empty": "No messages yet for this conversation."
+      "empty": "No messages yet for this conversation.",
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "status": {
       "sending": "Sending",
@@ -637,7 +712,9 @@
     "list": {
       "errorTitle": "Unable to load chats",
       "errorDesc": "The inbox could not be loaded right now.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "statusAdmin": "Needs Admin",
+      "statusAiAgent": "AI Agent Active"
     },
     "contact": {
       "label": {
@@ -649,9 +726,11 @@
       "close": "Close",
       "back": "Back to conversation",
       "title": "Contact info",
-      "takeover": "Takeover",
+      "takeover": "Admin Takeover",
+      "agentActive": "AI Agent Active",
       "lastActivity": "Last activity",
       "connectedVia": "Connected via admin",
+      "connectedPlatforms": "Connected platforms",
       "customerLabel": "Customer label",
       "selectLabel": "Select customer label...",
       "customLabel": "Custom label...",
@@ -661,10 +740,16 @@
       "noteWarning": "Label and notes data are currently saved temporarily in the chat view."
     },
     "wabaSwitcher": {
+      "title": "WhatsApp Business Accounts",
       "select": "Select a WABA",
       "search": "Search WABA or phone number",
       "noMatch": "No WABA matches this search.",
       "noNumbers": "No connected numbers"
+    },
+    "phoneFilter": {
+      "title": "Phone Numbers",
+      "search": "Search phone number",
+      "noMatch": "No phone number matches this search."
     }
   },
   "Admin": {
@@ -687,6 +772,7 @@
       }
     },
     "AdminDashboardCard": {
+      "eyebrow": "Admin",
       "title": "Admin Dashboard",
       "description": "Select a menu below to manage the system.",
       "navigation": {
@@ -706,7 +792,12 @@
     },
     "Header": {
       "logoAlt": "pesan.ai logo",
-      "brandName": "pesan-ai"
+      "brandName": "pesan.ai",
+      "navigation": {
+        "user": "Users",
+        "webhook": "Webhook",
+        "waba": "WABA"
+      }
     },
     "CreateUserDialog": {
       "trigger": "Create User",

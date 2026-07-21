@@ -38,6 +38,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       id: 'conv-1',
       contact: {
         id: 'contact-1',
+        phoneNumberId: 'phone-1',
         bsuid: 'US.redirect-customer-123',
         customerPhone: '+123456',
         customerName: 'Test Customer',

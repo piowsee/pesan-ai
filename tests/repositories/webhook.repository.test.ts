@@ -24,7 +24,6 @@ vi.unmock('@/repositories/webhook.repository');
 describe('WebhookRepository Integration', { tags: ['db'] }, () => {
   let userId: string;
   let dbWebhookId: string;
-  let dbWabaId: string;
 
   beforeEach(async () => {
     // Pre-test cleanup for robustness
@@ -78,7 +77,6 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
         `Seeded WABA ${SEED_DATA.WABA_META_ID} not found. Please run prisma db seed.`,
       );
     }
-    dbWabaId = waba.id;
   });
 
   afterEach(async () => {
@@ -102,6 +100,11 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
       where: {
         name: { contains: 'Test-WH-' },
         userId: userId,
+      },
+    });
+    await prisma.whatsappBusinessAccount.deleteMany({
+      where: {
+        wabaId: { startsWith: 'test-waba-webhook-' },
       },
     });
   });
@@ -159,12 +162,20 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
           userId,
         },
       });
+      const tempWaba = await prisma.whatsappBusinessAccount.create({
+        data: {
+          wabaId: `test-waba-webhook-${unique}`,
+          name: 'WABA with Custom Webhook',
+          systemUserToken: 'enc:test',
+          userId,
+        },
+      });
       const phoneNumber = await prisma.phoneNumber.create({
         data: {
           phoneNumberId: `test-phone-${unique}`,
           displayPhoneNumber: `9998${Date.now()}`,
           verifiedName: 'Test Redirect Phone',
-          wabaId: dbWabaId,
+          wabaId: tempWaba.id,
           botWebhookId: webhook.id,
         },
       });
@@ -172,6 +183,7 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
         data: {
           customerPhone: `9998${Date.now()}`,
           customerName: 'Redirect Customer',
+          phoneNumberId: phoneNumber.id,
         },
       });
       const conversation = await prisma.conversation.create({

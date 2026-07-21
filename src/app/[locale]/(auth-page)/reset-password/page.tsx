@@ -22,7 +22,9 @@ export default async function LocalizedResetPasswordPage({ params }: Props) {
     <AuthCard
       title={t('title')}
       subtitle={t('subtitle')}
-      FormComponent={ResetPasswordForm}
-    />
+      formKey="reset-password"
+    >
+      <ResetPasswordForm />
+    </AuthCard>
   );
 }

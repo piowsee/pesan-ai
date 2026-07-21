@@ -57,7 +57,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [isActivated, setIsActivated] = useState(false);
   const viewingConversationIdRef = useRef<string | undefined>(undefined);
-  const isPageVisibleRef = useRef(true);
+  const viewingConversationAtBottomRef = useRef<Map<string, boolean>>(
+    new Map(),
+  );
   const markAsReadInFlightRef = useRef<Set<string>>(new Set());
   const pendingReadReceiptsRef = useRef<Map<string, string>>(new Map());
 
@@ -127,20 +129,21 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     [markConversationAsRead],
   );
 
-  const syncPageVisibility = useCallback(() => {
-    const isVisible = document.visibilityState === 'visible';
-    isPageVisibleRef.current = isVisible;
+  const setViewingConversationAtBottom = useCallback(
+    (conversationId: string, isAtBottom: boolean | undefined) => {
+      if (isAtBottom === undefined) {
+        viewingConversationAtBottomRef.current.delete(conversationId);
+        return;
+      }
 
-    if (!isVisible) {
-      flushPendingReadReceipts();
-    }
-  }, [flushPendingReadReceipts]);
+      viewingConversationAtBottomRef.current.set(conversationId, isAtBottom);
+    },
+    [],
+  );
 
   useEffect(() => {
-    syncPageVisibility();
-
     const handleVisibilityChange = () => {
-      syncPageVisibility();
+      flushPendingReadReceipts();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -149,7 +152,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       flushPendingReadReceipts();
     };
-  }, [flushPendingReadReceipts, syncPageVisibility]);
+  }, [flushPendingReadReceipts]);
 
   useEffect(() => {
     if (!isActivated) return;
@@ -159,7 +162,14 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     // so the connection is persistent as long as the provider is mounted.
     const eventSource = new EventSource('/api/sse');
 
+    let isInitialConnect = true;
+
     const handleOpen = () => {
+      if (isInitialConnect) {
+        isInitialConnect = false;
+        return;
+      }
+
       void refetchRealtimeCache(queryClient, conversationKeys.root);
       void refetchRealtimeCache(queryClient, messageKeys.root);
     };
@@ -172,8 +182,9 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         if (!payload) return;
 
         const isActive =
-          isPageVisibleRef.current &&
-          payload.conversationId === viewingConversationIdRef.current;
+          payload.conversationId === viewingConversationIdRef.current &&
+          viewingConversationAtBottomRef.current.get(payload.conversationId) ===
+            true;
 
         handleNewMessageEvent({
           isActive,
@@ -235,7 +246,13 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [queryClient, isActivated]);
 
   return (
-    <RealtimeContext.Provider value={{ setViewingConversationId, activate }}>
+    <RealtimeContext.Provider
+      value={{
+        setViewingConversationAtBottom,
+        setViewingConversationId,
+        activate,
+      }}
+    >
       {children}
     </RealtimeContext.Provider>
   );
