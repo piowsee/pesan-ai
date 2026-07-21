@@ -1,0 +1,59 @@
+# Dependency directories
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.github
+
+# Build output
+.next/
+out/
+build/
+dist/
+coverage/
+.vercel/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# AI Agent specifics
+.agents/
+skills-lock.json
+
+# Tests and documentation
+tests/
+docs/
+
+# IDE / Editor
+.vscode/
+.zed/
+
+# Misc Project Files
+README.md
+LICENSE
+CHANGELOG.md
+.changeset/
+.husky/
+
+# Docker related files
+.docker/
+.dockerignore
+docker-compose.yml
+Dockerfile*
