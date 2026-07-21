@@ -39,3 +39,6 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           provenance: true
           sbom: true
+          build-args: |
+            NEXT_PUBLIC_META_APP_ID=${{ secrets.NEXT_PUBLIC_META_APP_ID }}
+            NEXT_PUBLIC_FACEBOOK_CONFIG_ID=${{ secrets.NEXT_PUBLIC_FACEBOOK_CONFIG_ID }}
