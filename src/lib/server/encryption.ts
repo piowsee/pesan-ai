@@ -1,6 +1,6 @@
 // this file need to be called on startup
 import { logError } from '@/lib/server/logger';
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 import { ApiError } from '../api-helper/error';
 
