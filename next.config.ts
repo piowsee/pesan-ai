@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  output: 'standalone',
+  ...(process.env.DOCKER_BUILD === 'true' && { output: 'standalone' }),
 };
 
 const withNextIntl = createNextIntlPlugin({});

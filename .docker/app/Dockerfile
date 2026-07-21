@@ -47,6 +47,8 @@ COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
+# DOCKER_BUILD was included to avoid build standalone on local
+ENV DOCKER_BUILD=true
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
