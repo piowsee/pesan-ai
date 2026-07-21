@@ -1,5 +1,21 @@
 # pesan-ai
 
+## 1.3.0
+
+### Minor Changes
+
+- 2a3550f: fix embedded sign up flow to only fetch and register data that is provided by session payload and remove unused column on WABA table
+- 6b289b8: add phoneNumber relation on contact table and filter by phoneNumber instead of join with conversation table on fetching customer contacts
+- 18f73af: This commit introduces rich text formatting for WhatsApp messages and supports multi-file media uploads with individual captions, alongside UI improvements for media chat bubbles and conversation lists. It significantly optimizes chat performance by introducing expiration-based caching for media download URLs and ensuring real-time SSE cache invalidation only triggers on lost connections to prevent redundant network requests. Additionally, core messaging stability is improved by enforcing strict chronological message queueing, automatically routing default typing to the composer, fixing missing document filenames, capping messages to the 4096-character WhatsApp limit, and resolving underlying security and test coverage issues.
+- 45a87cb: Implement business (phone number) profile feature's API
+
+### Patch Changes
+
+- 4456af5: Check message type before process the history webhook and add message type error on message bubble frontend
+- 3f97d86: Change env variables loader on s3 Client and encryption to lazy load and add checker for all env variable on instrumentation.ts
+- eda1220: Change message fetch limit from a fixed 50 to the greater of the conversation's unread count, so all unread messages are retrieved while keeping default to 50.
+- d45e8d5: optimize database's schema and it's indexing
+
 ## 1.2.0
 
 ### Minor Changes
