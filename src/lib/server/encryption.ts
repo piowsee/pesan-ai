@@ -4,26 +4,29 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 import { ApiError } from '../api-helper/error';
 
+let cachedKey: Buffer | null = null;
+
 /**
  * Gets the encryption key from environment variables.
  * Key must be 32 Bytes (256 bits). We need to convert to utf-8 and check the size
  */
 function getEncryptionKey(): Buffer {
+  if (cachedKey) return cachedKey;
+
   const key = process.env.ENCRYPTION_KEY;
   if (!key) {
     throw new Error('ENCRYPTION_KEY is not set in environment variables');
   }
 
   const keyBuffer = Buffer.from(key, 'utf8');
-
   if (keyBuffer.length !== 32) {
     throw new Error('ENCRYPTION_KEY must be exactly 32 Bytes');
   }
 
+  cachedKey = keyBuffer;
   return keyBuffer;
 }
 
-const key = getEncryptionKey();
 const PREFIX = 'enc';
 const ALGO = 'aes-256-gcm';
 
@@ -33,6 +36,7 @@ const ALGO = 'aes-256-gcm';
  */
 export function encrypt(text: string): string {
   try {
+    const key = getEncryptionKey();
     const iv = randomBytes(12);
     const cipher = createCipheriv(ALGO, key, iv);
     const encryptedData = Buffer.concat([
@@ -61,6 +65,7 @@ export function decrypt(text: string): string {
   }
 
   try {
+    const key = getEncryptionKey();
     const slicedText = text.split(':');
     const ivB64 = slicedText[1];
     const tagB64 = slicedText[2];
