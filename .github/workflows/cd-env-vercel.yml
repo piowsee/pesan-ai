@@ -21,7 +21,6 @@ jobs:
           set_env "DATABASE_URL"                   "${{ secrets.DATABASE_URL }}"
           set_env "BETTER_AUTH_SECRET"             "${{ secrets.BETTER_AUTH_SECRET }}"
           set_env "BETTER_AUTH_URL"                "${{ secrets.BETTER_AUTH_URL }}"
-          set_env "NEXT_PUBLIC_APP_TIME_ZONE"      "Asia/Jakarta"
           set_env "ENCRYPTION_KEY"                 "${{ secrets.ENCRYPTION_KEY }}"
           set_env "META_WEBHOOK_SECRET"            "${{ secrets.META_WEBHOOK_SECRET }}"
           set_env "NEXT_PUBLIC_META_APP_ID"        "${{ secrets.NEXT_PUBLIC_META_APP_ID }}"
