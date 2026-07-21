@@ -1,0 +1,136 @@
+name: Deploy to VPS
+
+on:
+  workflow_run:
+    workflows: ['Build & Push App Docker Image']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: vps
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Ensure directories exist on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          script: |
+            mkdir -p ~/pesanai-docker/app
+            mkdir -p ~/pesanai-docker/database
+            mkdir -p ~/pesanai-docker/nginx
+
+      - name: Copy App docker-compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          source: '.deployment/app/docker-compose.yaml'
+          target: '~/pesanai-docker/app/'
+          strip_components: 2
+
+      - name: Copy DB docker-compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          source: '.deployment/database/docker-compose.yaml'
+          target: '~/pesanai-docker/database/'
+          strip_components: 2
+
+      - name: Inject Domain into Nginx Config
+        run: |
+          sed -i "s/YOUR_DOMAIN_NAME/${{ secrets.DOMAIN_NAME }}/g" .deployment/nginx/nginx.conf
+
+      - name: Copy Nginx Config & Compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          source: '.deployment/nginx/*'
+          target: '~/pesanai-docker/nginx/'
+          strip_components: 2
+
+      - name: Start Database, App, and Nginx
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          script: |
+            echo "==================================="
+            echo "       DATABASE DEPLOYMENT         "
+            echo "==================================="
+            cd ~/pesanai-docker/database
+
+            if [ -n "$(docker compose ps -q)" ]; then
+              echo "Database is already running. Skipping startup."
+            else
+              echo "Database is not running. Starting it up..."
+              docker compose up -d
+            fi
+
+            echo "==================================="
+            echo "         APP DEPLOYMENT            "
+            echo "==================================="
+            cd ~/pesanai-docker/app
+
+            echo "Pulling latest image and starting app..."
+            docker compose pull
+            docker compose up -d
+
+            echo "==================================="
+            echo "        NGINX DEPLOYMENT           "
+            echo "==================================="
+            cd ~/pesanai-docker/nginx
+
+            echo "1. Checking/Installing Certbot..."
+            if ! command -v certbot &> /dev/null; then
+                sudo apt-get update && sudo apt-get install -y certbot
+            fi
+
+            echo "2. Checking SSL Certificate..."
+            if [ ! -d "/etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
+                echo "SSL Certificate not found for ${{ secrets.DOMAIN_NAME }}. Generating..."
+                
+                # Stop nginx so port 80 is free for Certbot's standalone challenge
+                docker compose down || true
+                
+                # Setup Email Flag safely
+                EMAIL="${{ secrets.SSL_EMAIL }}"
+                if [ -z "$EMAIL" ]; then
+                    CERTBOT_EMAIL_FLAG="--register-unsafely-without-email"
+                else
+                    CERTBOT_EMAIL_FLAG="-m $EMAIL"
+                fi
+                
+                sudo certbot certonly --standalone --non-interactive --agree-tos $CERTBOT_EMAIL_FLAG -d "${{ secrets.DOMAIN_NAME }}"
+            else
+                echo "SSL Certificate already exists for ${{ secrets.DOMAIN_NAME }}. Checking expiration..."
+                sudo certbot renew --pre-hook "docker stop nginx" --post-hook "docker start nginx"
+            fi
+
+            echo "3. Pulling latest nginx image and starting proxy..."
+            docker compose pull
+            docker compose up -d --remove-orphans

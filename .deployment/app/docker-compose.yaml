@@ -1,0 +1,9 @@
+services:
+  app:
+    container_name: pesanai_app
+    image: piowsee/pesanai:latest
+    ports:
+      - '127.0.0.1:3000:3000'
+    env_file:
+      - .env
+    restart: unless-stopped

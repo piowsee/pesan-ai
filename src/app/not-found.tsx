@@ -2,7 +2,6 @@
 
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
-import { defaultTimeZone } from '@/i18n/config';
 import enMessages from '@/i18n/messages/en.json';
 import idMessages from '@/i18n/messages/id.json';
 import { routing } from '@/i18n/routing';
@@ -28,11 +27,7 @@ export default function NotFound() {
   const t = messages.NotFoundPage;
 
   return (
-    <NextIntlClientProvider
-      locale={locale}
-      messages={messages}
-      timeZone={defaultTimeZone}
-    >
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <div className="bg-background font-sans">
         <Navbar />
         <NotFoundHero
