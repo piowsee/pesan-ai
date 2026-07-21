@@ -40,6 +40,9 @@ FROM node:${NODE_VERSION} AS builder
 # Set working directory
 WORKDIR /app
 
+# openssl needed for prisma
+RUN apt-get update && apt-get install -y openssl
+
 # Copy project dependencies from dependencies stage
 COPY --from=dependencies /app/node_modules ./node_modules
 
@@ -80,6 +83,9 @@ FROM node:${NODE_VERSION} AS runner
 # Set working directory
 WORKDIR /app
 
+# openssl needed for prisma
+RUN apt-get update -y && apt-get install -y openssl
+
 # Set production environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -104,7 +110,7 @@ COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
 # If you want to persist the fetch cache generated during the build so that
 # cached responses are available immediately on startup, uncomment this line:
-# COPY --from=builder --chown=node:node /app/.next/cache ./.next/cache
+COPY --from=builder --chown=node:node /app/.next/cache ./.next/cache
 
 # Switch to non-root user for security best practices
 USER node
