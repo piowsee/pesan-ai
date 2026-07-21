@@ -28,6 +28,7 @@ jobs:
           script: |
             mkdir -p ~/pesanai-docker/app
             mkdir -p ~/pesanai-docker/database
+            mkdir -p ~/pesanai-docker/nginx
 
       - name: Copy App docker-compose
         uses: appleboy/scp-action@v0.1.7
@@ -37,7 +38,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.docker/app/docker-compose.yaml'
+          source: '.deployment/app/docker-compose.yaml'
           target: '~/pesanai-docker/app/'
           strip_components: 2
 
@@ -49,11 +50,23 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.docker/database/docker-compose.yaml'
+          source: '.deployment/database/docker-compose.yaml'
           target: '~/pesanai-docker/database/'
           strip_components: 2
 
-      - name: Start Database and Restart App
+      - name: Copy Nginx Config & Compose
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
+          source: '.deployment/nginx/*'
+          target: '~/pesanai-docker/nginx/'
+          strip_components: 2
+
+      - name: Start Database, App, and Nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -67,12 +80,10 @@ jobs:
             echo "==================================="
             cd ~/pesanai-docker/database
 
-            # Check if there are any running containers in this compose stack
             if [ -n "$(docker compose ps -q)" ]; then
               echo "Database is already running. Skipping startup."
             else
               echo "Database is not running. Starting it up..."
-              docker compose pull
               docker compose up -d
             fi
 
@@ -81,9 +92,15 @@ jobs:
             echo "==================================="
             cd ~/pesanai-docker/app
 
-            echo "Shutting down old app containers..."
-            docker compose down
-
             echo "Pulling latest image and starting app..."
             docker compose pull
             docker compose up -d
+
+            echo "==================================="
+            echo "        NGINX DEPLOYMENT           "
+            echo "==================================="
+            cd ~/pesanai-docker/nginx
+
+            echo "Pulling latest nginx image and starting proxy..."
+            docker compose pull
+            docker compose up -d --remove-orphans
