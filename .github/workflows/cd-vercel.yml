@@ -1,10 +1,6 @@
 name: CD - Deploy Web App to Vercel
 run-name: Web App Deployment on commit ${{ github.sha }} by @${{ github.actor }}
 
-env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
 on:
   workflow_dispatch:
 
@@ -14,7 +10,10 @@ permissions:
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
-    environment: production
+    environment: vercel
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout branch
