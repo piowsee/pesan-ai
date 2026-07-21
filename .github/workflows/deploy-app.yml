@@ -54,6 +54,10 @@ jobs:
           target: '~/pesanai-docker/database/'
           strip_components: 2
 
+      - name: Inject Domain into Nginx Config
+        run: |
+          sed -i "s/YOUR_DOMAIN_NAME/${{ secrets.DOMAIN_NAME }}/g" .deployment/nginx/nginx.conf
+
       - name: Copy Nginx Config & Compose
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -101,6 +105,32 @@ jobs:
             echo "==================================="
             cd ~/pesanai-docker/nginx
 
-            echo "Pulling latest nginx image and starting proxy..."
+            echo "1. Checking/Installing Certbot..."
+            if ! command -v certbot &> /dev/null; then
+                sudo apt-get update && sudo apt-get install -y certbot
+            fi
+
+            echo "2. Checking SSL Certificate..."
+            if [ ! -d "/etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
+                echo "SSL Certificate not found for ${{ secrets.DOMAIN_NAME }}. Generating..."
+                
+                # Stop nginx so port 80 is free for Certbot's standalone challenge
+                docker compose down || true
+                
+                # Setup Email Flag safely
+                EMAIL="${{ secrets.SSL_EMAIL }}"
+                if [ -z "$EMAIL" ]; then
+                    CERTBOT_EMAIL_FLAG="--register-unsafely-without-email"
+                else
+                    CERTBOT_EMAIL_FLAG="-m $EMAIL"
+                fi
+                
+                sudo certbot certonly --standalone --non-interactive --agree-tos $CERTBOT_EMAIL_FLAG -d "${{ secrets.DOMAIN_NAME }}" -d "www.${{ secrets.DOMAIN_NAME }}"
+            else
+                echo "SSL Certificate already exists for ${{ secrets.DOMAIN_NAME }}. Checking expiration..."
+                sudo certbot renew --pre-hook "docker stop nginx" --post-hook "docker start nginx"
+            fi
+
+            echo "3. Pulling latest nginx image and starting proxy..."
             docker compose pull
             docker compose up -d --remove-orphans
