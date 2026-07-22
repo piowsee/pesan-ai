@@ -59,6 +59,7 @@ jobs:
       - name: Generate Cloudflare Nginx Config
         run: |
           curl -s https://www.cloudflare.com/ips-v4 > cf-ipv4.txt
+          echo "" >> cf-ipv4.txt
           curl -s https://www.cloudflare.com/ips-v6 > cf-ipv6.txt
 
           echo "geo \$realip_remote_addr \$cloudflare_ip {" > .deployment/nginx/cloudflare-allow.conf
