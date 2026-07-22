@@ -95,7 +95,7 @@ export function LoginForm() {
 
       const isAdmin = result?.data?.user?.role === 'admin';
 
-      const redirectTo = isAdmin ? '/admin' : '/dashboard';
+      const redirectTo = isAdmin ? '/admin' : '/dashboard/chat';
       router.push(redirectTo);
     } catch {
       setFormError(errors.unknownError);

@@ -423,14 +423,17 @@
     "home": "Kembali ke Beranda"
   },
   "Sidebar": {
-    "home": "Ringkasan",
-    "wabaManagement": "Hubungkan App",
+    "business": {
+      "title": "Bisnis",
+      "overview": "Ringkasan",
+      "connectApp": "Hubungkan App"
+    },
+    "customer": {
+      "title": "Pelanggan",
+      "customers": "Pelanggan"
+    },
     "chat": "Obrolan",
-    "customers": "Pelanggan",
     "navigation": "Navigasi",
-    "workspace": "Bisnis",
-    "customer": "Pelanggan",
-    "waba": "WABA",
     "pinPanel": "Pin panel",
     "closePanel": "Close panel"
   },
@@ -462,20 +465,26 @@
     },
     "quickActions": {
       "sectionTitle": "Tindakan Cepat",
-      "inbox": {
-        "eyebrow": "Kotak Masuk",
-        "title": "Balas percakapan pelanggan",
-        "helper": "Buka panel Kotak Masuk untuk memantau antrean percakapan, menugaskan agen, dan merespons pesan secara waktu nyata."
+      "chat": {
+        "inbox": {
+          "eyebrow": "Kotak Masuk",
+          "title": "Balas percakapan pelanggan",
+          "helper": "Buka panel Kotak Masuk untuk memantau antrean percakapan, menugaskan agen, dan merespons pesan secara waktu nyata."
+        }
       },
-      "waba": {
-        "eyebrow": "WABA",
-        "title": "Kelola akun WhatsApp Business",
-        "helper": "Buka pengaturan WABA untuk mengelola status nomor, verifikasi Meta, dan batas tier pesan."
+      "business": {
+        "connectApp": {
+          "eyebrow": "Hubungkan App",
+          "title": "Kelola akun WhatsApp Business",
+          "helper": "Buka pengaturan Hubungkan App untuk mengelola status nomor, verifikasi Meta, dan batas tier pesan."
+        }
       },
-      "customers": {
-        "eyebrow": "Pelanggan",
-        "title": "Tinjau kontak pelanggan yang tersimpan",
-        "helper": "Buka daftar pelanggan untuk memfilter kontak berdasarkan WABA atau nomor WhatsApp dan mengekspornya bila diperlukan."
+      "customer": {
+        "customers": {
+          "eyebrow": "Pelanggan",
+          "title": "Tinjau kontak pelanggan yang tersimpan",
+          "helper": "Buka daftar pelanggan untuk memfilter kontak berdasarkan nomor WhatsApp dan mengekspornya bila diperlukan."
+        }
       }
     }
   },

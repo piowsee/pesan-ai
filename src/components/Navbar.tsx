@@ -163,7 +163,7 @@ function AuthActionLink({
 }: AuthActionLinkProps) {
   if (isLoggedIn) {
     return (
-      <Link href="/dashboard" className={className} onClick={onClick}>
+      <Link href="/dashboard/chat" className={className} onClick={onClick}>
         {label}
       </Link>
     );
