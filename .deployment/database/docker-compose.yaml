@@ -42,6 +42,7 @@ services:
 
 networks:
   backend:
+    name: pesanai_backend
     driver: bridge
 
 volumes:
