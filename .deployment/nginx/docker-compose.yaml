@@ -3,12 +3,8 @@ services:
     image: nginx:latest
     container_name: nginx
     restart: always
-    ports:
-      - '80:80'
-      - '443:443'
-      - '5432:5432'
-      - '6432:6432'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
+    # https://docs.docker.com/compose/how-tos/networking/
     network_mode: 'host'

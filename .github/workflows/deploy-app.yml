@@ -86,12 +86,8 @@ jobs:
             echo "==================================="
             cd ~/pesanai-docker/database
 
-            if [ -n "$(docker compose ps -q)" ]; then
-              echo "Database is already running. Skipping startup."
-            else
-              echo "Database is not running. Starting it up..."
-              docker compose up -d
-            fi
+            echo "Starting or updating database..."
+            docker compose up -d
 
             echo "==================================="
             echo "         APP DEPLOYMENT            "
