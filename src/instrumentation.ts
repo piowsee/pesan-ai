@@ -8,9 +8,6 @@ const envSchema = z.object({
   // Better-Auth
   BETTER_AUTH_SECRET: z.string().min(1, 'BETTER_AUTH_SECRET is required'),
   BETTER_AUTH_URL: z.string().url('BETTER_AUTH_URL must be a valid URL'),
-  NEXT_PUBLIC_APP_TIME_ZONE: z
-    .string()
-    .min(1, 'NEXT_PUBLIC_APP_TIME_ZONE is required'),
 
   // encryption key (must be exactly 32 chars)
   ENCRYPTION_KEY: z
