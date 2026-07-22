@@ -1,11 +1,8 @@
-name: Deploy to VPS
+name: Deploy App to VPS
 
 on:
-  workflow_run:
-    workflows: ['Build & Push App Docker Image']
-    types: [completed]
-    branches: ['main']
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -13,7 +10,6 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     environment: vps
     steps:
       - name: Checkout Code
