@@ -1,4 +1,4 @@
-import { WabaDashboardManager } from '@/components/dashboard/waba/waba-dashboard-manager';
+import { WabaDashboardManager } from '@/components/dashboard/business/connect-app/waba-dashboard-manager';
 
 export default function WabaPage() {
   return (
