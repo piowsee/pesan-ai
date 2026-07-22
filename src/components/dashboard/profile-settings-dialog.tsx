@@ -153,7 +153,7 @@ export function ProfileSettingsDialog({
       if (hasEmailChanged) {
         const emailResult = await authClient.changeEmail({
           newEmail: email,
-          callbackURL: '/dashboard',
+          callbackURL: '/dashboard/chat',
         });
 
         if (emailResult?.error) {

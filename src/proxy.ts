@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
       return response;
     } else {
       return NextResponse.redirect(
-        new URL(`${localePrefix}/dashboard`, request.url),
+        new URL(`${localePrefix}/dashboard/chat`, request.url),
       );
     }
   }

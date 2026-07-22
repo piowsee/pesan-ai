@@ -13,16 +13,16 @@ export function MobileBottomNav() {
 
   const mobileNavItems = [
     {
-      title: t('home'),
-      url: '/dashboard',
+      title: t('business.overview'),
+      url: '/dashboard/business/overview',
       icon: Home,
-      matchPath: '/dashboard',
+      matchPath: '/dashboard/business/overview',
     },
     {
-      title: t('waba'),
-      url: '/dashboard/waba',
+      title: t('business.connectApp'),
+      url: '/dashboard/business/connect-app',
       icon: Layers,
-      matchPath: '/dashboard/waba',
+      matchPath: '/dashboard/business/connect-app',
     },
     {
       title: t('chat'),
@@ -31,15 +31,15 @@ export function MobileBottomNav() {
       matchPath: '/dashboard/chat',
     },
     {
-      title: t('customers'),
-      url: '/dashboard/customers',
+      title: t('customer.customers'),
+      url: '/dashboard/customer/customers',
       icon: UsersRound,
-      matchPath: '/dashboard/customers',
+      matchPath: '/dashboard/customer/customers',
     },
   ];
 
-  const isDashboardRoot = pathname === '/dashboard';
-  const isWabaSection = pathname === '/dashboard/waba';
+  const isDashboardRoot = pathname === '/dashboard/business/overview';
+  const isWabaSection = pathname === '/dashboard/business/connect-app';
   const chatSegments = pathname.startsWith('/dashboard/chat')
     ? pathname.split('/').filter(Boolean) // e.g. ['dashboard', 'chat', 'wabaId', 'convId']
     : [];
@@ -48,7 +48,7 @@ export function MobileBottomNav() {
     (chatSegments[0] === 'dashboard' &&
       chatSegments[1] === 'chat' &&
       chatSegments.length <= 3); // allows /dashboard/chat/:wabaId, blocks /dashboard/chat/:wabaId/:convId
-  const isCustomersSection = pathname === '/dashboard/customers';
+  const isCustomersSection = pathname === '/dashboard/customer/customers';
   const shouldShowMenu =
     isDashboardRoot || isWabaSection || isChatSection || isCustomersSection;
 
@@ -64,7 +64,7 @@ export function MobileBottomNav() {
           {mobileNavItems.map((item) => {
             const isActive =
               pathname === item.matchPath ||
-              (item.matchPath !== '/dashboard' &&
+              (item.matchPath !== '/dashboard/business/overview' &&
                 pathname.startsWith(`${item.matchPath}/`));
 
             return (

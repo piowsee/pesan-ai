@@ -13,27 +13,27 @@ export function QuickActions() {
 
   const actions = [
     {
-      eyebrow: t('inbox.eyebrow'),
-      title: t('inbox.title'),
+      eyebrow: t('chat.inbox.eyebrow'),
+      title: t('chat.inbox.title'),
       href: chatHref,
       icon: MessageSquare,
-      helper: t('inbox.helper'),
+      helper: t('chat.inbox.helper'),
       iconColor: 'text-brand/50',
     },
     {
-      eyebrow: t('waba.eyebrow'),
-      title: t('waba.title'),
-      href: '/dashboard/waba',
+      eyebrow: t('business.connectApp.eyebrow'),
+      title: t('business.connectApp.title'),
+      href: '/dashboard/business/connect-app',
       icon: FaWhatsapp,
-      helper: t('waba.helper'),
+      helper: t('business.connectApp.helper'),
       iconColor: 'text-[#25D366]',
     },
     {
-      eyebrow: t('customers.eyebrow'),
-      title: t('customers.title'),
-      href: '/dashboard/customers',
+      eyebrow: t('customer.customers.eyebrow'),
+      title: t('customer.customers.title'),
+      href: '/dashboard/customer/customers',
       icon: UsersRound,
-      helper: t('customers.helper'),
+      helper: t('customer.customers.helper'),
       iconColor: 'text-brand/50',
     },
   ];

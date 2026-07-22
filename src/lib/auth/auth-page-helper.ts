@@ -31,7 +31,7 @@ export const AuthPageHelper = {
     if (user.role !== 'admin') {
       const requestHeaders = await headers();
       const locale = getLocaleFromHeaders(requestHeaders);
-      redirect(`/${locale}/dashboard`);
+      redirect(`/${locale}/dashboard/chat`);
     }
 
     return user;
