@@ -56,6 +56,29 @@ jobs:
         run: |
           sed -i "s/YOUR_DOMAIN_NAME/${{ secrets.DOMAIN_NAME }}/g" .deployment/nginx/nginx.conf
 
+      - name: Generate Cloudflare Nginx Config
+        run: |
+          curl -s https://www.cloudflare.com/ips-v4 > cf-ipv4.txt
+          echo "" >> cf-ipv4.txt
+          curl -s https://www.cloudflare.com/ips-v6 > cf-ipv6.txt
+
+          echo "geo \$realip_remote_addr \$cloudflare_ip {" > .deployment/nginx/cloudflare-allow.conf
+          echo "    default 0;" >> .deployment/nginx/cloudflare-allow.conf
+          cat cf-ipv4.txt cf-ipv6.txt | while read -r ip; do
+            if [ -n "$ip" ]; then
+              echo "    $ip 1;" >> .deployment/nginx/cloudflare-allow.conf
+            fi
+          done
+          echo "}" >> .deployment/nginx/cloudflare-allow.conf
+
+          echo "real_ip_header CF-Connecting-IP;" >> .deployment/nginx/cloudflare-allow.conf
+          cat cf-ipv4.txt cf-ipv6.txt | while read -r ip; do
+            if [ -n "$ip" ]; then
+              echo "set_real_ip_from $ip;" >> .deployment/nginx/cloudflare-allow.conf
+            fi
+          done
+          rm cf-ipv4.txt cf-ipv6.txt
+
       - name: Copy Nginx Config & Compose
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -128,3 +151,6 @@ jobs:
             echo "3. Pulling latest nginx image and starting proxy..."
             docker compose pull
             docker compose up -d --remove-orphans
+
+            echo "4. Reloading Nginx configuration..."
+            docker exec nginx nginx -s reload || true
