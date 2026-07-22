@@ -1,5 +1,11 @@
 # pesan-ai
 
+## 1.3.1
+
+### Patch Changes
+
+- 4751419: remove timezone env variable from instrumention since it is no longer used in the app
+
 ## 1.3.0
 
 ### Minor Changes
