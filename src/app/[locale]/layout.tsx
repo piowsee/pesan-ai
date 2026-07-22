@@ -20,5 +20,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   setRequestLocale(locale);
 
-  return <NextIntlClientProvider>{children}</NextIntlClientProvider>;
+  return (
+    <NextIntlClientProvider timeZone="UTC">{children}</NextIntlClientProvider>
+  );
 }
