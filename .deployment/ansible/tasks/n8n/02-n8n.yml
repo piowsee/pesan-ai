@@ -2,11 +2,11 @@
 - name: Pull n8n Image
   ansible.builtin.command: docker compose pull
   args:
-    chdir: '{{ ansible_env.HOME }}/pesanai-docker/n8n'
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/n8n'
   become: yes
 
 - name: Start n8n
   ansible.builtin.command: docker compose up -d
   args:
-    chdir: '{{ ansible_env.HOME }}/pesanai-docker/n8n'
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/n8n'
   become: yes

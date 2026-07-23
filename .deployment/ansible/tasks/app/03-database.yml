@@ -2,5 +2,5 @@
 - name: Start Database
   ansible.builtin.command: docker compose up -d
   args:
-    chdir: '{{ ansible_env.HOME }}/pesanai-docker/database'
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/database'
   become: yes
