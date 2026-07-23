@@ -1,6 +1,6 @@
 ---
 - name: Check if Docker is installed
-  ansible.builtin.command: command -v docker
+  ansible.builtin.shell: command -v docker
   register: docker_installed
   ignore_errors: true
   changed_when: false
@@ -78,3 +78,6 @@
     state: started
     enabled: yes
   become: yes
+
+- name: Reset SSH connection to avoid timeout
+  ansible.builtin.meta: reset_connection
