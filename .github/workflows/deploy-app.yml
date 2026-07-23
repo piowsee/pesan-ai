@@ -15,142 +15,55 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Ensure directories exist on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          script: |
-            mkdir -p ~/pesanai-docker/app
-            mkdir -p ~/pesanai-docker/database
-            mkdir -p ~/pesanai-docker/nginx
-
-      - name: Copy App docker-compose
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.deployment/app/docker-compose.yaml'
-          target: '~/pesanai-docker/app/'
-          strip_components: 2
-
-      - name: Copy DB docker-compose
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.deployment/database/docker-compose.yaml'
-          target: '~/pesanai-docker/database/'
-          strip_components: 2
-
-      - name: Inject Domain into Nginx Config
+      - name: Add SSH Keys with Passphrase
+        env:
+          # App Server Credentials (Server Hosted Together With DB and Reverse Proxy)
+          SSH_KEY_APP: ${{ secrets.SSH_KEY_APP }}
+          SSH_PASSPHRASE_APP: ${{ secrets.SSH_KEY_PASSPHRASE_APP }}
+          # N8N Server Credentials
+          SSH_KEY_N8N: ${{ secrets.SSH_KEY_N8N }}
+          SSH_PASSPHRASE_N8N: ${{ secrets.SSH_KEY_PASSPHRASE_N8N }}
         run: |
-          sed -i "s/YOUR_DOMAIN_NAME/${{ secrets.DOMAIN_NAME }}/g" .deployment/nginx/nginx.conf
+          sudo apt-get update && sudo apt-get install -y expect
+          eval $(ssh-agent -s)
 
-      - name: Generate Cloudflare Nginx Config
-        run: |
-          curl -s https://www.cloudflare.com/ips-v4 > cf-ipv4.txt
-          echo "" >> cf-ipv4.txt
-          curl -s https://www.cloudflare.com/ips-v6 > cf-ipv6.txt
-
-          echo "geo \$realip_remote_addr \$cloudflare_ip {" > .deployment/nginx/cloudflare-allow.conf
-          echo "    default 0;" >> .deployment/nginx/cloudflare-allow.conf
-          cat cf-ipv4.txt cf-ipv6.txt | while read -r ip; do
-            if [ -n "$ip" ]; then
-              echo "    $ip 1;" >> .deployment/nginx/cloudflare-allow.conf
+          # Helper function to add a key if it exists
+          add_key() {
+            local key="$1"
+            local pass="$2"
+            if [ -n "$key" ]; then
+              echo "$key" > key.pem
+              chmod 600 key.pem
+              expect -c "
+                spawn ssh-add key.pem
+                expect \"Enter passphrase\"
+                send \"$pass\r\"
+                expect eof
+              "
+              rm key.pem
             fi
-          done
-          echo "}" >> .deployment/nginx/cloudflare-allow.conf
+          }
 
-          echo "real_ip_header CF-Connecting-IP;" >> .deployment/nginx/cloudflare-allow.conf
-          cat cf-ipv4.txt cf-ipv6.txt | while read -r ip; do
-            if [ -n "$ip" ]; then
-              echo "set_real_ip_from $ip;" >> .deployment/nginx/cloudflare-allow.conf
-            fi
-          done
-          rm cf-ipv4.txt cf-ipv6.txt
+          # Load both keys into the ssh-agent
+          add_key "$SSH_KEY_APP" "$SSH_PASSPHRASE_APP"
+          add_key "$SSH_KEY_N8N" "$SSH_PASSPHRASE_N8N"
 
-      - name: Copy Nginx Config & Compose
-        uses: appleboy/scp-action@v0.1.7
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
+
+      - name: Run Ansible Playbook
+        uses: dawidd6/action-ansible-playbook@v9
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
         with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.deployment/nginx/*'
-          target: '~/pesanai-docker/nginx/'
-          strip_components: 2
+          playbook: deploy.yml
+          directory: .deployment/ansible
+          # Note: We intentionally omit the 'key' input here.
+          # Providing it would force Ansible to bypass the ssh-agent we set up in the previous step
+          # and fail when prompted for the passphrase.
+          inventory: |
+            [app]
+            ${{ secrets.SSH_HOST_APP }} ansible_port=${{ secrets.SSH_PORT_APP }} ansible_user=${{ secrets.SSH_USERNAME_APP }} ansible_become_password=${{ secrets.SUDO_PASSWORD_APP }} domain_name=${{ secrets.DOMAIN_NAME }} ssl_email=${{ secrets.SSL_EMAIL }} cf_api_token=${{ secrets.CF_API_TOKEN }}
 
-      - name: Start Database, App, and Nginx
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          script: |
-            echo "==================================="
-            echo "       DATABASE DEPLOYMENT         "
-            echo "==================================="
-            cd ~/pesanai-docker/database
-
-            echo "Starting or updating database..."
-            docker compose up -d
-
-            echo "==================================="
-            echo "         APP DEPLOYMENT            "
-            echo "==================================="
-            cd ~/pesanai-docker/app
-
-            echo "Pulling latest image and starting app..."
-            docker compose pull
-            docker compose up -d
-
-            echo "==================================="
-            echo "        NGINX DEPLOYMENT           "
-            echo "==================================="
-            cd ~/pesanai-docker/nginx
-
-            echo "1. Checking/Installing Certbot..."
-            if ! command -v certbot &> /dev/null; then
-                sudo apt-get update && sudo apt-get install -y certbot
-            fi
-
-            echo "2. Checking SSL Certificate..."
-            if [ ! -d "/etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
-                echo "SSL Certificate not found for ${{ secrets.DOMAIN_NAME }}. Generating..."
-                
-                # Stop nginx so port 80 is free for Certbot's standalone challenge
-                docker compose down || true
-                
-                # Setup Email Flag safely
-                EMAIL="${{ secrets.SSL_EMAIL }}"
-                if [ -z "$EMAIL" ]; then
-                    CERTBOT_EMAIL_FLAG="--register-unsafely-without-email"
-                else
-                    CERTBOT_EMAIL_FLAG="-m $EMAIL"
-                fi
-                
-                sudo certbot certonly --standalone --non-interactive --agree-tos $CERTBOT_EMAIL_FLAG -d "${{ secrets.DOMAIN_NAME }}"
-            else
-                echo "SSL Certificate already exists for ${{ secrets.DOMAIN_NAME }}. Checking expiration..."
-                sudo certbot renew --pre-hook "docker stop nginx" --post-hook "docker start nginx"
-            fi
-
-            echo "3. Pulling latest nginx image and starting proxy..."
-            docker compose pull
-            docker compose up -d --remove-orphans
-
-            echo "4. Reloading Nginx configuration..."
-            docker exec nginx nginx -s reload || true
+            [n8n]
+            ${{ secrets.SSH_HOST_N8N }} ansible_port=${{ secrets.SSH_PORT_N8N }} ansible_user=${{ secrets.SSH_USERNAME_N8N }} ansible_become_password=${{ secrets.SUDO_PASSWORD_N8N }}
