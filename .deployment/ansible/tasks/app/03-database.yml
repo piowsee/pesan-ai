@@ -1,5 +1,5 @@
 ---
 - name: Start Database
-  ansible.builtin.command: docker compose up -d
+  ansible.builtin.command: sudo docker compose up -d
   args:
     chdir: '~/pesanai-docker/database'

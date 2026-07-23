@@ -1,14 +1,14 @@
 ---
 - name: Pull n8n Nginx Image
-  ansible.builtin.command: docker compose pull
+  ansible.builtin.command: sudo docker compose pull
   args:
     chdir: '~/pesanai-docker/nginx-n8n'
 
 - name: Start n8n Nginx Proxy
-  ansible.builtin.command: docker compose up -d --remove-orphans
+  ansible.builtin.command: sudo docker compose up -d --remove-orphans
   args:
     chdir: '~/pesanai-docker/nginx-n8n'
 
 - name: Reload n8n Nginx configuration
-  ansible.builtin.command: docker exec nginx_n8n nginx -s reload
+  ansible.builtin.command: sudo docker exec nginx_n8n nginx -s reload
   ignore_errors: yes

@@ -4,6 +4,9 @@
   become: no
 
   tasks:
+    - name: Ensure Docker is installed
+      ansible.builtin.import_tasks: tasks/common/install-docker.yml
+
     - name: Setup environment and copy files
       ansible.builtin.import_tasks: tasks/app/01-setup.yml
 
@@ -24,6 +27,9 @@
   become: no
 
   tasks:
+    - name: Ensure Docker is installed
+      ansible.builtin.import_tasks: tasks/common/install-docker.yml
+
     - name: Setup environment and copy files
       ansible.builtin.import_tasks: tasks/n8n/01-setup.yml
 
