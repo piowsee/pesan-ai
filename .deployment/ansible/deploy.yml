@@ -5,16 +5,30 @@
 
   tasks:
     - name: Setup environment and copy files
-      ansible.builtin.import_tasks: tasks/01-setup.yml
+      ansible.builtin.import_tasks: tasks/app/01-setup.yml
 
     - name: Configure Cloudflare rules
-      ansible.builtin.import_tasks: tasks/02-cloudflare.yml
+      ansible.builtin.import_tasks: tasks/app/02-cloudflare.yml
 
     - name: Deploy Database
-      ansible.builtin.import_tasks: tasks/03-database.yml
+      ansible.builtin.import_tasks: tasks/app/03-database.yml
 
     - name: Deploy App
-      ansible.builtin.import_tasks: tasks/04-app.yml
+      ansible.builtin.import_tasks: tasks/app/04-app.yml
 
-    - name: Deploy Nginx and SSL
-      ansible.builtin.import_tasks: tasks/05-nginx.yml
+    - name: Deploy App Nginx and SSL
+      ansible.builtin.import_tasks: tasks/app/05-nginx.yml
+
+- name: Deploy n8n
+  hosts: n8n
+  become: no
+
+  tasks:
+    - name: Setup environment and copy files
+      ansible.builtin.import_tasks: tasks/n8n/01-setup.yml
+
+    - name: Deploy n8n
+      ansible.builtin.import_tasks: tasks/n8n/02-n8n.yml
+
+    - name: Deploy n8n Nginx Proxy
+      ansible.builtin.import_tasks: tasks/n8n/03-nginx.yml

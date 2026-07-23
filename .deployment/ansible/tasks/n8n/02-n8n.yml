@@ -1,0 +1,10 @@
+---
+- name: Pull n8n Image
+  ansible.builtin.command: docker compose pull
+  args:
+    chdir: '~/pesanai-docker/n8n'
+
+- name: Start n8n
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: '~/pesanai-docker/n8n'
