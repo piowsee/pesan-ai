@@ -78,6 +78,3 @@
     state: started
     enabled: yes
   become: yes
-
-- name: Reset SSH connection to avoid timeout
-  ansible.builtin.meta: reset_connection

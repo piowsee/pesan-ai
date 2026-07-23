@@ -1,10 +1,12 @@
 ---
 - name: Pull App Image
-  ansible.builtin.command: sudo docker compose pull
+  ansible.builtin.command: docker compose pull
   args:
     chdir: '~/pesanai-docker/app'
+  become: yes
 
 - name: Start App
-  ansible.builtin.command: sudo docker compose up -d
+  ansible.builtin.command: docker compose up -d
   args:
     chdir: '~/pesanai-docker/app'
+  become: yes
