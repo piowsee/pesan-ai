@@ -54,13 +54,13 @@
 - name: Pull Nginx Image
   ansible.builtin.command: docker compose pull
   args:
-    chdir: '~/pesanai-docker/nginx-app'
+    chdir: '{{ ansible_env.HOME }}/pesanai-docker/nginx-app'
   become: yes
 
 - name: Start Nginx Proxy
   ansible.builtin.command: docker compose up -d --remove-orphans
   args:
-    chdir: '~/pesanai-docker/nginx-app'
+    chdir: '{{ ansible_env.HOME }}/pesanai-docker/nginx-app'
   become: yes
 
 - name: Reload Nginx configuration
