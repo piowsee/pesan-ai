@@ -1,0 +1,66 @@
+---
+- name: Install Certbot and Cloudflare DNS Plugin
+  ansible.builtin.apt:
+    name:
+      - certbot
+      - python3-certbot-dns-cloudflare
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Check if SSL certificate exists
+  ansible.builtin.stat:
+    path: '/etc/letsencrypt/live/{{ domain_name }}'
+  register: ssl_cert
+  become: yes
+
+- name: Generate SSL Certificate (if missing)
+  when: not ssl_cert.stat.exists
+  block:
+    - name: Ensure secrets directory exists
+      ansible.builtin.file:
+        path: '~/.secrets'
+        state: directory
+        mode: '0700'
+
+    - name: Create Cloudflare credentials file
+      ansible.builtin.copy:
+        dest: '~/.secrets/cloudflare.ini'
+        content: "dns_cloudflare_api_token = {{ cf_api_token }}\n"
+        mode: '0600'
+
+    - name: Obtain certificate (with email)
+      ansible.builtin.command: >
+        certbot certonly --dns-cloudflare
+        --dns-cloudflare-credentials ~/.secrets/cloudflare.ini
+        --non-interactive --agree-tos -m {{ ssl_email }} -d {{ domain_name }}
+      become: yes
+      when: ssl_email | default('') != ''
+
+    - name: Obtain certificate (without email)
+      ansible.builtin.command: >
+        certbot certonly --dns-cloudflare
+        --dns-cloudflare-credentials ~/.secrets/cloudflare.ini
+        --non-interactive --agree-tos --register-unsafely-without-email -d {{ domain_name }}
+      become: yes
+      when: ssl_email | default('') == ''
+
+- name: Renew SSL Certificate (if exists)
+  when: ssl_cert.stat.exists
+  ansible.builtin.command: certbot renew --post-hook "docker exec nginx nginx -s reload"
+  become: yes
+  ignore_errors: yes
+
+- name: Pull Nginx Image
+  ansible.builtin.command: docker compose pull
+  args:
+    chdir: '~/pesanai-docker/nginx'
+
+- name: Start Nginx Proxy
+  ansible.builtin.command: docker compose up -d --remove-orphans
+  args:
+    chdir: '~/pesanai-docker/nginx'
+
+- name: Reload Nginx configuration
+  ansible.builtin.command: docker exec nginx nginx -s reload
+  ignore_errors: yes

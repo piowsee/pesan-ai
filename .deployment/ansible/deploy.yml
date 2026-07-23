@@ -1,0 +1,20 @@
+---
+- name: Deploy Pesan AI App
+  hosts: app
+  become: no
+
+  tasks:
+    - name: Setup environment and copy files
+      ansible.builtin.import_tasks: tasks/01-setup.yml
+
+    - name: Configure Cloudflare rules
+      ansible.builtin.import_tasks: tasks/02-cloudflare.yml
+
+    - name: Deploy Database
+      ansible.builtin.import_tasks: tasks/03-database.yml
+
+    - name: Deploy App
+      ansible.builtin.import_tasks: tasks/04-app.yml
+
+    - name: Deploy Nginx and SSL
+      ansible.builtin.import_tasks: tasks/05-nginx.yml

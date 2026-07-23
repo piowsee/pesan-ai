@@ -1,0 +1,34 @@
+---
+- name: Ensure deployment directories exist
+  ansible.builtin.file:
+    path: '~/pesanai-docker/{{ item }}'
+    state: directory
+    mode: '0755'
+  loop:
+    - app
+    - database
+    - nginx
+
+- name: Copy App docker-compose
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../app/docker-compose.yaml'
+    dest: '~/pesanai-docker/app/docker-compose.yaml'
+    mode: '0644'
+
+- name: Copy Database docker-compose
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../database/docker-compose.yaml'
+    dest: '~/pesanai-docker/database/docker-compose.yaml'
+    mode: '0644'
+
+- name: Copy Nginx files
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../nginx/'
+    dest: '~/pesanai-docker/nginx/'
+    mode: '0644'
+
+- name: Inject Domain into Nginx Config
+  ansible.builtin.replace:
+    path: '~/pesanai-docker/nginx/nginx.conf'
+    regexp: 'YOUR_DOMAIN_NAME'
+    replace: '{{ domain_name }}'
