@@ -1,7 +1,7 @@
 services:
   nginx:
     image: nginx:latest
-    container_name: nginx_app
+    container_name: nginx
     restart: always
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro

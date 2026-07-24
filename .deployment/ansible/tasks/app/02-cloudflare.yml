@@ -13,7 +13,7 @@
 
 - name: Create Cloudflare Nginx config
   ansible.builtin.copy:
-    dest: '~/pesanai-docker/nginx-app/cloudflare-allow.conf'
+    dest: '~/pesanai-docker/nginx/cloudflare-allow.conf'
     mode: '0644'
     content: |
       geo $realip_remote_addr $cloudflare_ip {
