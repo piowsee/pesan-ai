@@ -58,7 +58,7 @@
   become: yes
 
 - name: Start Nginx Proxy
-  ansible.builtin.command: docker compose up -d --remove-orphans
+  ansible.builtin.command: docker compose up -d --force-recreate nginx
   args:
     chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
   become: yes
