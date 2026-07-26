@@ -59,7 +59,7 @@ export function Footer() {
                 draggable={false}
               />
               <p className="mb-1 text-3xl font-bold tracking-tight text-brand">
-                pesan.ai
+                Pesan AI
               </p>
             </Link>
 
@@ -140,7 +140,7 @@ export function Footer() {
 
         <ScrollReveal className="mt-2 -mb-2" delay={280} distance={18}>
           <p className="pointer-events-none w-full bg-linear-to-b from-brand/30 to-transparent bg-clip-text text-center text-[clamp(5rem,20vw,18.5rem)] font-semibold leading-[0.9] tracking-tight text-transparent">
-            pesan.ai
+            Pesan AI
           </p>
         </ScrollReveal>
       </Container>

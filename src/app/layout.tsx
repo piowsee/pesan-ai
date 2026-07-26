@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'pesan.ai',
-    template: '%s | pesan.ai',
+    default: 'Pesan AI',
+    template: '%s | Pesan AI',
   },
   description: 'WhatsApp chat automation platform with AI support.',
 };

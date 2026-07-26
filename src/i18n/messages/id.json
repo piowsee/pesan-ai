@@ -4,24 +4,24 @@
   },
   "Metadata": {
     "home": {
-      "title": "pesan.ai | AI Agent WhatsApp untuk Bisnis",
+      "title": "Pesan AI | AI Agent WhatsApp untuk Bisnis",
       "description": "Pesan AI membantu bisnis membalas chat pelanggan dan mengatur booking otomatis lewat WhatsApp dengan AI."
     },
     "login": {
-      "title": "Masuk | pesan.ai",
-      "description": "Masuk ke akun pesan.ai untuk mengelola otomatisasi chat WhatsApp bisnis Anda."
+      "title": "Masuk | Pesan AI",
+      "description": "Masuk ke akun Pesan AI untuk mengelola otomatisasi chat WhatsApp bisnis Anda."
     },
     "contactUs": {
-      "title": "Hubungi Kami | pesan.ai",
-      "description": "Hubungi pesan.ai untuk meminta akun atau menjadwalkan konsultasi tentang otomasi WhatsApp untuk bisnis Anda."
+      "title": "Hubungi Kami | Pesan AI",
+      "description": "Hubungi Pesan AI untuk meminta akun atau menjadwalkan konsultasi tentang otomasi WhatsApp untuk bisnis Anda."
     },
     "terms": {
-      "title": "Syarat Layanan | pesan.ai",
-      "description": "Baca Syarat Layanan pesan.ai untuk memahami ketentuan penggunaan platform dan layanan kami."
+      "title": "Syarat Layanan | Pesan AI",
+      "description": "Baca Syarat Layanan Pesan AI untuk memahami ketentuan penggunaan platform dan layanan kami."
     },
     "privacy": {
-      "title": "Kebijakan Privasi | pesan.ai",
-      "description": "Pelajari bagaimana pesan.ai mengumpulkan, menggunakan, dan melindungi data pribadi Anda."
+      "title": "Kebijakan Privasi | Pesan AI",
+      "description": "Pelajari bagaimana Pesan AI mengumpulkan, menggunakan, dan melindungi data pribadi Anda."
     }
   },
   "Navbar": {
@@ -514,7 +514,7 @@
     },
     "empty": {
       "title": "Belum ada akun WhatsApp",
-      "description": "Hubungkan akun WhatsApp Business pertama Anda agar pesan-ai dapat mulai menerima dan mengelola percakapan."
+      "description": "Hubungkan akun WhatsApp Business pertama Anda agar Pesan AI dapat mulai menerima dan mengelola percakapan."
     },
     "action": {
       "connect": "Hubungkan akun WhatsApp",
@@ -531,7 +531,7 @@
     },
     "header": {
       "title": "Akun WhatsApp Business",
-      "description": "Kelola akun dan nomor WhatsApp yang terhubung ke pesan-ai."
+      "description": "Kelola akun dan nomor WhatsApp yang terhubung ke Pesan AI."
     },
     "table": {
       "business": "Bisnis"
@@ -800,8 +800,8 @@
       }
     },
     "Header": {
-      "logoAlt": "pesan.ai logo",
-      "brandName": "pesan.ai",
+      "logoAlt": "Pesan AI logo",
+      "brandName": "Pesan AI",
       "navigation": {
         "user": "Pengguna",
         "webhook": "Webhook",
@@ -965,20 +965,20 @@
     "WebhookDocsDialog": {
       "trigger": "Dokumentasi API",
       "title": "Dokumentasi API Webhook",
-      "description": "Bagaimana endpoint webhook Anda harus menangani permintaan dari pesan-ai.",
+      "description": "Bagaimana endpoint webhook Anda harus menangani permintaan dari Pesan AI.",
       "sections": {
         "auth": {
           "title": "Autentikasi",
           "p1": "Setiap permintaan menyertakan token bearer di header <authCode>Authorization</authCode>. Token ini adalah JWT berumur pendek yang ditandatangani dengan algoritma <strongAuth>HS256</strongAuth> menggunakan <strongPassphrase>frasa sandi</strongPassphrase> yang Anda konfigurasikan sebagai rahasia bersama.",
-          "p2": "Jika webhook tool Anda meminta kredensial JWT, konfigurasi tipe key sebagai <strongType>passphrase</strongType>, pilih <strongAlgo>HS256</strongAlgo> sebagai algoritma, dan gunakan frasa sandi yang sama persis saat membuat webhook di pesan-ai."
+          "p2": "Jika webhook tool Anda meminta kredensial JWT, konfigurasi tipe key sebagai <strongType>passphrase</strongType>, pilih <strongAlgo>HS256</strongAlgo> sebagai algoritma, dan gunakan frasa sandi yang sama persis saat membuat webhook di Pesan AI."
         },
         "validation": {
           "title": "Permintaan Validasi",
-          "p1": "Saat Anda mendaftarkan webhook, pesan-ai mengirim permintaan <strongGet>GET</strongGet> ke URL Anda untuk memverifikasi apakah URL tersebut dapat dijangkau dan diautentikasi. Endpoint Anda harus memvalidasi token JWT dan mengembalikan respons <codeOk>200 OK</codeOk> untuk mengonfirmasi validitas webhook."
+          "p1": "Saat Anda mendaftarkan webhook, Pesan AI mengirim permintaan <strongGet>GET</strongGet> ke URL Anda untuk memverifikasi apakah URL tersebut dapat dijangkau dan diautentikasi. Endpoint Anda harus memvalidasi token JWT dan mengembalikan respons <codeOk>200 OK</codeOk> untuk mengonfirmasi validitas webhook."
         },
         "message": {
           "title": "Permintaan Pesan",
-          "p1": "Saat pesan baru diterima, pesan-ai meneruskannya ke webhook Anda melalui permintaan <strongPost>POST</strongPost>. Endpoint Anda harus memverifikasi token bearer JWT menggunakan frasa sandi yang dikonfigurasikan, memproses riwayat pesan, dan mengembalikan respons bot.",
+          "p1": "Saat pesan baru diterima, Pesan AI meneruskannya ke webhook Anda melalui permintaan <strongPost>POST</strongPost>. Endpoint Anda harus memverifikasi token bearer JWT menggunakan frasa sandi yang dikonfigurasikan, memproses riwayat pesan, dan mengembalikan respons bot.",
           "p2": "Kolom <codePhone>customerPhoneNumber</codePhone> mengidentifikasi pelanggan, dan array <codeMessages>messages</codeMessages> berisi pesan teks secara kronologis.",
           "list": {
             "phone": "<codeField>customerPhoneNumber</codeField>: nomor telepon WhatsApp pelanggan dalam format internasional.",
@@ -987,8 +987,8 @@
             "timestamp": "<codeField>timestamp</codeField>: string timestamp ISO-8601.",
             "content": "<codeField>content</codeField>: konten teks pesan."
           },
-          "p3": "Kolom <codeBot>botResponse</codeBot> bersifat opsional dan akan dikirim ke pelanggan sebagai pesan bot. <codeAdmin>adminTakeover</codeAdmin> bersifat opsional dan default ke <codeFalse>false</codeFalse>; saat diatur ke <codeTrue>true</codeTrue>, pesan-ai menandai percakapan untuk pengambilalihan admin sebelum mengirim pesan bot.",
-          "p4": "Kembalikan status non-2xx hanya ketika pesan-ai harus menganggap panggilan webhook gagal. Kesalahan klien tidak dicoba ulang, kecuali <code429>429</code429>. Batas rate dan kesalahan server dicoba ulang hingga 3 kali dengan jeda linear 1 detik."
+          "p3": "Kolom <codeBot>botResponse</codeBot> bersifat opsional dan akan dikirim ke pelanggan sebagai pesan bot. <codeAdmin>adminTakeover</codeAdmin> bersifat opsional dan default ke <codeFalse>false</codeFalse>; saat diatur ke <codeTrue>true</codeTrue>, Pesan AI menandai percakapan untuk pengambilalihan admin sebelum mengirim pesan bot.",
+          "p4": "Kembalikan status non-2xx hanya ketika Pesan AI harus menganggap panggilan webhook gagal. Kesalahan klien tidak dicoba ulang, kecuali <code429>429</code429>. Batas rate dan kesalahan server dicoba ulang hingga 3 kali dengan jeda linear 1 detik."
         }
       }
     },

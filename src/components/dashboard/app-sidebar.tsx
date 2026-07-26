@@ -69,7 +69,7 @@ export function AppSidebar({ user }: { user: User | null }) {
                 <div className="pointer-events-none flex aspect-square size-10 shrink-0 items-center justify-center rounded-lg select-none">
                   <Image
                     src="/pesan-ai-black-logo.png"
-                    alt="pesan-ai"
+                    alt="Pesan AI"
                     width={28}
                     height={28}
                     className="size-7 object-contain select-none"

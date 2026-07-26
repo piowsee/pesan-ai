@@ -4,24 +4,24 @@
   },
   "Metadata": {
     "home": {
-      "title": "pesan.ai | WhatsApp AI Agent for Business",
+      "title": "Pesan AI | WhatsApp AI Agent for Business",
       "description": "Pesan AI helps businesses automate WhatsApp replies and booking workflows with intelligent AI agents."
     },
     "login": {
-      "title": "Login | pesan.ai",
-      "description": "Sign in to your pesan.ai account and manage WhatsApp AI chat automation for your business."
+      "title": "Login | Pesan AI",
+      "description": "Sign in to your Pesan AI account and manage WhatsApp AI chat automation for your business."
     },
     "contactUs": {
-      "title": "Contact Us | pesan.ai",
-      "description": "Contact pesan.ai to request an account or book a consultation about WhatsApp automation for your business."
+      "title": "Contact Us | Pesan AI",
+      "description": "Contact Pesan AI to request an account or book a consultation about WhatsApp automation for your business."
     },
     "terms": {
-      "title": "Terms of Service | pesan.ai",
-      "description": "Read the Terms of Service for pesan.ai to understand platform usage and legal obligations."
+      "title": "Terms of Service | Pesan AI",
+      "description": "Read the Terms of Service for Pesan AI to understand platform usage and legal obligations."
     },
     "privacy": {
-      "title": "Privacy Policy | pesan.ai",
-      "description": "Learn how pesan.ai collects, uses, and protects your personal data across our services."
+      "title": "Privacy Policy | Pesan AI",
+      "description": "Learn how Pesan AI collects, uses, and protects your personal data across our services."
     }
   },
   "Navbar": {
@@ -514,7 +514,7 @@
     },
     "empty": {
       "title": "No WhatsApp accounts yet",
-      "description": "Connect your first WhatsApp Business account so pesan-ai can start receiving and managing conversations."
+      "description": "Connect your first WhatsApp Business account so Pesan AI can start receiving and managing conversations."
     },
     "action": {
       "connect": "Connect WhatsApp account",
@@ -531,7 +531,7 @@
     },
     "header": {
       "title": "WhatsApp Business Accounts",
-      "description": "Manage WhatsApp accounts and numbers connected to pesan-ai."
+      "description": "Manage WhatsApp accounts and numbers connected to Pesan AI."
     },
     "table": {
       "business": "Business"
@@ -800,8 +800,8 @@
       }
     },
     "Header": {
-      "logoAlt": "pesan.ai logo",
-      "brandName": "pesan.ai",
+      "logoAlt": "Pesan AI logo",
+      "brandName": "Pesan AI",
       "navigation": {
         "user": "Users",
         "webhook": "Webhook",
@@ -965,20 +965,20 @@
     "WebhookDocsDialog": {
       "trigger": "API Docs",
       "title": "Webhook API Documentation",
-      "description": "How your webhook endpoint should handle incoming requests from pesan-ai.",
+      "description": "How your webhook endpoint should handle incoming requests from Pesan AI.",
       "sections": {
         "auth": {
           "title": "Authentication",
           "p1": "Every request includes a bearer token in the <authCode>Authorization</authCode> header. The token is a short-lived JWT signed with the <strongAuth>HS256</strongAuth> algorithm using your configured <strongPassphrase>passphrase</strongPassphrase> as the shared secret.",
-          "p2": "If your webhook tool asks for JWT credentials, configure the key type as <strongType>passphrase</strongType>, choose <strongAlgo>HS256</strongAlgo> as the algorithm, and use the exact passphrase entered when creating the webhook in pesan-ai."
+          "p2": "If your webhook tool asks for JWT credentials, configure the key type as <strongType>passphrase</strongType>, choose <strongAlgo>HS256</strongAlgo> as the algorithm, and use the exact passphrase entered when creating the webhook in Pesan AI."
         },
         "validation": {
           "title": "Validation Request",
-          "p1": "When you register a webhook, pesan-ai sends a <strongGet>GET</strongGet> request to your URL to verify it is reachable and can authenticate. Your endpoint must validate the JWT token and return a <codeOk>200 OK</codeOk> response to confirm the webhook is valid."
+          "p1": "When you register a webhook, Pesan AI sends a <strongGet>GET</strongGet> request to your URL to verify it is reachable and can authenticate. Your endpoint must validate the JWT token and return a <codeOk>200 OK</codeOk> response to confirm the webhook is valid."
         },
         "message": {
           "title": "Message Request",
-          "p1": "When a new message is received, pesan-ai forwards it to your webhook via a <strongPost>POST</strongPost> request. Your endpoint should verify the JWT bearer token using your configured passphrase, process the message history, and return a bot response.",
+          "p1": "When a new message is received, Pesan AI forwards it to your webhook via a <strongPost>POST</strongPost> request. Your endpoint should verify the JWT bearer token using your configured passphrase, process the message history, and return a bot response.",
           "p2": "The <codePhone>customerPhoneNumber</codePhone> field identifies the customer, and the <codeMessages>messages</codeMessages> array contains text messages in chronological order.",
           "list": {
             "phone": "<codeField>customerPhoneNumber</codeField>: customer WhatsApp phone number in international format.",
@@ -987,8 +987,8 @@
             "timestamp": "<codeField>timestamp</codeField>: ISO-8601 timestamp string.",
             "content": "<codeField>content</codeField>: text message content."
           },
-          "p3": "The <codeBot>botResponse</codeBot> field is optional and will be sent to the customer as a bot message. <codeAdmin>adminTakeover</codeAdmin> is optional and defaults to <codeFalse>false</codeFalse>; when set to <codeTrue>true</codeTrue>, pesan-ai marks the conversation for admin takeover before sending the bot response.",
-          "p4": "Return a non-2xx status only when pesan-ai should treat the webhook call as failed. Client errors are not retried, except <code429>429</code429>. Rate limits and server errors are retried up to 3 times with a 1 second linear delay."
+          "p3": "The <codeBot>botResponse</codeBot> field is optional and will be sent to the customer as a bot message. <codeAdmin>adminTakeover</codeAdmin> is optional and defaults to <codeFalse>false</codeFalse>; when set to <codeTrue>true</codeTrue>, Pesan AI marks the conversation for admin takeover before sending the bot response.",
+          "p4": "Return a non-2xx status only when Pesan AI should treat the webhook call as failed. Client errors are not retried, except <code429>429</code429>. Rate limits and server errors are retried up to 3 times with a 1 second linear delay."
         }
       }
     },

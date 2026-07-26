@@ -72,7 +72,7 @@ export function AuthBrandPanel() {
         >
           <Image
             src="/pesan-ai-logo.png"
-            alt="pesan.ai logo"
+            alt="Pesan AI logo"
             width={120}
             height={28}
             className="h-10 w-auto object-contain"
@@ -83,7 +83,7 @@ export function AuthBrandPanel() {
             className="mb-1 select-none text-xl font-bold tracking-tight text-white"
             draggable={false}
           >
-            pesan.ai
+            Pesan AI
           </span>
         </Link>
 

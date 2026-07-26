@@ -415,7 +415,7 @@ export function Navbar() {
                 scrolled || mobileMenuOpen ? 'text-brand' : 'text-white',
               )}
             >
-              pesan.ai
+              Pesan AI
             </span>
           </Link>
 
