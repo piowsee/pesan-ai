@@ -19,7 +19,7 @@ services:
       ofelia.job-exec.pgbackrest-incr.command: 'pgbackrest --stanza=YOUR_STANZA backup --type=incr'
     volumes:
       # We mount the shared volume so pgBackRest has direct access to Postgres data files
-      - pesanai_database_volume:/var/lib/postgresql
+      - pesanai_volume:/var/lib/postgresql
       - ./pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
     networks:
       - backend
@@ -43,6 +43,6 @@ networks:
     external: true
 
 volumes:
-  pesanai_database_volume:
-    name: pesanai_volume
+  pesanai_volume:
     external: true
+    name: pesanai_database_volume

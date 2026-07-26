@@ -44,3 +44,4 @@ networks:
 
 volumes:
   pesanai_volume:
+    name: pesanai_database_volume
