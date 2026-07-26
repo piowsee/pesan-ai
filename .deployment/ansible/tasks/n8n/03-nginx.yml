@@ -11,7 +11,8 @@
     chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
   become: yes
 
-- name: Reload n8n Nginx configuration
-  ansible.builtin.command: docker exec nginx nginx -s reload
+- name: Start/Recreate Nginx Proxy Container
+  ansible.builtin.command: docker compose up -d --force-recreate nginx
+  args:
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
   become: yes
-  ignore_errors: yes
