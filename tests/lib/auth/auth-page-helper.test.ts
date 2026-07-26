@@ -1,11 +1,12 @@
 import { auth } from '@/lib/auth/auth';
 import { AuthPageHelper } from '@/lib/auth/auth-page-helper';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 describe('AuthPageHelper', () => {
@@ -57,7 +58,7 @@ describe('AuthPageHelper', () => {
     );
   });
 
-  it('redirects non-admin users to the dashboard', async () => {
+  it('throws notFound for non-admin users', async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue({
       user: {
         id: 'user-1',
@@ -66,13 +67,20 @@ describe('AuthPageHelper', () => {
         role: 'user',
       },
     } as never);
-    vi.mocked(redirect).mockImplementation((url: string) => {
-      throw new Error(`REDIRECT:${url}`);
+    vi.mocked(notFound).mockImplementation(() => {
+      throw new Error('NOT_FOUND');
     });
 
-    await expect(AuthPageHelper.requireAdmin()).rejects.toThrow(
-      'REDIRECT:/en/dashboard',
-    );
+    await expect(AuthPageHelper.requireAdmin()).rejects.toThrow('NOT_FOUND');
+  });
+
+  it('throws notFound for unauthenticated users', async () => {
+    vi.mocked(auth.api.getSession).mockResolvedValue(null as never);
+    vi.mocked(notFound).mockImplementation(() => {
+      throw new Error('NOT_FOUND');
+    });
+
+    await expect(AuthPageHelper.requireAdmin()).rejects.toThrow('NOT_FOUND');
   });
 
   it('returns the admin user', async () => {
