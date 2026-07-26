@@ -20,12 +20,10 @@ export async function proxy(request: NextRequest) {
   const normalizedPath = pathName.replace(localePrefixRegex, '') || '/';
 
   const isLoginRoute = normalizedPath.startsWith('/login');
-  const isProtectedRoute =
-    normalizedPath.startsWith('/dashboard') ||
-    normalizedPath.startsWith('/admin');
+  const isDashboardRoute = normalizedPath.startsWith('/dashboard');
 
   // Protect secure routes when entirely unauthenticated
-  if (!sessionCookie && isProtectedRoute) {
+  if (!sessionCookie && isDashboardRoute) {
     return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
   }
 
