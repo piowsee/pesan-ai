@@ -48,7 +48,7 @@ export function Footer() {
           >
             <Link
               href="/"
-              className="-mt-2 inline-flex w-fit items-center gap-2 pointer-events-auto"
+              className="-mt-2 inline-flex w-fit items-center gap-1 pointer-events-auto"
             >
               <Image
                 src="/pesan-ai-black-logo.png"
@@ -58,7 +58,7 @@ export function Footer() {
                 className="h-15 w-auto object-contain"
                 draggable={false}
               />
-              <p className="mb-1 text-3xl font-bold tracking-tight text-brand">
+              <p className="text-3xl font-bold tracking-tight text-black">
                 Pesan AI
               </p>
             </Link>

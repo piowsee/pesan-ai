@@ -68,7 +68,7 @@ export function AuthBrandPanel() {
         <Link
           href="/"
           draggable={false}
-          className="inline-flex w-fit select-none items-center gap-2"
+          className="inline-flex w-fit select-none items-center gap-1"
         >
           <Image
             src="/pesan-ai-logo.png"
@@ -80,7 +80,7 @@ export function AuthBrandPanel() {
             draggable={false}
           />
           <span
-            className="mb-1 select-none text-xl font-bold tracking-tight text-white"
+            className="select-none text-xl font-bold tracking-tight text-white"
             draggable={false}
           >
             Pesan AI
