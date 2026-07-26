@@ -20,13 +20,15 @@ export async function proxy(request: NextRequest) {
   const normalizedPath = pathName.replace(localePrefixRegex, '') || '/';
 
   const isLoginRoute = normalizedPath.startsWith('/login');
-  const isProtectedRoute =
-    normalizedPath.startsWith('/dashboard') ||
-    normalizedPath.startsWith('/admin');
+  const isDashboardRoute = normalizedPath.startsWith('/dashboard');
 
   // Protect secure routes when entirely unauthenticated
-  if (!sessionCookie && isProtectedRoute) {
-    return NextResponse.redirect(new URL(`${localePrefix}/login`, request.url));
+  if (!sessionCookie) {
+    if (isDashboardRoute) {
+      return NextResponse.redirect(
+        new URL(`${localePrefix}/login`, request.url),
+      );
+    }
   }
 
   // Expired-session returns clear auth cookies here; valid login redirects use a fresh session check in the login page.
