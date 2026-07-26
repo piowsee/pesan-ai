@@ -22,6 +22,9 @@
     - name: Deploy App Nginx and SSL
       ansible.builtin.import_tasks: tasks/app/05-nginx.yml
 
+    - name: Deploy Database Backup (pgbackrest)
+      ansible.builtin.import_tasks: tasks/common/pgbackrest.yml
+
 - name: Deploy n8n
   hosts: n8n
   become: no

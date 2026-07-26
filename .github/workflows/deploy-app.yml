@@ -63,7 +63,30 @@ jobs:
           # and fail when prompted for the passphrase.
           inventory: |
             [app]
-            ${{ secrets.SSH_HOST_APP }} ansible_port=${{ secrets.SSH_PORT_APP }} ansible_user=${{ secrets.SSH_USERNAME_APP }} ansible_become_password=${{ secrets.SUDO_PASSWORD_APP }} domain_name=${{ secrets.DOMAIN_NAME }} ssl_email=${{ secrets.SSL_EMAIL }} cf_api_token=${{ secrets.CF_API_TOKEN }}
+            ${{ secrets.SSH_HOST_APP }}
+
+            [app:vars]
+            ansible_port=${{ secrets.SSH_PORT_APP }}
+            ansible_user=${{ secrets.SSH_USERNAME_APP }}
+            ansible_become_password=${{ secrets.SUDO_PASSWORD_APP }}
+            domain_name=${{ secrets.DOMAIN_NAME }}
+            ssl_email=${{ secrets.SSL_EMAIL }}
+            cf_api_token=${{ secrets.CF_API_TOKEN }}
+            s3_bucket=${{ secrets.PGBACKREST_S3_BUCKET }}
+            s3_endpoint=${{ secrets.PGBACKREST_S3_ENDPOINT }}
+            s3_region=${{ secrets.PGBACKREST_S3_REGION }}
+            s3_access_key=${{ secrets.PGBACKREST_S3_ACCESS_KEY }}
+            s3_secret_key=${{ secrets.PGBACKREST_S3_SECRET_KEY }}
+            pgbackrest_cipher_pass=${{ secrets.PGBACKREST_CIPHER_PASS }}
+            pgbackrest_cipher_type=${{ secrets.PGBACKREST_CIPHER_TYPE }}
+            pgbackrest_repo_type=${{ secrets.PGBACKREST_REPO_TYPE }}
+            pgbackrest_retention_full=${{ secrets.PGBACKREST_RETENTION_FULL }}
+            pgbackrest_stanza=${{ secrets.PGBACKREST_STANZA }}
 
             [n8n]
-            ${{ secrets.SSH_HOST_N8N }} ansible_port=${{ secrets.SSH_PORT_N8N }} ansible_user=${{ secrets.SSH_USERNAME_N8N }} ansible_become_password=${{ secrets.SUDO_PASSWORD_N8N }}
+            ${{ secrets.SSH_HOST_N8N }}
+
+            [n8n:vars]
+            ansible_port=${{ secrets.SSH_PORT_N8N }}
+            ansible_user=${{ secrets.SSH_USERNAME_N8N }}
+            ansible_become_password=${{ secrets.SUDO_PASSWORD_N8N }}
