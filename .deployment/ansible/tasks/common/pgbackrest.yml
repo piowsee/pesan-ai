@@ -65,12 +65,6 @@
     regexp: '^repo1-type=.*'
     line: 'repo1-type={{ pgbackrest_repo_type }}'
 
-- name: Configure pgbackrest.conf - repo path
-  ansible.builtin.lineinfile:
-    path: '{{ ansible_facts.env.HOME }}/pesanai-docker/pgbackrest/pgbackrest.conf'
-    regexp: '^repo1-path=.*'
-    line: 'repo1-path={{ pgbackrest_repo_path }}'
-
 - name: Configure pgbackrest.conf - retention full
   ansible.builtin.lineinfile:
     path: '{{ ansible_facts.env.HOME }}/pesanai-docker/pgbackrest/pgbackrest.conf'
