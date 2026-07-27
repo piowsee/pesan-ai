@@ -15,6 +15,7 @@ import {
   FaFileZipper,
 } from 'react-icons/fa6';
 
+import { getDocumentExtension } from './document-utils';
 import { MessageCaption } from './message-caption';
 import { useMessageOpen } from './message-menu';
 import { formatByteSize } from './message-utils';
@@ -83,38 +84,6 @@ const documentVisuals: Record<string, DocumentVisual> = {
     label: 'XML',
   },
 };
-
-const documentExtensionByMimeType: Record<string, string> = {
-  'application/msword': 'doc',
-  'application/pdf': 'pdf',
-  'application/vnd.ms-excel': 'xls',
-  'application/vnd.ms-powerpoint': 'ppt',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-    'pptx',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-    'docx',
-  'application/x-7z-compressed': '7z',
-  'application/x-rar-compressed': 'rar',
-  'application/zip': 'zip',
-  'text/csv': 'csv',
-  'text/plain': 'txt',
-};
-
-function getDocumentExtension({
-  mediaFilename,
-  mediaMimeType,
-}: Pick<MediaRendererProps['message'], 'mediaFilename' | 'mediaMimeType'>) {
-  const fileExtension = mediaFilename?.split('.').pop()?.trim().toLowerCase();
-
-  if (fileExtension && fileExtension !== mediaFilename) {
-    return fileExtension;
-  }
-
-  const mimeType = mediaMimeType?.split(';')[0]?.trim().toLowerCase();
-
-  return mimeType ? (documentExtensionByMimeType[mimeType] ?? null) : null;
-}
 
 export function getDocumentVisual(
   message: Pick<

@@ -724,6 +724,7 @@
         "copied": "Disalin ke clipboard.",
         "cancel": "Batal",
         "download": "Unduh file",
+        "saving": "Menyimpan...",
         "downloadConfirmTitle": "File ini tidak dapat dipratinjau",
         "downloadConfirmDescription": "Format file ini tidak dapat dibuka langsung di browser. Apakah Anda ingin menyimpannya?",
         "errors": {

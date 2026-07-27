@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
+import { Spinner } from '@/components/ui/spinner';
 import type { ChatMessage } from '@/types/chat';
 import {
   ChevronDownIcon,
@@ -41,10 +42,12 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { toast } from 'sonner';
 
+import { canPreviewDocument } from './document-utils';
 import {
   type GetMediaUrl,
   type MessageAction,
@@ -63,6 +66,7 @@ type MessageActionItem = {
 type MessageMenuContextValue = {
   actions: MessageActionItem[];
   onAction: (action: MessageAction) => void;
+  pendingAction: MessageAction | null;
 };
 
 const MessageMenuContext = createContext<MessageMenuContextValue | null>(null);
@@ -83,6 +87,7 @@ function MessageActionList({
   actions,
   menu,
   onAction,
+  pendingAction,
 }: MessageMenuContextValue & {
   menu: 'context' | 'dropdown';
 }) {
@@ -93,14 +98,21 @@ function MessageActionList({
     <Group className="p-1.5">
       {actions.map((item) => {
         const Icon = item.icon;
+        const isPending = pendingAction === item.action;
 
         return (
           <Item
             key={item.action}
+            aria-busy={isPending}
+            disabled={pendingAction !== null}
             onSelect={() => onAction(item.action)}
             className="min-h-9 cursor-pointer gap-2.5 whitespace-nowrap rounded-md px-2.5 py-2 text-foreground/80 focus:bg-brand/5 focus:text-brand"
           >
-            <Icon className="text-brand/80" />
+            {isPending ? (
+              <Spinner className="text-brand/80" />
+            ) : (
+              <Icon className="text-brand/80" />
+            )}
             <span className="font-medium">{item.label}</span>
           </Item>
         );
@@ -112,17 +124,6 @@ function MessageActionList({
 const menuContentClassName =
   'w-40 min-w-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg';
 
-const browserDocumentMimeTypes = new Set([
-  'application/json',
-  'application/pdf',
-  'application/xml',
-  'text/csv',
-  'text/plain',
-  'text/xml',
-]);
-
-const browserDocumentExtensions = new Set(['csv', 'json', 'pdf', 'txt', 'xml']);
-
 function canOpenInBrowser(message: ChatMessage) {
   if (message.type === 'image' || message.type === 'video') {
     return true;
@@ -132,18 +133,7 @@ function canOpenInBrowser(message: ChatMessage) {
     return false;
   }
 
-  const mimeType = message.mediaMimeType?.split(';')[0]?.trim().toLowerCase();
-  const extension = message.mediaFilename
-    ?.split('.')
-    .pop()
-    ?.trim()
-    .toLowerCase();
-
-  if (mimeType && mimeType !== 'application/octet-stream') {
-    return browserDocumentMimeTypes.has(mimeType);
-  }
-
-  return Boolean(extension && browserDocumentExtensions.has(extension));
+  return canPreviewDocument(message);
 }
 
 function useMessageOpen() {
@@ -160,6 +150,8 @@ function MessageMenuButton() {
     return null;
   }
 
+  const isPending = context.pendingAction !== null;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -167,9 +159,11 @@ function MessageMenuButton() {
           type="button"
           variant="unstyled"
           aria-label={t('menu.label')}
-          className="pointer-events-none absolute top-1 right-2 z-30 flex size-8 items-center justify-center overflow-visible text-slate-700 opacity-0 outline-none transition-opacity before:pointer-events-none before:absolute before:-inset-2 before:bg-radial before:from-slate-100/85 before:via-slate-100/45 before:via-40% before:to-transparent before:to-75% before:blur-[2px] group-hover/bubble:pointer-events-auto group-hover/bubble:opacity-100 hover:text-slate-950 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none data-[state=open]:pointer-events-auto data-[state=open]:text-slate-950 data-[state=open]:opacity-100 [&_svg]:relative [&_svg]:size-5"
+          aria-busy={isPending}
+          disabled={isPending}
+          className="pointer-events-none absolute top-1 right-2 z-30 flex size-8 items-center justify-center overflow-visible text-slate-700 opacity-0 outline-none transition-opacity before:pointer-events-none before:absolute before:-inset-2 before:bg-radial before:from-slate-100/85 before:via-slate-100/45 before:via-40% before:to-transparent before:to-75% before:blur-[2px] group-hover/bubble:pointer-events-auto group-hover/bubble:opacity-100 hover:text-slate-950 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:outline-none disabled:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:text-slate-950 data-[state=open]:opacity-100 [&_svg]:relative [&_svg]:size-5"
         >
-          <ChevronDownIcon strokeWidth={2.25} />
+          {isPending ? <Spinner /> : <ChevronDownIcon strokeWidth={2.25} />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -195,6 +189,10 @@ function MessageMenu({
 }) {
   const t = useTranslations('Chat.bubble');
   const [confirmDownloadOpen, setConfirmDownloadOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<MessageAction | null>(
+    null,
+  );
+  const pendingActionRef = useRef<MessageAction | null>(null);
   const actions = useMemo<MessageActionItem[]>(() => {
     if (message.type === 'text') {
       return [{ action: 'copy', icon: CopyIcon, label: t('menu.copy') }];
@@ -232,44 +230,58 @@ function MessageMenu({
   }, [message.type, t]);
 
   const executeAction = useCallback(
-    (action: MessageAction) => {
-      void runMessageAction({ action, getMediaUrl, message })
-        .then(() => {
-          if (action === 'copy') {
-            toast.success(t('menu.copied'));
-          }
-        })
-        .catch((error: unknown) => {
-          const code =
-            error instanceof MessageMenuError
-              ? error.code
-              : action === 'open'
-                ? 'fileOpenFailed'
-                : action === 'save'
-                  ? 'fileSaveFailed'
-                  : 'formatUnsupported';
+    async (action: MessageAction) => {
+      if (pendingActionRef.current) {
+        return;
+      }
 
-          toast.error(t(errorTranslationKeys[code]));
-        });
+      pendingActionRef.current = action;
+      setPendingAction(action);
+
+      try {
+        await runMessageAction({ action, getMediaUrl, message });
+
+        if (action === 'copy') {
+          toast.success(t('menu.copied'));
+        }
+      } catch (error: unknown) {
+        const code =
+          error instanceof MessageMenuError
+            ? error.code
+            : action === 'open'
+              ? 'fileOpenFailed'
+              : action === 'save'
+                ? 'fileSaveFailed'
+                : 'formatUnsupported';
+
+        toast.error(t(errorTranslationKeys[code]));
+      } finally {
+        pendingActionRef.current = null;
+        setPendingAction(null);
+      }
     },
     [getMediaUrl, message, t],
   );
 
   const onAction = useCallback(
     (action: MessageAction) => {
+      if (pendingActionRef.current) {
+        return;
+      }
+
       if (action === 'open' && !canOpenInBrowser(message)) {
         setConfirmDownloadOpen(true);
         return;
       }
 
-      executeAction(action);
+      void executeAction(action);
     },
     [executeAction, message],
   );
 
   const contextValue = useMemo(
-    () => ({ actions, onAction }),
-    [actions, onAction],
+    () => ({ actions, onAction, pendingAction }),
+    [actions, onAction, pendingAction],
   );
 
   if (actions.length === 0) {
@@ -293,7 +305,11 @@ function MessageMenu({
         </ContextMenu>
         <AlertDialog
           open={confirmDownloadOpen}
-          onOpenChange={setConfirmDownloadOpen}
+          onOpenChange={(open) => {
+            if (!pendingActionRef.current) {
+              setConfirmDownloadOpen(open);
+            }
+          }}
         >
           <AlertDialogContent className="gap-0 overflow-hidden rounded-lg border border-brand/20 p-0 shadow-xl sm:max-w-md">
             <AlertDialogHeader className="px-5 pt-5 pb-4">
@@ -316,14 +332,31 @@ function MessageMenu({
 
             <div className="flex flex-col px-5 py-4">
               <AlertDialogFooter className="mx-0 mb-0 gap-2 border-t-0 bg-transparent p-0">
-                <AlertDialogCancel variant="ghost">
+                <AlertDialogCancel
+                  variant="ghost"
+                  disabled={pendingAction !== null}
+                >
                   {t('menu.cancel')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   variant="brand"
-                  onClick={() => executeAction('save')}
+                  aria-busy={pendingAction === 'save'}
+                  disabled={pendingAction !== null}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void executeAction('save').finally(() => {
+                      setConfirmDownloadOpen(false);
+                    });
+                  }}
                 >
-                  {t('menu.download')}
+                  {pendingAction === 'save' ? (
+                    <>
+                      <Spinner data-icon="inline-start" />
+                      {t('menu.saving')}
+                    </>
+                  ) : (
+                    t('menu.download')
+                  )}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </div>

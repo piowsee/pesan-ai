@@ -724,6 +724,7 @@
         "copied": "Copied to clipboard.",
         "cancel": "Cancel",
         "download": "Download file",
+        "saving": "Saving...",
         "downloadConfirmTitle": "This file cannot be previewed",
         "downloadConfirmDescription": "This file format cannot be opened directly in the browser. Do you want to save it instead?",
         "errors": {
