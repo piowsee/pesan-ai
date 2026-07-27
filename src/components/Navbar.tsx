@@ -393,7 +393,7 @@ export function Navbar() {
         <Container className="flex h-18 items-center justify-between gap-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2"
+            className="inline-flex items-center gap-1"
             draggable={false}
           >
             <Image
@@ -411,11 +411,11 @@ export function Navbar() {
             />
             <span
               className={cn(
-                'mb-1 text-xl font-bold tracking-tight transition-colors',
-                scrolled || mobileMenuOpen ? 'text-brand' : 'text-white',
+                'text-xl font-bold tracking-tight transition-colors',
+                scrolled || mobileMenuOpen ? 'text-black' : 'text-white',
               )}
             >
-              pesan.ai
+              Pesan AI
             </span>
           </Link>
 
