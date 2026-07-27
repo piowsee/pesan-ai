@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fa6';
 
 import { MessageCaption } from './message-caption';
+import { useMessageOpen } from './message-menu';
 import { formatByteSize } from './message-utils';
 import type { MediaRendererProps } from './types';
 
@@ -167,26 +168,26 @@ function DocumentMessage({
   message,
   metadata,
 }: MediaRendererProps) {
+  const openFromMessageMenu = useMessageOpen();
   const size = formatByteSize(message.mediaSize);
   const { Icon, colorClassName, label } = getDocumentVisual(message);
   const title = message.mediaFilename || 'Document';
   const description = [label, size].filter(Boolean).join(' · ');
 
   const handleOpenDocument = async (event: MouseEvent<HTMLAnchorElement>) => {
+    if (openFromMessageMenu) {
+      event.preventDefault();
+      openFromMessageMenu();
+      return;
+    }
+
     if (!isDownloadUrlStale || !getFreshDownloadUrl) {
       return;
     }
 
     event.preventDefault();
-    const targetWindow = window.open('', '_blank', 'noopener,noreferrer');
     const freshUrl = await getFreshDownloadUrl();
-
-    if (targetWindow) {
-      targetWindow.location.href = freshUrl;
-      return;
-    }
-
-    window.location.href = freshUrl;
+    window.open(freshUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (

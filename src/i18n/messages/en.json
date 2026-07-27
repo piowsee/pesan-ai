@@ -716,6 +716,28 @@
     "bubble": {
       "errorLoad": "Could not load media preview.",
       "errorUnavailable": "Media file is unavailable.",
+      "menu": {
+        "label": "Message actions",
+        "open": "Open",
+        "saveAs": "Save as",
+        "copy": "Copy",
+        "copied": "Copied to clipboard.",
+        "cancel": "Cancel",
+        "download": "Download file",
+        "downloadConfirmTitle": "This file cannot be previewed",
+        "downloadConfirmDescription": "This file format cannot be opened directly in the browser. Do you want to save it instead?",
+        "errors": {
+          "urlUnavailable": "The media URL is unavailable.",
+          "signedUrlInvalid": "The media link is invalid or has expired.",
+          "mediaFetchFailed": "The media could not be retrieved.",
+          "fileOpenFailed": "The file could not be opened.",
+          "fileSaveFailed": "The file could not be saved.",
+          "savePickerUnsupported": "This browser cannot choose a save location.",
+          "clipboardUnsupported": "Clipboard access is not supported by this browser.",
+          "formatUnsupported": "This file format cannot be copied.",
+          "clipboardPermission": "The browser did not allow clipboard access."
+        }
+      },
       "unsupported": "Unsupported {type} message"
     },
     "list": {

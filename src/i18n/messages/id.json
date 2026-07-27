@@ -716,6 +716,28 @@
     "bubble": {
       "errorLoad": "Tidak dapat memuat pratinjau media.",
       "errorUnavailable": "File media tidak tersedia.",
+      "menu": {
+        "label": "Aksi pesan",
+        "open": "Buka",
+        "saveAs": "Simpan sebagai",
+        "copy": "Salin",
+        "copied": "Disalin ke clipboard.",
+        "cancel": "Batal",
+        "download": "Unduh file",
+        "downloadConfirmTitle": "File ini tidak dapat dipratinjau",
+        "downloadConfirmDescription": "Format file ini tidak dapat dibuka langsung di browser. Apakah Anda ingin menyimpannya?",
+        "errors": {
+          "urlUnavailable": "URL media tidak tersedia.",
+          "signedUrlInvalid": "Tautan media tidak valid atau sudah kedaluwarsa.",
+          "mediaFetchFailed": "Media gagal diambil.",
+          "fileOpenFailed": "File gagal dibuka.",
+          "fileSaveFailed": "File gagal disimpan.",
+          "savePickerUnsupported": "Browser ini tidak dapat memilih lokasi penyimpanan.",
+          "clipboardUnsupported": "Akses clipboard tidak didukung oleh browser ini.",
+          "formatUnsupported": "Format file ini tidak dapat disalin.",
+          "clipboardPermission": "Browser tidak memberikan izin clipboard."
+        }
+      },
       "unsupported": "Pesan {type} tidak didukung"
     },
     "list": {
