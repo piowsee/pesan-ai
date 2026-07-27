@@ -15,11 +15,11 @@ import {
   FaFileZipper,
 } from 'react-icons/fa6';
 
+import { MessageCaption } from '../message-caption';
+import { useMessageOpen } from '../message-menu';
+import { formatByteSize } from '../message-utils';
+import type { MediaRendererProps } from '../types';
 import { getDocumentExtension } from './document-utils';
-import { MessageCaption } from './message-caption';
-import { useMessageOpen } from './message-menu';
-import { formatByteSize } from './message-utils';
-import type { MediaRendererProps } from './types';
 
 export type DocumentVisual = {
   Icon: IconType;
@@ -85,7 +85,7 @@ const documentVisuals: Record<string, DocumentVisual> = {
   },
 };
 
-export function getDocumentVisual(
+function getDocumentVisual(
   message: Pick<
     MediaRendererProps['message'],
     'mediaFilename' | 'mediaMimeType'
@@ -186,4 +186,4 @@ function DocumentMessage({
   );
 }
 
-export { DocumentMessage };
+export { DocumentMessage, getDocumentVisual };

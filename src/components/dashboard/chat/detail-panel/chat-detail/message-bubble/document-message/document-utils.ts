@@ -1,6 +1,9 @@
 import type { ChatMessage } from '@/types/chat';
 
-type DocumentDescriptor = Pick<ChatMessage, 'mediaFilename' | 'mediaMimeType'>;
+type DocumentMessageDescriptor = Pick<
+  ChatMessage,
+  'mediaFilename' | 'mediaMimeType'
+>;
 
 type DocumentFormat = {
   mimeTypes: readonly string[];
@@ -99,7 +102,7 @@ function getFilenameExtension(filename?: string | null) {
 function getDocumentExtension({
   mediaFilename,
   mediaMimeType,
-}: DocumentDescriptor) {
+}: DocumentMessageDescriptor) {
   const filenameExtension = getFilenameExtension(mediaFilename);
 
   if (filenameExtension) {
@@ -114,7 +117,7 @@ function getDocumentExtension({
 function canPreviewDocument({
   mediaFilename,
   mediaMimeType,
-}: DocumentDescriptor) {
+}: DocumentMessageDescriptor) {
   const mimeType = normalizeMimeType(mediaMimeType);
 
   if (mimeType && mimeType !== 'application/octet-stream') {

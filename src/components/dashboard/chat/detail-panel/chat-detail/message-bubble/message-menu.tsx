@@ -47,7 +47,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
-import { canPreviewDocument } from './document-utils';
+import { canPreviewDocument } from './document-message/document-utils';
 import {
   type GetMediaUrl,
   type MessageAction,
