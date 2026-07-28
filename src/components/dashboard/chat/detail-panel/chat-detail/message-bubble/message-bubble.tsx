@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import type { ChatMessage } from '@/types/chat';
 import { AlertCircleIcon, EyeOffIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type ReactElement, memo } from 'react';
+import { type ReactElement, memo, useCallback } from 'react';
 
 import { AudioMessage } from './audio-message';
 import { DocumentMessage } from './document-message';
@@ -16,6 +16,7 @@ import { ImageMessage } from './image-message';
 import { MediaMessageSkeleton } from './media-message-skeleton';
 import { MediaPlaceholder } from './media-placeholder';
 import { MessageCaption } from './message-caption';
+import { MessageMenu, MessageMenuButton } from './message-menu';
 import {
   getMediaTitle,
   isMediaMessageType,
@@ -94,7 +95,7 @@ function MessageBubbleContent({
   const mediaType = isMediaMessageType(message.type) ? message.type : null;
   const metadata = <MessageMetadata message={message} />;
   const floatingMetadata = (
-    <div className="absolute right-[11px] bottom-1.5">{metadata}</div>
+    <div className="absolute right-2.75 bottom-1.5">{metadata}</div>
   );
   const canLoadMedia = Boolean(mediaType && wabaId && message.mediaObjectKey);
 
@@ -234,6 +235,36 @@ function MessageBubbleBase({
 }: MessageBubbleProps) {
   const isOutgoing = message.direction === 'outgoing';
   const isMediaMessage = isMediaMessageType(message.type);
+  const getMediaUrl = useCallback(async () => {
+    if (!isMediaMessage) {
+      return undefined;
+    }
+
+    if (message.localMediaUrl) {
+      return message.localMediaUrl;
+    }
+
+    if (!message.mediaObjectKey) {
+      return undefined;
+    }
+
+    if (!areMediaDownloadUrlsStale && mediaDownloadUrl?.downloadUrl) {
+      return mediaDownloadUrl.downloadUrl;
+    }
+
+    const refreshedUrls = await onRefreshMediaDownloadUrls();
+    return (
+      refreshedUrls?.[message.mediaObjectKey]?.downloadUrl ??
+      mediaDownloadUrl?.downloadUrl
+    );
+  }, [
+    areMediaDownloadUrlsStale,
+    isMediaMessage,
+    mediaDownloadUrl,
+    message.localMediaUrl,
+    message.mediaObjectKey,
+    onRefreshMediaDownloadUrls,
+  ]);
 
   return (
     <div
@@ -242,57 +273,65 @@ function MessageBubbleBase({
         isOutgoing ? 'justify-end' : 'justify-start',
       )}
     >
-      <Bubble
-        align={isOutgoing ? 'end' : 'start'}
-        className={isMediaMessage ? 'max-w-[calc(100vw-2rem)]' : 'max-w-[70%]'}
-        variant={isOutgoing ? 'tinted' : 'surface'}
+      <MessageMenu
+        message={message}
+        getMediaUrl={isMediaMessage ? getMediaUrl : undefined}
       >
-        <BubbleContent
-          className={cn(
-            'relative min-w-20 rounded-[8px]',
-            isMediaMessage ? 'p-[3px]' : 'px-2.5 pt-1.5 pb-1.5',
-            isOutgoing
-              ? isFirstInGroup
-                ? 'rounded-tr-none'
-                : ''
-              : cn(
-                  'border border-border/20 shadow-sm',
-                  isFirstInGroup ? 'rounded-tl-none' : '',
-                ),
-          )}
+        <Bubble
+          align={isOutgoing ? 'end' : 'start'}
+          className={
+            isMediaMessage ? 'max-w-[calc(100vw-2rem)]' : 'max-w-[70%]'
+          }
+          variant={isOutgoing ? 'tinted' : 'surface'}
         >
-          <MessageBubbleContent
-            message={message}
-            wabaId={wabaId}
-            mediaDownloadUrl={mediaDownloadUrl}
-            mediaDownloadUrlsError={mediaDownloadUrlsError}
-            isMediaDownloadUrlsError={isMediaDownloadUrlsError}
-            areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
-            onRefreshMediaDownloadUrls={onRefreshMediaDownloadUrls}
-          />
-        </BubbleContent>
-        {isFirstInGroup && isOutgoing && (
-          <div
-            data-slot="bubble-content"
-            className="absolute top-0 -right-[7px] w-[8px] h-[12px] z-10"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-          />
-        )}
-        {isFirstInGroup && !isOutgoing && (
-          <svg
-            className="absolute top-0 -left-[7px] w-[8px] h-[12px] z-10 overflow-visible"
-            viewBox="0 0 8 12"
+          <BubbleContent
+            className={cn(
+              'relative min-w-20 rounded-[8px]',
+              isMediaMessage ? 'p-0.75' : 'px-2.5 pt-1.5 pb-1.5',
+              isOutgoing
+                ? isFirstInGroup
+                  ? 'rounded-tr-none'
+                  : ''
+                : cn(
+                    'border border-border/20 shadow-sm',
+                    isFirstInGroup ? 'rounded-tl-none' : '',
+                  ),
+            )}
           >
-            <path d="M 8 0 L 0 0 L 8 12" className="fill-background" />
-            <path
-              d="M 8 0 L 0 0 L 8 12"
-              className="stroke-border/40"
-              fill="none"
-              strokeWidth="1"
+            <MessageBubbleContent
+              message={message}
+              wabaId={wabaId}
+              mediaDownloadUrl={mediaDownloadUrl}
+              mediaDownloadUrlsError={mediaDownloadUrlsError}
+              isMediaDownloadUrlsError={isMediaDownloadUrlsError}
+              areMediaDownloadUrlsStale={areMediaDownloadUrlsStale}
+              onRefreshMediaDownloadUrls={onRefreshMediaDownloadUrls}
             />
-          </svg>
-        )}
-      </Bubble>
+            <MessageMenuButton />
+          </BubbleContent>
+          {isFirstInGroup && isOutgoing && (
+            <div
+              data-slot="bubble-content"
+              className="absolute top-0 -right-1.75 w-2 h-3 z-10"
+              style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+            />
+          )}
+          {isFirstInGroup && !isOutgoing && (
+            <svg
+              className="absolute top-0 -left-1.75 w-2 h-3 z-10 overflow-visible"
+              viewBox="0 0 8 12"
+            >
+              <path d="M 8 0 L 0 0 L 8 12" className="fill-background" />
+              <path
+                d="M 8 0 L 0 0 L 8 12"
+                className="stroke-border/40"
+                fill="none"
+                strokeWidth="1"
+              />
+            </svg>
+          )}
+        </Bubble>
+      </MessageMenu>
     </div>
   );
 }

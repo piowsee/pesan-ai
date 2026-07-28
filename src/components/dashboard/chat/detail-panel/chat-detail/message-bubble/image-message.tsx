@@ -30,15 +30,8 @@ function ImageMessage({
     }
 
     event.preventDefault();
-    const targetWindow = window.open('', '_blank', 'noopener,noreferrer');
     const freshUrl = await getFreshDownloadUrl();
-
-    if (targetWindow) {
-      targetWindow.location.href = freshUrl;
-      return;
-    }
-
-    window.location.href = freshUrl;
+    window.open(freshUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleImageLoad = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -86,7 +79,7 @@ function ImageMessage({
         />
         {!message.content ? (
           <>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-slate-100/95 via-slate-100/70 via-50% to-slate-100/0 dark:from-slate-200/95 dark:via-slate-200/70 dark:via-50% dark:to-slate-200/0" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-linear-to-t from-slate-100/95 via-slate-100/70 via-50% to-slate-100/0 dark:from-slate-200/95 dark:via-slate-200/70 dark:via-50% dark:to-slate-200/0" />
             <div className="pointer-events-none absolute right-2 bottom-1.5 z-20">
               {metadata}
             </div>

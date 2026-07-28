@@ -15,9 +15,11 @@ import {
   FaFileZipper,
 } from 'react-icons/fa6';
 
-import { MessageCaption } from './message-caption';
-import { formatByteSize } from './message-utils';
-import type { MediaRendererProps } from './types';
+import { MessageCaption } from '../message-caption';
+import { useMessageOpen } from '../message-menu';
+import { formatByteSize } from '../message-utils';
+import type { MediaRendererProps } from '../types';
+import { getDocumentExtension } from './document-utils';
 
 export type DocumentVisual = {
   Icon: IconType;
@@ -83,39 +85,7 @@ const documentVisuals: Record<string, DocumentVisual> = {
   },
 };
 
-const documentExtensionByMimeType: Record<string, string> = {
-  'application/msword': 'doc',
-  'application/pdf': 'pdf',
-  'application/vnd.ms-excel': 'xls',
-  'application/vnd.ms-powerpoint': 'ppt',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-    'pptx',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-    'docx',
-  'application/x-7z-compressed': '7z',
-  'application/x-rar-compressed': 'rar',
-  'application/zip': 'zip',
-  'text/csv': 'csv',
-  'text/plain': 'txt',
-};
-
-function getDocumentExtension({
-  mediaFilename,
-  mediaMimeType,
-}: Pick<MediaRendererProps['message'], 'mediaFilename' | 'mediaMimeType'>) {
-  const fileExtension = mediaFilename?.split('.').pop()?.trim().toLowerCase();
-
-  if (fileExtension && fileExtension !== mediaFilename) {
-    return fileExtension;
-  }
-
-  const mimeType = mediaMimeType?.split(';')[0]?.trim().toLowerCase();
-
-  return mimeType ? (documentExtensionByMimeType[mimeType] ?? null) : null;
-}
-
-export function getDocumentVisual(
+function getDocumentVisual(
   message: Pick<
     MediaRendererProps['message'],
     'mediaFilename' | 'mediaMimeType'
@@ -167,26 +137,26 @@ function DocumentMessage({
   message,
   metadata,
 }: MediaRendererProps) {
+  const openFromMessageMenu = useMessageOpen();
   const size = formatByteSize(message.mediaSize);
   const { Icon, colorClassName, label } = getDocumentVisual(message);
   const title = message.mediaFilename || 'Document';
   const description = [label, size].filter(Boolean).join(' · ');
 
   const handleOpenDocument = async (event: MouseEvent<HTMLAnchorElement>) => {
+    if (openFromMessageMenu) {
+      event.preventDefault();
+      openFromMessageMenu();
+      return;
+    }
+
     if (!isDownloadUrlStale || !getFreshDownloadUrl) {
       return;
     }
 
     event.preventDefault();
-    const targetWindow = window.open('', '_blank', 'noopener,noreferrer');
     const freshUrl = await getFreshDownloadUrl();
-
-    if (targetWindow) {
-      targetWindow.location.href = freshUrl;
-      return;
-    }
-
-    window.location.href = freshUrl;
+    window.open(freshUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -216,4 +186,4 @@ function DocumentMessage({
   );
 }
 
-export { DocumentMessage };
+export { DocumentMessage, getDocumentVisual };
