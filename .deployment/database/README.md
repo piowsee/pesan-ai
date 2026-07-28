@@ -18,6 +18,30 @@ Do this procedure after you start the database for the first time:
    docker exec -u postgres postgres pgbackrest --stanza=YOUR_STANZA check
    ```
 
+## Manual Backups
+
+You can run backups manually at any time. There are three types of backups:
+- **Full**: Backs up all database files. Takes the longest and uses the most storage.
+- **Differential (diff)**: Backs up only files that changed since the last *Full* backup.
+- **Incremental (incr)**: Backs up only files that changed since the *last backup* (Full, Diff, or Incr).
+
+To run a backup manually, go to your VPS terminal and run one of these commands:
+
+**Run a Full Backup:**
+```bash
+docker exec -u postgres postgres pgbackrest --stanza=YOUR_STANZA --type=full backup
+```
+
+**Run a Differential Backup:**
+```bash
+docker exec -u postgres postgres pgbackrest --stanza=YOUR_STANZA --type=diff backup
+```
+
+**Run an Incremental Backup:**
+```bash
+docker exec -u postgres postgres pgbackrest --stanza=YOUR_STANZA --type=incr backup
+```
+
 ## Disaster Recovery
 
 Do this procedure if the disk breaks, the volume is deleted, or the database is corrupted. This procedure restores your data from the S3 backups.
