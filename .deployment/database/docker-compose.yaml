@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18
+    build: .
     container_name: postgres
     restart: unless-stopped
     environment:
@@ -9,6 +9,17 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pesanai_volume:/var/lib/postgresql
+      - ./conf/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest archive-push --stanza=YOUR_PGBACKREST_STANZA %p
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=3
     networks:
       - backend
     healthcheck:

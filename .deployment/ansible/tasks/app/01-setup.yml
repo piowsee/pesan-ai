@@ -15,11 +15,11 @@
     dest: '~/pesanai-docker/app/docker-compose.yaml'
     mode: '0644'
 
-- name: Copy Database docker-compose
+- name: Copy Database files
   ansible.builtin.copy:
-    src: '{{ playbook_dir }}/../database/docker-compose.yaml'
-    dest: '~/pesanai-docker/database/docker-compose.yaml'
-    mode: '0644'
+    src: '{{ playbook_dir }}/../database/'
+    dest: '~/pesanai-docker/database/'
+    mode: preserve
 
 - name: Copy Nginx App files
   ansible.builtin.copy:
