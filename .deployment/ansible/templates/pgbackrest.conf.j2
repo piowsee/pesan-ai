@@ -15,3 +15,6 @@ repo1-path=/
 repo1-retention-full={{ pgbackrest_retention_full | default('2') }}
 repo1-cipher-type={{ pgbackrest_cipher_type }}
 repo1-cipher-pass={{ pgbackrest_cipher_pass }}
+
+[global:archive-push]
+compress-level=3

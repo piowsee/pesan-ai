@@ -15,11 +15,7 @@ services:
       - -c
       - archive_mode=on
       - -c
-      - archive_command=pgbackrest archive-push --stanza=YOUR_PGBACKREST_STANZA %p
-      - -c
-      - wal_level=replica
-      - -c
-      - max_wal_senders=3
+      - archive_command=pgbackrest --stanza=YOUR_PGBACKREST_STANZA archive-push %p
     networks:
       - backend
     healthcheck:
