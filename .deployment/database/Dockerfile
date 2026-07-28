@@ -7,6 +7,7 @@ ENV BACKREST_USER="postgres" \
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         pgbackrest \
+        ca-certificates \
     && apt-get autoremove -y \
     && apt-get autopurge -y \
     && rm -rf /var/lib/apt/lists/*
