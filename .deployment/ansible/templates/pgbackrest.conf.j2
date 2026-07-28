@@ -5,18 +5,14 @@ pg1-path=/var/lib/postgresql/data
 log-level-console=info
 
 # S3 Repository Configuration
-repo1-type={{ pgbackrest_repo_type | default('s3') }}
+repo1-type=s3
 repo1-s3-bucket={{ s3_bucket }}
 repo1-s3-endpoint={{ s3_endpoint }}
 repo1-s3-key={{ s3_access_key }}
 repo1-s3-key-secret={{ s3_secret_key }}
 repo1-s3-region={{ s3_region }}
-repo1-s3-uri-style=path
-repo1-path={{ pgbackrest_repo_path | default('/pg') }}
-repo1-storage-port=443
-repo1-storage-verify-tls=n
+repo1-path=/
 repo1-retention-full={{ pgbackrest_retention_full | default('2') }}
-repo1-retention-diff=2
 {% if pgbackrest_cipher_type is defined and pgbackrest_cipher_type != 'none' %}
 repo1-cipher-type={{ pgbackrest_cipher_type }}
 repo1-cipher-pass={{ pgbackrest_cipher_pass }}
