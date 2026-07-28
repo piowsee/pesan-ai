@@ -10,6 +10,7 @@
   ansible.builtin.template:
     src: pgbackrest.conf.j2
     dest: '{{ ansible_facts.env.HOME }}/pesanai-docker/database/conf/pgbackrest.conf'
+    mode: '0644'
   become: yes
 
 - name: Inject pgbackrest stanza into docker-compose

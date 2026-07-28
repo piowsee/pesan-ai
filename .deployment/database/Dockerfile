@@ -10,6 +10,3 @@ RUN apt-get update -y \
     && apt-get autoremove -y \
     && apt-get autopurge -y \
     && rm -rf /var/lib/apt/lists/*
-
-# pgBackRest config
-COPY --chmod=640 --chown=${BACKREST_USER}:${BACKREST_GROUP} ./conf/pgbackrest.conf /etc/pgbackrest/pgbackrest.conf
