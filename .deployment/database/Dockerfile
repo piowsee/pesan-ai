@@ -1,7 +1,7 @@
 FROM postgres:18
 
-ENV PGBACKREST_USER="postgres" \
-    PGBACKREST_GROUP="postgres" \
+ENV BACKREST_USER="postgres" \
+    BACKREST_GROUP="postgres" \
     PG_VERSION="18"
 
 RUN apt-get update -y \
@@ -12,4 +12,4 @@ RUN apt-get update -y \
     && rm -rf /var/lib/apt/lists/*
 
 # pgBackRest config
-COPY --chmod=640 --chown=${PGBACKREST_USER}:${PGBACKREST_GROUP} ./conf/pgbackrest.conf /etc/pgbackrest/pgbackrest.conf
+COPY --chmod=640 --chown=${BACKREST_USER}:${BACKREST_GROUP} ./conf/pgbackrest.conf /etc/pgbackrest/pgbackrest.conf

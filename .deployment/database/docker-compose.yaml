@@ -9,7 +9,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pesanai_volume:/var/lib/postgresql
-      - ./conf/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf
     command:
       - postgres
       - -c
