@@ -13,7 +13,5 @@ repo1-s3-key-secret={{ s3_secret_key }}
 repo1-s3-region={{ s3_region }}
 repo1-path=/
 repo1-retention-full={{ pgbackrest_retention_full | default('2') }}
-{% if pgbackrest_cipher_type is defined and pgbackrest_cipher_type != 'none' %}
 repo1-cipher-type={{ pgbackrest_cipher_type }}
 repo1-cipher-pass={{ pgbackrest_cipher_pass }}
-{% endif %}

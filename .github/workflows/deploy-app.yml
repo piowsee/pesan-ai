@@ -15,6 +15,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Verify Required Secrets
+        run: |
+          if [ -z "${{ secrets.PGBACKREST_CIPHER_TYPE }}" ] || [ -z "${{ secrets.PGBACKREST_CIPHER_PASS }}" ]; then
+            echo "Error: pgBackRest encryption secrets (CIPHER_TYPE or CIPHER_PASS) are missing!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PGBACKREST_S3_ACCESS_KEY }}" ] || [ -z "${{ secrets.PGBACKREST_S3_SECRET_KEY }}" ]; then
+            echo "Error: S3 Access/Secret keys are missing!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PGBACKREST_S3_BUCKET }}" ] || [ -z "${{ secrets.PGBACKREST_S3_ENDPOINT }}" ] || [ -z "${{ secrets.PGBACKREST_S3_REGION }}" ]; then
+            echo "Error: S3 Bucket, Endpoint, or Region secrets are missing!"
+            exit 1
+          fi
+
       - name: Add SSH Keys with Passphrase
         env:
           # App Server Credentials (Server Hosted Together With DB and Reverse Proxy)
@@ -79,7 +94,6 @@ jobs:
             s3_secret_key=${{ secrets.PGBACKREST_S3_SECRET_KEY }}
             pgbackrest_cipher_pass=${{ secrets.PGBACKREST_CIPHER_PASS }}
             pgbackrest_cipher_type=${{ secrets.PGBACKREST_CIPHER_TYPE }}
-            pgbackrest_repo_type=${{ secrets.PGBACKREST_REPO_TYPE }}
             pgbackrest_retention_full=${{ secrets.PGBACKREST_RETENTION_FULL }}
             pgbackrest_stanza=${{ secrets.PGBACKREST_STANZA }}
 
