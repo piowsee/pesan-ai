@@ -1,5 +1,17 @@
 # pesan-ai
 
+## 1.4.0
+
+### Minor Changes
+
+- afc9990: Add chat bubble context menu with open, save as, and copy actions.
+
+### Patch Changes
+
+- 396808d: hide admin page from non-admin user (return notfound() instead of redirect)
+- c437d89: rename env vars and add bucket path
+- 63268c3: reorganize page route by grouping based on sidebar
+
 ## 1.3.1
 
 ### Patch Changes
