@@ -74,25 +74,31 @@ export const WebhookService = {
       }
 
       if (error) {
-        const status = error.status >= 500 ? 502 : 400;
+        const fetchError = error as {
+          status?: number;
+          statusText?: string;
+          message?: string;
+        };
+        const status =
+          fetchError.status && fetchError.status >= 500 ? 502 : 400;
         logError(new Error(`Webhook ${method} request failed`), {
           url,
-          status: error.status,
-          message: error.statusText || error.message,
+          status: fetchError.status,
+          message: fetchError.statusText || fetchError.message,
         });
         throw new ApiError(
-          `Webhook ${action} failed with status: ${error.status || 'unknown'}`,
+          `Webhook ${action} failed with status: ${fetchError.status || 'unknown'}`,
           status,
         );
       }
 
       return data as z.infer<T> | undefined;
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw error;
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw err;
       }
 
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      const message = err instanceof Error ? err.message : 'Unknown error';
       throw new ApiError(`Failed to ${action} webhook: ${message}`, 400);
     }
   },
