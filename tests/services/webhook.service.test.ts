@@ -2,9 +2,13 @@ import { ApiError } from '@/lib/api-helper/error';
 import { decrypt, encrypt } from '@/lib/server/encryption';
 import { WebhookRepository } from '@/repositories/webhook.repository';
 import { WebhookService } from '@/services/webhook.service';
+import { betterFetch } from '@better-fetch/fetch';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.unmock('@/services/webhook.service');
+vi.mock('@better-fetch/fetch', () => ({
+  betterFetch: vi.fn(),
+}));
 
 /**
  * WebhookService Tests
@@ -15,19 +19,18 @@ vi.unmock('@/services/webhook.service');
 describe('WebhookService', { tags: ['backend'] }, () => {
   describe('callWebhook', () => {
     it('calls webhook successfully', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({ success: true }),
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: { success: true },
+        error: null,
+      } as never);
 
       const result = await WebhookService.callWebhook({
         url: 'https://example.com',
         passphrase: 'pass',
         method: 'GET',
       });
-      expect(result.ok).toBe(true);
-      expect(fetch).toHaveBeenCalledWith(
+      expect(result).toEqual({ success: true });
+      expect(betterFetch).toHaveBeenCalledWith(
         'https://example.com',
         expect.objectContaining({
           method: 'GET',
@@ -36,10 +39,10 @@ describe('WebhookService', { tags: ['backend'] }, () => {
     });
 
     it('throws ApiError on failed response', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 400,
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: null,
+        error: { status: 400, message: 'Bad Request' },
+      } as never);
 
       await expect(
         WebhookService.callWebhook({
@@ -96,10 +99,10 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         existingWebhook as never,
       );
       vi.mocked(decrypt).mockReturnValue('decrypted-passphrase');
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: { success: true },
+        error: null,
+      } as never);
       vi.mocked(WebhookRepository.updateWebhook).mockResolvedValue({
         ...existingWebhook,
         name: 'New Name',
@@ -111,7 +114,7 @@ describe('WebhookService', { tags: ['backend'] }, () => {
       });
 
       expect(result.name).toBe('New Name');
-      expect(fetch).toHaveBeenCalledWith(
+      expect(betterFetch).toHaveBeenCalledWith(
         'https://old.example.com',
         expect.objectContaining({ method: 'GET' }),
       );
@@ -126,10 +129,10 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         existingWebhook as never,
       );
       vi.mocked(decrypt).mockReturnValue('decrypted-passphrase');
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: { success: true },
+        error: null,
+      } as never);
       vi.mocked(WebhookRepository.updateWebhook).mockResolvedValue({
         ...existingWebhook,
         webhookUrl: 'https://new.example.com',
@@ -141,7 +144,7 @@ describe('WebhookService', { tags: ['backend'] }, () => {
       });
 
       expect(result.webhookUrl).toBe('https://new.example.com');
-      expect(fetch).toHaveBeenCalledWith(
+      expect(betterFetch).toHaveBeenCalledWith(
         'https://new.example.com',
         expect.objectContaining({ method: 'GET' }),
       );
@@ -156,10 +159,10 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         existingWebhook as never,
       );
       vi.mocked(decrypt).mockReturnValue('decrypted-passphrase');
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: { success: true },
+        error: null,
+      } as never);
       vi.mocked(WebhookRepository.updateWebhook).mockResolvedValue({
         ...existingWebhook,
         webhookUrl: 'https://new.example.com',
@@ -174,7 +177,7 @@ describe('WebhookService', { tags: ['backend'] }, () => {
       });
 
       // Should use the new values for validation
-      expect(fetch).toHaveBeenCalledWith(
+      expect(betterFetch).toHaveBeenCalledWith(
         'https://new.example.com',
         expect.objectContaining({ method: 'GET' }),
       );
@@ -186,10 +189,10 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         existingWebhook as never,
       );
       vi.mocked(decrypt).mockReturnValue('decrypted-passphrase');
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: { success: true },
+        error: null,
+      } as never);
       vi.mocked(WebhookRepository.updateWebhook).mockResolvedValue(
         existingWebhook as never,
       );
@@ -200,7 +203,7 @@ describe('WebhookService', { tags: ['backend'] }, () => {
       });
 
       expect(decrypt).toHaveBeenCalledWith('enc:encrypted-passphrase');
-      expect(fetch).toHaveBeenCalledWith(
+      expect(betterFetch).toHaveBeenCalledWith(
         'https://old.example.com',
         expect.objectContaining({ method: 'GET' }),
       );
@@ -242,10 +245,10 @@ describe('WebhookService', { tags: ['backend'] }, () => {
         existingWebhook as never,
       );
       vi.mocked(decrypt).mockReturnValue('decrypted-passphrase');
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-      });
+      vi.mocked(betterFetch).mockResolvedValue({
+        data: { success: true },
+        error: null,
+      } as never);
 
       const result = await WebhookService.refreshWebhookConnection({
         id: 'wh-1',
@@ -253,7 +256,7 @@ describe('WebhookService', { tags: ['backend'] }, () => {
 
       expect(result.success).toBe(true);
       expect(decrypt).toHaveBeenCalledWith('enc:encrypted-passphrase');
-      expect(fetch).toHaveBeenCalledWith(
+      expect(betterFetch).toHaveBeenCalledWith(
         'https://example.com/webhook',
         expect.objectContaining({ method: 'GET' }),
       );

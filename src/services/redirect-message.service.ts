@@ -5,7 +5,6 @@ import { logError, logger } from '@/lib/server/logger';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { MessageRepository } from '@/repositories/message.repository';
 import { WebhookRepository } from '@/repositories/webhook.repository';
-import { betterFetch } from '@better-fetch/fetch';
 import { randomUUID } from 'crypto';
 import z from 'zod';
 
@@ -150,59 +149,16 @@ async function _requestBotWebhook(params: {
   const { url, passphrase } = await _findWebhookData({ conversationId });
   const decryptedPassphrase = decrypt(passphrase);
   const webhookMessages = _toBotWebhookMessages(messages);
-  const webhookToken = await WebhookService._generateWebhookToken({
+  const data = await WebhookService.callWebhook({
     url,
     passphrase: decryptedPassphrase,
-  });
-
-  const { data, error } = await betterFetch(url, {
-    retry: {
-      type: 'linear',
-      attempts: 3,
-      delay: 1000, // 1 second between retry attempts
-      shouldRetry: (response) => {
-        // Do not retry non-transient 4xx responses. Rate limits are transient,
-        // so 429 responses are retried alongside network and server failures.
-        if (
-          response &&
-          response.status >= 400 &&
-          response.status < 500 &&
-          response.status !== 429
-        ) {
-          return false;
-        }
-        return true;
-      },
-    },
     method: 'POST',
-    auth: {
-      type: 'Bearer',
-      token: webhookToken,
-    },
-    // External webhook body:
-    // {
-    //   customerIdentifier: "6281xxxxxxxx", // BSUID / Phone Number
-    //   messages: [{
-    //     sequence: number,  // chronological order, starting at 1
-    //     source: string,    // customer | admin | bot
-    //     timestamp: ISO-8601,
-    //     content: string
-    //   }]
-    // }
-    body: {
+    payload: {
       customerIdentifier,
       messages: webhookMessages,
     },
     output: botWebhookOutputSchema,
   });
-
-  if (error instanceof z.ZodError) {
-    throw new Error(`Webhook response schema mismatch: ${error.message}`);
-  }
-
-  if (error) {
-    throw new Error(`Failed to reach bot webhook: ${error.message}`);
-  }
 
   if (!data) {
     throw new Error('Empty response from bot webhook');

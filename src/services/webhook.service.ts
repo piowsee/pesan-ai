@@ -6,7 +6,9 @@ import {
   CreateWebhookPayload,
   UpdateWebhookPayload,
 } from '@/schemas/webhook.schema';
+import { betterFetch } from '@better-fetch/fetch';
 import { SignJWT } from 'jose';
+import { z } from 'zod';
 
 export const WebhookService = {
   /**
@@ -25,47 +27,66 @@ export const WebhookService = {
   /**
    * Internal helper to call a webhook with standardized timeout, token, and error handling.
    */
-  async callWebhook(params: {
+  async callWebhook<T extends z.ZodTypeAny = z.ZodAny>(params: {
     url: string;
     passphrase: string;
     method: 'GET' | 'POST';
     payload?: Record<string, unknown>;
-  }) {
-    const { url, passphrase, method, payload } = params;
+    output?: T;
+  }): Promise<z.infer<T> | undefined> {
+    const { url, passphrase, method, payload, output } = params;
     const action = method === 'GET' ? 'validate' : 'send message to';
+
     try {
       const token = await this._generateWebhookToken({ url, passphrase });
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
       logger.info(`Calling webhook (${method})`, { url });
 
-      const response = await fetch(url, {
+      const { data, error } = await betterFetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(payload ? { 'Content-Type': 'application/json' } : {}),
+        auth: {
+          type: 'Bearer',
+          token,
         },
-        body: payload ? JSON.stringify(payload) : undefined,
-        signal: controller.signal,
+        body: payload,
+        output,
+        retry: {
+          type: 'linear',
+          attempts: 3,
+          delay: 1000,
+          shouldRetry: (response) => {
+            if (
+              response &&
+              response.status >= 400 &&
+              response.status < 500 &&
+              response.status !== 429
+            ) {
+              return false;
+            }
+            return true;
+          },
+        },
+        timeout: 10000,
       });
 
-      clearTimeout(timeoutId);
+      if (error instanceof z.ZodError) {
+        throw new Error(`Webhook response schema mismatch: ${error.message}`);
+      }
 
-      if (!response.ok) {
-        const status = response.status >= 500 ? 502 : 400;
+      if (error) {
+        const status = error.status >= 500 ? 502 : 400;
         logError(new Error(`Webhook ${method} request failed`), {
           url,
-          status: response.status,
+          status: error.status,
+          message: error.statusText || error.message,
         });
         throw new ApiError(
-          `Webhook ${action} failed with status: ${response.status}`,
+          `Webhook ${action} failed with status: ${error.status || 'unknown'}`,
           status,
         );
       }
 
-      return response;
+      return data as z.infer<T> | undefined;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
