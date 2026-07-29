@@ -54,7 +54,7 @@ export async function register() {
         'Invalid environment variables:',
         JSON.stringify(parsed.error.flatten().fieldErrors, null, 2),
       );
-      throw new Error('Invalid environment variables');
+      process.exit(1);
     }
   }
 }
