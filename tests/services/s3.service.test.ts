@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/server/s3-client', () => ({
   s3BucketName: 'test-bucket',
+  s3BucketPath: '',
   s3Client: { send: vi.fn() },
 }));
 
