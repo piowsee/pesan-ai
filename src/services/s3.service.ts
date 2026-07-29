@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/api-helper/error';
 import { CHAT_FREEFORM_WINDOW_MS } from '@/lib/chat/chat';
 import { logger } from '@/lib/server/logger';
-import { s3BucketName, s3Client } from '@/lib/server/s3-client';
+import { s3BucketName, s3BucketPath, s3Client } from '@/lib/server/s3-client';
 import { ConversationRepository } from '@/repositories/conversation.repository';
 import { getSupportedUploadConfig } from '@/schemas/s3-upload.schema';
 import {
@@ -23,7 +23,8 @@ function createObjectKey(params: {
   wabaId: string; // Internal DB WhatsappBusinessAccount.id.
   convId: string; // Internal DB Conversation.id.
 }) {
-  return `${params.userId}/${params.wabaId}/${params.convId}/${randomUUID()}`;
+  const pathPrefix = s3BucketPath ? `${s3BucketPath}/` : '';
+  return `${pathPrefix}${params.userId}/${params.wabaId}/${params.convId}/${randomUUID()}`;
 }
 
 function assertUserOwnsKey(params: {
@@ -33,7 +34,8 @@ function assertUserOwnsKey(params: {
   convId: string;
 }) {
   const objectKey = params.key;
-  const expectedPrefix = `${params.userId}/${params.wabaId}/${params.convId}/`;
+  const pathPrefix = s3BucketPath ? `${s3BucketPath}/` : '';
+  const expectedPrefix = `${pathPrefix}${params.userId}/${params.wabaId}/${params.convId}/`;
 
   if (!objectKey.startsWith(expectedPrefix)) {
     throw new ApiError('Upload key not found or access denied', 404);
@@ -66,6 +68,7 @@ function assertFreeformWindowOpen(lastCustomerMessageAt?: Date | null) {
     409,
   );
 }
+
 export const S3Service = {
   async createPresignedUploadUrls(params: {
     userId: string;

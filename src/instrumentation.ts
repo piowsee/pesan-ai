@@ -37,19 +37,12 @@ const envSchema = z.object({
   // Logger
   LOG_LEVEL: z.string().optional().default('info'),
 
-  // Digital Ocean Space Object Storage
-  DIGITAL_OCEAN_SPACES_BUCKET_NAME: z
-    .string()
-    .min(1, 'DIGITAL_OCEAN_SPACES_BUCKET_NAME is required'),
-  DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT: z
-    .string()
-    .url('DIGITAL_OCEAN_SPACES_BUCKET_ENDPOINT must be a valid URL'),
-  DIGITAL_OCEAN_SPACES_BUCKET_ACCESS_KEY: z
-    .string()
-    .min(1, 'DIGITAL_OCEAN_SPACES_BUCKET_ACCESS_KEY is required'),
-  DIGITAL_OCEAN_SPACES_BUCKET_SECRET_KEY: z
-    .string()
-    .min(1, 'DIGITAL_OCEAN_SPACES_BUCKET_SECRET_KEY is required'),
+  // Object Storage - S3 compatible
+  BUCKET_NAME: z.string().min(1, 'BUCKET_NAME is required'),
+  BUCKET_ENDPOINT: z.string().url('BUCKET_ENDPOINT must be a valid URL'),
+  BUCKET_PATH: z.string().min(1, 'BUCKET_PATH is required'),
+  BUCKET_ACCESS_KEY: z.string().min(1, 'BUCKET_ACCESS_KEY is required'),
+  BUCKET_SECRET_KEY: z.string().min(1, 'BUCKET_SECRET_KEY is required'),
 });
 
 export async function register() {
