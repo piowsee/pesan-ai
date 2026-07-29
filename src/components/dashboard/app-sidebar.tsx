@@ -35,27 +35,27 @@ export function AppSidebar({ user }: { user: User | null }) {
     matchPath: '/dashboard/chat',
   };
 
-  const workspaceItems = [
+  const businessItems = [
     {
-      title: t('home'),
-      url: '/dashboard',
+      title: t('business.overview'),
+      url: '/dashboard/business/overview',
       icon: Home,
-      matchPath: '/dashboard',
+      matchPath: '/dashboard/business/overview',
     },
     {
-      title: t('wabaManagement'),
-      url: '/dashboard/waba',
+      title: t('business.connectApp'),
+      url: '/dashboard/business/connect-app',
       icon: FaWhatsapp,
-      matchPath: '/dashboard/waba',
+      matchPath: '/dashboard/business/connect-app',
     },
   ];
 
   const customerItems = [
     {
-      title: t('customers'),
-      url: '/dashboard/customers',
+      title: t('customer.customers'),
+      url: '/dashboard/customer/customers',
       icon: UsersRound,
-      matchPath: '/dashboard/customers',
+      matchPath: '/dashboard/customer/customers',
     },
   ];
 
@@ -69,7 +69,7 @@ export function AppSidebar({ user }: { user: User | null }) {
                 <div className="pointer-events-none flex aspect-square size-10 shrink-0 items-center justify-center rounded-lg select-none">
                   <Image
                     src="/pesan-ai-black-logo.png"
-                    alt="pesan-ai"
+                    alt="Pesan AI"
                     width={28}
                     height={28}
                     className="size-7 object-contain select-none"
@@ -128,18 +128,18 @@ export function AppSidebar({ user }: { user: User | null }) {
         <SidebarGroup className="pt-2 pb-0">
           <SidebarGroupLabel className="flex items-center justify-start font-bold text-muted-foreground group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:opacity-100">
             <span className="block max-w-32 flex-1 truncate whitespace-nowrap text-left text-brand/70! opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:opacity-0">
-              {t('workspace')}
+              {t('business.title')}
             </span>
             <span className="block h-px max-w-0 flex-1 overflow-hidden bg-border opacity-0 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-10 group-data-[collapsible=icon]:opacity-100" />
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {workspaceItems.map((item) => (
+              {businessItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
                     isActive={
-                      item.matchPath === '/dashboard'
+                      item.matchPath === '/dashboard/business/overview'
                         ? pathname === item.matchPath
                         : pathname === item.matchPath ||
                           pathname.startsWith(`${item.matchPath}/`)
@@ -166,7 +166,7 @@ export function AppSidebar({ user }: { user: User | null }) {
         <SidebarGroup className="pt-2 pb-0">
           <SidebarGroupLabel className="flex items-center justify-start font-bold text-muted-foreground group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:opacity-100">
             <span className="block max-w-32 flex-1 truncate whitespace-nowrap text-left text-brand/70! opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:opacity-0">
-              {t('customer')}
+              {t('customer.title')}
             </span>
             <span className="block h-px max-w-0 flex-1 overflow-hidden bg-border opacity-0 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-10 group-data-[collapsible=icon]:opacity-100" />
           </SidebarGroupLabel>
@@ -177,7 +177,7 @@ export function AppSidebar({ user }: { user: User | null }) {
                   <SidebarMenuButton
                     asChild
                     isActive={
-                      item.matchPath === '/dashboard'
+                      item.matchPath === '/dashboard/business/overview'
                         ? pathname === item.matchPath
                         : pathname === item.matchPath ||
                           pathname.startsWith(`${item.matchPath}/`)

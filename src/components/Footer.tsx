@@ -48,7 +48,7 @@ export function Footer() {
           >
             <Link
               href="/"
-              className="-mt-2 inline-flex w-fit items-center gap-2 pointer-events-auto"
+              className="-mt-2 inline-flex w-fit items-center gap-1 pointer-events-auto"
             >
               <Image
                 src="/pesan-ai-black-logo.png"
@@ -58,8 +58,8 @@ export function Footer() {
                 className="h-15 w-auto object-contain"
                 draggable={false}
               />
-              <p className="mb-1 text-3xl font-bold tracking-tight text-brand">
-                pesan.ai
+              <p className="text-3xl font-bold tracking-tight text-black">
+                Pesan AI
               </p>
             </Link>
 
@@ -138,9 +138,13 @@ export function Footer() {
           <p className="text-center text-sm text-brand/75">{t('rights')}</p>
         </ScrollReveal>
 
-        <ScrollReveal className="mt-2 -mb-2" delay={280} distance={18}>
-          <p className="pointer-events-none w-full bg-linear-to-b from-brand/30 to-transparent bg-clip-text text-center text-[clamp(5rem,20vw,18.5rem)] font-semibold leading-[0.9] tracking-tight text-transparent">
-            pesan.ai
+        <ScrollReveal
+          className="mt-2 -mb-2 flex w-full justify-center overflow-hidden @container"
+          delay={280}
+          distance={18}
+        >
+          <p className="pointer-events-none w-max whitespace-nowrap bg-linear-to-b from-brand/30 to-transparent bg-clip-text text-center text-[26cqi] font-semibold leading-[0.9] tracking-tight text-transparent">
+            Pesan AI
           </p>
         </ScrollReveal>
       </Container>

@@ -1,0 +1,18 @@
+---
+- name: Pull n8n Nginx Image
+  ansible.builtin.command: docker compose pull
+  args:
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
+  become: yes
+
+- name: Start n8n Nginx Proxy
+  ansible.builtin.command: docker compose up -d --remove-orphans
+  args:
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
+  become: yes
+
+- name: Start/Recreate Nginx Proxy Container
+  ansible.builtin.command: docker compose up -d --force-recreate nginx
+  args:
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
+  become: yes

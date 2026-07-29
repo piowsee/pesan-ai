@@ -1,0 +1,27 @@
+---
+- name: Ensure deployment directories exist
+  ansible.builtin.file:
+    path: '~/pesanai-docker/{{ item }}'
+    state: directory
+    mode: '0755'
+  loop:
+    - n8n
+    - nginx
+
+- name: Copy n8n files
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../n8n/'
+    dest: '~/pesanai-docker/n8n/'
+    mode: '0644'
+
+- name: Copy Nginx n8n files
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../nginx/n8n/'
+    dest: '~/pesanai-docker/nginx/'
+    mode: '0644'
+
+- name: Inject App IP into Nginx n8n Config
+  ansible.builtin.replace:
+    path: '~/pesanai-docker/nginx/nginx.conf'
+    regexp: 'YOUR_APP_IP'
+    replace: '{{ hostvars[groups["app"][0]].ansible_host | default(groups["app"][0]) }}'

@@ -1,20 +1,25 @@
 services:
   postgres:
-    image: postgres:18-alpine
+    build: .
     container_name: postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: postgres
     volumes:
       - pesanai_volume:/var/lib/postgresql
-    ports:
-      - '127.0.0.1:54320:5432'
+      - ./conf/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=YOUR_PGBACKREST_STANZA archive-push %p
     networks:
       - backend
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,18 +32,33 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 200
       DEFAULT_POOL_SIZE: 20
       MIN_POOL_SIZE: 0
       RESERVE_POOL_SIZE: 5
+      LISTEN_PORT: 6432
       SERVER_RESET_QUERY: DISCARD ALL
       AUTH_TYPE: scram-sha-256
-    ports:
-      - '127.0.0.1:64320:6432'
     networks:
       - backend
+
+  cron:
+    image: docker:cli
+    container_name: pgbackrest_cron
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    entrypoint: >
+      sh -c '
+      echo "0 3 * * 1 docker exec -u postgres postgres pgbackrest --stanza=YOUR_PGBACKREST_STANZA --type=full backup" > /etc/crontabs/root &&
+      echo "0 3 * * 2-7 docker exec -u postgres postgres pgbackrest --stanza=YOUR_PGBACKREST_STANZA --type=incr backup" >> /etc/crontabs/root &&
+      exec crond -f -l 2
+      '
 
 networks:
   backend:
@@ -47,3 +67,4 @@ networks:
 
 volumes:
   pesanai_volume:
+    name: pesanai_database_volume

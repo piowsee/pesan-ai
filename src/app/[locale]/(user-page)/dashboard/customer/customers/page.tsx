@@ -1,4 +1,4 @@
-import { CustomersDashboard } from '@/components/dashboard/customers/customers-dashboard';
+import { CustomersDashboard } from '@/components/dashboard/customer/customers/customers-dashboard';
 
 export default function CustomersPage() {
   return (

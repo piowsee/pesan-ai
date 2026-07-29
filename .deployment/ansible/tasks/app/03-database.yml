@@ -1,0 +1,36 @@
+---
+- name: Ensure pgbackrest config directory exists
+  ansible.builtin.file:
+    path: '{{ ansible_facts.env.HOME }}/pesanai-docker/database/conf'
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Copy pgbackrest config
+  ansible.builtin.template:
+    src: pgbackrest.conf.j2
+    dest: '{{ ansible_facts.env.HOME }}/pesanai-docker/database/conf/pgbackrest.conf'
+    mode: '0644'
+  become: yes
+  register: db_config
+
+- name: Inject pgbackrest stanza into docker-compose
+  ansible.builtin.replace:
+    path: '{{ ansible_facts.env.HOME }}/pesanai-docker/database/docker-compose.yaml'
+    regexp: 'YOUR_PGBACKREST_STANZA'
+    replace: '{{ pgbackrest_stanza | default("pesanai") }}'
+  become: yes
+  register: db_compose
+
+- name: Start Database
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/database'
+  become: yes
+
+- name: Restart Database if config changed
+  ansible.builtin.command: docker compose restart
+  args:
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/database'
+  become: yes
+  when: db_config.changed or db_compose.changed

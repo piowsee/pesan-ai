@@ -27,7 +27,7 @@ export default function NotFound() {
   const t = messages.NotFoundPage;
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">
       <div className="bg-background font-sans">
         <Navbar />
         <NotFoundHero

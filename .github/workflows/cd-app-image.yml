@@ -49,3 +49,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_META_APP_ID=${{ secrets.NEXT_PUBLIC_META_APP_ID }}
             NEXT_PUBLIC_FACEBOOK_CONFIG_ID=${{ secrets.NEXT_PUBLIC_FACEBOOK_CONFIG_ID }}
+
+  deploy:
+    needs: build
+    uses: ./.github/workflows/deploy-app.yml
+    secrets: inherit

@@ -1,0 +1,21 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./cloudflare-allow.conf:/etc/nginx/cloudflare-allow.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    ports:
+      - '80:80'
+      - '443:443'
+      - '5432:5432'
+      - '6432:6432'
+    networks:
+      - backend
+
+networks:
+  backend:
+    external: true
+    name: pesanai_backend

@@ -1,6 +1,6 @@
 import { getLocaleFromHeaders } from '@/lib/i18n-helper/locale';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { auth } from './auth';
 
@@ -26,14 +26,13 @@ export const AuthPageHelper = {
   },
 
   async requireAdmin() {
-    const user = await this.requireUser();
+    const requestHeaders = await headers();
+    const session = await auth.api.getSession({ headers: requestHeaders });
 
-    if (user.role !== 'admin') {
-      const requestHeaders = await headers();
-      const locale = getLocaleFromHeaders(requestHeaders);
-      redirect(`/${locale}/dashboard`);
+    if (!session?.user || session.user.role !== 'admin') {
+      notFound();
     }
 
-    return user;
+    return session.user;
   },
 };

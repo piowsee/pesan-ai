@@ -1,11 +1,8 @@
-name: Deploy to VPS
+name: Deploy App to VPS
 
 on:
-  workflow_run:
-    workflows: ['Build & Push App Docker Image']
-    types: [completed]
-    branches: ['main']
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -13,122 +10,98 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     environment: vps
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Ensure directories exist on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          script: |
-            mkdir -p ~/pesanai-docker/app
-            mkdir -p ~/pesanai-docker/database
-            mkdir -p ~/pesanai-docker/nginx
-
-      - name: Copy App docker-compose
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.deployment/app/docker-compose.yaml'
-          target: '~/pesanai-docker/app/'
-          strip_components: 2
-
-      - name: Copy DB docker-compose
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.deployment/database/docker-compose.yaml'
-          target: '~/pesanai-docker/database/'
-          strip_components: 2
-
-      - name: Inject Domain into Nginx Config
+      - name: Verify Required Secrets
         run: |
-          sed -i "s/YOUR_DOMAIN_NAME/${{ secrets.DOMAIN_NAME }}/g" .deployment/nginx/nginx.conf
+          if [ -z "${{ secrets.PGBACKREST_CIPHER_TYPE }}" ] || [ -z "${{ secrets.PGBACKREST_CIPHER_PASS }}" ]; then
+            echo "Error: pgBackRest encryption secrets (CIPHER_TYPE or CIPHER_PASS) are missing!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PGBACKREST_S3_ACCESS_KEY }}" ] || [ -z "${{ secrets.PGBACKREST_S3_SECRET_KEY }}" ]; then
+            echo "Error: S3 Access/Secret keys are missing!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.PGBACKREST_S3_BUCKET }}" ] || [ -z "${{ secrets.PGBACKREST_S3_ENDPOINT }}" ] || [ -z "${{ secrets.PGBACKREST_S3_REGION }}" ] || [ -z "${{ secrets.PGBACKREST_S3_PATH }}" ]; then
+            echo "Error: S3 Bucket, Endpoint, Region, or Path secrets are missing!"
+            exit 1
+          fi
 
-      - name: Copy Nginx Config & Compose
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          source: '.deployment/nginx/*'
-          target: '~/pesanai-docker/nginx/'
-          strip_components: 2
+      - name: Add SSH Keys with Passphrase
+        env:
+          # App Server Credentials (Server Hosted Together With DB and Reverse Proxy)
+          SSH_KEY_APP: ${{ secrets.SSH_KEY_APP }}
+          SSH_PASSPHRASE_APP: ${{ secrets.SSH_KEY_PASSPHRASE_APP }}
+          # N8N Server Credentials
+          SSH_KEY_N8N: ${{ secrets.SSH_KEY_N8N }}
+          SSH_PASSPHRASE_N8N: ${{ secrets.SSH_KEY_PASSPHRASE_N8N }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y expect
+          eval $(ssh-agent -s)
 
-      - name: Start Database, App, and Nginx
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          port: ${{ secrets.SSH_PORT }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_KEY_PASSPHRASE }}
-          script: |
-            echo "==================================="
-            echo "       DATABASE DEPLOYMENT         "
-            echo "==================================="
-            cd ~/pesanai-docker/database
-
-            echo "Starting or updating database..."
-            docker compose up -d
-
-            echo "==================================="
-            echo "         APP DEPLOYMENT            "
-            echo "==================================="
-            cd ~/pesanai-docker/app
-
-            echo "Pulling latest image and starting app..."
-            docker compose pull
-            docker compose up -d
-
-            echo "==================================="
-            echo "        NGINX DEPLOYMENT           "
-            echo "==================================="
-            cd ~/pesanai-docker/nginx
-
-            echo "1. Checking/Installing Certbot..."
-            if ! command -v certbot &> /dev/null; then
-                sudo apt-get update && sudo apt-get install -y certbot
+          # Helper function to add a key if it exists
+          add_key() {
+            local key="$1"
+            local pass="$2"
+            if [ -n "$key" ]; then
+              echo "$key" > key.pem
+              chmod 600 key.pem
+              expect -c "
+                spawn ssh-add key.pem
+                expect \"Enter passphrase\"
+                send \"$pass\r\"
+                expect eof
+              "
+              rm key.pem
             fi
+          }
 
-            echo "2. Checking SSL Certificate..."
-            if [ ! -d "/etc/letsencrypt/live/${{ secrets.DOMAIN_NAME }}" ]; then
-                echo "SSL Certificate not found for ${{ secrets.DOMAIN_NAME }}. Generating..."
-                
-                # Stop nginx so port 80 is free for Certbot's standalone challenge
-                docker compose down || true
-                
-                # Setup Email Flag safely
-                EMAIL="${{ secrets.SSL_EMAIL }}"
-                if [ -z "$EMAIL" ]; then
-                    CERTBOT_EMAIL_FLAG="--register-unsafely-without-email"
-                else
-                    CERTBOT_EMAIL_FLAG="-m $EMAIL"
-                fi
-                
-                sudo certbot certonly --standalone --non-interactive --agree-tos $CERTBOT_EMAIL_FLAG -d "${{ secrets.DOMAIN_NAME }}"
-            else
-                echo "SSL Certificate already exists for ${{ secrets.DOMAIN_NAME }}. Checking expiration..."
-                sudo certbot renew --pre-hook "docker stop nginx" --post-hook "docker start nginx"
-            fi
+          # Load both keys into the ssh-agent
+          add_key "$SSH_KEY_APP" "$SSH_PASSPHRASE_APP"
+          add_key "$SSH_KEY_N8N" "$SSH_PASSPHRASE_N8N"
 
-            echo "3. Pulling latest nginx image and starting proxy..."
-            docker compose pull
-            docker compose up -d --remove-orphans
+          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV
+          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> $GITHUB_ENV
+
+      - name: Run Ansible Playbook
+        uses: dawidd6/action-ansible-playbook@v9
+        env:
+          ANSIBLE_HOST_KEY_CHECKING: 'False'
+        with:
+          playbook: deploy.yml
+          directory: .deployment/ansible
+          # Note: We intentionally omit the 'key' input here.
+          # Providing it would force Ansible to bypass the ssh-agent we set up in the previous step
+          # and fail when prompted for the passphrase.
+          inventory: |
+            [app]
+            ${{ secrets.SSH_HOST_APP }}
+
+            [app:vars]
+            ansible_port=${{ secrets.SSH_PORT_APP }}
+            ansible_user=${{ secrets.SSH_USERNAME_APP }}
+            ansible_become_password=${{ secrets.SUDO_PASSWORD_APP }}
+            domain_name=${{ secrets.DOMAIN_NAME }}
+            ssl_email=${{ secrets.SSL_EMAIL }}
+            cf_api_token=${{ secrets.CF_API_TOKEN }}
+            s3_bucket=${{ secrets.PGBACKREST_S3_BUCKET }}
+            s3_endpoint=${{ secrets.PGBACKREST_S3_ENDPOINT }}
+            s3_region=${{ secrets.PGBACKREST_S3_REGION }}
+            s3_access_key=${{ secrets.PGBACKREST_S3_ACCESS_KEY }}
+            s3_secret_key=${{ secrets.PGBACKREST_S3_SECRET_KEY }}
+            s3_path=${{ secrets.PGBACKREST_S3_PATH }}
+            pgbackrest_cipher_pass=${{ secrets.PGBACKREST_CIPHER_PASS }}
+            pgbackrest_cipher_type=${{ secrets.PGBACKREST_CIPHER_TYPE }}
+            pgbackrest_retention_full=${{ secrets.PGBACKREST_RETENTION_FULL }}
+            pgbackrest_stanza=${{ secrets.PGBACKREST_STANZA }}
+
+            [n8n]
+            ${{ secrets.SSH_HOST_N8N }}
+
+            [n8n:vars]
+            ansible_port=${{ secrets.SSH_PORT_N8N }}
+            ansible_user=${{ secrets.SSH_USERNAME_N8N }}
+            ansible_become_password=${{ secrets.SUDO_PASSWORD_N8N }}

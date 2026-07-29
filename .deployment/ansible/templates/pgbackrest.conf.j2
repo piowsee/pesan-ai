@@ -1,0 +1,20 @@
+[{{ pgbackrest_stanza | default('pesanai') }}]
+pg1-path=/var/lib/postgresql/18/docker
+
+[global]
+log-level-console=info
+
+# S3 Repository Configuration
+repo1-type=s3
+repo1-s3-bucket={{ s3_bucket }}
+repo1-s3-endpoint={{ s3_endpoint }}
+repo1-s3-key={{ s3_access_key }}
+repo1-s3-key-secret={{ s3_secret_key }}
+repo1-s3-region={{ s3_region }}
+repo1-path={{ s3_path if s3_path.startswith('/') else '/' ~ s3_path }}
+repo1-retention-full={{ pgbackrest_retention_full | default('2') }}
+repo1-cipher-type={{ pgbackrest_cipher_type }}
+repo1-cipher-pass={{ pgbackrest_cipher_pass }}
+
+[global:archive-push]
+compress-level=3
