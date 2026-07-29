@@ -985,6 +985,39 @@
         "errorFallback": "Failed to delete webhook"
       }
     },
+    "UpdateWebhookDialog": {
+      "trigger": "Edit",
+      "title": "Update Webhook",
+      "description": "Update settings for \"{name}\". Changes will take effect immediately.",
+      "labels": {
+        "name": "Name",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Passphrase",
+        "passphraseHint": "Leave blank to keep the current passphrase."
+      },
+      "placeholders": {
+        "name": "My Webhook",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Enter new passphrase"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "submit": "Save Changes",
+        "refresh": "Test Connection",
+        "refreshing": "Testing..."
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" updated successfully",
+        "refreshSuccess": "Connection verified successfully",
+        "errorFallback": "Failed to update webhook"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidUrl": "Enter a valid URL",
+        "passphraseMinLength": "Passphrase must be at least 1 character"
+      }
+    },
     "WebhookDocsDialog": {
       "trigger": "API Docs",
       "title": "Webhook API Documentation",

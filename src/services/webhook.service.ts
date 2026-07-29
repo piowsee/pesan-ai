@@ -1,8 +1,11 @@
 import { ApiError } from '@/lib/api-helper/error';
-import { encrypt } from '@/lib/server/encryption';
+import { decrypt, encrypt } from '@/lib/server/encryption';
 import { logError, logger } from '@/lib/server/logger';
 import { WebhookRepository } from '@/repositories/webhook.repository';
-import { CreateWebhookPayload } from '@/schemas/create-webhook.schema';
+import {
+  CreateWebhookPayload,
+  UpdateWebhookPayload,
+} from '@/schemas/webhook.schema';
 import { SignJWT } from 'jose';
 
 export const WebhookService = {
@@ -102,6 +105,64 @@ export const WebhookService = {
       updatedAt: webhook.updatedAt,
       userId: webhook.userId,
     };
+  },
+
+  async updateWebhook(params: { id: string; data: UpdateWebhookPayload }) {
+    const { id, data } = params;
+
+    const existing = await WebhookRepository.findById({ id });
+    if (!existing) {
+      throw new ApiError('Webhook not found', 404);
+    }
+
+    const effectiveUrl = data.webhookUrl ?? existing.webhookUrl;
+    const effectivePassphrase = data.passphrase ?? decrypt(existing.passphrase);
+    await this.validateWebhookUrl({
+      url: effectiveUrl,
+      passphrase: effectivePassphrase,
+    });
+
+    const updateData: {
+      name?: string;
+      webhookUrl?: string;
+      passphrase?: string;
+    } = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.webhookUrl !== undefined) updateData.webhookUrl = data.webhookUrl;
+    if (data.passphrase !== undefined)
+      updateData.passphrase = encrypt(data.passphrase);
+
+    const webhook = await WebhookRepository.updateWebhook({
+      id,
+      data: updateData,
+    });
+
+    return {
+      id: webhook.id,
+      name: webhook.name,
+      webhookUrl: webhook.webhookUrl,
+      isActive: webhook.isActive,
+      createdAt: webhook.createdAt,
+      updatedAt: webhook.updatedAt,
+      userId: webhook.userId,
+    };
+  },
+
+  async refreshWebhookConnection(params: { id: string }) {
+    const { id } = params;
+
+    const existing = await WebhookRepository.findById({ id });
+    if (!existing) {
+      throw new ApiError('Webhook not found', 404);
+    }
+
+    const passphrase = decrypt(existing.passphrase);
+    await this.validateWebhookUrl({
+      url: existing.webhookUrl,
+      passphrase,
+    });
+
+    return { success: true };
   },
 
   async getWebhooksPaginated(params: { page: number; limit: number }) {

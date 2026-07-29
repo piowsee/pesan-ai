@@ -1,7 +1,7 @@
 import { withApiAdmin } from '@/lib/api-helper/api-handler';
 import { jsend } from '@/lib/api-helper/jsend';
 import { getPaginationParams } from '@/lib/api-helper/pagination';
-import { CreateWebhookSchema } from '@/schemas/create-webhook.schema';
+import { CreateWebhookSchema } from '@/schemas/webhook.schema';
 import { WebhookService } from '@/services/webhook.service';
 
 /**

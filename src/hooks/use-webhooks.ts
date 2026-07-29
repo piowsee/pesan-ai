@@ -32,6 +32,12 @@ interface CreateWebhookPayload {
   passphrase: string;
 }
 
+interface UpdateWebhookPayload {
+  name?: string;
+  webhookUrl?: string;
+  passphrase?: string;
+}
+
 const DEFAULT_PAGE_SIZE = 10;
 
 // ─── Query Keys ──────────────────────────────────────────────────────
@@ -109,6 +115,24 @@ async function createWebhook(payload: CreateWebhookPayload): Promise<void> {
   }
 }
 
+async function updateWebhook(params: {
+  id: string;
+  payload: UpdateWebhookPayload;
+}): Promise<void> {
+  const { id, payload } = params;
+  const response = await fetch(`/api/webhooks/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message = body?.data?.message ?? 'Failed to update webhook';
+    throw new Error(message);
+  }
+}
+
 async function deleteWebhook(id: string): Promise<void> {
   const response = await fetch(`/api/webhooks/${id}`, {
     method: 'DELETE',
@@ -117,6 +141,18 @@ async function deleteWebhook(id: string): Promise<void> {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const message = body?.data?.message ?? 'Failed to delete webhook';
+    throw new Error(message);
+  }
+}
+
+async function refreshWebhook(id: string): Promise<void> {
+  const response = await fetch(`/api/webhooks/${id}/refresh`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    const message = body?.data?.message ?? 'Failed to refresh webhook';
     throw new Error(message);
   }
 }
@@ -148,6 +184,23 @@ export function useCreateWebhook() {
 }
 
 /**
+ * Mutation hook to update a webhook (rename, change URL, refresh connection).
+ * Automatically invalidates the webhooks list on success.
+ */
+export function useUpdateWebhook() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateWebhook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: webhookKeys.all,
+      });
+    },
+  });
+}
+
+/**
  * Mutation hook to delete a webhook.
  * Automatically invalidates the webhooks list on success.
  */
@@ -161,6 +214,15 @@ export function useDeleteWebhook() {
         queryKey: webhookKeys.all,
       });
     },
+  });
+}
+
+/**
+ * Mutation hook to refresh a webhook's connection.
+ */
+export function useRefreshWebhook() {
+  return useMutation({
+    mutationFn: refreshWebhook,
   });
 }
 

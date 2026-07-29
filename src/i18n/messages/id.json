@@ -985,6 +985,39 @@
         "errorFallback": "Gagal menghapus webhook"
       }
     },
+    "UpdateWebhookDialog": {
+      "trigger": "Edit",
+      "title": "Perbarui Webhook",
+      "description": "Perbarui pengaturan untuk \"{name}\". Perubahan akan langsung berlaku.",
+      "labels": {
+        "name": "Nama",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Frasa Sandi",
+        "passphraseHint": "Kosongkan untuk mempertahankan frasa sandi saat ini."
+      },
+      "placeholders": {
+        "name": "Webhook Saya",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Masukkan frasa sandi baru"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "saving": "Menyimpan...",
+        "submit": "Simpan Perubahan",
+        "refresh": "Uji Koneksi",
+        "refreshing": "Menguji..."
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" berhasil diperbarui",
+        "refreshSuccess": "Koneksi berhasil diverifikasi",
+        "errorFallback": "Gagal memperbarui webhook"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidUrl": "Masukkan URL yang valid",
+        "passphraseMinLength": "Frasa sandi minimal 1 karakter"
+      }
+    },
     "WebhookDocsDialog": {
       "trigger": "Dokumentasi API",
       "title": "Dokumentasi API Webhook",

@@ -18,6 +18,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { DeleteWebhookDialog } from './delete-webhook-dialog';
+import { UpdateWebhookDialog } from './update-webhook-dialog';
 
 const PAGE_SIZE = 10;
 
@@ -71,7 +72,10 @@ export function WebhookTable() {
           {formattedDate}
         </TableCell>
         <TableCell className="py-4">
-          <DeleteWebhookDialog id={webhook.id} name={webhook.name} />
+          <div className="flex items-center gap-1">
+            <UpdateWebhookDialog webhook={webhook} />
+            <DeleteWebhookDialog id={webhook.id} name={webhook.name} />
+          </div>
         </TableCell>
       </TableRow>
     );
