@@ -357,7 +357,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
         }),
       ).rejects.toMatchObject({
         status: 404,
-        message: 'Upload key not found or access denied',
+        message: 'Media not found or access denied',
       });
     });
     it('rejects keys outside the user, WABA, and conversation prefix', async () => {
@@ -370,7 +370,7 @@ describe('S3Service', { tags: ['backend'] }, () => {
         }),
       ).rejects.toMatchObject({
         status: 404,
-        message: 'Upload key not found or access denied',
+        message: 'Media not found or access denied',
       });
       expect(s3Client.send).not.toHaveBeenCalled();
     });
