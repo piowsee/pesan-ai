@@ -38,7 +38,7 @@ function assertUserOwnsKey(params: {
   const expectedPrefix = `${pathPrefix}${params.userId}/${params.wabaId}/${params.convId}/`;
 
   if (!objectKey.startsWith(expectedPrefix)) {
-    throw new ApiError('Upload key not found or access denied', 404);
+    throw new ApiError('Media not found or access denied', 404);
   }
 
   return objectKey;
@@ -227,7 +227,7 @@ export const S3Service = {
         error instanceof S3ServiceException &&
         error.$metadata.httpStatusCode === 404
       ) {
-        throw new ApiError('Upload key not found or access denied', 404);
+        throw new ApiError('Media not found or access denied', 404);
       }
 
       throw error;

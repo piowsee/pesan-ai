@@ -47,6 +47,8 @@ export interface ChatConversation {
   createdAt: string;
   updatedAt: string;
   messagingProduct: string;
+  label: string | null;
+  internalNotes: string | null;
   canSendFreeform: boolean;
   freeformWindowEndsAt: string | null;
   phoneNumber: {

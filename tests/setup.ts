@@ -60,6 +60,8 @@ vi.mock('@/repositories/contact.repository', () => ({
     findConversationContacts: vi.fn(),
     upsertContact: vi.fn(),
     upsertContactsBulk: vi.fn(),
+    findContactByConversationId: vi.fn(),
+    updateContactDetails: vi.fn(),
   },
 }));
 
@@ -134,9 +136,12 @@ vi.mock('@/services/conversation.service', () => ({
 
     return {
       ...conversationWithoutContact,
+      contactId: contact?.id ?? null,
       customerPhone: contact?.customerPhone ?? null,
       customerName: contact?.customerName ?? null,
       customerUsername: contact?.customerUsername ?? null,
+      label: contact?.label ?? null,
+      internalNotes: contact?.internalNotes ?? null,
     };
   }),
   ConversationService: {
@@ -144,6 +149,12 @@ vi.mock('@/services/conversation.service', () => ({
     getChatDetail: vi.fn(),
     markAsRead: vi.fn(),
     updateAdminTakeoverStatus: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/contact-details.service', () => ({
+  ContactDetailsService: {
+    updateContactDetails: vi.fn(),
   },
 }));
 

@@ -42,6 +42,8 @@ describe('ConversationService', { tags: ['backend'] }, () => {
           customerName: null,
           customerPhone: null,
           customerUsername: null,
+          internalNotes: null,
+          label: null,
           messages: [{ id: 'msg-1', mediaSize: 123 }],
         },
       ]);

@@ -769,7 +769,7 @@
       "typeLabel": "Type label name...",
       "internalNotes": "Internal notes",
       "addNote": "Add a brief note for the admin team",
-      "noteWarning": "Label and notes data are currently saved temporarily in the chat view."
+      "saving": "Saving..."
     },
     "wabaSwitcher": {
       "title": "WhatsApp Business Accounts",

@@ -769,7 +769,7 @@
       "typeLabel": "Ketik nama label...",
       "internalNotes": "Catatan internal",
       "addNote": "Tambahkan catatan singkat untuk tim admin",
-      "noteWarning": "Data label dan catatan saat ini disimpan sementara di tampilan obrolan."
+      "saving": "Menyimpan..."
     },
     "wabaSwitcher": {
       "title": "Akun WhatsApp Business",
