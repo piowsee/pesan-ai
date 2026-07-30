@@ -806,6 +806,7 @@ export function ChatWorkspace() {
       />
 
       <ChatContactPanel
+        key={selectedConversation?.id}
         conversation={selectedConversation}
         isOpen={isContactInfoOpen}
         wabaId={activeWabaId}

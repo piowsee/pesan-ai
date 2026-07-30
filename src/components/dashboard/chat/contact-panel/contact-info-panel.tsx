@@ -91,13 +91,6 @@ export function ContactInfoPanel({
     isCustomInitially ? 'custom' : 'preset',
   );
 
-  const [prevConvId, setPrevConvId] = useState(conversation.id);
-
-  if (conversation.id !== prevConvId) {
-    setPrevConvId(conversation.id);
-    setMode(isCustomInitially ? 'custom' : 'preset');
-  }
-
   const selectValue = mode === 'custom' ? '_custom_' : label || undefined;
 
   return (

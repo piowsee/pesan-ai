@@ -24,18 +24,10 @@ export function ChatContactPanel({
   const { mutate: updateDetails, isPending } = useUpdateContactDetails();
 
   // Local draft state for label and notes (needed for debouncing inputs)
-  const [prevConvId, setPrevConvId] = useState(convId);
   const [localLabel, setLocalLabel] = useState(conversation?.label ?? '');
   const [localNotes, setLocalNotes] = useState(
     conversation?.internalNotes ?? '',
   );
-
-  // Reset state when conversation changes.
-  if (convId !== prevConvId) {
-    setPrevConvId(convId);
-    setLocalLabel(conversation?.label ?? '');
-    setLocalNotes(conversation?.internalNotes ?? '');
-  }
 
   // Debounced save
   const debouncedLabel = useDebounce(localLabel, 3000);
