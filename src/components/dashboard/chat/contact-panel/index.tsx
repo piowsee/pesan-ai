@@ -36,6 +36,18 @@ export function ChatContactPanel({
   const prevDebouncedLabelRef = useRef(debouncedLabel);
   const prevDebouncedNotesRef = useRef(debouncedNotes);
 
+  // Track latest local values and saved values for unmount flushing
+  const latestLocalLabelRef = useRef(localLabel);
+  const latestLocalNotesRef = useRef(localNotes);
+
+  useEffect(() => {
+    latestLocalLabelRef.current = localLabel;
+    latestLocalNotesRef.current = localNotes;
+  }, [localLabel, localNotes]);
+
+  const savedLabelRef = useRef(conversation?.label ?? '');
+  const savedNotesRef = useRef(conversation?.internalNotes ?? '');
+
   useEffect(() => {
     if (wabaId && convId && isOpen) {
       const isLabelChanged = debouncedLabel !== prevDebouncedLabelRef.current;
@@ -44,6 +56,8 @@ export function ChatContactPanel({
       if (isLabelChanged || isNotesChanged) {
         prevDebouncedLabelRef.current = debouncedLabel;
         prevDebouncedNotesRef.current = debouncedNotes;
+        savedLabelRef.current = debouncedLabel;
+        savedNotesRef.current = debouncedNotes;
 
         updateDetails({
           wabaId,
@@ -58,6 +72,28 @@ export function ChatContactPanel({
       }
     }
   }, [debouncedLabel, debouncedNotes, wabaId, convId, isOpen, updateDetails]);
+
+  // Flush pending changes on unmount (e.g. user clicked another conversation before debounce finished)
+  useEffect(() => {
+    return () => {
+      const pendingLabel = latestLocalLabelRef.current;
+      const pendingNotes = latestLocalNotesRef.current;
+
+      const isLabelUnsaved = pendingLabel !== savedLabelRef.current;
+      const isNotesUnsaved = pendingNotes !== savedNotesRef.current;
+
+      if ((isLabelUnsaved || isNotesUnsaved) && wabaId && convId) {
+        updateDetails({
+          wabaId,
+          convId,
+          params: {
+            ...(isLabelUnsaved ? { label: pendingLabel || null } : {}),
+            ...(isNotesUnsaved ? { internalNotes: pendingNotes || null } : {}),
+          },
+        });
+      }
+    };
+  }, [wabaId, convId, updateDetails]);
 
   const handleLabelChange = useCallback((value: string) => {
     setLocalLabel(value);
