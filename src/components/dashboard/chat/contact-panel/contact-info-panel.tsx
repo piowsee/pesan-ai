@@ -91,15 +91,11 @@ export function ContactInfoPanel({
     isCustomInitially ? 'custom' : 'preset',
   );
 
-  const [prevLabel, setPrevLabel] = useState(label);
+  const [prevConvId, setPrevConvId] = useState(conversation.id);
 
-  if (label !== prevLabel) {
-    setPrevLabel(label);
-    if (label && !predefinedLabels.some((l) => l.value === label)) {
-      setMode('custom');
-    } else {
-      setMode('preset');
-    }
+  if (conversation.id !== prevConvId) {
+    setPrevConvId(conversation.id);
+    setMode(isCustomInitially ? 'custom' : 'preset');
   }
 
   const selectValue = mode === 'custom' ? '_custom_' : label || undefined;

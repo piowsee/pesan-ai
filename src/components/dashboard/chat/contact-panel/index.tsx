@@ -23,53 +23,53 @@ export function ChatContactPanel({
 
   const { mutate: updateDetails, isPending } = useUpdateContactDetails();
 
-  // Label updates instantly via mutation and cache update.
-  const label = conversation?.label ?? '';
-
-  // Local draft state for notes (needed for debouncing text input)
+  // Local draft state for label and notes (needed for debouncing inputs)
   const [prevConvId, setPrevConvId] = useState(convId);
+  const [localLabel, setLocalLabel] = useState(conversation?.label ?? '');
   const [localNotes, setLocalNotes] = useState(
     conversation?.internalNotes ?? '',
   );
 
-  // Reset notes state when conversation changes.
+  // Reset state when conversation changes.
   if (convId !== prevConvId) {
     setPrevConvId(convId);
+    setLocalLabel(conversation?.label ?? '');
     setLocalNotes(conversation?.internalNotes ?? '');
   }
 
-  // Debounced notes save
+  // Debounced save
+  const debouncedLabel = useDebounce(localLabel, 3000);
   const debouncedNotes = useDebounce(localNotes, 3000);
+
+  const prevDebouncedLabelRef = useRef(debouncedLabel);
   const prevDebouncedNotesRef = useRef(debouncedNotes);
 
   useEffect(() => {
-    if (
-      wabaId &&
-      convId &&
-      isOpen &&
-      debouncedNotes !== prevDebouncedNotesRef.current
-    ) {
-      prevDebouncedNotesRef.current = debouncedNotes;
-      updateDetails({
-        wabaId,
-        convId,
-        params: { internalNotes: debouncedNotes || null },
-      });
-    }
-  }, [debouncedNotes, wabaId, convId, isOpen, updateDetails]);
+    if (wabaId && convId && isOpen) {
+      const isLabelChanged = debouncedLabel !== prevDebouncedLabelRef.current;
+      const isNotesChanged = debouncedNotes !== prevDebouncedNotesRef.current;
 
-  const handleLabelChange = useCallback(
-    (value: string) => {
-      if (wabaId && convId) {
+      if (isLabelChanged || isNotesChanged) {
+        prevDebouncedLabelRef.current = debouncedLabel;
+        prevDebouncedNotesRef.current = debouncedNotes;
+
         updateDetails({
           wabaId,
           convId,
-          params: { label: value || null },
+          params: {
+            ...(isLabelChanged ? { label: debouncedLabel || null } : {}),
+            ...(isNotesChanged
+              ? { internalNotes: debouncedNotes || null }
+              : {}),
+          },
         });
       }
-    },
-    [wabaId, convId, updateDetails],
-  );
+    }
+  }, [debouncedLabel, debouncedNotes, wabaId, convId, isOpen, updateDetails]);
+
+  const handleLabelChange = useCallback((value: string) => {
+    setLocalLabel(value);
+  }, []);
 
   const handleNotesChange = useCallback((value: string) => {
     setLocalNotes(value);
@@ -83,7 +83,7 @@ export function ChatContactPanel({
     <div className="absolute inset-0 z-30 flex flex-col bg-background lg:static lg:z-0 lg:w-90 lg:shrink-0 lg:overflow-hidden lg:border-l">
       <ContactInfoPanel
         conversation={conversation}
-        label={label}
+        label={localLabel}
         notes={localNotes}
         isSaving={isPending}
         onLabelChange={handleLabelChange}
