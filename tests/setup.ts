@@ -110,8 +110,10 @@ vi.mock('@/repositories/phone-number.repository', () => ({
 vi.mock('@/repositories/webhook.repository', () => ({
   WebhookRepository: {
     createWebhook: vi.fn(),
+    findById: vi.fn(),
     findPaginated: vi.fn(),
     findWebhookByConversationId: vi.fn(),
+    updateWebhook: vi.fn(),
     deleteWebhook: vi.fn(),
   },
 }));
@@ -205,9 +207,11 @@ vi.mock('@/services/webhook.service', () => ({
   WebhookService: {
     _generateWebhookToken: vi.fn(),
     callWebhook: vi.fn(),
+    refreshWebhookConnection: vi.fn(),
     validateWebhookUrl: vi.fn(),
     sendMessageToWebhook: vi.fn(),
     createWebhook: vi.fn(),
+    updateWebhook: vi.fn(),
     getAllWebhooks: vi.fn(),
     getWebhooksPaginated: vi.fn(),
     deleteWebhook: vi.fn(),

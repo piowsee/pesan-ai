@@ -7,14 +7,9 @@ import { WebhookRepository } from '@/repositories/webhook.repository';
 import { MetaFetchService } from '@/services/meta-fetch.service';
 import { redirectMessageToExternalWebhook } from '@/services/redirect-message.service';
 import { WebhookService } from '@/services/webhook.service';
-import { betterFetch } from '@better-fetch/fetch';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import z from 'zod';
 
 vi.unmock('@/services/redirect-message.service');
-vi.mock('@better-fetch/fetch', () => ({
-  betterFetch: vi.fn(),
-}));
 
 function messageHistory(content: string) {
   return [
@@ -34,6 +29,10 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     vi.mocked(WebhookService._generateWebhookToken).mockResolvedValue(
       'signed-webhook-jwt',
     );
+    vi.mocked(WebhookService.callWebhook).mockResolvedValue({
+      botResponse: 'ok',
+      adminTakeover: false,
+    } as never);
     vi.mocked(ConversationRepository.findConversationById).mockResolvedValue({
       id: 'conv-1',
       contact: {
@@ -88,9 +87,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     vi.mocked(decrypt).mockImplementation((value) =>
       value === 'encrypted-passphrase' ? 'plain-passphrase' : 'plain-token',
     );
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: { botResponse: 'ok', adminTakeover: false },
-      error: null,
+    vi.mocked(WebhookService.callWebhook).mockResolvedValue({
+      botResponse: 'ok',
+      adminTakeover: false,
     } as never);
     vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
       status: 'sent',
@@ -130,16 +129,11 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       conversationId: 'conv-1',
     });
     expect(decrypt).toHaveBeenCalledWith('encrypted-passphrase');
-    expect(WebhookService._generateWebhookToken).toHaveBeenCalledWith({
-      url: 'https://bot.example.com/message',
-      passphrase: 'plain-passphrase',
-    });
-    expect(betterFetch).toHaveBeenCalledWith(
-      'https://bot.example.com/message',
+    expect(WebhookService.callWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'POST',
-        auth: { type: 'Bearer', token: 'signed-webhook-jwt' },
-        body: {
+        url: 'https://bot.example.com/message',
+        passphrase: 'plain-passphrase',
+        payload: {
           customerIdentifier: 'US.redirect-customer-123',
           messages: [
             {
@@ -194,10 +188,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
         passphrase: 'encrypted-passphrase',
         isActive: true,
       });
-      vi.mocked(betterFetch).mockResolvedValue({
-        data,
-        error: null,
-      } as never);
+      vi.mocked(WebhookService.callWebhook).mockResolvedValue(data as never);
 
       const result = await redirectMessageToExternalWebhook({
         conversationId: 'conv-1',
@@ -221,9 +212,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: { botResponse: 'I am a bot', adminTakeover: false },
-      error: null,
+    vi.mocked(WebhookService.callWebhook).mockResolvedValue({
+      botResponse: 'I am a bot',
+      adminTakeover: false,
     } as never);
     // On first call, adminTakeover is false. On second call, it is true.
     vi.mocked(ConversationRepository.findConversationById)
@@ -258,9 +249,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: { botResponse: '', adminTakeover: true },
-      error: null,
+    vi.mocked(WebhookService.callWebhook).mockResolvedValue({
+      botResponse: '',
+      adminTakeover: true,
     } as never);
 
     await redirectMessageToExternalWebhook({
@@ -306,7 +297,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     expect(
       WebhookRepository.findWebhookByConversationId,
     ).not.toHaveBeenCalled();
-    expect(betterFetch).not.toHaveBeenCalled();
+    expect(WebhookService.callWebhook).not.toHaveBeenCalled();
     expect(MetaFetchService.sendMessage).not.toHaveBeenCalled();
     expect(MessageRepository.saveMessage).not.toHaveBeenCalled();
   });
@@ -317,12 +308,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: {
-        botResponse: 'I am connecting you with an admin.',
-        adminTakeover: true,
-      },
-      error: null,
+    vi.mocked(WebhookService.callWebhook).mockResolvedValue({
+      botResponse: 'I am connecting you with an admin.',
+      adminTakeover: true,
     } as never);
     vi.mocked(
       ConversationRepository.updateAdminTakeoverStatus,
@@ -367,9 +355,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: { botResponse: 'bot reply', adminTakeover: false },
-      error: null,
+    vi.mocked(WebhookService.callWebhook).mockResolvedValue({
+      botResponse: 'bot reply',
+      adminTakeover: false,
     } as never);
     vi.mocked(MetaFetchService.sendMessage).mockResolvedValue({
       status: 'sent',
@@ -439,7 +427,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     });
 
     expect(result).toBeUndefined();
-    expect(betterFetch).not.toHaveBeenCalled();
+    expect(WebhookService.callWebhook).not.toHaveBeenCalled();
     expect(
       ConversationRepository.updateAdminTakeoverStatus,
     ).toHaveBeenCalledWith({
@@ -471,7 +459,7 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
     });
 
     expect(result).toBeUndefined();
-    expect(betterFetch).not.toHaveBeenCalled();
+    expect(WebhookService.callWebhook).not.toHaveBeenCalled();
     expect(
       ConversationRepository.updateAdminTakeoverStatus,
     ).toHaveBeenCalledWith({
@@ -481,16 +469,14 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
   });
 
   it('returns undefined and logs when the webhook response schema is invalid', async () => {
-    const schemaError = new z.ZodError([]);
     vi.mocked(WebhookRepository.findWebhookByConversationId).mockResolvedValue({
       url: 'https://bot.example.com/message',
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: null,
-      error: schemaError,
-    } as never);
+    vi.mocked(WebhookService.callWebhook).mockRejectedValue(
+      new Error('Webhook response schema mismatch'),
+    );
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',
@@ -522,10 +508,9 @@ describe('redirectMessageToExternalWebhook', { tags: ['backend'] }, () => {
       passphrase: 'encrypted-passphrase',
       isActive: true,
     });
-    vi.mocked(betterFetch).mockResolvedValue({
-      data: null,
-      error: new Error('Service unavailable'),
-    } as never);
+    vi.mocked(WebhookService.callWebhook).mockRejectedValue(
+      new Error('fetch failed'),
+    );
 
     const result = await redirectMessageToExternalWebhook({
       conversationId: 'conv-1',

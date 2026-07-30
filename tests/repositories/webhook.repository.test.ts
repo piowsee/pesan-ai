@@ -205,6 +205,94 @@ describe('WebhookRepository Integration', { tags: ['db'] }, () => {
     });
   });
 
+  describe('findById', () => {
+    it('returns the webhook when it exists', async () => {
+      const result = await WebhookRepository.findById({ id: dbWebhookId });
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(dbWebhookId);
+      expect(result?.name).toBe(SEED_DATA.WEBHOOK_NAME);
+    });
+
+    it('returns null when webhook does not exist', async () => {
+      const result = await WebhookRepository.findById({
+        id: 'non-existent-id',
+      });
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('updateWebhook', () => {
+    it('updates the webhook name', async () => {
+      const temp = await prisma.botWebhook.create({
+        data: {
+          name: 'Test-WH-Update-Name',
+          webhookUrl: 'https://update-test.com/wh',
+          passphrase: 'test-passphrase',
+          userId,
+        },
+      });
+
+      const result = await WebhookRepository.updateWebhook({
+        id: temp.id,
+        data: { name: 'Test-WH-Updated-Name' },
+      });
+
+      expect(result.name).toBe('Test-WH-Updated-Name');
+      expect(result.webhookUrl).toBe('https://update-test.com/wh');
+
+      // Verify persistence
+      const saved = await prisma.botWebhook.findUnique({
+        where: { id: temp.id },
+      });
+      expect(saved?.name).toBe('Test-WH-Updated-Name');
+    });
+
+    it('updates the webhook URL', async () => {
+      const temp = await prisma.botWebhook.create({
+        data: {
+          name: 'Test-WH-Update-URL',
+          webhookUrl: 'https://old-url.com/wh',
+          passphrase: 'test-passphrase',
+          userId,
+        },
+      });
+
+      const result = await WebhookRepository.updateWebhook({
+        id: temp.id,
+        data: { webhookUrl: 'https://new-url.com/wh' },
+      });
+
+      expect(result.webhookUrl).toBe('https://new-url.com/wh');
+      expect(result.name).toBe('Test-WH-Update-URL');
+    });
+
+    it('updates multiple fields at once', async () => {
+      const temp = await prisma.botWebhook.create({
+        data: {
+          name: 'Test-WH-Update-Multi',
+          webhookUrl: 'https://multi-old.com/wh',
+          passphrase: 'old-passphrase',
+          userId,
+        },
+      });
+
+      const result = await WebhookRepository.updateWebhook({
+        id: temp.id,
+        data: {
+          name: 'Test-WH-Updated-Multi',
+          webhookUrl: 'https://multi-new.com/wh',
+          passphrase: 'new-passphrase',
+        },
+      });
+
+      expect(result.name).toBe('Test-WH-Updated-Multi');
+      expect(result.webhookUrl).toBe('https://multi-new.com/wh');
+      expect(result.passphrase).toBe('new-passphrase');
+    });
+  });
+
   describe('deleteWebhook', () => {
     it('deletes a specifically created test webhook', async () => {
       // Create a temporary one

@@ -1,5 +1,5 @@
 import prisma from '@/lib/server/prisma';
-import { CreateWebhookPayload } from '@/schemas/create-webhook.schema';
+import { CreateWebhookPayload } from '@/schemas/webhook.schema';
 
 export const WebhookRepository = {
   async createWebhook(params: { userId: string; data: CreateWebhookPayload }) {
@@ -55,6 +55,24 @@ export const WebhookRepository = {
       passphrase: conversation?.phoneNumber.botWebhook?.passphrase,
       isActive: conversation?.phoneNumber.botWebhook?.isActive,
     };
+  },
+
+  async findById(params: { id: string }) {
+    const { id } = params;
+    return prisma.botWebhook.findUnique({
+      where: { id },
+    });
+  },
+
+  async updateWebhook(params: {
+    id: string;
+    data: { name?: string; webhookUrl?: string; passphrase?: string };
+  }) {
+    const { id, data } = params;
+    return prisma.botWebhook.update({
+      where: { id },
+      data,
+    });
   },
 
   async deleteWebhook(params: { id: string }) {
