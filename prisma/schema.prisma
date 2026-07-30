@@ -161,6 +161,8 @@ model Contact {
   customerPhone    String?  
   customerName     String?
   customerUsername String?
+  label            String?  // predefined slug or custom free-text label
+  internalNotes    String?  // operator internal notes (freeform text)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

@@ -7,6 +7,11 @@ export interface CustomerContactRow {
   customerUsername: string | null;
 }
 
+export interface ContactDetails {
+  label: string | null;
+  internalNotes: string | null;
+}
+
 interface FindConversationContactsParams {
   userId: string;
   wabaIds?: string[];
@@ -193,5 +198,50 @@ export const ContactRepository = {
         maxWait: 30000,
       },
     );
+  },
+
+  async findContactByConversationId(
+    conversationId: string,
+  ): Promise<(ContactDetails & { id: string }) | null> {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        contact: {
+          select: {
+            id: true,
+            label: true,
+            internalNotes: true,
+          },
+        },
+      },
+    });
+
+    return conversation?.contact ?? null;
+  },
+
+  async updateContactDetails(params: {
+    contactId: string;
+    label?: string | null;
+    internalNotes?: string | null;
+  }): Promise<ContactDetails> {
+    const data: Prisma.ContactUpdateInput = {};
+
+    if (params.label !== undefined) {
+      data.label = params.label;
+    }
+    if (params.internalNotes !== undefined) {
+      data.internalNotes = params.internalNotes;
+    }
+
+    const updated = await prisma.contact.update({
+      where: { id: params.contactId },
+      data,
+      select: {
+        label: true,
+        internalNotes: true,
+      },
+    });
+
+    return updated;
   },
 };

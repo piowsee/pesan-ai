@@ -7,6 +7,8 @@ export const safeContactSelect = {
   customerPhone: true,
   customerName: true,
   customerUsername: true,
+  label: true,
+  internalNotes: true,
 } satisfies Prisma.ContactSelect;
 
 export const ConversationRepository = {
