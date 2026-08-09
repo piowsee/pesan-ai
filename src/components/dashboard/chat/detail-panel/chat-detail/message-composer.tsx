@@ -410,7 +410,7 @@ function MediaPreviewGrid({
   if (selectedMedia.length === 0) return null;
 
   return (
-    <div className="mx-4 mb-2 grid max-h-[30vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin]">
+    <div className="mx-4 mb-2 grid max-h-[30vh] grid-cols-2 gap-2 overflow-y-auto pt-px pr-1 pb-px pl-px sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin]">
       {selectedMedia.map((media, index) => {
         const { file, previewUrl } = media;
         const description = formatFileSize(file.size);
@@ -429,6 +429,7 @@ function MediaPreviewGrid({
             key={`${file.name}-${index}`}
             role="button"
             tabIndex={0}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelectCaptionTarget(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -437,10 +438,10 @@ function MediaPreviewGrid({
               }
             }}
             className={cn(
-              'group relative flex h-14 cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl border bg-background/95 p-2 shadow-sm transition-all',
+              'group relative flex h-14 cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl border border-border p-2 shadow-sm transition-colors',
               captionTargetIndex === index
-                ? 'border-brand ring-2 ring-inset ring-brand'
-                : 'border-border hover:border-brand/40',
+                ? 'bg-muted-foreground/15'
+                : 'bg-background/95 hover:bg-muted',
             )}
           >
             <div className="relative flex shrink-0 items-center justify-center">
