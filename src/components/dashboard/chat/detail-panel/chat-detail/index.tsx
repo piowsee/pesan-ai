@@ -29,7 +29,7 @@ import {
   UserRoundCheckIcon,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type MouseEvent, useState } from 'react';
+import { type MouseEvent, useRef, useState } from 'react';
 import { TbArrowLoopLeft } from 'react-icons/tb';
 
 const composerFocusExclusionSelector = [
@@ -190,6 +190,7 @@ export function ChatDetail({
   const [isTakeoverDialogOpen, setIsTakeoverDialogOpen] = useState(false);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
   const [composerFocusRequest, setComposerFocusRequest] = useState(0);
+  const mediaDropAreaRef = useRef<HTMLElement>(null);
 
   if (isConversationLoading && !conversation) {
     return <ChatDetailLoadingShell />;
@@ -228,7 +229,10 @@ export function ChatDetail({
   };
 
   return (
-    <section className="relative flex h-full w-full flex-col bg-background">
+    <section
+      ref={mediaDropAreaRef}
+      className="relative flex h-full w-full flex-col bg-background"
+    >
       <div className="bg-background">
         <ChatHeader
           conversation={conversation}
@@ -275,7 +279,7 @@ export function ChatDetail({
             {/* Banner: Return to AI Agent */}
             <div
               className={cn(
-                'flex min-h-[56px] w-full flex-col justify-between gap-3 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-4',
+                'flex min-h-14 w-full flex-col justify-between gap-3 px-4 py-2.5 text-sm sm:flex-row sm:items-center sm:gap-4',
                 conversation.canSendFreeform
                   ? 'bg-amber-50 dark:bg-amber-950/35'
                   : 'bg-red-50 dark:bg-red-950/35',
@@ -346,7 +350,7 @@ export function ChatDetail({
                         {t('cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
-                        className="!bg-brand !text-brand-foreground hover:!bg-brand/90"
+                        className="bg-brand! text-brand-foreground! hover:bg-brand/90!"
                         onClick={() => {
                           onToggleTakeover(conversation.id, false);
                           setIsReturnDialogOpen(false);
@@ -365,6 +369,7 @@ export function ChatDetail({
               key={conversation.id}
               conversation={conversation}
               focusRequest={composerFocusRequest}
+              mediaDropAreaRef={mediaDropAreaRef}
               onSendAction={onSend}
               onSendMediaAction={onSendMedia}
             />
@@ -374,7 +379,7 @@ export function ChatDetail({
             {/* Banner: AI Agent is active */}
             <div
               className={cn(
-                'flex min-h-[56px] w-full flex-col justify-center gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-start sm:gap-4',
+                'flex min-h-14 w-full flex-col justify-center gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-start sm:gap-4',
                 conversation.canSendFreeform
                   ? 'bg-emerald-50 dark:bg-emerald-950/35'
                   : 'bg-red-50 dark:bg-red-950/35',
@@ -443,7 +448,7 @@ export function ChatDetail({
                         {t('cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
-                        className="!bg-brand !text-brand-foreground hover:!bg-brand/90"
+                        className="bg-brand! text-brand-foreground! hover:bg-brand/90!"
                         onClick={() => {
                           onToggleTakeover(conversation.id, true);
                           setIsTakeoverDialogOpen(false);

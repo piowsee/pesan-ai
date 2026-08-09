@@ -31,13 +31,16 @@ import {
   QuoteIcon,
   SendHorizontalIcon,
   StrikethroughIcon,
+  UploadIcon,
   XIcon,
 } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type ChangeEvent,
   type ClipboardEvent,
   type ReactNode,
+  type RefObject,
   useCallback,
   useEffect,
   useRef,
@@ -318,6 +321,30 @@ function getClipboardFiles(clipboardData: DataTransfer) {
   return itemFiles.length > 0 ? itemFiles : Array.from(clipboardData.files);
 }
 
+function hasDraggedFiles(dataTransfer: DataTransfer) {
+  return (
+    dataTransfer.files.length > 0 ||
+    Array.from(dataTransfer.types).includes('Files')
+  );
+}
+
+function isDragInsideElement(
+  event: globalThis.DragEvent,
+  element: HTMLElement | null,
+) {
+  if (!element) {
+    return false;
+  }
+
+  const bounds = element.getBoundingClientRect();
+  return (
+    event.clientX >= bounds.left &&
+    event.clientX <= bounds.right &&
+    event.clientY >= bounds.top &&
+    event.clientY <= bounds.bottom
+  );
+}
+
 const mediaPickerOptions = [
   {
     type: 'document' as const,
@@ -478,7 +505,7 @@ function MediaPreviewGrid({
               type="button"
               variant="ghost"
               size="icon"
-              className="mr-0.5 size-7 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100"
+              className="mr-0.5 size-7 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-transparent hover:text-muted-foreground group-hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove(index);
@@ -713,11 +740,13 @@ function isPrintableComposerKey(event: KeyboardEvent) {
 export function MessageComposer({
   conversation,
   focusRequest = 0,
+  mediaDropAreaRef,
   onSendAction,
   onSendMediaAction,
 }: {
   conversation: ChatConversation;
   focusRequest?: number;
+  mediaDropAreaRef?: RefObject<HTMLElement | null>;
   onSendAction: (content: string) => void;
   onSendMediaAction: (input: SendMediaMessageBatchInput) => void;
 }) {
@@ -729,12 +758,18 @@ export function MessageComposer({
     0, 0,
   ]);
   const [isBlockToolbarDismissed, setIsBlockToolbarDismissed] = useState(false);
+  const [isDraggingMedia, setIsDraggingMedia] = useState(false);
+  const [isDraggingOverDropZone, setIsDraggingOverDropZone] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const photoVideoInputRef = useRef<HTMLInputElement>(null);
   const selectedMediaRef = useRef<SelectedMedia[]>([]);
+  const mediaDragDepthRef = useRef(0);
+  const mediaDropZoneRef = useRef<HTMLDivElement>(null);
+  const addMediaFilesRef = useRef<(files: File[]) => void>(() => undefined);
 
   useEffect(() => {
     selectedMediaRef.current = selectedMedia;
@@ -1109,7 +1144,7 @@ export function MessageComposer({
     photoVideoInputRef.current?.click();
   };
 
-  const getMediaListWithSavedDraft = () => {
+  const getMediaListWithSavedDraft = useCallback(() => {
     const list = [...selectedMedia];
     if (captionTargetIndex !== -1 && list[captionTargetIndex]) {
       list[captionTargetIndex] = {
@@ -1118,58 +1153,63 @@ export function MessageComposer({
       };
     }
     return list;
-  };
+  }, [captionTargetIndex, draft, selectedMedia]);
 
-  const addMediaFiles = (files: File[]) => {
-    if (files.length === 0) {
-      return;
-    }
-
-    const validFiles = files.flatMap((file) => {
-      const normalizedFile = normalizeMediaFile(file);
-
-      if (!normalizedFile) {
-        toast.error(`${file.name}: ${t('unsupportedFile')}`);
-        return [];
+  const addMediaFiles = useCallback(
+    (files: File[]) => {
+      if (files.length === 0) {
+        return;
       }
 
-      return [normalizedFile];
-    });
+      const validFiles = files.flatMap((file) => {
+        const normalizedFile = normalizeMediaFile(file);
 
-    const baseList = getMediaListWithSavedDraft();
-    const availableSlots = Math.max(MAX_MEDIA_FILES - baseList.length, 0);
+        if (!normalizedFile) {
+          toast.error(`${file.name}: ${t('unsupportedFile')}`);
+          return [];
+        }
 
-    if (validFiles.length > availableSlots) {
-      toast.error(t('maxFilesExceeded', { max: MAX_MEDIA_FILES }));
-    }
+        return [normalizedFile];
+      });
 
-    const newMedia = validFiles.slice(0, availableSlots).map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-      caption: '',
-    }));
+      const baseList = getMediaListWithSavedDraft();
+      const availableSlots = Math.max(MAX_MEDIA_FILES - baseList.length, 0);
 
-    if (newMedia.length === 0) {
-      return;
-    }
+      if (validFiles.length > availableSlots) {
+        toast.error(t('maxFilesExceeded', { max: MAX_MEDIA_FILES }));
+      }
 
-    const nextList = [...baseList, ...newMedia];
-    let nextIndex = captionTargetIndex;
+      const newMedia = validFiles.slice(0, availableSlots).map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        caption: '',
+      }));
 
-    // Auto assign if no valid target exists (e.g. was empty or only audio previously)
-    if (nextIndex === -1 || nextIndex >= nextList.length) {
-      nextIndex = nextList.findIndex((m) => !m.file.type.startsWith('audio/'));
-    }
+      if (newMedia.length === 0) {
+        return;
+      }
 
-    setSelectedMedia(nextList);
-    setCaptionTargetIndex(nextIndex);
+      const nextList = [...baseList, ...newMedia];
+      let nextIndex = captionTargetIndex;
 
-    if (nextIndex !== captionTargetIndex && captionTargetIndex !== -1) {
-      setDraft(nextIndex !== -1 ? nextList[nextIndex].caption || '' : '');
-    }
+      // Auto assign if no valid target exists (e.g. was empty or only audio previously)
+      if (nextIndex === -1 || nextIndex >= nextList.length) {
+        nextIndex = nextList.findIndex(
+          (media) => !media.file.type.startsWith('audio/'),
+        );
+      }
 
-    setTimeout(() => textareaRef.current?.focus(), 0);
-  };
+      setSelectedMedia(nextList);
+      setCaptionTargetIndex(nextIndex);
+
+      if (nextIndex !== captionTargetIndex && captionTargetIndex !== -1) {
+        setDraft(nextIndex !== -1 ? nextList[nextIndex].caption || '' : '');
+      }
+
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    },
+    [captionTargetIndex, getMediaListWithSavedDraft, t],
+  );
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const rawFiles = event.target.files;
@@ -1188,6 +1228,99 @@ export function MessageComposer({
     event.preventDefault();
     addMediaFiles(files);
   };
+
+  useEffect(() => {
+    addMediaFilesRef.current = addMediaFiles;
+  }, [addMediaFiles]);
+
+  useEffect(() => {
+    const dropArea = mediaDropAreaRef?.current;
+    if (!dropArea) {
+      return;
+    }
+
+    const getFileTransfer = (event: globalThis.DragEvent) => {
+      const { dataTransfer } = event;
+      return dataTransfer && hasDraggedFiles(dataTransfer)
+        ? dataTransfer
+        : null;
+    };
+
+    const handleDragEnter = (event: globalThis.DragEvent) => {
+      if (!getFileTransfer(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      if (!conversation.canSendFreeform) {
+        return;
+      }
+
+      mediaDragDepthRef.current += 1;
+      setIsDraggingMedia(true);
+    };
+
+    const handleDragOver = (event: globalThis.DragEvent) => {
+      const dataTransfer = getFileTransfer(event);
+      if (!dataTransfer) {
+        return;
+      }
+
+      event.preventDefault();
+      dataTransfer.dropEffect = conversation.canSendFreeform ? 'copy' : 'none';
+
+      if (conversation.canSendFreeform) {
+        setIsDraggingOverDropZone(
+          isDragInsideElement(event, mediaDropZoneRef.current),
+        );
+      }
+    };
+
+    const handleDragLeave = (event: globalThis.DragEvent) => {
+      if (mediaDragDepthRef.current === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      mediaDragDepthRef.current = Math.max(mediaDragDepthRef.current - 1, 0);
+
+      if (mediaDragDepthRef.current === 0) {
+        setIsDraggingMedia(false);
+        setIsDraggingOverDropZone(false);
+      }
+    };
+
+    const handleDrop = (event: globalThis.DragEvent) => {
+      const dataTransfer = getFileTransfer(event);
+      if (!dataTransfer) {
+        return;
+      }
+
+      event.preventDefault();
+      mediaDragDepthRef.current = 0;
+      setIsDraggingMedia(false);
+      setIsDraggingOverDropZone(false);
+
+      if (conversation.canSendFreeform) {
+        addMediaFilesRef.current(Array.from(dataTransfer.files));
+      }
+    };
+
+    dropArea.addEventListener('dragenter', handleDragEnter);
+    dropArea.addEventListener('dragover', handleDragOver);
+    dropArea.addEventListener('dragleave', handleDragLeave);
+    dropArea.addEventListener('drop', handleDrop);
+
+    return () => {
+      mediaDragDepthRef.current = 0;
+      setIsDraggingMedia(false);
+      setIsDraggingOverDropZone(false);
+      dropArea.removeEventListener('dragenter', handleDragEnter);
+      dropArea.removeEventListener('dragover', handleDragOver);
+      dropArea.removeEventListener('dragleave', handleDragLeave);
+      dropArea.removeEventListener('drop', handleDrop);
+    };
+  }, [conversation.canSendFreeform, mediaDropAreaRef]);
 
   const trimmedDraft = draft.trim();
   const canSendMessage = Boolean(trimmedDraft || selectedMedia.length > 0);
@@ -1279,306 +1412,371 @@ export function MessageComposer({
   }
 
   return (
-    <div className="w-full shrink-0 bg-transparent">
-      {selectedMedia.length > 0 ? (
-        <MediaPreviewGrid
-          selectedMedia={selectedMedia}
-          onRemove={(indexToRemove) => {
-            const nextArr = [...selectedMedia];
-
-            if (
-              captionTargetIndex !== -1 &&
-              captionTargetIndex !== indexToRemove
-            ) {
-              if (nextArr[captionTargetIndex]) {
-                nextArr[captionTargetIndex] = {
-                  ...nextArr[captionTargetIndex],
-                  caption: draft,
-                };
-              }
+    <motion.div
+      layout={!shouldReduceMotion}
+      className="w-full shrink-0"
+      transition={{
+        layout: {
+          duration: shouldReduceMotion ? 0 : 0.2,
+          ease: 'easeOut',
+        },
+      }}
+    >
+      <AnimatePresence initial={false} mode="wait">
+        {isDraggingMedia ? (
+          <motion.div
+            key="media-drop-zone"
+            initial={
+              shouldReduceMotion
+                ? { opacity: 1 }
+                : { opacity: 0, scale: 0.985, y: 8 }
             }
-
-            URL.revokeObjectURL(nextArr[indexToRemove].previewUrl);
-            nextArr.splice(indexToRemove, 1);
-
-            let nextTargetIndex = captionTargetIndex;
-            let nextDraft = draft;
-
-            if (indexToRemove === captionTargetIndex) {
-              const firstValid = nextArr.findIndex(
-                (m) => !m.file.type.startsWith('audio/'),
-              );
-              nextTargetIndex = firstValid;
-              nextDraft =
-                firstValid !== -1 ? nextArr[firstValid].caption || '' : '';
-            } else if (captionTargetIndex > indexToRemove) {
-              nextTargetIndex = captionTargetIndex - 1;
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              shouldReduceMotion
+                ? { opacity: 1 }
+                : { opacity: 0, scale: 0.985, y: 8 }
             }
-
-            setSelectedMedia(nextArr);
-            setCaptionTargetIndex(nextTargetIndex);
-
-            if (indexToRemove === captionTargetIndex) {
-              setDraft(nextDraft);
-            }
-          }}
-          removeAriaLabel={t('removeMedia')}
-          captionTargetIndex={captionTargetIndex}
-          onSelectCaptionTarget={(newIndex) => {
-            if (newIndex === captionTargetIndex) return;
-
-            if (newIndex >= 0 && newIndex < selectedMedia.length) {
-              if (selectedMedia[newIndex].file.type.startsWith('audio/')) {
-                toast.error(t('audioCaptionNotSupported'));
-                return;
-              }
-            }
-
-            const nextList = getMediaListWithSavedDraft();
-            setSelectedMedia(nextList);
-            setCaptionTargetIndex(newIndex);
-            setDraft(newIndex !== -1 ? nextList[newIndex].caption || '' : '');
-            textareaRef.current?.focus();
-          }}
-        />
-      ) : null}
-
-      <input
-        ref={documentInputRef}
-        type="file"
-        multiple
-        accept={documentAccept}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <input
-        ref={photoVideoInputRef}
-        type="file"
-        multiple
-        accept={photoVideoAccept}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <input
-        ref={audioInputRef}
-        type="file"
-        multiple
-        accept={audioAccept}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-
-      <div className="relative flex items-end bg-transparent px-4 pt-0 pb-3">
-        {showFormatToolbar ? (
-          <TextFormatToolbar
-            disabled={!conversation.canSendFreeform}
-            activeFormats={getActiveFormats(
-              draft,
-              selectionRange[0],
-              selectionRange[1],
-            )}
-            getLabel={(key) => t(key)}
-            onCloseAction={() => setIsBlockToolbarDismissed(true)}
-            onFormatAction={applyTextFormat}
-          />
-        ) : null}
-
-        <div
-          className={cn(
-            'flex min-h-14 max-h-36 flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-background px-2 py-2 shadow-sm transition-[border-color,box-shadow]',
-            conversation.canSendFreeform
-              ? 'focus-within:ring-2 focus-within:ring-brand/80'
-              : 'pointer-events-none opacity-50',
-          )}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                disabled={!conversation.canSendFreeform}
-                className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-brand/10 hover:text-brand"
-              >
-                <PlusIcon />
-                <span className="sr-only">{t('attach')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              sideOffset={8}
-              className="w-max min-w-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
-            >
-              <DropdownMenuGroup className="p-2">
-                {mediaPickerOptions.map((option) => {
-                  const Icon = option.icon;
-
-                  return (
-                    <DropdownMenuItem
-                      key={option.type}
-                      onSelect={() => openFilePicker(option.type)}
-                      className="min-h-11 cursor-pointer gap-3 whitespace-nowrap rounded-md px-3 py-2.5 focus:bg-brand/5"
-                    >
-                      <Icon className={cn('size-5 shrink-0', option.color)} />
-                      <span className="font-medium text-foreground/80!">
-                        {t(option.label)}
-                      </span>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div className="relative min-h-10 flex-1">
-            {!draft ? (
-              <div className="pointer-events-none absolute inset-0 py-2.5 text-[15px] leading-tight text-muted-foreground/70">
-                {conversation.canSendFreeform
-                  ? selectedMedia.length > 0
-                    ? t('placeholderMedia')
-                    : t('placeholder')
-                  : t('placeholderTemplate')}
-              </div>
-            ) : null}
-
-            {draft ? (
-              <div
-                ref={overlayRef}
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap py-2.5 text-[15px] leading-tight wrap-break-word font-sans [scrollbar-width:thin] [scrollbar-color:transparent_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent"
-              >
-                {draft.split('\n').map((line, index, arr) => {
-                  const key = `co-${index}`;
-                  let renderedLine: ReactNode = null;
-
-                  if (isQuoteLine(line)) {
-                    const quoteMatch = /^\s{0,3}>\s+/.exec(line);
-                    const prefix = quoteMatch ? quoteMatch[0] : '> ';
-                    const actualContent = line.slice(prefix.length);
-                    renderedLine = (
-                      <span key={key}>
-                        <span className="text-brand/75">{prefix}</span>
-                        {renderInlineComposerText(
-                          actualContent,
-                          `${key}-quote`,
-                        )}
-                      </span>
-                    );
-                  } else if (isBulletLine(line)) {
-                    const bulletMatch = /^\s{0,3}[-*]\s+/.exec(line);
-                    const prefix = bulletMatch ? bulletMatch[0] : '- ';
-                    const actualContent = line.slice(prefix.length);
-                    renderedLine = (
-                      <span key={key}>
-                        <span className="text-brand/75">{prefix}</span>
-                        {renderInlineComposerText(
-                          actualContent,
-                          `${key}-bullet`,
-                        )}
-                      </span>
-                    );
-                  } else if (isNumberedLine(line)) {
-                    const numMatch = /^\s{0,3}\d{1,2}\.\s+/.exec(line);
-                    const prefix = numMatch ? numMatch[0] : '1. ';
-                    const actualContent = line.slice(prefix.length);
-                    renderedLine = (
-                      <span key={key}>
-                        <span className="text-brand/75">{prefix}</span>
-                        {renderInlineComposerText(
-                          actualContent,
-                          `${key}-numbered`,
-                        )}
-                      </span>
-                    );
-                  } else if (isCodeFenceStart(line)) {
-                    renderedLine = (
-                      <span key={key} className="text-brand/75">
-                        {line}
-                      </span>
-                    );
-                  } else {
-                    renderedLine = (
-                      <span key={key}>
-                        {renderInlineComposerText(line, key)}
-                      </span>
-                    );
-                  }
-
-                  return index === arr.length - 1 ? (
-                    renderedLine
-                  ) : (
-                    <span key={`${key}-w`}>
-                      {renderedLine}
-                      {'\n'}
-                    </span>
-                  );
-                })}
-              </div>
-            ) : null}
-
-            <Textarea
-              ref={textareaRef}
-              value={draft}
-              onPaste={handlePaste}
-              onChange={(event) => {
-                const nextDraft = event.target.value;
-                setDraft(nextDraft);
-                resizeTextarea(event.currentTarget);
-              }}
-              onScroll={syncOverlayScroll}
-              onSelect={(event) => {
-                const target = event.target as HTMLTextAreaElement;
-                const nextSelectionRange: [number, number] = [
-                  target.selectionStart,
-                  target.selectionEnd,
-                ];
-
-                setSelectionRange(nextSelectionRange);
-
-                if (nextSelectionRange[0] === nextSelectionRange[1]) {
-                  setIsBlockToolbarDismissed(false);
-                }
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  if (event.shiftKey) {
-                    event.preventDefault();
-                    continueCurrentLine();
-                    return;
-                  }
-
-                  event.preventDefault();
-                  handleSend();
-                }
-              }}
-              rows={1}
-              maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
-              disabled={!conversation.canSendFreeform}
-              className={cn(
-                'relative h-10 min-h-10! max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 pr-2.5 text-[15px] leading-tight shadow-none caret-foreground focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:text-muted-foreground/70 [scrollbar-width:thin] [scrollbar-color:hsla(0,0%,0%,0.1)_transparent] dark:[scrollbar-color:hsla(0,0%,100%,0.1)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20',
-                draft && 'text-transparent selection:bg-brand/20',
-              )}
-            />
-          </div>
-
-          <Button
-            onClick={handleSend}
-            disabled={!conversation.canSendFreeform || !canSendMessage}
-            size="icon"
-            variant="ghost"
-            className={cn(
-              'size-10 shrink-0 cursor-pointer rounded-full transition-colors',
-              canSendMessage
-                ? 'text-brand hover:bg-brand/10 hover:text-brand'
-                : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
-            )}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.18,
+              ease: 'easeOut',
+            }}
+            className="w-full bg-transparent px-4 pb-3"
           >
-            <SendHorizontalIcon className="size-5" />
-            <span className="sr-only">{t('send')}</span>
-          </Button>
-        </div>
-      </div>
-    </div>
+            <div
+              ref={mediaDropZoneRef}
+              aria-live="polite"
+              className={cn(
+                'flex h-30 items-center justify-center gap-2.5 rounded-2xl border border-dashed border-brand/60 px-4 text-brand shadow-sm transition-colors duration-150',
+                isDraggingOverDropZone ? 'bg-brand/10' : 'bg-muted/40',
+              )}
+            >
+              <UploadIcon className="size-6" />
+              <span className="text-sm font-medium">{t('dropMedia')}</span>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="message-composer"
+            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 4 }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.14,
+              ease: 'easeOut',
+            }}
+            className="relative w-full bg-transparent"
+          >
+            {selectedMedia.length > 0 ? (
+              <MediaPreviewGrid
+                selectedMedia={selectedMedia}
+                onRemove={(indexToRemove) => {
+                  const nextArr = [...selectedMedia];
+
+                  if (
+                    captionTargetIndex !== -1 &&
+                    captionTargetIndex !== indexToRemove
+                  ) {
+                    if (nextArr[captionTargetIndex]) {
+                      nextArr[captionTargetIndex] = {
+                        ...nextArr[captionTargetIndex],
+                        caption: draft,
+                      };
+                    }
+                  }
+
+                  URL.revokeObjectURL(nextArr[indexToRemove].previewUrl);
+                  nextArr.splice(indexToRemove, 1);
+
+                  let nextTargetIndex = captionTargetIndex;
+                  let nextDraft = draft;
+
+                  if (indexToRemove === captionTargetIndex) {
+                    const firstValid = nextArr.findIndex(
+                      (m) => !m.file.type.startsWith('audio/'),
+                    );
+                    nextTargetIndex = firstValid;
+                    nextDraft =
+                      firstValid !== -1
+                        ? nextArr[firstValid].caption || ''
+                        : '';
+                  } else if (captionTargetIndex > indexToRemove) {
+                    nextTargetIndex = captionTargetIndex - 1;
+                  }
+
+                  setSelectedMedia(nextArr);
+                  setCaptionTargetIndex(nextTargetIndex);
+
+                  if (indexToRemove === captionTargetIndex) {
+                    setDraft(nextDraft);
+                  }
+                }}
+                removeAriaLabel={t('removeMedia')}
+                captionTargetIndex={captionTargetIndex}
+                onSelectCaptionTarget={(newIndex) => {
+                  if (newIndex === captionTargetIndex) return;
+
+                  if (newIndex >= 0 && newIndex < selectedMedia.length) {
+                    if (
+                      selectedMedia[newIndex].file.type.startsWith('audio/')
+                    ) {
+                      toast.error(t('audioCaptionNotSupported'));
+                      return;
+                    }
+                  }
+
+                  const nextList = getMediaListWithSavedDraft();
+                  setSelectedMedia(nextList);
+                  setCaptionTargetIndex(newIndex);
+                  setDraft(
+                    newIndex !== -1 ? nextList[newIndex].caption || '' : '',
+                  );
+                  textareaRef.current?.focus();
+                }}
+              />
+            ) : null}
+
+            <input
+              ref={documentInputRef}
+              type="file"
+              multiple
+              accept={documentAccept}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <input
+              ref={photoVideoInputRef}
+              type="file"
+              multiple
+              accept={photoVideoAccept}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <input
+              ref={audioInputRef}
+              type="file"
+              multiple
+              accept={audioAccept}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <div className="relative flex items-end bg-transparent px-4 pt-0 pb-3">
+              {showFormatToolbar ? (
+                <TextFormatToolbar
+                  disabled={!conversation.canSendFreeform}
+                  activeFormats={getActiveFormats(
+                    draft,
+                    selectionRange[0],
+                    selectionRange[1],
+                  )}
+                  getLabel={(key) => t(key)}
+                  onCloseAction={() => setIsBlockToolbarDismissed(true)}
+                  onFormatAction={applyTextFormat}
+                />
+              ) : null}
+
+              <div
+                className={cn(
+                  'flex min-h-14 max-h-36 flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-background px-2 py-2 shadow-sm transition-[border-color,box-shadow]',
+                  conversation.canSendFreeform
+                    ? 'focus-within:ring-2 focus-within:ring-brand/80'
+                    : 'pointer-events-none opacity-50',
+                )}
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      disabled={!conversation.canSendFreeform}
+                      className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-brand/10 hover:text-brand"
+                    >
+                      <PlusIcon />
+                      <span className="sr-only">{t('attach')}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    side="top"
+                    align="start"
+                    sideOffset={8}
+                    className="w-max min-w-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
+                  >
+                    <DropdownMenuGroup className="p-2">
+                      {mediaPickerOptions.map((option) => {
+                        const Icon = option.icon;
+
+                        return (
+                          <DropdownMenuItem
+                            key={option.type}
+                            onSelect={() => openFilePicker(option.type)}
+                            className="min-h-11 cursor-pointer gap-3 whitespace-nowrap rounded-md px-3 py-2.5 focus:bg-brand/5"
+                          >
+                            <Icon
+                              className={cn('size-5 shrink-0', option.color)}
+                            />
+                            <span className="font-medium text-foreground/80!">
+                              {t(option.label)}
+                            </span>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="relative min-h-10 flex-1">
+                  {!draft ? (
+                    <div className="pointer-events-none absolute inset-0 py-2.5 text-[15px] leading-tight text-muted-foreground/70">
+                      {conversation.canSendFreeform
+                        ? selectedMedia.length > 0
+                          ? t('placeholderMedia')
+                          : t('placeholder')
+                        : t('placeholderTemplate')}
+                    </div>
+                  ) : null}
+
+                  {draft ? (
+                    <div
+                      ref={overlayRef}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap py-2.5 text-[15px] leading-tight wrap-break-word font-sans [scrollbar-width:thin] [scrollbar-color:transparent_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent"
+                    >
+                      {draft.split('\n').map((line, index, arr) => {
+                        const key = `co-${index}`;
+                        let renderedLine: ReactNode = null;
+
+                        if (isQuoteLine(line)) {
+                          const quoteMatch = /^\s{0,3}>\s+/.exec(line);
+                          const prefix = quoteMatch ? quoteMatch[0] : '> ';
+                          const actualContent = line.slice(prefix.length);
+                          renderedLine = (
+                            <span key={key}>
+                              <span className="text-brand/75">{prefix}</span>
+                              {renderInlineComposerText(
+                                actualContent,
+                                `${key}-quote`,
+                              )}
+                            </span>
+                          );
+                        } else if (isBulletLine(line)) {
+                          const bulletMatch = /^\s{0,3}[-*]\s+/.exec(line);
+                          const prefix = bulletMatch ? bulletMatch[0] : '- ';
+                          const actualContent = line.slice(prefix.length);
+                          renderedLine = (
+                            <span key={key}>
+                              <span className="text-brand/75">{prefix}</span>
+                              {renderInlineComposerText(
+                                actualContent,
+                                `${key}-bullet`,
+                              )}
+                            </span>
+                          );
+                        } else if (isNumberedLine(line)) {
+                          const numMatch = /^\s{0,3}\d{1,2}\.\s+/.exec(line);
+                          const prefix = numMatch ? numMatch[0] : '1. ';
+                          const actualContent = line.slice(prefix.length);
+                          renderedLine = (
+                            <span key={key}>
+                              <span className="text-brand/75">{prefix}</span>
+                              {renderInlineComposerText(
+                                actualContent,
+                                `${key}-numbered`,
+                              )}
+                            </span>
+                          );
+                        } else if (isCodeFenceStart(line)) {
+                          renderedLine = (
+                            <span key={key} className="text-brand/75">
+                              {line}
+                            </span>
+                          );
+                        } else {
+                          renderedLine = (
+                            <span key={key}>
+                              {renderInlineComposerText(line, key)}
+                            </span>
+                          );
+                        }
+
+                        return index === arr.length - 1 ? (
+                          renderedLine
+                        ) : (
+                          <span key={`${key}-w`}>
+                            {renderedLine}
+                            {'\n'}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  <Textarea
+                    ref={textareaRef}
+                    value={draft}
+                    onPaste={handlePaste}
+                    onChange={(event) => {
+                      const nextDraft = event.target.value;
+                      setDraft(nextDraft);
+                      resizeTextarea(event.currentTarget);
+                    }}
+                    onScroll={syncOverlayScroll}
+                    onSelect={(event) => {
+                      const target = event.target as HTMLTextAreaElement;
+                      const nextSelectionRange: [number, number] = [
+                        target.selectionStart,
+                        target.selectionEnd,
+                      ];
+
+                      setSelectionRange(nextSelectionRange);
+
+                      if (nextSelectionRange[0] === nextSelectionRange[1]) {
+                        setIsBlockToolbarDismissed(false);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        if (event.shiftKey) {
+                          event.preventDefault();
+                          continueCurrentLine();
+                          return;
+                        }
+
+                        event.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    rows={1}
+                    maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
+                    disabled={!conversation.canSendFreeform}
+                    className={cn(
+                      'relative h-10 min-h-10! max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 pr-2.5 text-[15px] leading-tight shadow-none caret-foreground focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:text-muted-foreground/70 [scrollbar-width:thin] [scrollbar-color:hsla(0,0%,0%,0.1)_transparent] dark:[scrollbar-color:hsla(0,0%,100%,0.1)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20',
+                      draft && 'text-transparent selection:bg-brand/20',
+                    )}
+                  />
+                </div>
+
+                <Button
+                  onClick={handleSend}
+                  disabled={!conversation.canSendFreeform || !canSendMessage}
+                  size="icon"
+                  variant="ghost"
+                  className={cn(
+                    'size-10 shrink-0 cursor-pointer rounded-full transition-colors',
+                    canSendMessage
+                      ? 'text-brand hover:bg-brand/10 hover:text-brand'
+                      : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
+                  )}
+                >
+                  <SendHorizontalIcon className="size-5" />
+                  <span className="sr-only">{t('send')}</span>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

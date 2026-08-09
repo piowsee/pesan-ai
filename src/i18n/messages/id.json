@@ -686,6 +686,7 @@
       "templateRequired": "Penggunaan pesan templat diwajibkan",
       "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
       "attach": "Lampirkan media",
+      "dropMedia": "Lepaskan media untuk dilampirkan",
       "placeholderMedia": "Tambahkan keterangan...",
       "placeholder": "Ketik pesan Anda...",
       "placeholderTemplate": "Pesan templat diwajibkan",
