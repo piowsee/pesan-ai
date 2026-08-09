@@ -686,6 +686,7 @@
       "templateRequired": "Template message usage is required",
       "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
       "attach": "Attach media",
+      "dropMedia": "Drop media to attach",
       "placeholderMedia": "Add a caption...",
       "placeholder": "Type your message...",
       "placeholderTemplate": "Template message required",

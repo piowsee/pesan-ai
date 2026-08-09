@@ -31,12 +31,16 @@ import {
   QuoteIcon,
   SendHorizontalIcon,
   StrikethroughIcon,
+  UploadIcon,
   XIcon,
 } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type ChangeEvent,
+  type ClipboardEvent,
   type ReactNode,
+  type RefObject,
   useCallback,
   useEffect,
   useRef,
@@ -187,7 +191,9 @@ export type SendMediaMessageBatchInput = {
   files: Array<{ file: File; caption?: string }>;
 };
 
-const documentAccept = [
+const MAX_MEDIA_FILES = 10;
+
+const documentMimeTypes = [
   'text/plain',
   'application/pdf',
   'application/msword',
@@ -196,22 +202,148 @@ const documentAccept = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-].join(',');
+] as const;
 
-const photoVideoAccept = [
+const photoVideoMimeTypes = [
   'image/jpeg',
   'image/png',
   'video/3gpp',
   'video/mp4',
-].join(',');
+] as const;
 
-const audioAccept = [
+const audioMimeTypes = [
   'audio/aac',
   'audio/amr',
   'audio/mpeg',
   'audio/mp4',
   'audio/ogg',
-].join(',');
+] as const;
+
+const documentAccept = documentMimeTypes.join(',');
+const photoVideoAccept = photoVideoMimeTypes.join(',');
+const audioAccept = audioMimeTypes.join(',');
+const supportedMediaMimeTypes = new Set<string>([
+  ...documentMimeTypes,
+  ...photoVideoMimeTypes,
+  ...audioMimeTypes,
+]);
+
+const mediaMimeTypeByExtension: Record<string, string> = {
+  '.3gp': 'video/3gpp',
+  '.aac': 'audio/aac',
+  '.amr': 'audio/amr',
+  '.doc': 'application/msword',
+  '.docx':
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.m4a': 'audio/mp4',
+  '.mp3': 'audio/mpeg',
+  '.mp4': 'video/mp4',
+  '.oga': 'audio/ogg',
+  '.ogg': 'audio/ogg',
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx':
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.txt': 'text/plain',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+};
+
+const defaultPastedFileNameByMimeType: Record<string, string> = {
+  'image/jpeg': 'pasted-image.jpg',
+  'image/png': 'pasted-image.png',
+  'video/3gpp': 'pasted-video.3gp',
+  'video/mp4': 'pasted-video.mp4',
+  'audio/aac': 'pasted-audio.aac',
+  'audio/amr': 'pasted-audio.amr',
+  'audio/mpeg': 'pasted-audio.mp3',
+  'audio/mp4': 'pasted-audio.m4a',
+  'audio/ogg': 'pasted-audio.ogg',
+  'text/plain': 'pasted-document.txt',
+  'application/pdf': 'pasted-document.pdf',
+  'application/msword': 'pasted-document.doc',
+  'application/vnd.ms-excel': 'pasted-document.xls',
+  'application/vnd.ms-powerpoint': 'pasted-document.ppt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'pasted-document.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    'pasted-document.xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    'pasted-document.pptx',
+};
+
+function getFilenameExtension(filename: string) {
+  const extensionStart = filename.lastIndexOf('.');
+  return extensionStart === -1
+    ? ''
+    : filename.slice(extensionStart).toLowerCase();
+}
+
+function normalizeMediaFile(file: File) {
+  const normalizedMimeType = file.type.split(';')[0]?.trim().toLowerCase();
+  const canInferMimeType =
+    !normalizedMimeType || normalizedMimeType === 'application/octet-stream';
+  const inferredMimeType = canInferMimeType
+    ? mediaMimeTypeByExtension[getFilenameExtension(file.name)]
+    : undefined;
+  const mimeType = supportedMediaMimeTypes.has(normalizedMimeType)
+    ? normalizedMimeType
+    : inferredMimeType;
+
+  if (!mimeType) {
+    return null;
+  }
+
+  const filename =
+    file.name.trim() ||
+    defaultPastedFileNameByMimeType[mimeType] ||
+    'pasted-file';
+
+  if (file.type === mimeType && file.name === filename) {
+    return file;
+  }
+
+  return new File([file], filename, {
+    type: mimeType,
+    lastModified: file.lastModified,
+  });
+}
+
+function getClipboardFiles(clipboardData: DataTransfer) {
+  const itemFiles = Array.from(clipboardData.items)
+    .filter((item) => item.kind === 'file')
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => file !== null);
+
+  return itemFiles.length > 0 ? itemFiles : Array.from(clipboardData.files);
+}
+
+function hasDraggedFiles(dataTransfer: DataTransfer) {
+  return (
+    dataTransfer.files.length > 0 ||
+    Array.from(dataTransfer.types).includes('Files')
+  );
+}
+
+function isDragInsideElement(
+  event: globalThis.DragEvent,
+  element: HTMLElement | null,
+) {
+  if (!element) {
+    return false;
+  }
+
+  const bounds = element.getBoundingClientRect();
+  return (
+    event.clientX >= bounds.left &&
+    event.clientX <= bounds.right &&
+    event.clientY >= bounds.top &&
+    event.clientY <= bounds.bottom
+  );
+}
 
 const mediaPickerOptions = [
   {
@@ -305,7 +437,7 @@ function MediaPreviewGrid({
   if (selectedMedia.length === 0) return null;
 
   return (
-    <div className="mx-4 mb-2 grid max-h-[30vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin]">
+    <div className="mx-4 mb-2 grid max-h-[30vh] grid-cols-2 gap-2 overflow-y-auto pt-px pr-1 pb-px pl-px sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5 [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin]">
       {selectedMedia.map((media, index) => {
         const { file, previewUrl } = media;
         const description = formatFileSize(file.size);
@@ -324,6 +456,7 @@ function MediaPreviewGrid({
             key={`${file.name}-${index}`}
             role="button"
             tabIndex={0}
+            onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelectCaptionTarget(index)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -332,10 +465,10 @@ function MediaPreviewGrid({
               }
             }}
             className={cn(
-              'group relative flex h-14 cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl border bg-background/95 p-2 shadow-sm transition-all',
+              'group relative flex h-14 cursor-pointer items-center gap-2.5 overflow-hidden rounded-xl border border-border p-2 shadow-sm transition-colors',
               captionTargetIndex === index
-                ? 'border-brand ring-2 ring-inset ring-brand'
-                : 'border-border hover:border-brand/40',
+                ? 'bg-muted-foreground/15'
+                : 'bg-background/95 hover:bg-muted',
             )}
           >
             <div className="relative flex shrink-0 items-center justify-center">
@@ -372,7 +505,7 @@ function MediaPreviewGrid({
               type="button"
               variant="ghost"
               size="icon"
-              className="mr-0.5 size-7 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100"
+              className="mr-0.5 size-7 shrink-0 rounded-full text-muted-foreground opacity-0 transition-opacity hover:bg-transparent hover:text-muted-foreground group-hover:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove(index);
@@ -607,11 +740,13 @@ function isPrintableComposerKey(event: KeyboardEvent) {
 export function MessageComposer({
   conversation,
   focusRequest = 0,
+  mediaDropAreaRef,
   onSendAction,
   onSendMediaAction,
 }: {
   conversation: ChatConversation;
   focusRequest?: number;
+  mediaDropAreaRef?: RefObject<HTMLElement | null>;
   onSendAction: (content: string) => void;
   onSendMediaAction: (input: SendMediaMessageBatchInput) => void;
 }) {
@@ -623,18 +758,29 @@ export function MessageComposer({
     0, 0,
   ]);
   const [isBlockToolbarDismissed, setIsBlockToolbarDismissed] = useState(false);
+  const [isDraggingMedia, setIsDraggingMedia] = useState(false);
+  const [isDraggingOverDropZone, setIsDraggingOverDropZone] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const photoVideoInputRef = useRef<HTMLInputElement>(null);
+  const selectedMediaRef = useRef<SelectedMedia[]>([]);
+  const mediaDropZoneRef = useRef<HTMLDivElement>(null);
+  const addMediaFilesRef = useRef<(files: File[]) => void>(() => undefined);
+
+  useEffect(() => {
+    selectedMediaRef.current = selectedMedia;
+  }, [selectedMedia]);
 
   useEffect(() => {
     return () => {
-      selectedMedia.forEach((media) => URL.revokeObjectURL(media.previewUrl));
+      selectedMediaRef.current.forEach((media) =>
+        URL.revokeObjectURL(media.previewUrl),
+      );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Cleanup on unmount only or selected media changes
-  }, [selectedMedia.length]);
+  }, []);
 
   const syncOverlayScroll = () => {
     if (textareaRef.current && overlayRef.current) {
@@ -778,7 +924,6 @@ export function MessageComposer({
 
   const resetComposer = () => {
     setDraft('');
-    setSelectedMedia([]);
     setCaptionTargetIndex(-1);
     setIsBlockToolbarDismissed(false);
     clearSelectedMedia();
@@ -998,7 +1143,7 @@ export function MessageComposer({
     photoVideoInputRef.current?.click();
   };
 
-  const getMediaListWithSavedDraft = () => {
+  const getMediaListWithSavedDraft = useCallback(() => {
     const list = [...selectedMedia];
     if (captionTargetIndex !== -1 && list[captionTargetIndex]) {
       list[captionTargetIndex] = {
@@ -1007,55 +1152,194 @@ export function MessageComposer({
       };
     }
     return list;
-  };
+  }, [captionTargetIndex, draft, selectedMedia]);
+
+  const addMediaFiles = useCallback(
+    (files: File[]) => {
+      if (files.length === 0) {
+        return;
+      }
+
+      const validFiles = files.flatMap((file) => {
+        const normalizedFile = normalizeMediaFile(file);
+
+        if (!normalizedFile) {
+          toast.error(`${file.name}: ${t('unsupportedFile')}`);
+          return [];
+        }
+
+        return [normalizedFile];
+      });
+
+      const baseList = getMediaListWithSavedDraft();
+      const availableSlots = Math.max(MAX_MEDIA_FILES - baseList.length, 0);
+
+      if (validFiles.length > availableSlots) {
+        toast.error(t('maxFilesExceeded', { max: MAX_MEDIA_FILES }));
+      }
+
+      const newMedia = validFiles.slice(0, availableSlots).map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        caption: '',
+      }));
+
+      if (newMedia.length === 0) {
+        return;
+      }
+
+      const nextList = [...baseList, ...newMedia];
+      let nextIndex = captionTargetIndex;
+
+      // Auto assign if no valid target exists (e.g. was empty or only audio previously)
+      if (nextIndex === -1 || nextIndex >= nextList.length) {
+        nextIndex = nextList.findIndex(
+          (media) => !media.file.type.startsWith('audio/'),
+        );
+      }
+
+      setSelectedMedia(nextList);
+      setCaptionTargetIndex(nextIndex);
+
+      if (nextIndex !== captionTargetIndex && captionTargetIndex !== -1) {
+        setDraft(nextIndex !== -1 ? nextList[nextIndex].caption || '' : '');
+      }
+
+      setTimeout(() => textareaRef.current?.focus(), 0);
+    },
+    [captionTargetIndex, getMediaListWithSavedDraft, t],
+  );
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const rawFiles = event.target.files;
     const files = rawFiles ? Array.from(rawFiles) : [];
     event.target.value = '';
+    addMediaFiles(files);
+  };
+
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = getClipboardFiles(event.clipboardData);
 
     if (files.length === 0) {
       return;
     }
 
-    const validFiles = files.filter((file) => {
-      if (!file.type) {
-        toast.error(`${file.name}: ${t('unsupportedFile')}`);
-        return false;
-      }
-      return true;
-    });
-
-    const newMedia = validFiles.map((file) => ({
-      file,
-      previewUrl: URL.createObjectURL(file),
-      caption: '',
-    }));
-
-    const baseList = getMediaListWithSavedDraft();
-    let nextList = [...baseList, ...newMedia];
-
-    if (nextList.length > 10) {
-      toast.error(t('maxFilesExceeded', { max: 10 }));
-      nextList = nextList.slice(0, 10);
-    }
-
-    let nextIndex = captionTargetIndex;
-
-    // Auto assign if no valid target exists (e.g. was empty or only audio previously)
-    if (nextIndex === -1 || nextIndex >= nextList.length) {
-      nextIndex = nextList.findIndex((m) => !m.file.type.startsWith('audio/'));
-    }
-
-    setSelectedMedia(nextList);
-    setCaptionTargetIndex(nextIndex);
-
-    if (nextIndex !== captionTargetIndex && captionTargetIndex !== -1) {
-      setDraft(nextIndex !== -1 ? nextList[nextIndex].caption || '' : '');
-    }
-
-    setTimeout(() => textareaRef.current?.focus(), 0);
+    event.preventDefault();
+    addMediaFiles(files);
   };
+
+  useEffect(() => {
+    addMediaFilesRef.current = addMediaFiles;
+  }, [addMediaFiles]);
+
+  useEffect(() => {
+    const dropArea = mediaDropAreaRef?.current;
+    if (!dropArea) {
+      return;
+    }
+
+    const getFileTransfer = (event: globalThis.DragEvent) => {
+      const { dataTransfer } = event;
+      return dataTransfer && hasDraggedFiles(dataTransfer)
+        ? dataTransfer
+        : null;
+    };
+
+    const resetMediaDragState = () => {
+      setIsDraggingMedia(false);
+      setIsDraggingOverDropZone(false);
+    };
+
+    const handleDragEnter = (event: globalThis.DragEvent) => {
+      if (!getFileTransfer(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      if (!conversation.canSendFreeform) {
+        return;
+      }
+
+      setIsDraggingMedia(true);
+    };
+
+    const handleDocumentDragOver = (event: globalThis.DragEvent) => {
+      const dataTransfer = getFileTransfer(event);
+      if (!dataTransfer) {
+        return;
+      }
+
+      const isInsideChat = isDragInsideElement(event, dropArea);
+      if (!isInsideChat || !conversation.canSendFreeform) {
+        resetMediaDragState();
+        return;
+      }
+
+      event.preventDefault();
+      dataTransfer.dropEffect = 'copy';
+      setIsDraggingMedia(true);
+      setIsDraggingOverDropZone(
+        isDragInsideElement(event, mediaDropZoneRef.current),
+      );
+    };
+
+    const handleDragLeave = (event: globalThis.DragEvent) => {
+      const nextTarget = event.relatedTarget;
+      const remainsInsideDropArea =
+        nextTarget instanceof Node && dropArea.contains(nextTarget);
+
+      if (!remainsInsideDropArea && !isDragInsideElement(event, dropArea)) {
+        resetMediaDragState();
+      }
+    };
+
+    const handleDocumentDragLeave = (event: globalThis.DragEvent) => {
+      const isOutsideViewport =
+        event.clientX <= 0 ||
+        event.clientY <= 0 ||
+        event.clientX >= window.innerWidth ||
+        event.clientY >= window.innerHeight;
+
+      if (isOutsideViewport) {
+        resetMediaDragState();
+      }
+    };
+
+    const handleDrop = (event: globalThis.DragEvent) => {
+      const dataTransfer = getFileTransfer(event);
+      if (!dataTransfer) {
+        return;
+      }
+
+      event.preventDefault();
+      resetMediaDragState();
+
+      if (conversation.canSendFreeform) {
+        addMediaFilesRef.current(Array.from(dataTransfer.files));
+      }
+    };
+
+    dropArea.addEventListener('dragenter', handleDragEnter);
+    dropArea.addEventListener('dragleave', handleDragLeave);
+    dropArea.addEventListener('drop', handleDrop);
+    document.addEventListener('dragover', handleDocumentDragOver);
+    document.addEventListener('dragleave', handleDocumentDragLeave);
+    document.addEventListener('dragend', resetMediaDragState);
+    document.addEventListener('drop', resetMediaDragState);
+    window.addEventListener('blur', resetMediaDragState);
+
+    return () => {
+      resetMediaDragState();
+      dropArea.removeEventListener('dragenter', handleDragEnter);
+      dropArea.removeEventListener('dragleave', handleDragLeave);
+      dropArea.removeEventListener('drop', handleDrop);
+      document.removeEventListener('dragover', handleDocumentDragOver);
+      document.removeEventListener('dragleave', handleDocumentDragLeave);
+      document.removeEventListener('dragend', resetMediaDragState);
+      document.removeEventListener('drop', resetMediaDragState);
+      window.removeEventListener('blur', resetMediaDragState);
+    };
+  }, [conversation.canSendFreeform, mediaDropAreaRef]);
 
   const trimmedDraft = draft.trim();
   const canSendMessage = Boolean(trimmedDraft || selectedMedia.length > 0);
@@ -1147,305 +1431,371 @@ export function MessageComposer({
   }
 
   return (
-    <div className="w-full shrink-0 bg-transparent">
-      {selectedMedia.length > 0 ? (
-        <MediaPreviewGrid
-          selectedMedia={selectedMedia}
-          onRemove={(indexToRemove) => {
-            const nextArr = [...selectedMedia];
-
-            if (
-              captionTargetIndex !== -1 &&
-              captionTargetIndex !== indexToRemove
-            ) {
-              if (nextArr[captionTargetIndex]) {
-                nextArr[captionTargetIndex] = {
-                  ...nextArr[captionTargetIndex],
-                  caption: draft,
-                };
-              }
+    <motion.div
+      layout={!shouldReduceMotion}
+      className="w-full shrink-0"
+      transition={{
+        layout: {
+          duration: shouldReduceMotion ? 0 : 0.2,
+          ease: 'easeOut',
+        },
+      }}
+    >
+      <AnimatePresence initial={false} mode="wait">
+        {isDraggingMedia ? (
+          <motion.div
+            key="media-drop-zone"
+            initial={
+              shouldReduceMotion
+                ? { opacity: 1 }
+                : { opacity: 0, scale: 0.985, y: 8 }
             }
-
-            URL.revokeObjectURL(nextArr[indexToRemove].previewUrl);
-            nextArr.splice(indexToRemove, 1);
-
-            let nextTargetIndex = captionTargetIndex;
-            let nextDraft = draft;
-
-            if (indexToRemove === captionTargetIndex) {
-              const firstValid = nextArr.findIndex(
-                (m) => !m.file.type.startsWith('audio/'),
-              );
-              nextTargetIndex = firstValid;
-              nextDraft =
-                firstValid !== -1 ? nextArr[firstValid].caption || '' : '';
-            } else if (captionTargetIndex > indexToRemove) {
-              nextTargetIndex = captionTargetIndex - 1;
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              shouldReduceMotion
+                ? { opacity: 1 }
+                : { opacity: 0, scale: 0.985, y: 8 }
             }
-
-            setSelectedMedia(nextArr);
-            setCaptionTargetIndex(nextTargetIndex);
-
-            if (indexToRemove === captionTargetIndex) {
-              setDraft(nextDraft);
-            }
-          }}
-          removeAriaLabel={t('removeMedia')}
-          captionTargetIndex={captionTargetIndex}
-          onSelectCaptionTarget={(newIndex) => {
-            if (newIndex === captionTargetIndex) return;
-
-            if (newIndex >= 0 && newIndex < selectedMedia.length) {
-              if (selectedMedia[newIndex].file.type.startsWith('audio/')) {
-                toast.error(t('audioCaptionNotSupported'));
-                return;
-              }
-            }
-
-            const nextList = getMediaListWithSavedDraft();
-            setSelectedMedia(nextList);
-            setCaptionTargetIndex(newIndex);
-            setDraft(newIndex !== -1 ? nextList[newIndex].caption || '' : '');
-            textareaRef.current?.focus();
-          }}
-        />
-      ) : null}
-
-      <input
-        ref={documentInputRef}
-        type="file"
-        multiple
-        accept={documentAccept}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <input
-        ref={photoVideoInputRef}
-        type="file"
-        multiple
-        accept={photoVideoAccept}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <input
-        ref={audioInputRef}
-        type="file"
-        multiple
-        accept={audioAccept}
-        className="hidden"
-        onChange={handleFileChange}
-      />
-
-      <div className="relative flex items-end bg-transparent px-4 pt-0 pb-3">
-        {showFormatToolbar ? (
-          <TextFormatToolbar
-            disabled={!conversation.canSendFreeform}
-            activeFormats={getActiveFormats(
-              draft,
-              selectionRange[0],
-              selectionRange[1],
-            )}
-            getLabel={(key) => t(key)}
-            onCloseAction={() => setIsBlockToolbarDismissed(true)}
-            onFormatAction={applyTextFormat}
-          />
-        ) : null}
-
-        <div
-          className={cn(
-            'flex min-h-14 max-h-36 flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-background px-2 py-2 shadow-sm transition-[border-color,box-shadow]',
-            conversation.canSendFreeform
-              ? 'focus-within:ring-2 focus-within:ring-brand/80'
-              : 'pointer-events-none opacity-50',
-          )}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                disabled={!conversation.canSendFreeform}
-                className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-brand/10 hover:text-brand"
-              >
-                <PlusIcon />
-                <span className="sr-only">{t('attach')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              side="top"
-              align="start"
-              sideOffset={8}
-              className="w-max min-w-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
-            >
-              <DropdownMenuGroup className="p-2">
-                {mediaPickerOptions.map((option) => {
-                  const Icon = option.icon;
-
-                  return (
-                    <DropdownMenuItem
-                      key={option.type}
-                      onSelect={() => openFilePicker(option.type)}
-                      className="min-h-11 cursor-pointer gap-3 whitespace-nowrap rounded-md px-3 py-2.5 focus:bg-brand/5"
-                    >
-                      <Icon className={cn('size-5 shrink-0', option.color)} />
-                      <span className="font-medium text-foreground/80!">
-                        {t(option.label)}
-                      </span>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div className="relative min-h-10 flex-1">
-            {!draft ? (
-              <div className="pointer-events-none absolute inset-0 py-2.5 text-[15px] leading-tight text-muted-foreground/70">
-                {conversation.canSendFreeform
-                  ? selectedMedia.length > 0
-                    ? t('placeholderMedia')
-                    : t('placeholder')
-                  : t('placeholderTemplate')}
-              </div>
-            ) : null}
-
-            {draft ? (
-              <div
-                ref={overlayRef}
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap py-2.5 text-[15px] leading-tight wrap-break-word font-sans [scrollbar-width:thin] [scrollbar-color:transparent_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent"
-              >
-                {draft.split('\n').map((line, index, arr) => {
-                  const key = `co-${index}`;
-                  let renderedLine: ReactNode = null;
-
-                  if (isQuoteLine(line)) {
-                    const quoteMatch = /^\s{0,3}>\s+/.exec(line);
-                    const prefix = quoteMatch ? quoteMatch[0] : '> ';
-                    const actualContent = line.slice(prefix.length);
-                    renderedLine = (
-                      <span key={key}>
-                        <span className="text-brand/75">{prefix}</span>
-                        {renderInlineComposerText(
-                          actualContent,
-                          `${key}-quote`,
-                        )}
-                      </span>
-                    );
-                  } else if (isBulletLine(line)) {
-                    const bulletMatch = /^\s{0,3}[-*]\s+/.exec(line);
-                    const prefix = bulletMatch ? bulletMatch[0] : '- ';
-                    const actualContent = line.slice(prefix.length);
-                    renderedLine = (
-                      <span key={key}>
-                        <span className="text-brand/75">{prefix}</span>
-                        {renderInlineComposerText(
-                          actualContent,
-                          `${key}-bullet`,
-                        )}
-                      </span>
-                    );
-                  } else if (isNumberedLine(line)) {
-                    const numMatch = /^\s{0,3}\d{1,2}\.\s+/.exec(line);
-                    const prefix = numMatch ? numMatch[0] : '1. ';
-                    const actualContent = line.slice(prefix.length);
-                    renderedLine = (
-                      <span key={key}>
-                        <span className="text-brand/75">{prefix}</span>
-                        {renderInlineComposerText(
-                          actualContent,
-                          `${key}-numbered`,
-                        )}
-                      </span>
-                    );
-                  } else if (isCodeFenceStart(line)) {
-                    renderedLine = (
-                      <span key={key} className="text-brand/75">
-                        {line}
-                      </span>
-                    );
-                  } else {
-                    renderedLine = (
-                      <span key={key}>
-                        {renderInlineComposerText(line, key)}
-                      </span>
-                    );
-                  }
-
-                  return index === arr.length - 1 ? (
-                    renderedLine
-                  ) : (
-                    <span key={`${key}-w`}>
-                      {renderedLine}
-                      {'\n'}
-                    </span>
-                  );
-                })}
-              </div>
-            ) : null}
-
-            <Textarea
-              ref={textareaRef}
-              value={draft}
-              onChange={(event) => {
-                const nextDraft = event.target.value;
-                setDraft(nextDraft);
-                resizeTextarea(event.currentTarget);
-              }}
-              onScroll={syncOverlayScroll}
-              onSelect={(event) => {
-                const target = event.target as HTMLTextAreaElement;
-                const nextSelectionRange: [number, number] = [
-                  target.selectionStart,
-                  target.selectionEnd,
-                ];
-
-                setSelectionRange(nextSelectionRange);
-
-                if (nextSelectionRange[0] === nextSelectionRange[1]) {
-                  setIsBlockToolbarDismissed(false);
-                }
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  if (event.shiftKey) {
-                    event.preventDefault();
-                    continueCurrentLine();
-                    return;
-                  }
-
-                  event.preventDefault();
-                  handleSend();
-                }
-              }}
-              rows={1}
-              maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
-              disabled={!conversation.canSendFreeform}
-              className={cn(
-                'relative h-10 min-h-10! max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 pr-2.5 text-[15px] leading-tight shadow-none caret-foreground focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:text-muted-foreground/70 [scrollbar-width:thin] [scrollbar-color:hsla(0,0%,0%,0.1)_transparent] dark:[scrollbar-color:hsla(0,0%,100%,0.1)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20',
-                draft && 'text-transparent selection:bg-brand/20',
-              )}
-            />
-          </div>
-
-          <Button
-            onClick={handleSend}
-            disabled={!conversation.canSendFreeform || !canSendMessage}
-            size="icon"
-            variant="ghost"
-            className={cn(
-              'size-10 shrink-0 cursor-pointer rounded-full transition-colors',
-              canSendMessage
-                ? 'text-brand hover:bg-brand/10 hover:text-brand'
-                : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
-            )}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.18,
+              ease: 'easeOut',
+            }}
+            className="w-full bg-transparent px-4 pb-3"
           >
-            <SendHorizontalIcon className="size-5" />
-            <span className="sr-only">{t('send')}</span>
-          </Button>
-        </div>
-      </div>
-    </div>
+            <div
+              ref={mediaDropZoneRef}
+              aria-live="polite"
+              className={cn(
+                'flex h-30 items-center justify-center gap-2.5 rounded-2xl border border-dashed border-brand/60 px-4 text-brand shadow-sm transition-colors duration-150',
+                isDraggingOverDropZone ? 'bg-brand/10' : 'bg-muted/40',
+              )}
+            >
+              <UploadIcon className="size-6" />
+              <span className="text-sm font-medium">{t('dropMedia')}</span>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="message-composer"
+            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 4 }}
+            transition={{
+              duration: shouldReduceMotion ? 0 : 0.14,
+              ease: 'easeOut',
+            }}
+            className="relative w-full bg-transparent"
+          >
+            {selectedMedia.length > 0 ? (
+              <MediaPreviewGrid
+                selectedMedia={selectedMedia}
+                onRemove={(indexToRemove) => {
+                  const nextArr = [...selectedMedia];
+
+                  if (
+                    captionTargetIndex !== -1 &&
+                    captionTargetIndex !== indexToRemove
+                  ) {
+                    if (nextArr[captionTargetIndex]) {
+                      nextArr[captionTargetIndex] = {
+                        ...nextArr[captionTargetIndex],
+                        caption: draft,
+                      };
+                    }
+                  }
+
+                  URL.revokeObjectURL(nextArr[indexToRemove].previewUrl);
+                  nextArr.splice(indexToRemove, 1);
+
+                  let nextTargetIndex = captionTargetIndex;
+                  let nextDraft = draft;
+
+                  if (indexToRemove === captionTargetIndex) {
+                    const firstValid = nextArr.findIndex(
+                      (m) => !m.file.type.startsWith('audio/'),
+                    );
+                    nextTargetIndex = firstValid;
+                    nextDraft =
+                      firstValid !== -1
+                        ? nextArr[firstValid].caption || ''
+                        : '';
+                  } else if (captionTargetIndex > indexToRemove) {
+                    nextTargetIndex = captionTargetIndex - 1;
+                  }
+
+                  setSelectedMedia(nextArr);
+                  setCaptionTargetIndex(nextTargetIndex);
+
+                  if (indexToRemove === captionTargetIndex) {
+                    setDraft(nextDraft);
+                  }
+                }}
+                removeAriaLabel={t('removeMedia')}
+                captionTargetIndex={captionTargetIndex}
+                onSelectCaptionTarget={(newIndex) => {
+                  if (newIndex === captionTargetIndex) return;
+
+                  if (newIndex >= 0 && newIndex < selectedMedia.length) {
+                    if (
+                      selectedMedia[newIndex].file.type.startsWith('audio/')
+                    ) {
+                      toast.error(t('audioCaptionNotSupported'));
+                      return;
+                    }
+                  }
+
+                  const nextList = getMediaListWithSavedDraft();
+                  setSelectedMedia(nextList);
+                  setCaptionTargetIndex(newIndex);
+                  setDraft(
+                    newIndex !== -1 ? nextList[newIndex].caption || '' : '',
+                  );
+                  textareaRef.current?.focus();
+                }}
+              />
+            ) : null}
+
+            <input
+              ref={documentInputRef}
+              type="file"
+              multiple
+              accept={documentAccept}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <input
+              ref={photoVideoInputRef}
+              type="file"
+              multiple
+              accept={photoVideoAccept}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <input
+              ref={audioInputRef}
+              type="file"
+              multiple
+              accept={audioAccept}
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <div className="relative flex items-end bg-transparent px-4 pt-0 pb-3">
+              {showFormatToolbar ? (
+                <TextFormatToolbar
+                  disabled={!conversation.canSendFreeform}
+                  activeFormats={getActiveFormats(
+                    draft,
+                    selectionRange[0],
+                    selectionRange[1],
+                  )}
+                  getLabel={(key) => t(key)}
+                  onCloseAction={() => setIsBlockToolbarDismissed(true)}
+                  onFormatAction={applyTextFormat}
+                />
+              ) : null}
+
+              <div
+                className={cn(
+                  'flex min-h-14 max-h-36 flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-background px-2 py-2 shadow-sm transition-[border-color,box-shadow]',
+                  conversation.canSendFreeform
+                    ? 'focus-within:ring-2 focus-within:ring-brand/80'
+                    : 'pointer-events-none opacity-50',
+                )}
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      disabled={!conversation.canSendFreeform}
+                      className="size-10 shrink-0 rounded-full text-muted-foreground hover:bg-brand/10 hover:text-brand"
+                    >
+                      <PlusIcon />
+                      <span className="sr-only">{t('attach')}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    side="top"
+                    align="start"
+                    sideOffset={8}
+                    className="w-max min-w-0 overflow-hidden rounded-lg border bg-background p-0 text-foreground shadow-lg"
+                  >
+                    <DropdownMenuGroup className="p-2">
+                      {mediaPickerOptions.map((option) => {
+                        const Icon = option.icon;
+
+                        return (
+                          <DropdownMenuItem
+                            key={option.type}
+                            onSelect={() => openFilePicker(option.type)}
+                            className="min-h-11 cursor-pointer gap-3 whitespace-nowrap rounded-md px-3 py-2.5 focus:bg-brand/5"
+                          >
+                            <Icon
+                              className={cn('size-5 shrink-0', option.color)}
+                            />
+                            <span className="font-medium text-foreground/80!">
+                              {t(option.label)}
+                            </span>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="relative min-h-10 flex-1">
+                  {!draft ? (
+                    <div className="pointer-events-none absolute inset-0 py-2.5 text-[15px] leading-tight text-muted-foreground/70">
+                      {conversation.canSendFreeform
+                        ? selectedMedia.length > 0
+                          ? t('placeholderMedia')
+                          : t('placeholder')
+                        : t('placeholderTemplate')}
+                    </div>
+                  ) : null}
+
+                  {draft ? (
+                    <div
+                      ref={overlayRef}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap py-2.5 text-[15px] leading-tight wrap-break-word font-sans [scrollbar-width:thin] [scrollbar-color:transparent_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent"
+                    >
+                      {draft.split('\n').map((line, index, arr) => {
+                        const key = `co-${index}`;
+                        let renderedLine: ReactNode = null;
+
+                        if (isQuoteLine(line)) {
+                          const quoteMatch = /^\s{0,3}>\s+/.exec(line);
+                          const prefix = quoteMatch ? quoteMatch[0] : '> ';
+                          const actualContent = line.slice(prefix.length);
+                          renderedLine = (
+                            <span key={key}>
+                              <span className="text-brand/75">{prefix}</span>
+                              {renderInlineComposerText(
+                                actualContent,
+                                `${key}-quote`,
+                              )}
+                            </span>
+                          );
+                        } else if (isBulletLine(line)) {
+                          const bulletMatch = /^\s{0,3}[-*]\s+/.exec(line);
+                          const prefix = bulletMatch ? bulletMatch[0] : '- ';
+                          const actualContent = line.slice(prefix.length);
+                          renderedLine = (
+                            <span key={key}>
+                              <span className="text-brand/75">{prefix}</span>
+                              {renderInlineComposerText(
+                                actualContent,
+                                `${key}-bullet`,
+                              )}
+                            </span>
+                          );
+                        } else if (isNumberedLine(line)) {
+                          const numMatch = /^\s{0,3}\d{1,2}\.\s+/.exec(line);
+                          const prefix = numMatch ? numMatch[0] : '1. ';
+                          const actualContent = line.slice(prefix.length);
+                          renderedLine = (
+                            <span key={key}>
+                              <span className="text-brand/75">{prefix}</span>
+                              {renderInlineComposerText(
+                                actualContent,
+                                `${key}-numbered`,
+                              )}
+                            </span>
+                          );
+                        } else if (isCodeFenceStart(line)) {
+                          renderedLine = (
+                            <span key={key} className="text-brand/75">
+                              {line}
+                            </span>
+                          );
+                        } else {
+                          renderedLine = (
+                            <span key={key}>
+                              {renderInlineComposerText(line, key)}
+                            </span>
+                          );
+                        }
+
+                        return index === arr.length - 1 ? (
+                          renderedLine
+                        ) : (
+                          <span key={`${key}-w`}>
+                            {renderedLine}
+                            {'\n'}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  <Textarea
+                    ref={textareaRef}
+                    value={draft}
+                    onPaste={handlePaste}
+                    onChange={(event) => {
+                      const nextDraft = event.target.value;
+                      setDraft(nextDraft);
+                      resizeTextarea(event.currentTarget);
+                    }}
+                    onScroll={syncOverlayScroll}
+                    onSelect={(event) => {
+                      const target = event.target as HTMLTextAreaElement;
+                      const nextSelectionRange: [number, number] = [
+                        target.selectionStart,
+                        target.selectionEnd,
+                      ];
+
+                      setSelectionRange(nextSelectionRange);
+
+                      if (nextSelectionRange[0] === nextSelectionRange[1]) {
+                        setIsBlockToolbarDismissed(false);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        if (event.shiftKey) {
+                          event.preventDefault();
+                          continueCurrentLine();
+                          return;
+                        }
+
+                        event.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    rows={1}
+                    maxLength={CHAT_MESSAGE_CHARACTER_LIMIT}
+                    disabled={!conversation.canSendFreeform}
+                    className={cn(
+                      'relative h-10 min-h-10! max-h-32 resize-none border-0 bg-transparent p-0 py-2.5 pr-2.5 text-[15px] leading-tight shadow-none caret-foreground focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-100 placeholder:text-muted-foreground/70 [scrollbar-width:thin] [scrollbar-color:hsla(0,0%,0%,0.1)_transparent] dark:[scrollbar-color:hsla(0,0%,100%,0.1)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black/10 dark:[&::-webkit-scrollbar-thumb]:bg-white/10 hover:[&::-webkit-scrollbar-thumb]:bg-black/20 dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20',
+                      draft && 'text-transparent selection:bg-brand/20',
+                    )}
+                  />
+                </div>
+
+                <Button
+                  onClick={handleSend}
+                  disabled={!conversation.canSendFreeform || !canSendMessage}
+                  size="icon"
+                  variant="ghost"
+                  className={cn(
+                    'size-10 shrink-0 cursor-pointer rounded-full transition-colors',
+                    canSendMessage
+                      ? 'text-brand hover:bg-brand/10 hover:text-brand'
+                      : 'text-muted-foreground/40 hover:bg-transparent hover:text-muted-foreground/40',
+                  )}
+                >
+                  <SendHorizontalIcon className="size-5" />
+                  <span className="sr-only">{t('send')}</span>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
