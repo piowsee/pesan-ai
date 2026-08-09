@@ -36,6 +36,7 @@ import {
 import { useTranslations } from 'next-intl';
 import {
   type ChangeEvent,
+  type ClipboardEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -187,7 +188,9 @@ export type SendMediaMessageBatchInput = {
   files: Array<{ file: File; caption?: string }>;
 };
 
-const documentAccept = [
+const MAX_MEDIA_FILES = 10;
+
+const documentMimeTypes = [
   'text/plain',
   'application/pdf',
   'application/msword',
@@ -196,22 +199,124 @@ const documentAccept = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-].join(',');
+] as const;
 
-const photoVideoAccept = [
+const photoVideoMimeTypes = [
   'image/jpeg',
   'image/png',
   'video/3gpp',
   'video/mp4',
-].join(',');
+] as const;
 
-const audioAccept = [
+const audioMimeTypes = [
   'audio/aac',
   'audio/amr',
   'audio/mpeg',
   'audio/mp4',
   'audio/ogg',
-].join(',');
+] as const;
+
+const documentAccept = documentMimeTypes.join(',');
+const photoVideoAccept = photoVideoMimeTypes.join(',');
+const audioAccept = audioMimeTypes.join(',');
+const supportedMediaMimeTypes = new Set<string>([
+  ...documentMimeTypes,
+  ...photoVideoMimeTypes,
+  ...audioMimeTypes,
+]);
+
+const mediaMimeTypeByExtension: Record<string, string> = {
+  '.3gp': 'video/3gpp',
+  '.aac': 'audio/aac',
+  '.amr': 'audio/amr',
+  '.doc': 'application/msword',
+  '.docx':
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.m4a': 'audio/mp4',
+  '.mp3': 'audio/mpeg',
+  '.mp4': 'video/mp4',
+  '.oga': 'audio/ogg',
+  '.ogg': 'audio/ogg',
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.ppt': 'application/vnd.ms-powerpoint',
+  '.pptx':
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  '.txt': 'text/plain',
+  '.xls': 'application/vnd.ms-excel',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+};
+
+const defaultPastedFileNameByMimeType: Record<string, string> = {
+  'image/jpeg': 'pasted-image.jpg',
+  'image/png': 'pasted-image.png',
+  'video/3gpp': 'pasted-video.3gp',
+  'video/mp4': 'pasted-video.mp4',
+  'audio/aac': 'pasted-audio.aac',
+  'audio/amr': 'pasted-audio.amr',
+  'audio/mpeg': 'pasted-audio.mp3',
+  'audio/mp4': 'pasted-audio.m4a',
+  'audio/ogg': 'pasted-audio.ogg',
+  'text/plain': 'pasted-document.txt',
+  'application/pdf': 'pasted-document.pdf',
+  'application/msword': 'pasted-document.doc',
+  'application/vnd.ms-excel': 'pasted-document.xls',
+  'application/vnd.ms-powerpoint': 'pasted-document.ppt',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'pasted-document.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    'pasted-document.xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    'pasted-document.pptx',
+};
+
+function getFilenameExtension(filename: string) {
+  const extensionStart = filename.lastIndexOf('.');
+  return extensionStart === -1
+    ? ''
+    : filename.slice(extensionStart).toLowerCase();
+}
+
+function normalizeMediaFile(file: File) {
+  const normalizedMimeType = file.type.split(';')[0]?.trim().toLowerCase();
+  const canInferMimeType =
+    !normalizedMimeType || normalizedMimeType === 'application/octet-stream';
+  const inferredMimeType = canInferMimeType
+    ? mediaMimeTypeByExtension[getFilenameExtension(file.name)]
+    : undefined;
+  const mimeType = supportedMediaMimeTypes.has(normalizedMimeType)
+    ? normalizedMimeType
+    : inferredMimeType;
+
+  if (!mimeType) {
+    return null;
+  }
+
+  const filename =
+    file.name.trim() ||
+    defaultPastedFileNameByMimeType[mimeType] ||
+    'pasted-file';
+
+  if (file.type === mimeType && file.name === filename) {
+    return file;
+  }
+
+  return new File([file], filename, {
+    type: mimeType,
+    lastModified: file.lastModified,
+  });
+}
+
+function getClipboardFiles(clipboardData: DataTransfer) {
+  const itemFiles = Array.from(clipboardData.items)
+    .filter((item) => item.kind === 'file')
+    .map((item) => item.getAsFile())
+    .filter((file): file is File => file !== null);
+
+  return itemFiles.length > 0 ? itemFiles : Array.from(clipboardData.files);
+}
 
 const mediaPickerOptions = [
   {
@@ -628,13 +733,19 @@ export function MessageComposer({
   const audioInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
   const photoVideoInputRef = useRef<HTMLInputElement>(null);
+  const selectedMediaRef = useRef<SelectedMedia[]>([]);
+
+  useEffect(() => {
+    selectedMediaRef.current = selectedMedia;
+  }, [selectedMedia]);
 
   useEffect(() => {
     return () => {
-      selectedMedia.forEach((media) => URL.revokeObjectURL(media.previewUrl));
+      selectedMediaRef.current.forEach((media) =>
+        URL.revokeObjectURL(media.previewUrl),
+      );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Cleanup on unmount only or selected media changes
-  }, [selectedMedia.length]);
+  }, []);
 
   const syncOverlayScroll = () => {
     if (textareaRef.current && overlayRef.current) {
@@ -778,7 +889,6 @@ export function MessageComposer({
 
   const resetComposer = () => {
     setDraft('');
-    setSelectedMedia([]);
     setCaptionTargetIndex(-1);
     setIsBlockToolbarDismissed(false);
     clearSelectedMedia();
@@ -1009,37 +1119,40 @@ export function MessageComposer({
     return list;
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const rawFiles = event.target.files;
-    const files = rawFiles ? Array.from(rawFiles) : [];
-    event.target.value = '';
-
+  const addMediaFiles = (files: File[]) => {
     if (files.length === 0) {
       return;
     }
 
-    const validFiles = files.filter((file) => {
-      if (!file.type) {
+    const validFiles = files.flatMap((file) => {
+      const normalizedFile = normalizeMediaFile(file);
+
+      if (!normalizedFile) {
         toast.error(`${file.name}: ${t('unsupportedFile')}`);
-        return false;
+        return [];
       }
-      return true;
+
+      return [normalizedFile];
     });
 
-    const newMedia = validFiles.map((file) => ({
+    const baseList = getMediaListWithSavedDraft();
+    const availableSlots = Math.max(MAX_MEDIA_FILES - baseList.length, 0);
+
+    if (validFiles.length > availableSlots) {
+      toast.error(t('maxFilesExceeded', { max: MAX_MEDIA_FILES }));
+    }
+
+    const newMedia = validFiles.slice(0, availableSlots).map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
       caption: '',
     }));
 
-    const baseList = getMediaListWithSavedDraft();
-    let nextList = [...baseList, ...newMedia];
-
-    if (nextList.length > 10) {
-      toast.error(t('maxFilesExceeded', { max: 10 }));
-      nextList = nextList.slice(0, 10);
+    if (newMedia.length === 0) {
+      return;
     }
 
+    const nextList = [...baseList, ...newMedia];
     let nextIndex = captionTargetIndex;
 
     // Auto assign if no valid target exists (e.g. was empty or only audio previously)
@@ -1055,6 +1168,24 @@ export function MessageComposer({
     }
 
     setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const rawFiles = event.target.files;
+    const files = rawFiles ? Array.from(rawFiles) : [];
+    event.target.value = '';
+    addMediaFiles(files);
+  };
+
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = getClipboardFiles(event.clipboardData);
+
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    addMediaFiles(files);
   };
 
   const trimmedDraft = draft.trim();
@@ -1388,6 +1519,7 @@ export function MessageComposer({
             <Textarea
               ref={textareaRef}
               value={draft}
+              onPaste={handlePaste}
               onChange={(event) => {
                 const nextDraft = event.target.value;
                 setDraft(nextDraft);
