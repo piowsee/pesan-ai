@@ -767,7 +767,6 @@ export function MessageComposer({
   const documentInputRef = useRef<HTMLInputElement>(null);
   const photoVideoInputRef = useRef<HTMLInputElement>(null);
   const selectedMediaRef = useRef<SelectedMedia[]>([]);
-  const mediaDragDepthRef = useRef(0);
   const mediaDropZoneRef = useRef<HTMLDivElement>(null);
   const addMediaFilesRef = useRef<(files: File[]) => void>(() => undefined);
 
@@ -1246,6 +1245,11 @@ export function MessageComposer({
         : null;
     };
 
+    const resetMediaDragState = () => {
+      setIsDraggingMedia(false);
+      setIsDraggingOverDropZone(false);
+    };
+
     const handleDragEnter = (event: globalThis.DragEvent) => {
       if (!getFileTransfer(event)) {
         return;
@@ -1256,37 +1260,48 @@ export function MessageComposer({
         return;
       }
 
-      mediaDragDepthRef.current += 1;
       setIsDraggingMedia(true);
     };
 
-    const handleDragOver = (event: globalThis.DragEvent) => {
+    const handleDocumentDragOver = (event: globalThis.DragEvent) => {
       const dataTransfer = getFileTransfer(event);
       if (!dataTransfer) {
         return;
       }
 
-      event.preventDefault();
-      dataTransfer.dropEffect = conversation.canSendFreeform ? 'copy' : 'none';
-
-      if (conversation.canSendFreeform) {
-        setIsDraggingOverDropZone(
-          isDragInsideElement(event, mediaDropZoneRef.current),
-        );
-      }
-    };
-
-    const handleDragLeave = (event: globalThis.DragEvent) => {
-      if (mediaDragDepthRef.current === 0) {
+      const isInsideChat = isDragInsideElement(event, dropArea);
+      if (!isInsideChat || !conversation.canSendFreeform) {
+        resetMediaDragState();
         return;
       }
 
       event.preventDefault();
-      mediaDragDepthRef.current = Math.max(mediaDragDepthRef.current - 1, 0);
+      dataTransfer.dropEffect = 'copy';
+      setIsDraggingMedia(true);
+      setIsDraggingOverDropZone(
+        isDragInsideElement(event, mediaDropZoneRef.current),
+      );
+    };
 
-      if (mediaDragDepthRef.current === 0) {
-        setIsDraggingMedia(false);
-        setIsDraggingOverDropZone(false);
+    const handleDragLeave = (event: globalThis.DragEvent) => {
+      const nextTarget = event.relatedTarget;
+      const remainsInsideDropArea =
+        nextTarget instanceof Node && dropArea.contains(nextTarget);
+
+      if (!remainsInsideDropArea && !isDragInsideElement(event, dropArea)) {
+        resetMediaDragState();
+      }
+    };
+
+    const handleDocumentDragLeave = (event: globalThis.DragEvent) => {
+      const isOutsideViewport =
+        event.clientX <= 0 ||
+        event.clientY <= 0 ||
+        event.clientX >= window.innerWidth ||
+        event.clientY >= window.innerHeight;
+
+      if (isOutsideViewport) {
+        resetMediaDragState();
       }
     };
 
@@ -1297,9 +1312,7 @@ export function MessageComposer({
       }
 
       event.preventDefault();
-      mediaDragDepthRef.current = 0;
-      setIsDraggingMedia(false);
-      setIsDraggingOverDropZone(false);
+      resetMediaDragState();
 
       if (conversation.canSendFreeform) {
         addMediaFilesRef.current(Array.from(dataTransfer.files));
@@ -1307,18 +1320,24 @@ export function MessageComposer({
     };
 
     dropArea.addEventListener('dragenter', handleDragEnter);
-    dropArea.addEventListener('dragover', handleDragOver);
     dropArea.addEventListener('dragleave', handleDragLeave);
     dropArea.addEventListener('drop', handleDrop);
+    document.addEventListener('dragover', handleDocumentDragOver);
+    document.addEventListener('dragleave', handleDocumentDragLeave);
+    document.addEventListener('dragend', resetMediaDragState);
+    document.addEventListener('drop', resetMediaDragState);
+    window.addEventListener('blur', resetMediaDragState);
 
     return () => {
-      mediaDragDepthRef.current = 0;
-      setIsDraggingMedia(false);
-      setIsDraggingOverDropZone(false);
+      resetMediaDragState();
       dropArea.removeEventListener('dragenter', handleDragEnter);
-      dropArea.removeEventListener('dragover', handleDragOver);
       dropArea.removeEventListener('dragleave', handleDragLeave);
       dropArea.removeEventListener('drop', handleDrop);
+      document.removeEventListener('dragover', handleDocumentDragOver);
+      document.removeEventListener('dragleave', handleDocumentDragLeave);
+      document.removeEventListener('dragend', resetMediaDragState);
+      document.removeEventListener('drop', resetMediaDragState);
+      window.removeEventListener('blur', resetMediaDragState);
     };
   }, [conversation.canSendFreeform, mediaDropAreaRef]);
 
