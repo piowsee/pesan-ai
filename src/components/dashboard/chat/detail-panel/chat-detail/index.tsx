@@ -1,5 +1,5 @@
 import { ChatHeader } from '@/components/dashboard/chat/detail-panel/chat-detail/chat-header';
-import { MessageComposer } from '@/components/dashboard/chat/detail-panel/chat-detail/message-composer';
+import { MessageComposer } from '@/components/dashboard/chat/detail-panel/chat-detail/message-composer/message-composer';
 import { MessageTimeline } from '@/components/dashboard/chat/detail-panel/chat-detail/message-timeline';
 import { ChatEmptyState } from '@/components/dashboard/chat/shared/chat-empty-state';
 import {
