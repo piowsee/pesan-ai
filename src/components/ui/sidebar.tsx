@@ -25,8 +25,10 @@ import { useTranslations } from 'next-intl';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_STORAGE_KEYS = {
+  desktop: 'sidebar_state_desktop',
+  mobile: 'sidebar_state_mobile',
+} as const;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '4.25rem';
@@ -35,13 +37,36 @@ const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 type SidebarContextProps = {
   state: 'expanded' | 'collapsed';
   open: boolean;
-  setOpen: (open: boolean) => void;
-  setHoverOpen: (open: boolean) => void;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setHoverOpen: React.Dispatch<React.SetStateAction<boolean>>;
   openMobile: boolean;
-  setOpenMobile: (open: boolean) => void;
+  setOpenMobile: React.Dispatch<React.SetStateAction<boolean>>;
   isMobile: boolean;
   toggleSidebar: () => void;
 };
+
+type SidebarStorageType = keyof typeof SIDEBAR_STORAGE_KEYS;
+
+function getStoredSidebarState(type: SidebarStorageType, fallback: boolean) {
+  try {
+    const storedState = window.localStorage.getItem(SIDEBAR_STORAGE_KEYS[type]);
+
+    if (storedState === 'true') return true;
+    if (storedState === 'false') return false;
+  } catch {
+    // Use the provided default when storage is unavailable.
+  }
+
+  return fallback;
+}
+
+function storeSidebarState(type: SidebarStorageType, open: boolean) {
+  try {
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEYS[type], String(open));
+  } catch {
+    // The sidebar remains usable when storage is unavailable.
+  }
+}
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
@@ -68,13 +93,22 @@ function SidebarProvider({
   onOpenChange?: (open: boolean) => void;
 }) {
   const isMobile = useIsMobile();
-  const [openMobile, setOpenMobile] = React.useState(false);
+  const [openMobile, _setOpenMobile] = React.useState(false);
   const [hoverOpen, setHoverOpen] = React.useState(false);
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
+
+  React.useEffect(() => {
+    if (openProp === undefined) {
+      _setOpen(getStoredSidebarState('desktop', defaultOpen));
+    }
+
+    _setOpenMobile(getStoredSidebarState('mobile', false));
+  }, [defaultOpen, openProp]);
+
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
@@ -84,10 +118,18 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      storeSidebarState('desktop', openState);
     },
     [setOpenProp, open],
+  );
+
+  const setOpenMobile = React.useCallback(
+    (value: boolean | ((value: boolean) => boolean)) => {
+      const openState = typeof value === 'function' ? value(openMobile) : value;
+      _setOpenMobile(openState);
+      storeSidebarState('mobile', openState);
+    },
+    [openMobile],
   );
 
   // Helper to toggle the sidebar.
