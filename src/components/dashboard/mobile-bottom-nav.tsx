@@ -16,7 +16,6 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
@@ -28,7 +27,6 @@ import { User } from '@/types/user';
 import {
   CircleQuestionMark,
   CircleUserRound,
-  LockKeyhole,
   LogOut,
   Settings,
   UserRound,
@@ -53,9 +51,9 @@ export function MobileBottomNav({ user }: { user: User }) {
     setIsProfileOpen(true);
   }
 
-  function openSettings(tab: AccountSettingsTab) {
+  function openSettings() {
     setIsAccountMenuOpen(false);
-    setSettingsTab(tab);
+    setSettingsTab('general');
     setIsSettingsOpen(true);
   }
 
@@ -118,14 +116,14 @@ export function MobileBottomNav({ user }: { user: User }) {
               side="bottom"
               className="max-h-[min(82dvh,42rem)] gap-0 overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
             >
-              <SheetHeader className="px-5 pt-5 pb-4">
+              <div className="sr-only">
                 <SheetTitle>{navigationT('account.title')}</SheetTitle>
                 <SheetDescription>
                   {navigationT('account.description')}
                 </SheetDescription>
-              </SheetHeader>
+              </div>
 
-              <div className="flex items-center gap-3 px-5 pb-4">
+              <div className="flex items-center gap-3 px-5 pt-5 pr-14 pb-4">
                 <Avatar className="size-11 rounded-full">
                   <AvatarImage src={user.image ?? undefined} alt={user.name} />
                   <AvatarFallback className="rounded-full bg-brand text-brand-foreground">
@@ -148,17 +146,8 @@ export function MobileBottomNav({ user }: { user: User }) {
                 <AccountMenuButton onClick={openProfile} icon={UserRound}>
                   {profileT('profile')}
                 </AccountMenuButton>
-                <AccountMenuButton
-                  onClick={() => openSettings('general')}
-                  icon={Settings}
-                >
-                  {profileT('general')}
-                </AccountMenuButton>
-                <AccountMenuButton
-                  onClick={() => openSettings('security')}
-                  icon={LockKeyhole}
-                >
-                  {profileT('security')}
+                <AccountMenuButton onClick={openSettings} icon={Settings}>
+                  {profileT('settings')}
                 </AccountMenuButton>
                 <Button
                   asChild
