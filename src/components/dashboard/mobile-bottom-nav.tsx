@@ -7,6 +7,7 @@ import {
 import {
   PESAN_AI_DOCS_URL,
   isDashboardDomainActive,
+  isNavigationPathActive,
 } from '@/components/dashboard/dashboard-navigation';
 import { ProfileSettingsDialog } from '@/components/dashboard/profile-settings-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,12 +15,18 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
+  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { useDashboardNavigation } from '@/hooks/use-dashboard-navigation';
+import {
+  type DashboardMobileDomain,
+  type DashboardNavigationSection,
+  useDashboardNavigation,
+} from '@/hooks/use-dashboard-navigation';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
@@ -39,7 +46,7 @@ export function MobileBottomNav({ user }: { user: User }) {
   const router = useRouter();
   const navigationT = useTranslations('Sidebar');
   const profileT = useTranslations('ProfileMenu');
-  const { mobileDomains } = useDashboardNavigation();
+  const { mobileDomains, sections } = useDashboardNavigation();
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -69,25 +76,33 @@ export function MobileBottomNav({ user }: { user: User }) {
         <div className="grid h-16 grid-cols-4 px-2 pb-[env(safe-area-inset-bottom)]">
           {mobileDomains.map((domain) => {
             const isActive = isDashboardDomainActive(pathname, domain.id);
+            const section = sections.find(
+              (candidate) => candidate.id === domain.id,
+            );
+
+            if (section && section.items.length > 1) {
+              return (
+                <MobileDomainMenu
+                  key={domain.id}
+                  description={navigationT('sectionNavigation', {
+                    section: section.title,
+                  })}
+                  domain={domain}
+                  isActive={isActive}
+                  pathname={pathname}
+                  section={section}
+                />
+              );
+            }
 
             return (
               <Link
                 key={domain.id}
                 href={domain.url}
-                className={cn(
-                  'flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
+                className={getMobileNavItemClassName(isActive)}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <domain.icon
-                  className={cn('size-4', isActive ? 'text-primary' : '')}
-                />
-                <span className="w-full truncate text-center">
-                  {domain.title}
-                </span>
+                <MobileNavItemContent domain={domain} />
               </Link>
             );
           })}
@@ -96,12 +111,7 @@ export function MobileBottomNav({ user }: { user: User }) {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className={cn(
-                  'flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors',
-                  isAccountActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
+                className={getMobileNavItemClassName(isAccountActive)}
                 aria-label={navigationT('account.title')}
                 aria-expanded={isAccountMenuOpen}
               >
@@ -196,6 +206,92 @@ export function MobileBottomNav({ user }: { user: User }) {
         user={user}
       />
     </>
+  );
+}
+
+function MobileDomainMenu({
+  description,
+  domain,
+  isActive,
+  pathname,
+  section,
+}: {
+  description: string;
+  domain: DashboardMobileDomain;
+  isActive: boolean;
+  pathname: string;
+  section: DashboardNavigationSection;
+}) {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button
+          type="button"
+          className={getMobileNavItemClassName(isActive)}
+          aria-current={isActive ? 'page' : undefined}
+          aria-label={domain.title}
+        >
+          <MobileNavItemContent domain={domain} />
+        </button>
+      </SheetTrigger>
+
+      <SheetContent
+        side="bottom"
+        className="max-h-[min(78dvh,40rem)] gap-0 overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+      >
+        <SheetHeader className="px-5 pt-5 pb-3">
+          <SheetTitle>{section.title}</SheetTitle>
+          <SheetDescription>{description}</SheetDescription>
+        </SheetHeader>
+
+        <nav
+          aria-label={section.title}
+          className="flex flex-col gap-1 px-3 pb-3"
+        >
+          {section.items.map((item) => {
+            const isItemActive = isNavigationPathActive({
+              exact: item.exact,
+              matchPath: item.matchPath,
+              pathname,
+            });
+
+            return (
+              <SheetClose asChild key={item.id}>
+                <Link
+                  href={item.url}
+                  aria-current={isItemActive ? 'page' : undefined}
+                  className={cn(
+                    'flex min-h-12 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
+                    isItemActive
+                      ? 'bg-brand/10 text-brand'
+                      : 'text-foreground/70 hover:bg-brand/5 hover:text-brand',
+                  )}
+                >
+                  <item.icon className="size-5 shrink-0" />
+                  <span>{item.title}</span>
+                </Link>
+              </SheetClose>
+            );
+          })}
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function MobileNavItemContent({ domain }: { domain: DashboardMobileDomain }) {
+  return (
+    <>
+      <domain.icon className="size-4" />
+      <span className="w-full truncate text-center">{domain.title}</span>
+    </>
+  );
+}
+
+function getMobileNavItemClassName(isActive: boolean) {
+  return cn(
+    'flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 text-[11px] font-medium transition-colors data-[state=open]:text-primary',
+    isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
   );
 }
 
