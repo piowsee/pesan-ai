@@ -1,5 +1,6 @@
 import { AppSidebar } from '@/components/dashboard/app-sidebar';
 import { MobileBottomNav } from '@/components/dashboard/mobile-bottom-nav';
+import { MobileSectionNav } from '@/components/dashboard/mobile-section-nav';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { routing } from '@/i18n/routing';
 import { AuthPageHelper } from '@/lib/auth/auth-page-helper';
@@ -39,8 +40,11 @@ export default async function DashboardLayout({
       <AppSidebar user={user} />
       <SidebarInset>
         <main className="flex flex-1 flex-col h-dvh bg-background">
-          <div className="h-full w-full flex-1 overflow-hidden">{children}</div>
-          <MobileBottomNav />
+          <MobileSectionNav />
+          <div className="min-h-0 w-full flex-1 overflow-hidden">
+            {children}
+          </div>
+          <MobileBottomNav user={user} />
         </main>
       </SidebarInset>
     </SidebarProvider>

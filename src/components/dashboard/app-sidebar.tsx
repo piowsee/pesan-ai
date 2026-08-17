@@ -1,5 +1,6 @@
 'use client';
 
+import { isNavigationPathActive } from '@/components/dashboard/dashboard-navigation';
 import { SidebarProfileMenu } from '@/components/dashboard/sidebar-profile-menu';
 import {
   Sidebar,
@@ -14,50 +15,15 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { useChatNavHref } from '@/hooks/use-chat-nav-href';
+import { useDashboardNavigation } from '@/hooks/use-dashboard-navigation';
 import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { User } from '@/types/user';
-import { Home, MessageSquare, UsersRound } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { FaWhatsapp } from 'react-icons/fa6';
 
 export function AppSidebar({ user }: { user: User | null }) {
   const pathname = usePathname();
-  const chatHref = useChatNavHref();
-  const t = useTranslations('Sidebar');
-
-  const chatItem = {
-    title: t('chat'),
-    url: chatHref,
-    icon: MessageSquare,
-    matchPath: '/dashboard/chat',
-  };
-
-  const businessItems = [
-    {
-      title: t('business.overview'),
-      url: '/dashboard/business/overview',
-      icon: Home,
-      matchPath: '/dashboard/business/overview',
-    },
-    {
-      title: t('business.connectApp'),
-      url: '/dashboard/business/connect-app',
-      icon: FaWhatsapp,
-      matchPath: '/dashboard/business/connect-app',
-    },
-  ];
-
-  const customerItems = [
-    {
-      title: t('customer.customers'),
-      url: '/dashboard/customer/customers',
-      icon: UsersRound,
-      matchPath: '/dashboard/customer/customers',
-    },
-  ];
+  const { chatItem, sections } = useDashboardNavigation();
 
   return (
     <Sidebar collapsible="icon">
@@ -103,10 +69,10 @@ export function AppSidebar({ user }: { user: User | null }) {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={
-                    pathname === chatItem.matchPath ||
-                    pathname.startsWith(`${chatItem.matchPath}/`)
-                  }
+                  isActive={isNavigationPathActive({
+                    matchPath: chatItem.matchPath,
+                    pathname,
+                  })}
                   variant="activePrimary"
                   className="h-10 gap-1 px-0 text-sm font-normal! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0! [&_svg]:size-5 [&_svg]:text-brand! [&_svg]:duration-200 group-data-[collapsible=icon]:[&_svg]:text-black/40!"
                 >
@@ -124,81 +90,43 @@ export function AppSidebar({ user }: { user: User | null }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Workspace Section */}
-        <SidebarGroup className="pt-2 pb-0">
-          <SidebarGroupLabel className="flex items-center justify-start font-bold text-muted-foreground group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:opacity-100">
-            <span className="block max-w-32 flex-1 truncate whitespace-nowrap text-left text-brand/70! opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:opacity-0">
-              {t('business.title')}
-            </span>
-            <span className="block h-px max-w-0 flex-1 overflow-hidden bg-border opacity-0 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-10 group-data-[collapsible=icon]:opacity-100" />
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {businessItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      item.matchPath === '/dashboard/business/overview'
-                        ? pathname === item.matchPath
-                        : pathname === item.matchPath ||
-                          pathname.startsWith(`${item.matchPath}/`)
-                    }
-                    variant="activePrimary"
-                    className="h-10 gap-1 px-0 text-sm font-normal! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0! [&_svg]:size-5 [&_svg]:text-brand! [&_svg]:duration-200 group-data-[collapsible=icon]:[&_svg]:text-black/40!"
-                  >
-                    <Link href={item.url}>
-                      <span className="flex size-10 shrink-0 items-center justify-center">
-                        <item.icon />
-                      </span>
-                      <span className="max-w-32 truncate whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 text-foreground!">
-                        {item.title}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Customer Section */}
-        <SidebarGroup className="pt-2 pb-0">
-          <SidebarGroupLabel className="flex items-center justify-start font-bold text-muted-foreground group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:opacity-100">
-            <span className="block max-w-32 flex-1 truncate whitespace-nowrap text-left text-brand/70! opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:opacity-0">
-              {t('customer.title')}
-            </span>
-            <span className="block h-px max-w-0 flex-1 overflow-hidden bg-border opacity-0 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-10 group-data-[collapsible=icon]:opacity-100" />
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {customerItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      item.matchPath === '/dashboard/business/overview'
-                        ? pathname === item.matchPath
-                        : pathname === item.matchPath ||
-                          pathname.startsWith(`${item.matchPath}/`)
-                    }
-                    variant="activePrimary"
-                    className="h-10 gap-1 px-0 text-sm font-normal! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0! [&_svg]:size-5 [&_svg]:text-brand! [&_svg]:duration-200 group-data-[collapsible=icon]:[&_svg]:text-black/40!"
-                  >
-                    <Link href={item.url}>
-                      <span className="flex size-10 shrink-0 items-center justify-center">
-                        <item.icon />
-                      </span>
-                      <span className="max-w-32 truncate whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 text-foreground!">
-                        {item.title}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section) => (
+          <SidebarGroup key={section.id} className="pt-2 pb-0">
+            <SidebarGroupLabel className="flex items-center justify-start font-bold text-muted-foreground group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:mt-0 group-data-[collapsible=icon]:opacity-100">
+              <span className="block max-w-32 flex-1 truncate whitespace-nowrap text-left text-brand/70! opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:opacity-0">
+                {section.title}
+              </span>
+              <span className="block h-px max-w-0 flex-1 overflow-hidden bg-border opacity-0 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-10 group-data-[collapsible=icon]:opacity-100" />
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isNavigationPathActive({
+                        exact: item.exact,
+                        matchPath: item.matchPath,
+                        pathname,
+                      })}
+                      variant="activePrimary"
+                      className="h-10 gap-1 px-0 text-sm font-normal! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:w-full! group-data-[collapsible=icon]:p-0! [&_svg]:size-5 [&_svg]:text-brand! [&_svg]:duration-200 group-data-[collapsible=icon]:[&_svg]:text-black/40!"
+                    >
+                      <Link href={item.url}>
+                        <span className="flex size-10 shrink-0 items-center justify-center">
+                          <item.icon />
+                        </span>
+                        <span className="max-w-32 truncate whitespace-nowrap opacity-100 transition-[max-width,opacity] duration-200 ease-out group-data-[collapsible=icon]:max-w-0 group-data-[collapsible=icon]:opacity-0 text-foreground!">
+                          {item.title}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>

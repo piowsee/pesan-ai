@@ -432,8 +432,13 @@
       "title": "Customer",
       "customers": "Customers"
     },
+    "account": {
+      "title": "Account",
+      "description": "Manage your profile, preferences, and account security."
+    },
     "chat": "Chat",
     "navigation": "Navigation",
+    "sectionNavigation": "Choose a page in {section}",
     "pinPanel": "Pin panel",
     "closePanel": "Close panel"
   },
