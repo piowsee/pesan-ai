@@ -432,8 +432,13 @@
       "title": "Pelanggan",
       "customers": "Pelanggan"
     },
+    "account": {
+      "title": "Akun",
+      "description": "Kelola profil, preferensi, dan keamanan akun Anda."
+    },
     "chat": "Obrolan",
     "navigation": "Navigasi",
+    "sectionNavigation": "Pilih halaman di {section}",
     "pinPanel": "Pin panel",
     "closePanel": "Close panel"
   },

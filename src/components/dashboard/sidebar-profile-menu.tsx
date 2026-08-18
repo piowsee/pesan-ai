@@ -4,6 +4,7 @@ import {
   AccountSettingsDialog,
   type AccountSettingsTab,
 } from '@/components/dashboard/account-settings-dialog';
+import { PESAN_AI_DOCS_URL } from '@/components/dashboard/dashboard-navigation';
 import { ProfileSettingsDialog } from '@/components/dashboard/profile-settings-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,8 +31,6 @@ import {
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { MdUnfoldMore } from 'react-icons/md';
-
-const DOCS_URL = 'https://piowsee.github.io/pesan-ai/introduction.html';
 
 export function SidebarProfileMenu({ user }: { user: User }) {
   const router = useRouter();
@@ -164,7 +163,11 @@ export function SidebarProfileMenu({ user }: { user: User }) {
                 className="cursor-pointer gap-3 rounded-md px-2.5 py-2.5 text-foreground/65 hover:bg-brand/5 hover:text-brand focus:bg-brand/10 focus:text-brand"
                 onSelect={() => setIsMenuOpen(false)}
               >
-                <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={PESAN_AI_DOCS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <CircleQuestionMark />
                   <span>{t('docs')}</span>
                 </a>

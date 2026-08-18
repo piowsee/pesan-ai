@@ -170,7 +170,7 @@ export function AccountSettingsDialog({
           <DialogDescription>{labels.description}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid h-[min(580px,calc(100vh-2rem))] grid-cols-1 overflow-hidden bg-background sm:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="grid h-[min(580px,calc(100dvh-2rem))] grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-background sm:grid-cols-[240px_minmax(0,1fr)] sm:grid-rows-1">
           <aside className="border-b border-brand/15 bg-background p-6 sm:border-r sm:border-b-0 sm:p-7">
             <div className="pr-10 sm:pr-0">
               <p className="text-base font-semibold text-brand">
@@ -209,7 +209,7 @@ export function AccountSettingsDialog({
             </nav>
           </aside>
 
-          <section className="min-w-0 overflow-y-auto px-6 py-7 sm:px-8">
+          <section className="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-6 py-7 sm:px-8">
             {activeTab === 'general' ? (
               <GeneralSettingsPanel
                 activeLocale={locale}
@@ -248,13 +248,13 @@ function GeneralSettingsPanel({
 }: GeneralSettingsPanelProps) {
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="hidden sm:block">
         <h2 className="text-xl font-semibold tracking-tight text-brand">
           {labels.title}
         </h2>
       </div>
 
-      <Separator className="bg-brand/15" />
+      <Separator className="hidden bg-brand/15 sm:block" />
 
       <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 max-w-md">
@@ -342,7 +342,7 @@ function SettingsLanguageDropdown({
       <div
         role="menu"
         className={cn(
-          'absolute top-full right-0 z-60 mt-1 min-w-40 bg-background py-1 shadow-md ring-1 ring-brand/20 transition-all duration-150',
+          'absolute top-full left-0 z-60 mt-1 min-w-40 bg-background py-1 shadow-md ring-1 ring-brand/20 transition-all duration-150 sm:right-0 sm:left-auto',
           isOpen
             ? 'visible translate-y-0 opacity-100'
             : 'invisible -translate-y-1 opacity-0',
@@ -494,13 +494,13 @@ function SecuritySettingsPanel({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="hidden sm:block">
         <h2 className="text-xl font-semibold tracking-tight text-brand">
           {labels.title}
         </h2>
       </div>
 
-      <Separator className="bg-brand/15" />
+      <Separator className="hidden bg-brand/15 sm:block" />
 
       <div className="flex flex-col gap-3 py-1 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 max-w-md">
@@ -517,7 +517,7 @@ function SecuritySettingsPanel({
           variant="ghost"
           onClick={handleRequestPasswordReset}
           disabled={isRequestingReset}
-          className="h-auto shrink-0 px-0 py-0 text-sm font-medium text-brand hover:bg-transparent hover:text-brand/80"
+          className="h-auto shrink-0 self-start px-0 py-0 text-sm font-medium text-brand hover:bg-transparent hover:text-brand/80 sm:self-auto"
         >
           {isRequestingReset ? (
             <Loader2 className="animate-spin" data-icon="inline-start" />
@@ -571,6 +571,7 @@ function SecuritySettingsPanel({
             type="submit"
             variant="brand"
             size="lg"
+            className="w-full sm:w-auto"
             disabled={isChangingPassword || !isFormFilled}
           >
             {isChangingPassword ? (
