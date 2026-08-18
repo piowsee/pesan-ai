@@ -452,4 +452,107 @@ describe('ContactRepository Integration', { tags: ['db'] }, () => {
       });
     });
   });
+
+  describe('findContactByConversationId', () => {
+    it('returns contact details for an existing conversation', async () => {
+      // Find a conversation created in beforeEach
+      const conversation = await prisma.conversation.findFirst({
+        where: {
+          contact: { customerPhone: primaryWabaCustomerPhone },
+        },
+      });
+      expect(conversation).not.toBeNull();
+
+      const contact = await ContactRepository.findContactByConversationId(
+        conversation!.id,
+      );
+
+      expect(contact).not.toBeNull();
+      expect(contact).toMatchObject({
+        label: null,
+        internalNotes: null,
+      });
+      expect(contact!.id).toBeTruthy();
+    });
+
+    it('returns null for a non-existent conversation', async () => {
+      const contact = await ContactRepository.findContactByConversationId(
+        'non-existent-conv-id',
+      );
+
+      expect(contact).toBeNull();
+    });
+  });
+
+  describe('updateContactDetails', () => {
+    it('updates label and internalNotes on a contact', async () => {
+      const contact = await prisma.contact.findFirst({
+        where: { customerPhone: primaryWabaCustomerPhone },
+      });
+      expect(contact).not.toBeNull();
+
+      const updated = await ContactRepository.updateContactDetails({
+        contactId: contact!.id,
+        label: 'vip',
+        internalNotes: 'Important customer',
+      });
+
+      expect(updated.label).toBe('vip');
+      expect(updated.internalNotes).toBe('Important customer');
+
+      // Verify persisted
+      const persisted = await prisma.contact.findUnique({
+        where: { id: contact!.id },
+      });
+      expect(persisted?.label).toBe('vip');
+      expect(persisted?.internalNotes).toBe('Important customer');
+    });
+
+    it('clears label and notes when set to null', async () => {
+      const contact = await prisma.contact.findFirst({
+        where: { customerPhone: sameWabaCustomerPhone },
+      });
+      expect(contact).not.toBeNull();
+
+      // Set values first
+      await ContactRepository.updateContactDetails({
+        contactId: contact!.id,
+        label: 'follow_up',
+        internalNotes: 'Call back tomorrow',
+      });
+
+      // Now clear them
+      const cleared = await ContactRepository.updateContactDetails({
+        contactId: contact!.id,
+        label: null,
+        internalNotes: null,
+      });
+
+      expect(cleared.label).toBeNull();
+      expect(cleared.internalNotes).toBeNull();
+    });
+
+    it('updates only the provided fields', async () => {
+      const contact = await prisma.contact.findFirst({
+        where: { customerPhone: secondWabaCustomerPhone },
+      });
+      expect(contact).not.toBeNull();
+
+      // Update only label
+      const afterLabel = await ContactRepository.updateContactDetails({
+        contactId: contact!.id,
+        label: 'new_customer',
+      });
+      expect(afterLabel.label).toBe('new_customer');
+      expect(afterLabel.internalNotes).toBeNull();
+
+      // Update only notes
+      const afterNotes = await ContactRepository.updateContactDetails({
+        contactId: contact!.id,
+        internalNotes: 'First-time buyer',
+      });
+      expect(afterNotes.label).toBe('new_customer');
+      expect(afterNotes.internalNotes).toBe('First-time buyer');
+    });
+  });
 });

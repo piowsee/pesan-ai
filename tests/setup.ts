@@ -60,6 +60,8 @@ vi.mock('@/repositories/contact.repository', () => ({
     findConversationContacts: vi.fn(),
     upsertContact: vi.fn(),
     upsertContactsBulk: vi.fn(),
+    findContactByConversationId: vi.fn(),
+    updateContactDetails: vi.fn(),
   },
 }));
 
@@ -110,8 +112,10 @@ vi.mock('@/repositories/phone-number.repository', () => ({
 vi.mock('@/repositories/webhook.repository', () => ({
   WebhookRepository: {
     createWebhook: vi.fn(),
+    findById: vi.fn(),
     findPaginated: vi.fn(),
     findWebhookByConversationId: vi.fn(),
+    updateWebhook: vi.fn(),
     deleteWebhook: vi.fn(),
   },
 }));
@@ -132,9 +136,12 @@ vi.mock('@/services/conversation.service', () => ({
 
     return {
       ...conversationWithoutContact,
+      contactId: contact?.id ?? null,
       customerPhone: contact?.customerPhone ?? null,
       customerName: contact?.customerName ?? null,
       customerUsername: contact?.customerUsername ?? null,
+      label: contact?.label ?? null,
+      internalNotes: contact?.internalNotes ?? null,
     };
   }),
   ConversationService: {
@@ -142,6 +149,12 @@ vi.mock('@/services/conversation.service', () => ({
     getChatDetail: vi.fn(),
     markAsRead: vi.fn(),
     updateAdminTakeoverStatus: vi.fn(),
+  },
+}));
+
+vi.mock('@/services/contact-details.service', () => ({
+  ContactDetailsService: {
+    updateContactDetails: vi.fn(),
   },
 }));
 
@@ -205,9 +218,11 @@ vi.mock('@/services/webhook.service', () => ({
   WebhookService: {
     _generateWebhookToken: vi.fn(),
     callWebhook: vi.fn(),
+    refreshWebhookConnection: vi.fn(),
     validateWebhookUrl: vi.fn(),
     sendMessageToWebhook: vi.fn(),
     createWebhook: vi.fn(),
+    updateWebhook: vi.fn(),
     getAllWebhooks: vi.fn(),
     getWebhooksPaginated: vi.fn(),
     deleteWebhook: vi.fn(),

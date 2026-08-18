@@ -20,6 +20,7 @@ import {
   BellIcon,
   CheckCircleIcon,
   ClockIcon,
+  Loader2Icon,
   PhoneCallIcon,
   StarIcon,
   StickyNoteIcon,
@@ -64,6 +65,7 @@ export function ContactInfoPanel({
   conversation,
   label,
   notes,
+  isSaving,
   onLabelChange,
   onNotesChange,
   onClose,
@@ -73,6 +75,7 @@ export function ContactInfoPanel({
   conversation: ChatConversation;
   label: string;
   notes: string;
+  isSaving?: boolean;
   onLabelChange: (value: string) => void;
   onNotesChange: (value: string) => void;
   onClose?: () => void;
@@ -87,17 +90,6 @@ export function ContactInfoPanel({
   const [mode, setMode] = useState<'preset' | 'custom'>(
     isCustomInitially ? 'custom' : 'preset',
   );
-
-  const [prevLabel, setPrevLabel] = useState(label);
-
-  if (label !== prevLabel) {
-    setPrevLabel(label);
-    if (label && !predefinedLabels.some((l) => l.value === label)) {
-      setMode('custom');
-    } else {
-      setMode('preset');
-    }
-  }
 
   const selectValue = mode === 'custom' ? '_custom_' : label || undefined;
 
@@ -300,9 +292,12 @@ export function ContactInfoPanel({
               className="mt-3 block min-h-0 w-full resize-none rounded-lg bg-background px-3 py-2 text-sm text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden field-sizing-content"
             />
 
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-              {t('noteWarning')}
-            </p>
+            {isSaving ? (
+              <p className="mt-3 flex items-center gap-1.5 text-xs leading-relaxed text-muted-foreground">
+                <Loader2Icon className="size-3 animate-spin" />
+                {t('saving')}
+              </p>
+            ) : null}
           </section>
         </div>
       </ScrollArea>

@@ -432,8 +432,13 @@
       "title": "Pelanggan",
       "customers": "Pelanggan"
     },
+    "account": {
+      "title": "Akun",
+      "description": "Kelola profil, preferensi, dan keamanan akun Anda."
+    },
     "chat": "Obrolan",
     "navigation": "Navigasi",
+    "sectionNavigation": "Pilih halaman di {section}",
     "pinPanel": "Pin panel",
     "closePanel": "Close panel"
   },
@@ -686,6 +691,7 @@
       "templateRequired": "Penggunaan pesan templat diwajibkan",
       "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
       "attach": "Lampirkan media",
+      "dropMedia": "Lepaskan media untuk dilampirkan",
       "placeholderMedia": "Tambahkan keterangan...",
       "placeholder": "Ketik pesan Anda...",
       "placeholderTemplate": "Pesan templat diwajibkan",
@@ -769,7 +775,7 @@
       "typeLabel": "Ketik nama label...",
       "internalNotes": "Catatan internal",
       "addNote": "Tambahkan catatan singkat untuk tim admin",
-      "noteWarning": "Data label dan catatan saat ini disimpan sementara di tampilan obrolan."
+      "saving": "Menyimpan..."
     },
     "wabaSwitcher": {
       "title": "Akun WhatsApp Business",
@@ -983,6 +989,39 @@
       "messages": {
         "success": "Webhook \"{name}\" berhasil dihapus",
         "errorFallback": "Gagal menghapus webhook"
+      }
+    },
+    "UpdateWebhookDialog": {
+      "trigger": "Edit",
+      "title": "Perbarui Webhook",
+      "description": "Perbarui pengaturan untuk \"{name}\". Perubahan akan langsung berlaku.",
+      "labels": {
+        "name": "Nama",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Frasa Sandi",
+        "passphraseHint": "Kosongkan untuk mempertahankan frasa sandi saat ini."
+      },
+      "placeholders": {
+        "name": "Webhook Saya",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Masukkan frasa sandi baru"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "saving": "Menyimpan...",
+        "submit": "Simpan Perubahan",
+        "refresh": "Uji Koneksi",
+        "refreshing": "Menguji..."
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" berhasil diperbarui",
+        "refreshSuccess": "Koneksi berhasil diverifikasi",
+        "errorFallback": "Gagal memperbarui webhook"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidUrl": "Masukkan URL yang valid",
+        "passphraseMinLength": "Frasa sandi minimal 1 karakter"
       }
     },
     "WebhookDocsDialog": {

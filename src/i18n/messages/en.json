@@ -432,8 +432,13 @@
       "title": "Customer",
       "customers": "Customers"
     },
+    "account": {
+      "title": "Account",
+      "description": "Manage your profile, preferences, and account security."
+    },
     "chat": "Chat",
     "navigation": "Navigation",
+    "sectionNavigation": "Choose a page in {section}",
     "pinPanel": "Pin panel",
     "closePanel": "Close panel"
   },
@@ -686,6 +691,7 @@
       "templateRequired": "Template message usage is required",
       "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
       "attach": "Attach media",
+      "dropMedia": "Drop media to attach",
       "placeholderMedia": "Add a caption...",
       "placeholder": "Type your message...",
       "placeholderTemplate": "Template message required",
@@ -769,7 +775,7 @@
       "typeLabel": "Type label name...",
       "internalNotes": "Internal notes",
       "addNote": "Add a brief note for the admin team",
-      "noteWarning": "Label and notes data are currently saved temporarily in the chat view."
+      "saving": "Saving..."
     },
     "wabaSwitcher": {
       "title": "WhatsApp Business Accounts",
@@ -983,6 +989,39 @@
       "messages": {
         "success": "Webhook \"{name}\" deleted successfully",
         "errorFallback": "Failed to delete webhook"
+      }
+    },
+    "UpdateWebhookDialog": {
+      "trigger": "Edit",
+      "title": "Update Webhook",
+      "description": "Update settings for \"{name}\". Changes will take effect immediately.",
+      "labels": {
+        "name": "Name",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Passphrase",
+        "passphraseHint": "Leave blank to keep the current passphrase."
+      },
+      "placeholders": {
+        "name": "My Webhook",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Enter new passphrase"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "submit": "Save Changes",
+        "refresh": "Test Connection",
+        "refreshing": "Testing..."
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" updated successfully",
+        "refreshSuccess": "Connection verified successfully",
+        "errorFallback": "Failed to update webhook"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidUrl": "Enter a valid URL",
+        "passphraseMinLength": "Passphrase must be at least 1 character"
       }
     },
     "WebhookDocsDialog": {

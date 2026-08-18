@@ -7,6 +7,8 @@ export type ContactFields = {
   customerPhone: string | null;
   customerName: string | null;
   customerUsername: string | null;
+  label: string | null;
+  internalNotes: string | null;
 };
 
 export type ConversationContact = Partial<ContactFields> | null | undefined;
@@ -21,6 +23,8 @@ export function flattenContactObject<
     customerPhone: contact?.customerPhone ?? null,
     customerName: contact?.customerName ?? null,
     customerUsername: contact?.customerUsername ?? null,
+    label: contact?.label ?? null,
+    internalNotes: contact?.internalNotes ?? null,
   };
 }
 

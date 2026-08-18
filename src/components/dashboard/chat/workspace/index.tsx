@@ -155,8 +155,6 @@ export function ChatWorkspace() {
     initialUnreadCountByConversation,
     setInitialUnreadCountByConversation,
   ] = useState<UnreadDividerSnapshotMap>({});
-  const [contactDetailsByConversation, setContactDetailsByConversation] =
-    useState<Record<string, { label: string; notes: string }>>({});
 
   const selectedPhoneNumberId =
     optimisticSearchParams.get('phoneNumberId') || undefined;
@@ -515,12 +513,6 @@ export function ChatWorkspace() {
     Boolean(activeWabaId) &&
     (isConversationsLoading || isConversationsPlaceholderData);
 
-  const selectedContactDraft = selectedConversation
-    ? (contactDetailsByConversation[selectedConversation.id] ?? {
-        label: '',
-        notes: '',
-      })
-    : { label: '', notes: '' };
   const selectedInitialUnreadCount = getUnreadDividerInitialCount({
     conversationId: selectedConversationId,
     conversationUnreadCount: selectedConversation?.unreadCount,
@@ -814,19 +806,10 @@ export function ChatWorkspace() {
       />
 
       <ChatContactPanel
+        key={selectedConversation?.id}
         conversation={selectedConversation}
         isOpen={isContactInfoOpen}
-        draft={selectedContactDraft}
-        onDraftChange={(draft) => {
-          if (!selectedConversation) {
-            return;
-          }
-
-          setContactDetailsByConversation((prev) => ({
-            ...prev,
-            [selectedConversation.id]: draft,
-          }));
-        }}
+        wabaId={activeWabaId}
         onClose={() => {
           replaceChatSearchState({ panel: undefined });
         }}
