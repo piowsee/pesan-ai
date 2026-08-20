@@ -200,23 +200,28 @@ model Conversation {
 }
 
 model Message {
-  id            String   @id @default(cuid())
-  messageId     String?  @unique // Meta message ID (wamid.xxx) - null for outgoing pre-confirmation
-  direction     String   // incoming, outgoing
-  source        String   // customer, admin, bot, whatsapp_app
-  type          String   // text, image, video, audio, document, sticker, location
-  content       String?  // Text content or caption
-  mediaObjectKey String? // S3 object key
-  mediaMimeType String?
-  mediaFilename String?
-  mediaSize     BigInt?  // File size in bytes
-  status        String   @default("sent") // sent, delivered, read, failed
-  errorMessage  String?
-  timestamp     DateTime // Message timestamp from Meta or server time
-  createdAt     DateTime @default(now())
+  id               String   @id @default(cuid())
+  messageId        String?  @unique // Meta message ID (wamid.xxx) - null for outgoing pre-confirmation
+  direction        String   // incoming, outgoing
+  source           String   // customer, admin, bot, whatsapp_app
+  type             String   // text, image, video, audio, document, sticker, location
+  content          String?  // Text content or caption
+  contextMessageId String?  // Meta message ID of the replied-to message (wamid.xxx)
+  mediaObjectKey   String?  // S3 object key
+  mediaMimeType    String?
+  mediaFilename    String?
+  mediaSize        BigInt?  // File size in bytes
+  status           String   @default("sent") // sent, delivered, read, failed
+  errorMessage     String?
+  timestamp        DateTime // Message timestamp from Meta or server time
+  createdAt        DateTime @default(now())
 
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  // Self-reference for reply context (via Meta message ID)
+  contextMessage Message?  @relation("MessageReply", fields: [contextMessageId], references: [messageId])
+  replies        Message[] @relation("MessageReply")
 
   @@index([conversationId, timestamp], name: "idx_messages_conversation_timestamp")
   @@map("message")
