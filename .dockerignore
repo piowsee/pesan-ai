@@ -1,5 +1,5 @@
 # Dependency directories
-node_modules/
+**/node_modules
 
 # Logs
 logs
@@ -19,41 +19,41 @@ Thumbs.db
 .github
 
 # Build output
-.next/
-out/
-build/
-dist/
-coverage/
-.vercel/
+**/.next
+**/out
+**/build
+**/dist
+**/coverage
+**/.vercel
 
-# Env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Env files (never bake secrets into the image)
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
 
 # AI Agent specifics
 .agents/
 skills-lock.json
 
 # Tests and documentation
-tests/
+web/tests/
 docs/
+**/README.md
+**/CHANGELOG.md
 
 # IDE / Editor
 .vscode/
 .zed/
 
 # Misc Project Files
-README.md
 LICENSE
-CHANGELOG.md
 .changeset/
 .husky/
 
 # Docker related files
 .docker/
 .dockerignore
-docker-compose.yml
-Dockerfile*
+**/docker-compose*.y*ml
+**/Dockerfile*
