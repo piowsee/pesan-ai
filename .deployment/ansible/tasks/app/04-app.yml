@@ -6,7 +6,7 @@
   become: yes
 
 - name: Start App
-  ansible.builtin.command: docker compose up -d
+  ansible.builtin.command: docker compose up -d app
   args:
     chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/app'
   become: yes

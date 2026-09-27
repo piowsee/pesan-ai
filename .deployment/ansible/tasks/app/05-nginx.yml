@@ -52,13 +52,13 @@
   ignore_errors: yes
 
 - name: Pull Nginx Image
-  ansible.builtin.command: docker compose pull
+  ansible.builtin.command: docker compose pull nginx
   args:
-    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/app'
   become: yes
 
 - name: Start/Recreate Nginx Proxy Container
   ansible.builtin.command: docker compose up -d --force-recreate nginx
   args:
-    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/nginx'
+    chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/app'
   become: yes

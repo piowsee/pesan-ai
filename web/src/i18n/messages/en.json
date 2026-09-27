@@ -1,0 +1,1085 @@
+{
+  "Common": {
+    "metaTechPartner": "Official Meta Tech Partner"
+  },
+  "Metadata": {
+    "home": {
+      "title": "Pesan AI | WhatsApp AI Agent for Business",
+      "description": "Pesan AI helps businesses automate WhatsApp replies and booking workflows with intelligent AI agents."
+    },
+    "login": {
+      "title": "Login | Pesan AI",
+      "description": "Sign in to your Pesan AI account and manage WhatsApp AI chat automation for your business."
+    },
+    "contactUs": {
+      "title": "Contact Us | Pesan AI",
+      "description": "Contact Pesan AI to request an account or book a consultation about WhatsApp automation for your business."
+    },
+    "terms": {
+      "title": "Terms of Service | Pesan AI",
+      "description": "Read the Terms of Service for Pesan AI to understand platform usage and legal obligations."
+    },
+    "privacy": {
+      "title": "Privacy Policy | Pesan AI",
+      "description": "Learn how Pesan AI collects, uses, and protects your personal data across our services."
+    }
+  },
+  "Navbar": {
+    "login": "Login",
+    "dashboard": "Dashboard",
+    "consultation": "Book a Consultation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "languages": [
+      {
+        "label": "Indonesian",
+        "value": "id"
+      },
+      {
+        "label": "English",
+        "value": "en"
+      }
+    ]
+  },
+  "Footer": {
+    "metaPartner": "Official Meta Tech Partner",
+    "description": "AI-powered WhatsApp solution to reply to customers and automate booking workflows.",
+    "company": "Company",
+    "about": "About Us",
+    "login": "Login",
+    "consultation": "Book a Consultation",
+    "featuresTitle": "Features",
+    "featuresList": [
+      "One Integrated Number",
+      "WhatsApp AI Agent",
+      "Automated Booking"
+    ],
+    "legalTitle": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "rights": "(c) 2026 Pesan AI. All rights reserved."
+  },
+  "LandingPage": {
+    "hero": {
+      "badge": "Custom #1 WhatsApp AI Agent for Your Business Needs",
+      "titlePrefix": "AI Handles Your ",
+      "titleHighlight": "Replies",
+      "titleSuffix": ",",
+      "titleLineTwo": "Bookings Made Effortless",
+      "descriptionPrefix": "A WhatsApp AI agent that replies to customers and schedules bookings automatically ",
+      "descriptionHighlight": "24/7",
+      "descriptionSuffix": ".",
+      "consultation": "Book a Consultation",
+      "login": "Login",
+      "heroAlt": "Night atmosphere background for Pesan AI hero section",
+      "demoAlt": "Pesan AI product demo"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "heading": "Common questions",
+      "subtitle": "The most common questions about how Pesan AI helps your business reply to customer chats and handle booking flows automatically.",
+      "items": [
+        {
+          "question": "What is Pesan AI?",
+          "answer": "Pesan AI is a WhatsApp AI Agent platform that helps businesses reply to customer chats automatically, naturally, and in real time, while handling booking flows without manual intervention."
+        },
+        {
+          "question": "Can this AI really be customized?",
+          "answer": "Yes. Pesan AI can be customized almost 100% for your business needs. From conversation flow and communication style to booking rules and service personalization, everything can be configured. The chat platform remains WhatsApp, but the entire in-chat experience can be tailored."
+        },
+        {
+          "question": "Is Pesan AI suitable for all business types?",
+          "answer": "Yes. Pesan AI works well for many businesses that need fast responses and booking workflows, including clinics, salons, service businesses, SMEs, and other professional services."
+        },
+        {
+          "question": "Will customers know they are talking to AI?",
+          "answer": "Pesan AI is designed to respond naturally and politely like a human assistant. You can also tune the communication tone to match your brand voice."
+        },
+        {
+          "question": "How does the automated booking system work?",
+          "answer": "The AI asks for customer details, checks schedule availability, and informs whether a booking slot is available. If a slot is full, the AI can automatically recommend alternative available times."
+        },
+        {
+          "question": "Do I need technical skills to use Pesan AI?",
+          "answer": "No. You only need to use the provided web chat. For AI setup, conversation flow, and system configuration, you can discuss everything with our team and we will prepare it for you. You simply use it with a ready-to-use account."
+        }
+      ]
+    }
+  },
+  "Auth": {
+    "brandPanel": {
+      "headline": "Boost your business efficiency through WhatsApp chat automation with AI support.",
+      "contactHeadline": "Get in touch with our team to find the perfect WhatsApp automation solution for your business."
+    },
+    "panelSwitch": {
+      "contactPrompt": "Need an account?",
+      "contactAction": "Contact us",
+      "loginPrompt": "Already have an account?",
+      "loginAction": "Login here"
+    },
+    "pages": {
+      "login": {
+        "title": "Login to Your Account",
+        "subtitle": "Enter your email and password."
+      },
+      "contactUs": {
+        "title": "Contact Us",
+        "subtitle": "Request an account or book a consultation with our team."
+      },
+      "forgotPassword": {
+        "title": "Forgot Password",
+        "subtitle": "Enter your email to receive a password reset link."
+      },
+      "resetPassword": {
+        "title": "Reset Password",
+        "subtitle": "Enter a new password for your account."
+      }
+    },
+    "forms": {
+      "common": {
+        "emailLabel": "Email",
+        "emailPlaceholder": "name@company.com"
+      },
+      "login": {
+        "labels": {
+          "password": "Password",
+          "forgotPassword": "Forgot password?",
+          "contactUs": "Contact us",
+          "agreePrefix": "By signing up, you agree to our",
+          "terms": "Terms of Service",
+          "and": "and",
+          "privacy": "Privacy Policy",
+          "submit": "Login",
+          "submitting": "Processing...",
+          "passwordPlaceholder": "Enter your password",
+          "hidePassword": "Hide password",
+          "showPassword": "Show password"
+        },
+        "errors": {
+          "invalidEmail": "Invalid email format",
+          "passwordRequired": "Password is required",
+          "passwordLength": "Password must be at least 8 characters",
+          "termsRequired": "You need to agree to the Terms and Privacy to continue",
+          "unknownError": "An error occurred during login. Please try again."
+        }
+      },
+      "forgotPassword": {
+        "labels": {
+          "submit": "Send Reset Link",
+          "submitting": "Sending...",
+          "backToLogin": "Back to login",
+          "successTitle": "Check your email",
+          "successMessage": "If the email exists, we have sent a link to reset your password."
+        },
+        "errors": {
+          "invalidEmail": "Invalid email format",
+          "unknownError": "An error occurred while requesting a password reset. Please try again."
+        }
+      },
+      "contactUs": {
+        "labels": {
+          "name": "Your name",
+          "namePlaceholder": "Jane Doe",
+          "companyName": "Company",
+          "companyNamePlaceholder": "Your business name",
+          "phoneNumber": "WhatsApp phone",
+          "phoneNumberPlaceholder": "6281234567890",
+          "message": "What do you need?",
+          "messagePlaceholder": "Tell us about your business, team size, or WhatsApp automation needs.",
+          "submit": "Submit Request",
+          "submitting": "Submitting...",
+          "backToLogin": "Back to login",
+          "successTitle": "Request sent",
+          "successMessage": "Thanks. Our team will review your request and contact you soon."
+        },
+        "errors": {
+          "nameRequired": "Please enter your name",
+          "nameLength": "Name must be 120 characters or fewer",
+          "invalidEmail": "Invalid email format",
+          "emailLength": "Email must be 160 characters or fewer",
+          "companyNameLength": "Company name must be 160 characters or fewer",
+          "phoneNumberLength": "Phone number must be 40 characters or fewer",
+          "phoneNumberDigits": "Phone number can only contain numbers",
+          "messageLength": "Message must be 1000 characters or fewer",
+          "unknownError": "An error occurred while submitting your request. Please try again."
+        }
+      },
+      "resetPassword": {
+        "labels": {
+          "password": "New Password",
+          "confirmPassword": "Confirm Password",
+          "submit": "Save New Password",
+          "submitting": "Saving...",
+          "passwordPlaceholder": "Enter your new password",
+          "confirmPasswordPlaceholder": "Re-enter your new password",
+          "hidePassword": "Hide password",
+          "showPassword": "Show password",
+          "backToLogin": "Back to login",
+          "successTitle": "Password updated successfully",
+          "successMessage": "You can now sign in with your new password.",
+          "invalidTokenTitle": "Invalid reset link",
+          "invalidTokenMessage": "This reset link is invalid or has expired. Please request a new one.",
+          "requestNewLink": "Request a new link"
+        },
+        "errors": {
+          "passwordRequired": "Password is required",
+          "passwordLength": "Password must be at least 8 characters",
+          "confirmPasswordRequired": "Password confirmation is required",
+          "passwordMismatch": "Password confirmation does not match",
+          "invalidToken": "This reset link is invalid or has expired. Please request a new one.",
+          "unknownError": "An error occurred while resetting your password. Please try again."
+        }
+      }
+    }
+  },
+  "PrivacyPage": {
+    "title": "Privacy Policy",
+    "heroAlt": "Privacy policy hero",
+    "updatedLabel": "Last Updated",
+    "updatedOn": "May 14, 2026",
+    "tocTitle": "Table of contents",
+    "sections": [
+      {
+        "id": "introduction",
+        "label": "Introduction"
+      },
+      {
+        "id": "data-collection",
+        "label": "The Data We Collect"
+      },
+      {
+        "id": "data-use",
+        "label": "How We Use Your Data"
+      },
+      {
+        "id": "security",
+        "label": "Data Security"
+      },
+      {
+        "id": "contact",
+        "label": "Contact Details"
+      }
+    ],
+    "introductionHeading": "1. Introduction",
+    "introductionText": "Welcome to Pesan AI (\"we,\" \"our,\" or \"us\"). We are an intelligent messaging and automation platform powered by the WhatsApp Business API. We respect your privacy and are committed to protecting your personal data. This privacy policy informs you how we look after your personal data and your customers' messaging data when you use our services.",
+    "collectionHeading": "2. The Data We Collect",
+    "collectionIntro": "We may collect, use, store, and transfer different kinds of data necessary to operate our platform:",
+    "collectionItems": [
+      {
+        "label": "Identity and Contact Data:",
+        "value": "Includes your name, email address, WhatsApp phone numbers, business profiles, and login credentials."
+      },
+      {
+        "label": "Messaging and Customer Data:",
+        "value": "Includes message content, conversation history, customer contacts, and interaction data processed through our platform."
+      },
+      {
+        "label": "Technical Data:",
+        "value": "Includes internet protocol (IP) address, login data, browser types, webhook payloads, API integrations, and operating systems."
+      },
+      {
+        "label": "Usage Data:",
+        "value": "Includes information about how you use our website, messaging metrics, and AI automation interactions."
+      }
+    ],
+    "usageHeading": "3. How We Use Your Data",
+    "usageIntro": "We use your personal and operational data primarily in the following circumstances:",
+    "usageItems": [
+      "To operate and provide WhatsApp Business messaging and automation services.",
+      "To process AI interactions in your customer conversations based on your configurations.",
+      "To manage your account and provide technical customer support.",
+      "To improve our AI algorithms, user interface, and overall platform reliability.",
+      "To comply with Meta/WhatsApp's operational guidelines and applicable local regulations."
+    ],
+    "securityHeading": "4. Data Security",
+    "securityText": "We implement robust industry-standard security measures to protect your business communication and personal data against unauthorized access. AI-processed conversations are handled securely, and access to your conversation history is restricted strictly to you and your authorized team members.",
+    "contactHeading": "5. Contact Details",
+    "contactText": "If you have any questions about this privacy policy or our data management practices, please contact our support team through the Pesan AI website."
+  },
+  "TermsPage": {
+    "title": "Terms of Service",
+    "heroAlt": "Terms of service hero",
+    "updatedLabel": "Last Updated",
+    "updatedOn": "May 14, 2026",
+    "tocTitle": "Table of contents",
+    "sections": [
+      {
+        "id": "acceptance",
+        "label": "Acceptance of Terms"
+      },
+      {
+        "id": "service",
+        "label": "Description of Service"
+      },
+      {
+        "id": "ip",
+        "label": "Intellectual Property"
+      },
+      {
+        "id": "obligations",
+        "label": "User Obligations"
+      },
+      {
+        "id": "liability",
+        "label": "Limitation of Liability"
+      },
+      {
+        "id": "law",
+        "label": "Governing Law"
+      }
+    ],
+    "acceptanceHeading": "1. Acceptance of Terms",
+    "acceptanceText": "By accessing or using the Pesan AI website and platform, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services.",
+    "serviceHeading": "2. Description of Service",
+    "serviceText": "Pesan AI is an intelligent conversation management and messaging automation platform integrated with the WhatsApp Business API. We provide AI chat agents, webhook integrations, and WABA conversation management features to help streamline your business communication.",
+    "ipHeading": "3. Intellectual Property",
+    "ipText": "The Pesan AI website, platform, original content, database structure, and AI models are and will remain the exclusive property of our platform. You are not granted any license to use our trademarks without prior written consent.",
+    "obligationsHeading": "4. User Obligations",
+    "obligationsIntro": "When registering and utilizing our platform, you agree not to:",
+    "obligationsItems": [
+      "Transmit any content that violates Meta's WhatsApp Commerce/Business Policies or any applicable laws.",
+      "Attempt to reverse engineer, decompile, or exploit our underlying code or server infrastructure.",
+      "Disrupt service performance or dispatch excessive malicious message queues resulting in DDoS or abuse.",
+      "Misuse webhook credentials or WABA numbers registered under your account."
+    ],
+    "liabilityHeading": "5. Limitation of Liability",
+    "liabilityText": "Pesan AI facilitates connection to Meta/WhatsApp API. We are not liable for WABA number suspensions enacted by Meta, direct or indirect financial loss, data loss, or downtime caused by third-party providers. Your use of our service is securely at your own risk.",
+    "lawHeading": "6. Governing Law",
+    "lawText": "These Terms shall be governed and construed in accordance with the laws of Indonesia. Any dispute arising from these services or these Terms shall be resolved exclusively within the jurisdiction of Indonesian courts."
+  },
+  "ProfileSettingsDialog": {
+    "labels": {
+      "title": "Edit profile",
+      "description": "Update your account name and email address.",
+      "name": "Name",
+      "email": "Email",
+      "warning": "Changing your email will send confirmation links to both your current and new email addresses.",
+      "save": "Save",
+      "saving": "Saving..."
+    },
+    "errors": {
+      "nameRequired": "Name is required",
+      "nameLength": "Name must be at most 80 characters",
+      "emailRequired": "Email is required",
+      "invalidEmail": "Enter a valid email address",
+      "emailLength": "Email must be at most 255 characters",
+      "failedSaveName": "Failed to save name",
+      "failedChangeEmail": "Failed to change email",
+      "failedSave": "Failed to save changes"
+    },
+    "messages": {
+      "profileUpdated": "Profile updated successfully",
+      "emailChangeSuccess": "Check your inboxes, confirm the change from {currentEmail}. Then verify with the link sent to {newEmail}."
+    }
+  },
+  "AccountSettingsDialog": {
+    "labels": {
+      "title": "Settings",
+      "description": "Manage your workspace preferences and account security.",
+      "tabs": {
+        "general": "General",
+        "security": "Security"
+      }
+    },
+    "general": {
+      "title": "General",
+      "description": "Choose the language used across your dashboard and chat workspace.",
+      "language": "Language",
+      "languageDescription": "Change the language used across your dashboard and chat workspace."
+    },
+    "security": {
+      "labels": {
+        "title": "Security",
+        "description": "Change your login password or send a reset link to your account email.",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "forgotPassword": "Forgot password?",
+        "changePassword": "Change password",
+        "changePasswordDescription": "Change your account login password or request a reset link by email.",
+        "changingPassword": "Changing...",
+        "hidePassword": "Hide password",
+        "showPassword": "Show password"
+      },
+      "errors": {
+        "currentPasswordRequired": "Current password is required",
+        "newPasswordRequired": "New password is required",
+        "passwordLength": "Password must be at least 8 characters",
+        "confirmPasswordRequired": "Confirm password is required",
+        "passwordMismatch": "Passwords do not match",
+        "failedChangePassword": "Failed to change password",
+        "failedSendReset": "Failed to send reset link"
+      },
+      "messages": {
+        "passwordChanged": "Password changed successfully",
+        "resetLinkSent": "Password reset link sent to email"
+      }
+    }
+  },
+  "NotFoundPage": {
+    "badge": "404",
+    "title": "We couldn't find the page you were looking for.",
+    "description": "The link may have moved or never existed.",
+    "home": "Back to Home"
+  },
+  "Sidebar": {
+    "business": {
+      "title": "Business",
+      "overview": "Overview",
+      "connectApp": "Connect App"
+    },
+    "customer": {
+      "title": "Customer",
+      "customers": "Customers"
+    },
+    "account": {
+      "title": "Account",
+      "description": "Manage your profile, preferences, and account security."
+    },
+    "chat": "Chat",
+    "navigation": "Navigation",
+    "sectionNavigation": "Choose a page in {section}",
+    "pinPanel": "Pin panel",
+    "closePanel": "Close panel"
+  },
+  "ProfileMenu": {
+    "profile": "Profile",
+    "docs": "Help Center",
+    "settings": "Settings",
+    "general": "General",
+    "security": "Security",
+    "logout": "Logout"
+  },
+  "DashboardHome": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "title": "Account Activity Summary",
+    "description": "Review WABA operational status and control incoming message traffic from a single control panel.",
+    "status": {
+      "error": "WhatsApp account summary could not be loaded.",
+      "sectionTitle": "Account Status",
+      "accounts": "WhatsApp Accounts",
+      "accountsHelper": "Total WhatsApp Business accounts (WABA) integrated in this workspace.",
+      "active": "Active",
+      "activeHelper": "Number of active accounts that can be used to process incoming and outgoing messages normally.",
+      "needsAttention": "Needs attention",
+      "needsAttentionHelper": "Accounts experiencing issues (disconnected, blocked, or need Meta verification). Check immediately to avoid operational disruption."
+    },
+    "quickActions": {
+      "sectionTitle": "Quick Actions",
+      "chat": {
+        "inbox": {
+          "eyebrow": "Inbox",
+          "title": "Reply to customer conversations",
+          "helper": "Open the Inbox panel to monitor conversation queues, assign agents, and respond to messages in real-time."
+        }
+      },
+      "business": {
+        "connectApp": {
+          "eyebrow": "Connect App",
+          "title": "Manage WhatsApp Business accounts",
+          "helper": "Go to Connect App settings to manage number status, Meta verification, and messaging tier limits."
+        }
+      },
+      "customer": {
+        "customers": {
+          "eyebrow": "Customers",
+          "title": "Review saved customer contacts",
+          "helper": "Open the customer list to filter contacts by WhatsApp number and export them when needed."
+        }
+      }
+    }
+  },
+  "Waba": {
+    "status": {
+      "active": "Active",
+      "disconnected": "Disconnected",
+      "suspended": "Suspended"
+    },
+    "numbers": {
+      "one": "1 number",
+      "multiple": "{count} numbers",
+      "manage": "Manage WhatsApp numbers",
+      "whatsappNumber": "WhatsApp Number",
+      "connected": "{label} connected",
+      "none": "No numbers connected yet.",
+      "add": "Add number"
+    },
+    "id": {
+      "copied": "WABA ID copied."
+    },
+    "row": {
+      "unnamed": "Unnamed business",
+      "idPrefix": "WABA ID: ",
+      "status": "Status",
+      "connectedOn": "Connected on"
+    },
+    "empty": {
+      "title": "No WhatsApp accounts yet",
+      "description": "Connect your first WhatsApp Business account so Pesan AI can start receiving and managing conversations."
+    },
+    "action": {
+      "connect": "Connect WhatsApp account",
+      "connecting": "Connecting account..."
+    },
+    "summary": {
+      "accounts": "accounts",
+      "active": "active",
+      "needsAttention": "needs attention"
+    },
+    "error": {
+      "load": "Failed to load WABA list",
+      "retry": "Try again"
+    },
+    "header": {
+      "title": "WhatsApp Business Accounts",
+      "description": "Manage WhatsApp accounts and numbers connected to Pesan AI."
+    },
+    "table": {
+      "business": "Business"
+    },
+    "pagination": {
+      "showing": "Showing {start}-{end} of {total} accounts",
+      "empty": "No accounts yet",
+      "previous": "Previous",
+      "page": "Page {current} of {total}",
+      "next": "Next"
+    },
+    "addNumber": {
+      "trigger": "Add number",
+      "input": {
+        "title": "Add WhatsApp Number",
+        "descriptionPrefix": "Connect a new number for ",
+        "descriptionFallback": "this WhatsApp Business account",
+        "labelNumber": "WhatsApp Number",
+        "placeholderNumber": "Enter WhatsApp number",
+        "labelName": "Display name",
+        "placeholderName": "Example: Customer Support",
+        "nameHelper": "This name will be visible to customers on WhatsApp until they save your contact.",
+        "cancel": "Cancel",
+        "submit": "Send code",
+        "submitting": "Sending code...",
+        "successToast": "Verification code sent via SMS.",
+        "errorToast": "Failed to add number",
+        "validation": {
+          "numberRequired": "WhatsApp number is required",
+          "invalidNumber": "Invalid number format",
+          "nameRequired": "Display name is required"
+        }
+      },
+      "otp": {
+        "title": "Verify Number",
+        "description": "Enter the 6-digit code sent via SMS.",
+        "changeNumber": "Change number",
+        "resend": "Resend code",
+        "resendIn": "Resend in {count}s",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "verifying": "Verifying...",
+        "resendSuccess": "Verification code resent.",
+        "resendError": "Failed to resend code",
+        "verifySuccess": "WhatsApp number verified successfully.",
+        "verifyError": "Verification failed"
+      }
+    },
+    "signup": {
+      "noCodeError": "Facebook login finished without an authorization code. Please try again.",
+      "waitingDetails": "Authorization code received. Waiting for WABA details from the embedded signup flow.",
+      "success": "WABA connected successfully.",
+      "alreadyConnected": "This WhatsApp Business Account is already connected to another user",
+      "generalError": "Failed to complete WhatsApp signup. Please try again.",
+      "requireHttps": "Facebook Embedded Signup requires HTTPS. Open this page from an HTTPS URL before continuing.",
+      "sdkNotReady": "Facebook SDK is not ready yet. Please try again in a moment."
+    }
+  },
+  "Customers": {
+    "filters": {
+      "allWabas": "All WABAs",
+      "noWaba": "No WABA",
+      "wabaSingular": "WABA",
+      "wabaPlural": "WABAs",
+      "allNumbers": "All numbers",
+      "noNumber": "No number",
+      "numberSingular": "number",
+      "numberPlural": "numbers",
+      "wabaTitle": "Filter WABA",
+      "selectAll": "Select all",
+      "wabaEmpty": "No WABA available.",
+      "numberTitle": "Filter Number",
+      "numberEmpty": "No number available for the selected WABA.",
+      "clear": "Clear"
+    },
+    "export": {
+      "emptyError": "There are no customer rows to export.",
+      "success": "Customer table exported."
+    },
+    "header": {
+      "title": "Customers",
+      "description": "Review customer numbers that have chatted with your connected WhatsApp accounts."
+    },
+    "action": {
+      "export": "Export Excel"
+    },
+    "pagination": {
+      "showing": "Showing {start}-{end} of {total} customers"
+    },
+    "table": {
+      "noMatch": "No matching customers",
+      "noMatchDescription": "Try another WABA or number filter to widen the customer list.",
+      "empty": "No customers yet",
+      "emptyDescription": "Customers will appear here after conversations come in.",
+      "clearFilters": "Clear filters",
+      "errorLoad": "Failed to load customers",
+      "retry": "Try again",
+      "colNo": "No.",
+      "colName": "Name",
+      "colUsername": "Username",
+      "colPhone": "Phone Number",
+      "noName": "Unknown name",
+      "noUsername": "Unknown username",
+      "noPhone": "Unknown phone"
+    }
+  },
+  "Chat": {
+    "takeover": {
+      "enabled": "Admin takeover enabled",
+      "disabled": "Conversation returned to AI Agent",
+      "error": "Failed to update takeover status"
+    },
+    "empty": {
+      "noConversations": "No conversations found",
+      "selectWaba": "Select a WABA",
+      "noConversationsDesc": "Try another WABA, adjust the filters, or wait for new customer messages.",
+      "selectWabaDesc": "Choose a WhatsApp Business Account to load its conversations."
+    },
+    "sidebar": {
+      "search": "Search number or name",
+      "filterAll": "All",
+      "filterAdmin": "Admin",
+      "filterBot": "AI Agent",
+      "allPhones": "All Phones"
+    },
+    "header": {
+      "back": "Back to conversations"
+    },
+    "detail": {
+      "emptyTitle": "Select a conversation",
+      "emptyDesc": "Choose a customer thread from the inbox to review message history and continue the conversation.",
+      "agentActivePrompt": "AI Agent is actively handling this conversation! You can take over anytime using the button below.",
+      "agentActiveExpiredPrompt": "The conversation has expired because the customer hasn't replied in the last 24 hours. The AI Agent is still active, but you cannot take over right now.",
+      "takeoverPrompt": "AI Agent is currently paused. Return the conversation to AI Agent when you're finished.",
+      "takeoverExpiredPrompt": "The conversation has expired because the customer hasn't replied in the last 24 hours. You can no longer send messages, please return the conversation to AI Agent so future messages can be answered automatically.",
+      "returnToAgent": "Return to AI Agent",
+      "returnDialogTitle": "Return this conversation to AI Agent?",
+      "returnDialogDesc": "The AI Agent will resume handling new messages from {name}.",
+      "takeoverButton": "Take Over Conversation",
+      "takeoverDialogTitle": "Take over this conversation?",
+      "takeoverDialogDesc": "The AI Agent will stop replying to {name} until you return this conversation to the AI Agent.",
+      "cancel": "Cancel"
+    },
+    "composer": {
+      "document": "Document",
+      "media": "Photos & videos",
+      "audio": "Audio",
+      "removeMedia": "Remove attachment",
+      "audioCaptionNotSupported": "Audio files cannot have captions",
+      "unsupportedFile": "This file type is not supported.",
+      "maxFilesExceeded": "Maximum {max} files can be sent at once.",
+      "templateRequired": "Template message usage is required",
+      "templateDesc": "Free-form replies expire 24 hours after the latest customer message. Send a template message to reopen the conversation.",
+      "attach": "Attach media",
+      "dropMedia": "Drop media to attach",
+      "placeholderMedia": "Add a caption...",
+      "placeholder": "Type your message...",
+      "placeholderTemplate": "Template message required",
+      "closeFormatToolbar": "Close",
+      "formatBold": "Bold",
+      "formatItalic": "Italic",
+      "formatStrikethrough": "Strikethrough",
+      "formatCode": "Inline code",
+      "formatBulletedList": "Bulleted list",
+      "formatNumberedList": "Numbered list",
+      "formatQuote": "Quote",
+      "send": "Send"
+    },
+    "timeline": {
+      "loading": "Loading messages",
+      "loadOlder": "Load older messages",
+      "empty": "No messages yet for this conversation.",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "status": {
+      "sending": "Sending",
+      "read": "Read",
+      "delivered": "Delivered",
+      "failed": "Failed",
+      "sent": "Sent"
+    },
+    "bubble": {
+      "errorLoad": "Could not load media preview.",
+      "errorUnavailable": "Media file is unavailable.",
+      "menu": {
+        "label": "Message actions",
+        "open": "Open",
+        "saveAs": "Save as",
+        "copy": "Copy",
+        "copied": "Copied to clipboard.",
+        "cancel": "Cancel",
+        "download": "Download file",
+        "saving": "Saving...",
+        "downloadConfirmTitle": "This file cannot be previewed",
+        "downloadConfirmDescription": "This file format cannot be opened directly in the browser. Do you want to save it instead?",
+        "errors": {
+          "urlUnavailable": "The media URL is unavailable.",
+          "signedUrlInvalid": "The media link is invalid or has expired.",
+          "mediaFetchFailed": "The media could not be retrieved.",
+          "fileOpenFailed": "The file could not be opened.",
+          "fileSaveFailed": "The file could not be saved.",
+          "savePickerUnsupported": "This browser cannot choose a save location.",
+          "clipboardUnsupported": "Clipboard access is not supported by this browser.",
+          "formatUnsupported": "This file format cannot be copied.",
+          "clipboardPermission": "The browser did not allow clipboard access."
+        }
+      },
+      "unsupported": "Unsupported {type} message"
+    },
+    "list": {
+      "errorTitle": "Unable to load chats",
+      "errorDesc": "The inbox could not be loaded right now.",
+      "retry": "Retry",
+      "statusAdmin": "Needs Admin",
+      "statusAiAgent": "AI Agent Active"
+    },
+    "contact": {
+      "label": {
+        "newCustomer": "New Customer",
+        "vip": "VIP Customer",
+        "followUp": "Needs Follow Up",
+        "completed": "Completed"
+      },
+      "close": "Close",
+      "back": "Back to conversation",
+      "title": "Contact info",
+      "takeover": "Admin Takeover",
+      "agentActive": "AI Agent Active",
+      "lastActivity": "Last activity",
+      "connectedVia": "Connected via admin",
+      "connectedPlatforms": "Connected platforms",
+      "customerLabel": "Customer label",
+      "selectLabel": "Select customer label...",
+      "customLabel": "Custom label...",
+      "typeLabel": "Type label name...",
+      "internalNotes": "Internal notes",
+      "addNote": "Add a brief note for the admin team",
+      "saving": "Saving..."
+    },
+    "wabaSwitcher": {
+      "title": "WhatsApp Business Accounts",
+      "select": "Select a WABA",
+      "search": "Search WABA or phone number",
+      "noMatch": "No WABA matches this search.",
+      "noNumbers": "No connected numbers"
+    },
+    "phoneFilter": {
+      "title": "Phone Numbers",
+      "search": "Search phone number",
+      "noMatch": "No phone number matches this search."
+    }
+  },
+  "Admin": {
+    "user": {
+      "page": {
+        "title": "User Management",
+        "description": "Add and manage user accounts for the platform."
+      }
+    },
+    "waba": {
+      "page": {
+        "title": "WABA Management",
+        "description": "View all WhatsApp Business Accounts and assign webhooks to them."
+      }
+    },
+    "webhook": {
+      "page": {
+        "title": "Webhook Management",
+        "description": "Add and manage webhook endpoints for the platform."
+      }
+    },
+    "AdminDashboardCard": {
+      "eyebrow": "Admin",
+      "title": "Admin Dashboard",
+      "description": "Select a menu below to manage the system.",
+      "navigation": {
+        "user": {
+          "label": "Manage User Account",
+          "description": "Add and manage user accounts."
+        },
+        "webhook": {
+          "label": "Manage Webhook",
+          "description": "Configure and monitor active webhooks."
+        },
+        "waba": {
+          "label": "Manage User WABA",
+          "description": "Assign Webhook to WABA"
+        }
+      }
+    },
+    "Header": {
+      "logoAlt": "Pesan AI logo",
+      "brandName": "Pesan AI",
+      "navigation": {
+        "user": "Users",
+        "webhook": "Webhook",
+        "waba": "WABA"
+      }
+    },
+    "CreateUserDialog": {
+      "trigger": "Create User",
+      "title": "Create New User",
+      "description": "Fill out the form to add a new user account.",
+      "labels": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role"
+      },
+      "placeholders": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "Select a role"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Create User"
+      },
+      "messages": {
+        "success": "User created and verification email sent",
+        "errorFallback": "Failed to create user"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidEmail": "Enter a valid email address",
+        "roleRequired": "Select a role"
+      }
+    },
+    "UserTable": {
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "resendInvite": "Resend Invite",
+        "sending": "Sending..."
+      },
+      "messages": {
+        "resendSuccess": "Onboarding email resent successfully",
+        "resendError": "Failed to resend onboarding email",
+        "errorFallback": "An error occurred"
+      },
+      "empty": {
+        "description": "No users found."
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} users",
+        "empty": "No users",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    },
+    "AssignWebhookDialog": {
+      "trigger": "Assign Webhook",
+      "title": "Assign Webhook to WABA",
+      "description": "Select a webhook to handle messages for <strong>{name}</strong>. Choosing \"None / Remove\" will remove the current assignment.",
+      "placeholder": "Select a webhook",
+      "noneOption": "None / Remove",
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save"
+      },
+      "messages": {
+        "success": "Webhook assigned successfully",
+        "errorFallback": "Failed to assign webhook"
+      }
+    },
+    "WabaTable": {
+      "columns": {
+        "namePhone": "Name / Phone Number",
+        "associatedUser": "Associated User",
+        "assignedWebhook": "Assigned Webhook",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "badges": {
+        "none": "None"
+      },
+      "row": {
+        "unknownUser": "Unknown",
+        "noPhoneNumbers": "No phone numbers",
+        "none": "None"
+      },
+      "empty": {
+        "description": "No WABAs found."
+      },
+      "error": {
+        "fallback": "An error occurred",
+        "retry": "Retry"
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} WABAs",
+        "empty": "No WABAs",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    },
+    "CreateWebhookDialog": {
+      "trigger": "Add Webhook",
+      "title": "Add New Webhook",
+      "description": "Enter the webhook details below. The URL will be validated before saving.",
+      "labels": {
+        "name": "Name",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Passphrase"
+      },
+      "placeholders": {
+        "name": "My Webhook",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Shared secret for JWT signing"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "creating": "Creating...",
+        "submit": "Add Webhook"
+      },
+      "messages": {
+        "success": "Webhook created successfully",
+        "errorFallback": "Failed to create webhook"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidUrl": "Enter a valid URL",
+        "passphraseRequired": "Passphrase is required"
+      }
+    },
+    "DeleteWebhookDialog": {
+      "trigger": "Delete",
+      "title": "Delete Webhook",
+      "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "actions": {
+        "cancel": "Cancel",
+        "deleting": "Deleting...",
+        "delete": "Delete"
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" deleted successfully",
+        "errorFallback": "Failed to delete webhook"
+      }
+    },
+    "UpdateWebhookDialog": {
+      "trigger": "Edit",
+      "title": "Update Webhook",
+      "description": "Update settings for \"{name}\". Changes will take effect immediately.",
+      "labels": {
+        "name": "Name",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Passphrase",
+        "passphraseHint": "Leave blank to keep the current passphrase."
+      },
+      "placeholders": {
+        "name": "My Webhook",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Enter new passphrase"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "submit": "Save Changes",
+        "refresh": "Test Connection",
+        "refreshing": "Testing..."
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" updated successfully",
+        "refreshSuccess": "Connection verified successfully",
+        "errorFallback": "Failed to update webhook"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "invalidUrl": "Enter a valid URL",
+        "passphraseMinLength": "Passphrase must be at least 1 character"
+      }
+    },
+    "WebhookDocsDialog": {
+      "trigger": "API Docs",
+      "title": "Webhook API Documentation",
+      "description": "How your webhook endpoint should handle incoming requests from Pesan AI.",
+      "sections": {
+        "auth": {
+          "title": "Authentication",
+          "p1": "Every request includes a bearer token in the <authCode>Authorization</authCode> header. The token is a short-lived JWT signed with the <strongAuth>HS256</strongAuth> algorithm using your configured <strongPassphrase>passphrase</strongPassphrase> as the shared secret.",
+          "p2": "If your webhook tool asks for JWT credentials, configure the key type as <strongType>passphrase</strongType>, choose <strongAlgo>HS256</strongAlgo> as the algorithm, and use the exact passphrase entered when creating the webhook in Pesan AI."
+        },
+        "validation": {
+          "title": "Validation Request",
+          "p1": "When you register a webhook, Pesan AI sends a <strongGet>GET</strongGet> request to your URL to verify it is reachable and can authenticate. Your endpoint must validate the JWT token and return a <codeOk>200 OK</codeOk> response to confirm the webhook is valid."
+        },
+        "message": {
+          "title": "Message Request",
+          "p1": "When a new message is received, Pesan AI forwards it to your webhook via a <strongPost>POST</strongPost> request. Your endpoint should verify the JWT bearer token using your configured passphrase, process the message history, and return a bot response.",
+          "p2": "The <codePhone>customerPhoneNumber</codePhone> field identifies the customer, and the <codeMessages>messages</codeMessages> array contains text messages in chronological order.",
+          "list": {
+            "phone": "<codeField>customerPhoneNumber</codeField>: customer WhatsApp phone number in international format.",
+            "sequence": "<codeField>sequence</codeField>: number, chronological order starting at 1.",
+            "source": "<codeField>source</codeField>: one of <codeSource>customer</codeSource>, <codeSource>admin</codeSource>, or <codeSource>bot</codeSource>.",
+            "timestamp": "<codeField>timestamp</codeField>: ISO-8601 timestamp string.",
+            "content": "<codeField>content</codeField>: text message content."
+          },
+          "p3": "The <codeBot>botResponse</codeBot> field is optional and will be sent to the customer as a bot message. <codeAdmin>adminTakeover</codeAdmin> is optional and defaults to <codeFalse>false</codeFalse>; when set to <codeTrue>true</codeTrue>, Pesan AI marks the conversation for admin takeover before sending the bot response.",
+          "p4": "Return a non-2xx status only when Pesan AI should treat the webhook call as failed. Client errors are not retried, except <code429>429</code429>. Rate limits and server errors are retried up to 3 times with a 1 second linear delay."
+        }
+      }
+    },
+    "WebhookTable": {
+      "columns": {
+        "name": "Name",
+        "url": "URL",
+        "status": "Status",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "empty": {
+        "description": "No webhooks found."
+      },
+      "error": {
+        "fallback": "An error occurred",
+        "retry": "Retry"
+      },
+      "pagination": {
+        "showing": "Showing {start}-{end} of {total} webhooks",
+        "empty": "No webhooks",
+        "previous": "Previous",
+        "page": "Page {current} of {total}",
+        "next": "Next"
+      }
+    }
+  }
+}

@@ -1,88 +1,51 @@
-# Pesan AI
+# Pesan AI - Monorepo
 
-Pesan AI is a simple CRM built for the WhatsApp Cloud API.
+Pesan AI is a simple CRM built for the WhatsApp Cloud API. This repository is a
+[pnpm workspace](https://pnpm.io/workspaces) monorepo.
 
-## Tech Stack
+## Structure
 
-- **Framework:** [Next.js 16.2.6](https://nextjs.org/) (App Router)
-- **UI Library:** [React 19.2.3](https://react.dev/)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
-- **Database & ORM:** PostgreSQL, [Prisma 7.8](https://www.prisma.io/), and `@prisma/adapter-pg`
-- **Authentication:** [Better Auth 1.6](https://better-auth.com/)
-- **Data Fetching:** [TanStack Query v5](https://tanstack.com/query/latest)
-- **Internationalization:** [next-intl v4](https://next-intl.dev/)
-- **UI Components:** [shadcn](https://ui.shadcn.com/), [Radix UI](https://www.radix-ui.com/), and [lucide-react](https://lucide.dev/)
-- **Language:** TypeScript
-- **Testing:** [Vitest](https://vitest.dev/) and Testing Library
-- **Release Notes:** [Changesets](https://github.com/changesets/changesets)
-- **Tooling:** pnpm, ESLint, Prettier, Husky, and lint-staged
+```
+.
+├── web/     # Next.js web app (package: pesan-ai) - see web/README.md
+├── docs/    # mdBook documentation (package: pesan-ai-docs)
+└── ...      # shared tooling: prettier, husky, lint-staged, changesets, CI, Docker
+```
 
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Node.js (v24.14.0 recommended, v22+ compatible)
 - **pnpm** (v11+)
-- PostgreSQL Database
+- PostgreSQL Database (for the web app)
+- `make` (optional, for the convenience targets below)
 
-### Installation
+## Quickstart
 
-1. Clone the repository and install dependencies using pnpm:
-
-```bash
-pnpm install
-```
-
-2. Set up your environment variables:
-   Copy the `.env.example` file to `.env` and fill in your database credentials, Better Auth secrets, and WhatsApp API keys.
+First-time setup (installs dependencies, generates the Prisma client, and scaffolds `web/.env`):
 
 ```bash
-cp .env.example .env
+make setup            # or, deps only: pnpm install
 ```
 
-3. Initialize the database and run Prisma generate:
+Then fill in `web/.env` and start the app with `make web-dev`.
 
-```bash
-pnpm prisma generate
-```
+The [`Makefile`](Makefile) wraps the common web-app workflow (run `make help` for the full list):
 
-4. Run the development server:
-
-```bash
-pnpm run dev
-```
-
-### Database Seeding (Optional)
-
-To populate the database with test data (Admin & User accounts, WABA, Conversations):
-
-> [!IMPORTANT]
-> You **MUST** temporarily disable/comment out the `signUpEmail` pre-hook (Endpoint restriction) in `src/lib/auth/auth.ts` before seeding, as the script uses the signup API to create users with hashed passwords.
-
-```bash
-pnpm prisma db seed
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Changesets
-
-Every pull request into `dev` must include a changeset.
-
-Create one from your feature branch:
-
-```bash
-pnpm changeset
-```
-
-Choose the appropriate version bump and write a concise summary of the change. Commit the generated file under `.changeset/` with the PR.
-
+| Task                       | Make                | Raw command                                                     |
+| -------------------------- | ------------------- | --------------------------------------------------------------- |
+| First-time setup           | `make setup`        | `pnpm install && pnpm --filter pesan-ai exec prisma generate`   |
+| Run the web app            | `make web-dev`      | `pnpm --filter pesan-ai dev`                                    |
+| Build the web app          | `make web-build`    | `pnpm --filter pesan-ai build`                                  |
+| Start the built web app    | `make web-start`    | `pnpm --filter pesan-ai start`                                  |
+| Test the web app           | `make web-test`     | `pnpm --filter pesan-ai test`                                   |
+| Run all tests              | `make test`         | aggregates every package's tests (web only for now)             |
+| Build the Docker image     | `make docker-build` | `docker build -f .deployment/app/Dockerfile -t pesanai:local .` |
+| Remove deps & build output | `make clean`        | —                                                               |
 
 ## Documentation
 
-Project Guide-Book/Docs lives in [`docs/`](docs/). Start with [`docs/README.md`](docs/README.md) for local docs setup and build instructions.
-
-Release notes are tracked in [`CHANGELOG.md`](CHANGELOG.md).
+- Web app: [`web/README.md`](web/README.md)
+- Guide-book / docs: [`docs/`](docs/)
 
 ## License
 

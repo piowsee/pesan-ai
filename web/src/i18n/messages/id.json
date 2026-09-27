@@ -1,0 +1,1085 @@
+{
+  "Common": {
+    "metaTechPartner": "Official Meta Tech Partner"
+  },
+  "Metadata": {
+    "home": {
+      "title": "Pesan AI | AI Agent WhatsApp untuk Bisnis",
+      "description": "Pesan AI membantu bisnis membalas chat pelanggan dan mengatur booking otomatis lewat WhatsApp dengan AI."
+    },
+    "login": {
+      "title": "Masuk | Pesan AI",
+      "description": "Masuk ke akun Pesan AI untuk mengelola otomatisasi chat WhatsApp bisnis Anda."
+    },
+    "contactUs": {
+      "title": "Hubungi Kami | Pesan AI",
+      "description": "Hubungi Pesan AI untuk meminta akun atau menjadwalkan konsultasi tentang otomasi WhatsApp untuk bisnis Anda."
+    },
+    "terms": {
+      "title": "Syarat Layanan | Pesan AI",
+      "description": "Baca Syarat Layanan Pesan AI untuk memahami ketentuan penggunaan platform dan layanan kami."
+    },
+    "privacy": {
+      "title": "Kebijakan Privasi | Pesan AI",
+      "description": "Pelajari bagaimana Pesan AI mengumpulkan, menggunakan, dan melindungi data pribadi Anda."
+    }
+  },
+  "Navbar": {
+    "login": "Masuk",
+    "dashboard": "Dashboard",
+    "consultation": "Konsultasi Sekarang",
+    "openMenu": "Buka menu",
+    "closeMenu": "Tutup menu",
+    "languages": [
+      {
+        "label": "Indonesia",
+        "value": "id"
+      },
+      {
+        "label": "Inggris",
+        "value": "en"
+      }
+    ]
+  },
+  "Footer": {
+    "metaPartner": "Official Meta Tech Partner",
+    "description": "Solusi AI WhatsApp untuk membalas pelanggan dengan ramah dan mengatur booking otomatis.",
+    "company": "Perusahaan",
+    "about": "Tentang Kami",
+    "login": "Masuk",
+    "consultation": "Konsultasi Sekarang",
+    "featuresTitle": "Fitur",
+    "featuresList": [
+      "Satu Nomor Terintegrasi",
+      "WhatsApp AI Agent",
+      "Booking Otomatis"
+    ],
+    "legalTitle": "Legal",
+    "terms": "Syarat Layanan",
+    "privacy": "Kebijakan Privasi",
+    "rights": "(c) 2026 Pesan AI. Hak cipta dilindungi."
+  },
+  "LandingPage": {
+    "hero": {
+      "badge": "AI Agent WhatsApp Custom #1 Sesuai Kebutuhan Bisnismu",
+      "titlePrefix": "AI Balas Chat ",
+      "titleHighlight": "Otomatis",
+      "titleSuffix": ",",
+      "titleLineTwo": "Booking Tanpa Ribet",
+      "descriptionPrefix": "AI WhatsApp Agent yang menjawab pelanggan dan mengatur booking secara otomatis ",
+      "descriptionHighlight": "24/7",
+      "descriptionSuffix": ".",
+      "consultation": "Konsultasi Sekarang",
+      "login": "Masuk",
+      "heroAlt": "Latar suasana malam untuk hero section Pesan AI",
+      "demoAlt": "Demo produk Pesan AI"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "heading": "Pertanyaan umum",
+      "subtitle": "Pertanyaan yang paling sering ditanyakan tentang cara kerja Pesan AI untuk membantu bisnis Anda membalas chat dan mengelola booking secara otomatis.",
+      "items": [
+        {
+          "question": "Apa itu Pesan AI?",
+          "answer": "Pesan AI adalah platform AI Agent WhatsApp yang membantu bisnis membalas chat pelanggan secara otomatis, ramah, dan real-time, sekaligus menangani proses booking tanpa intervensi manual."
+        },
+        {
+          "question": "Apakah AI ini benar-benar bisa disesuaikan (custom)?",
+          "answer": "Ya, Pesan AI dapat dikustomisasi hampir 100% sesuai kebutuhan bisnis Anda. Mulai dari alur percakapan, gaya bahasa, hingga sistem booking dan personalisasi layanan dapat disesuaikan sepenuhnya. Platform chat (WhatsApp) tetap sama, namun seluruh pengalaman di dalamnya bisa diatur sesuai kebutuhan Anda."
+        },
+        {
+          "question": "Apakah Pesan AI cocok untuk semua jenis bisnis?",
+          "answer": "Bisa. Pesan AI cocok untuk berbagai bisnis yang membutuhkan respon cepat dan sistem booking, seperti klinik, salon, jasa, UMKM, hingga layanan profesional lainnya."
+        },
+        {
+          "question": "Apakah pelanggan akan tahu bahwa mereka berbicara dengan AI?",
+          "answer": "Pesan AI dirancang untuk memberikan respon yang natural dan ramah seperti manusia. Anda juga bisa menyesuaikan gaya komunikasi sesuai branding bisnis Anda."
+        },
+        {
+          "question": "Bagaimana sistem booking otomatis bekerja?",
+          "answer": "AI akan menanyakan data pelanggan, mengecek ketersediaan jadwal booking, lalu memberi informasi apakah slot tersedia atau tidak. Jika penuh, AI dapat menyarankan waktu alternatif yang masih kosong secara otomatis."
+        },
+        {
+          "question": "Apakah saya perlu skill teknis untuk menggunakan Pesan AI?",
+          "answer": "Tidak. Anda hanya perlu menggunakan web chat yang sudah disediakan. Untuk pengaturan AI, alur, dan sistem lainnya cukup didiskusikan dengan tim kami, semua akan kami siapkan. Anda tinggal menggunakan, dan kami akan memberikan akun yang siap pakai."
+        }
+      ]
+    }
+  },
+  "Auth": {
+    "brandPanel": {
+      "headline": "Tingkatkan efisiensi bisnis melalui otomatisasi chat WhatsApp dengan dukungan AI.",
+      "contactHeadline": "Hubungi tim kami untuk menemukan solusi otomatisasi WhatsApp terbaik bagi bisnis Anda."
+    },
+    "panelSwitch": {
+      "contactPrompt": "Belum punya akun?",
+      "contactAction": "Hubungi kami",
+      "loginPrompt": "Sudah memiliki akun?",
+      "loginAction": "Login di sini"
+    },
+    "pages": {
+      "login": {
+        "title": "Masuk ke Akun Anda",
+        "subtitle": "Masukkan email dan kata sandi Anda."
+      },
+      "contactUs": {
+        "title": "Hubungi Kami",
+        "subtitle": "Minta akun atau jadwalkan konsultasi dengan tim kami."
+      },
+      "forgotPassword": {
+        "title": "Lupa Kata Sandi",
+        "subtitle": "Masukkan email Anda untuk menerima tautan reset kata sandi."
+      },
+      "resetPassword": {
+        "title": "Atur Ulang Kata Sandi",
+        "subtitle": "Masukkan kata sandi baru untuk akun Anda."
+      }
+    },
+    "forms": {
+      "common": {
+        "emailLabel": "Email",
+        "emailPlaceholder": "name@company.com"
+      },
+      "login": {
+        "labels": {
+          "password": "Kata Sandi",
+          "forgotPassword": "Lupa kata sandi?",
+          "contactUs": "Hubungi kami",
+          "agreePrefix": "Dengan mendaftar, Anda menyetujui",
+          "terms": "Syarat Layanan",
+          "and": "dan",
+          "privacy": "Kebijakan Privasi",
+          "submit": "Masuk",
+          "submitting": "Memproses...",
+          "passwordPlaceholder": "Masukkan kata sandi Anda",
+          "hidePassword": "Sembunyikan kata sandi",
+          "showPassword": "Tampilkan kata sandi"
+        },
+        "errors": {
+          "invalidEmail": "Format email tidak valid",
+          "passwordRequired": "Kata sandi wajib diisi",
+          "passwordLength": "Kata sandi minimal 8 karakter",
+          "termsRequired": "Anda harus menyetujui Syarat dan Privasi untuk lanjut",
+          "unknownError": "Terjadi kesalahan saat login. Silakan coba lagi."
+        }
+      },
+      "forgotPassword": {
+        "labels": {
+          "submit": "Kirim Tautan Reset",
+          "submitting": "Mengirim...",
+          "backToLogin": "Kembali ke login",
+          "successTitle": "Cek email Anda",
+          "successMessage": "Jika email terdaftar, kami telah mengirim tautan untuk mengatur ulang kata sandi Anda."
+        },
+        "errors": {
+          "invalidEmail": "Format email tidak valid",
+          "unknownError": "Terjadi kesalahan saat meminta reset kata sandi. Silakan coba lagi."
+        }
+      },
+      "contactUs": {
+        "labels": {
+          "name": "Nama Anda",
+          "namePlaceholder": "Jane Doe",
+          "companyName": "Perusahaan",
+          "companyNamePlaceholder": "Nama bisnis Anda",
+          "phoneNumber": "Nomor WhatsApp",
+          "phoneNumberPlaceholder": "6281234567890",
+          "message": "Apa yang Anda butuhkan?",
+          "messagePlaceholder": "Ceritakan bisnis, jumlah tim, atau kebutuhan otomatisasi WhatsApp Anda.",
+          "submit": "Kirim Permintaan",
+          "submitting": "Mengirim...",
+          "backToLogin": "Kembali ke login",
+          "successTitle": "Permintaan terkirim",
+          "successMessage": "Terima kasih. Tim kami akan meninjau permintaan Anda dan segera menghubungi Anda."
+        },
+        "errors": {
+          "nameRequired": "Masukkan nama Anda",
+          "nameLength": "Nama maksimal 120 karakter",
+          "invalidEmail": "Format email tidak valid",
+          "emailLength": "Email maksimal 160 karakter",
+          "companyNameLength": "Nama perusahaan maksimal 160 karakter",
+          "phoneNumberLength": "Nomor telepon maksimal 40 karakter",
+          "phoneNumberDigits": "Nomor telepon hanya boleh berisi angka",
+          "messageLength": "Pesan maksimal 1000 karakter",
+          "unknownError": "Terjadi kesalahan saat mengirim permintaan. Silakan coba lagi."
+        }
+      },
+      "resetPassword": {
+        "labels": {
+          "password": "Kata Sandi Baru",
+          "confirmPassword": "Konfirmasi Kata Sandi",
+          "submit": "Simpan Kata Sandi Baru",
+          "submitting": "Menyimpan...",
+          "passwordPlaceholder": "Masukkan kata sandi baru Anda",
+          "confirmPasswordPlaceholder": "Ulangi kata sandi baru Anda",
+          "hidePassword": "Sembunyikan kata sandi",
+          "showPassword": "Tampilkan kata sandi",
+          "backToLogin": "Kembali ke login",
+          "successTitle": "Kata sandi berhasil diperbarui",
+          "successMessage": "Anda sekarang dapat login dengan kata sandi baru Anda.",
+          "invalidTokenTitle": "Tautan reset tidak valid",
+          "invalidTokenMessage": "Tautan reset ini tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+          "requestNewLink": "Minta tautan baru"
+        },
+        "errors": {
+          "passwordRequired": "Kata sandi wajib diisi",
+          "passwordLength": "Kata sandi minimal 8 karakter",
+          "confirmPasswordRequired": "Konfirmasi kata sandi wajib diisi",
+          "passwordMismatch": "Konfirmasi kata sandi tidak cocok",
+          "invalidToken": "Tautan reset tidak valid atau sudah kedaluwarsa. Silakan minta tautan baru.",
+          "unknownError": "Terjadi kesalahan saat mengatur ulang kata sandi. Silakan coba lagi."
+        }
+      }
+    }
+  },
+  "PrivacyPage": {
+    "title": "Kebijakan Privasi",
+    "heroAlt": "Hero kebijakan privasi",
+    "updatedLabel": "Pembaruan Terakhir",
+    "updatedOn": "14 Mei 2026",
+    "tocTitle": "Daftar isi",
+    "sections": [
+      {
+        "id": "introduction",
+        "label": "Pendahuluan"
+      },
+      {
+        "id": "data-collection",
+        "label": "Data yang Kami Kumpulkan"
+      },
+      {
+        "id": "data-use",
+        "label": "Cara Kami Menggunakan Data Anda"
+      },
+      {
+        "id": "security",
+        "label": "Keamanan Data"
+      },
+      {
+        "id": "contact",
+        "label": "Kontak"
+      }
+    ],
+    "introductionHeading": "1. Pendahuluan",
+    "introductionText": "Selamat datang di Pesan AI (\"kami\"). Kami adalah platform manajemen dan otomasi pesan cerdas melalui WhatsApp Business API. Kami menghormati privasi Anda dan berkomitmen melindungi data pribadi Anda. Kebijakan privasi ini menjelaskan bagaimana kami mengelola data pribadi Anda dan data pelanggan Anda saat Anda mengunjungi website kami atau menggunakan layanan kami.",
+    "collectionHeading": "2. Data yang Kami Kumpulkan",
+    "collectionIntro": "Kami dapat mengumpulkan, menggunakan, menyimpan, dan mentransfer berbagai jenis data untuk mengoperasikan layanan kami:",
+    "collectionItems": [
+      {
+        "label": "Data Identitas dan Kontak:",
+        "value": "Mencakup nama, alamat email, nomor telepon WhatsApp, profil bisnis, dan informasi login Anda."
+      },
+      {
+        "label": "Data Pesan dan Pelanggan:",
+        "value": "Mencakup isi pesan, riwayat percakapan, kontak pelanggan, dan data interaksi yang Anda proses menggunakan platform kami."
+      },
+      {
+        "label": "Data Teknis:",
+        "value": "Mencakup alamat internet protocol (IP), data login, jenis browser, webhook payload, integrasi API, dan sistem operasi."
+      },
+      {
+        "label": "Data Penggunaan:",
+        "value": "Mencakup informasi tentang cara Anda menggunakan website, metrik pengiriman pesan, dan otomasi AI di dalam platform kami."
+      }
+    ],
+    "usageHeading": "3. Cara Kami Menggunakan Data Anda",
+    "usageIntro": "Kami menggunakan data pribadi dan data operasional Anda dalam kondisi berikut:",
+    "usageItems": [
+      "Untuk mengoperasikan dan menyediakan layanan pengiriman dan otomasi pesan WhatsApp Business.",
+      "Untuk memproses interaksi AI pada percakapan Anda dengan pelanggan sesuai pengaturan yang Anda buat.",
+      "Untuk mengelola akun Anda dan memberikan dukungan layanan pelanggan teknis.",
+      "Untuk meningkatkan algoritma AI dan antarmuka platform demi kenyamanan pengguna.",
+      "Untuk memenuhi kewajiban operasional dari Meta/WhatsApp dan regulasi lokal yang berlaku."
+    ],
+    "securityHeading": "4. Keamanan Data",
+    "securityText": "Kami mengimplementasikan standar keamanan industri yang kuat untuk melindungi data komunikasi bisnis dan data pribadi Anda dari akses yang tidak sah. Konversi pesan dengan AI diproses secara aman, dan akses ke percakapan Anda dibatasi hanya kepada pemilik akun dan anggota tim yang Anda percayakan.",
+    "contactHeading": "5. Kontak",
+    "contactText": "Jika Anda memiliki pertanyaan tentang kebijakan privasi ini atau cara pengelolaan data pesan Anda, silakan hubungi tim dukungan kami di website Pesan AI."
+  },
+  "TermsPage": {
+    "title": "Syarat Layanan",
+    "heroAlt": "Hero syarat layanan",
+    "updatedLabel": "Pembaruan Terakhir",
+    "updatedOn": "14 Mei 2026",
+    "tocTitle": "Daftar isi",
+    "sections": [
+      {
+        "id": "acceptance",
+        "label": "Penerimaan Syarat"
+      },
+      {
+        "id": "service",
+        "label": "Deskripsi Layanan"
+      },
+      {
+        "id": "ip",
+        "label": "Hak Kekayaan Intelektual"
+      },
+      {
+        "id": "obligations",
+        "label": "Kewajiban Pengguna"
+      },
+      {
+        "id": "liability",
+        "label": "Batasan Tanggung Jawab"
+      },
+      {
+        "id": "law",
+        "label": "Hukum yang Berlaku"
+      }
+    ],
+    "acceptanceHeading": "1. Penerimaan Syarat",
+    "acceptanceText": "Dengan mengakses atau menggunakan website Pesan AI, Anda setuju untuk terikat dan mematuhi Syarat Layanan ini. Jika Anda tidak menyetujui bagian mana pun dari syarat ini, Anda tidak diperkenankan mengakses atau menggunakan layanan kami.",
+    "serviceHeading": "2. Deskripsi Layanan",
+    "serviceText": "Pesan AI adalah platform manajemen percakapan dan otomasi pesan cerdas yang terintegrasi dengan WhatsApp Business API. Kami menyediakan fitur agent AI, webhook eksternal, dan pengelolaan database percakapan (WABA) untuk mempermudah bisnis Anda melayani pelanggan.",
+    "ipHeading": "3. Hak Kekayaan Intelektual",
+    "ipText": "Website dan platform Pesan AI beserta konten asli, struktur database, model AI dan fungsionalitasnya adalah dan akan tetap menjadi milik eksklusif platform kami. Anda tidak diberikan lisensi untuk menggunakan merek dagang kami tanpa izin tertulis dari kami.",
+    "obligationsHeading": "4. Kewajiban Pengguna",
+    "obligationsIntro": "Saat mendaftar dan menggunakan platform kami, Anda setuju untuk tidak:",
+    "obligationsItems": [
+      "Mengirimkan konten atau materi pesanan yang melanggar kebijakan WhatsApp (Commerce/Business Policy) atau aturan hukum di Indonesia.",
+      "Mencoba melakukan reverse engineering, dekompilasi, atau mengeksploitasi celah keamanan sistem Pesan AI dan server kami.",
+      "Mengganggu kinerja sistem atau mengirim antrean pesan secara berlebihan yang mengarah ke tindakan serangan server (seperti DDoS).",
+      "Menyalahgunakan kredensial webhook dan nomor WABA yang diregistrasikan di luar batas kewajaran."
+    ],
+    "liabilityHeading": "5. Batasan Tanggung Jawab",
+    "liabilityText": "Pesan AI memfasilitasi koneksi ke Meta/WhatsApp API. Kami tidak bertanggung jawab atas pemblokiran nomor WABA Anda oleh pihak Meta, kerugian finansial atau kehilangan data pelanggan, serta downtime yang disebabkan oleh penyedia layanan pihak ketiga. Penggunaan layanan kami merupakan risiko Anda sendiri.",
+    "lawHeading": "6. Hukum yang Berlaku",
+    "lawText": "Syarat ini diatur dan ditafsirkan sesuai hukum yang berlaku di Indonesia. Setiap perselisihan yang timbul dari layanan ini atau Syarat Layanan ini akan diselesaikan secara eksklusif dalam yurisdiksi pengadilan di Indonesia."
+  },
+  "ProfileSettingsDialog": {
+    "labels": {
+      "title": "Edit profil",
+      "description": "Perbarui nama dan alamat email akun Anda.",
+      "name": "Nama",
+      "email": "Email",
+      "warning": "Mengubah email Anda akan mengirimkan tautan konfirmasi ke alamat email lama dan baru Anda.",
+      "save": "Simpan",
+      "saving": "Menyimpan..."
+    },
+    "errors": {
+      "nameRequired": "Nama wajib diisi",
+      "nameLength": "Nama maksimal 80 karakter",
+      "emailRequired": "Email wajib diisi",
+      "invalidEmail": "Masukkan alamat email yang valid",
+      "emailLength": "Email maksimal 255 karakter",
+      "failedSaveName": "Gagal menyimpan nama",
+      "failedChangeEmail": "Gagal mengubah email",
+      "failedSave": "Gagal menyimpan perubahan"
+    },
+    "messages": {
+      "profileUpdated": "Profil berhasil diperbarui",
+      "emailChangeSuccess": "Cek kotak masuk Anda, konfirmasi perubahan dari {currentEmail}. Lalu verifikasi dengan tautan yang dikirim ke {newEmail}."
+    }
+  },
+  "AccountSettingsDialog": {
+    "labels": {
+      "title": "Pengaturan",
+      "description": "Kelola preferensi workspace dan keamanan akun Anda.",
+      "tabs": {
+        "general": "Umum",
+        "security": "Keamanan"
+      }
+    },
+    "general": {
+      "title": "Umum",
+      "description": "Pilih bahasa yang digunakan di dashboard dan workspace chat Anda.",
+      "language": "Bahasa",
+      "languageDescription": "Untuk mengubah bahasa yang digunakan di dashboard dan workspace chat Anda."
+    },
+    "security": {
+      "labels": {
+        "title": "Keamanan",
+        "description": "Ubah kata sandi login atau kirim tautan reset ke email akun Anda.",
+        "currentPassword": "Kata sandi saat ini",
+        "newPassword": "Kata sandi baru",
+        "confirmPassword": "Konfirmasi kata sandi baru",
+        "forgotPassword": "Lupa kata sandi?",
+        "changePassword": "Ubah kata sandi",
+        "changePasswordDescription": "Untuk mengubah kata sandi login akun Anda atau meminta tautan reset melalui email.",
+        "changingPassword": "Mengubah...",
+        "hidePassword": "Sembunyikan kata sandi",
+        "showPassword": "Tampilkan kata sandi"
+      },
+      "errors": {
+        "currentPasswordRequired": "Kata sandi saat ini wajib diisi",
+        "newPasswordRequired": "Kata sandi baru wajib diisi",
+        "passwordLength": "Kata sandi minimal 8 karakter",
+        "confirmPasswordRequired": "Konfirmasi kata sandi wajib diisi",
+        "passwordMismatch": "Kata sandi tidak cocok",
+        "failedChangePassword": "Gagal mengubah kata sandi",
+        "failedSendReset": "Gagal mengirim tautan reset"
+      },
+      "messages": {
+        "passwordChanged": "Kata sandi berhasil diubah",
+        "resetLinkSent": "Tautan reset kata sandi telah dikirim ke email"
+      }
+    }
+  },
+  "NotFoundPage": {
+    "badge": "404",
+    "title": "Ups, halaman yang kamu cari tidak tersedia.",
+    "description": "Link mungkin dipindahkan atau tidak pernah ada.",
+    "home": "Kembali ke Beranda"
+  },
+  "Sidebar": {
+    "business": {
+      "title": "Bisnis",
+      "overview": "Ringkasan",
+      "connectApp": "Hubungkan App"
+    },
+    "customer": {
+      "title": "Pelanggan",
+      "customers": "Pelanggan"
+    },
+    "account": {
+      "title": "Akun",
+      "description": "Kelola profil, preferensi, dan keamanan akun Anda."
+    },
+    "chat": "Obrolan",
+    "navigation": "Navigasi",
+    "sectionNavigation": "Pilih halaman di {section}",
+    "pinPanel": "Pin panel",
+    "closePanel": "Close panel"
+  },
+  "ProfileMenu": {
+    "profile": "Profil",
+    "docs": "Pusat Bantuan",
+    "settings": "Pengaturan",
+    "general": "Umum",
+    "security": "Keamanan",
+    "logout": "Keluar"
+  },
+  "DashboardHome": {
+    "greeting": {
+      "morning": "Selamat pagi",
+      "afternoon": "Selamat siang",
+      "evening": "Selamat malam"
+    },
+    "title": "Ringkasan Aktivitas Akun",
+    "description": "Tinjau status operasional WABA dan kendalikan lalu lintas pesan masuk dari satu panel kontrol.",
+    "status": {
+      "error": "Ringkasan akun WhatsApp tidak dapat dimuat.",
+      "sectionTitle": "Status Akun",
+      "accounts": "Akun WhatsApp",
+      "accountsHelper": "Total akun WhatsApp Business (WABA) yang terintegrasi di ruang kerja ini.",
+      "active": "Aktif",
+      "activeHelper": "Jumlah akun aktif yang dapat digunakan untuk memproses pesan masuk dan keluar secara normal.",
+      "needsAttention": "Perlu perhatian",
+      "needsAttentionHelper": "Akun yang mengalami kendala (terputus, diblokir, atau butuh verifikasi Meta). Periksa segera untuk menghindari gangguan operasional."
+    },
+    "quickActions": {
+      "sectionTitle": "Tindakan Cepat",
+      "chat": {
+        "inbox": {
+          "eyebrow": "Kotak Masuk",
+          "title": "Balas percakapan pelanggan",
+          "helper": "Buka panel Kotak Masuk untuk memantau antrean percakapan, menugaskan agen, dan merespons pesan secara waktu nyata."
+        }
+      },
+      "business": {
+        "connectApp": {
+          "eyebrow": "Hubungkan App",
+          "title": "Kelola akun WhatsApp Business",
+          "helper": "Buka pengaturan Hubungkan App untuk mengelola status nomor, verifikasi Meta, dan batas tier pesan."
+        }
+      },
+      "customer": {
+        "customers": {
+          "eyebrow": "Pelanggan",
+          "title": "Tinjau kontak pelanggan yang tersimpan",
+          "helper": "Buka daftar pelanggan untuk memfilter kontak berdasarkan nomor WhatsApp dan mengekspornya bila diperlukan."
+        }
+      }
+    }
+  },
+  "Waba": {
+    "status": {
+      "active": "Aktif",
+      "disconnected": "Terputus",
+      "suspended": "Ditangguhkan"
+    },
+    "numbers": {
+      "one": "1 nomor",
+      "multiple": "{count} nomor",
+      "manage": "Kelola nomor WhatsApp",
+      "whatsappNumber": "Nomor WhatsApp",
+      "connected": "{label} terhubung",
+      "none": "Belum ada nomor yang terhubung.",
+      "add": "Tambah nomor"
+    },
+    "id": {
+      "copied": "ID WABA disalin."
+    },
+    "row": {
+      "unnamed": "Bisnis tanpa nama",
+      "idPrefix": "ID WABA: ",
+      "status": "Status",
+      "connectedOn": "Terhubung pada"
+    },
+    "empty": {
+      "title": "Belum ada akun WhatsApp",
+      "description": "Hubungkan akun WhatsApp Business pertama Anda agar Pesan AI dapat mulai menerima dan mengelola percakapan."
+    },
+    "action": {
+      "connect": "Hubungkan akun WhatsApp",
+      "connecting": "Menghubungkan akun..."
+    },
+    "summary": {
+      "accounts": "akun",
+      "active": "aktif",
+      "needsAttention": "perlu perhatian"
+    },
+    "error": {
+      "load": "Gagal memuat daftar WABA",
+      "retry": "Coba lagi"
+    },
+    "header": {
+      "title": "Akun WhatsApp Business",
+      "description": "Kelola akun dan nomor WhatsApp yang terhubung ke Pesan AI."
+    },
+    "table": {
+      "business": "Bisnis"
+    },
+    "pagination": {
+      "showing": "Menampilkan {start}-{end} dari {total} akun",
+      "empty": "Belum ada akun",
+      "previous": "Sebelumnya",
+      "page": "Halaman {current} dari {total}",
+      "next": "Selanjutnya"
+    },
+    "addNumber": {
+      "trigger": "Tambah nomor",
+      "input": {
+        "title": "Tambah Nomor WhatsApp",
+        "descriptionPrefix": "Hubungkan nomor baru untuk ",
+        "descriptionFallback": "akun WhatsApp Business ini",
+        "labelNumber": "Nomor WhatsApp",
+        "placeholderNumber": "Masukkan nomor WhatsApp",
+        "labelName": "Nama tampilan",
+        "placeholderName": "Contoh: Customer Support",
+        "nameHelper": "Nama ini akan terlihat oleh pelanggan di WhatsApp sampai mereka menyimpan kontak Anda.",
+        "cancel": "Batal",
+        "submit": "Kirim kode",
+        "submitting": "Mengirim kode...",
+        "successToast": "Kode verifikasi dikirim melalui SMS.",
+        "errorToast": "Gagal menambahkan nomor",
+        "validation": {
+          "numberRequired": "Nomor WhatsApp wajib diisi",
+          "invalidNumber": "Format nomor tidak valid",
+          "nameRequired": "Nama tampilan wajib diisi"
+        }
+      },
+      "otp": {
+        "title": "Verifikasi Nomor",
+        "description": "Masukkan 6 digit kode yang dikirim melalui SMS.",
+        "changeNumber": "Ganti nomor",
+        "resend": "Kirim ulang kode",
+        "resendIn": "Kirim ulang dalam {count}d",
+        "cancel": "Batal",
+        "confirm": "Konfirmasi",
+        "verifying": "Memverifikasi...",
+        "resendSuccess": "Kode verifikasi dikirim ulang.",
+        "resendError": "Gagal mengirim ulang kode",
+        "verifySuccess": "Nomor WhatsApp berhasil diverifikasi.",
+        "verifyError": "Verifikasi gagal"
+      }
+    },
+    "signup": {
+      "noCodeError": "Login Facebook selesai tanpa kode otorisasi. Silakan coba lagi.",
+      "waitingDetails": "Kode otorisasi diterima. Menunggu detail WABA dari alur pendaftaran tersemat.",
+      "success": "WABA berhasil dihubungkan.",
+      "alreadyConnected": "Akun WhatsApp Business ini sudah terhubung ke pengguna lain",
+      "generalError": "Gagal menyelesaikan pendaftaran WhatsApp. Silakan coba lagi.",
+      "requireHttps": "Facebook Embedded Signup memerlukan HTTPS. Buka halaman ini dari URL HTTPS sebelum melanjutkan.",
+      "sdkNotReady": "Facebook SDK belum siap. Silakan coba lagi sebentar lagi."
+    }
+  },
+  "Customers": {
+    "filters": {
+      "allWabas": "Semua WABA",
+      "noWaba": "Tidak ada WABA",
+      "wabaSingular": "WABA",
+      "wabaPlural": "WABA",
+      "allNumbers": "Semua nomor",
+      "noNumber": "Tidak ada nomor",
+      "numberSingular": "nomor",
+      "numberPlural": "nomor",
+      "wabaTitle": "Filter WABA",
+      "selectAll": "Pilih semua",
+      "wabaEmpty": "WABA tidak tersedia.",
+      "numberTitle": "Filter Nomor",
+      "numberEmpty": "Tidak ada nomor yang tersedia untuk WABA yang dipilih.",
+      "clear": "Hapus"
+    },
+    "export": {
+      "emptyError": "Tidak ada baris pelanggan untuk diekspor.",
+      "success": "Tabel pelanggan diekspor."
+    },
+    "header": {
+      "title": "Pelanggan",
+      "description": "Tinjau nomor pelanggan yang telah mengobrol dengan akun WhatsApp Anda yang terhubung."
+    },
+    "action": {
+      "export": "Ekspor Excel"
+    },
+    "pagination": {
+      "showing": "Menampilkan {start}-{end} dari {total} pelanggan"
+    },
+    "table": {
+      "noMatch": "Tidak ada pelanggan yang cocok",
+      "noMatchDescription": "Coba filter WABA atau nomor lain untuk memperluas daftar pelanggan.",
+      "empty": "Belum ada pelanggan",
+      "emptyDescription": "Pelanggan akan muncul di sini setelah percakapan masuk.",
+      "clearFilters": "Hapus filter",
+      "errorLoad": "Gagal memuat pelanggan",
+      "retry": "Coba lagi",
+      "colNo": "No.",
+      "colName": "Nama",
+      "colUsername": "Nama Pengguna",
+      "colPhone": "Nomor Telepon",
+      "noName": "Nama tidak diketahui",
+      "noUsername": "Username tidak diketahui",
+      "noPhone": "Nomor tidak diketahui"
+    }
+  },
+  "Chat": {
+    "takeover": {
+      "enabled": "Pengambilalihan admin diaktifkan",
+      "disabled": "Percakapan dikembalikan ke Agen AI",
+      "error": "Gagal memperbarui status pengambilalihan"
+    },
+    "empty": {
+      "noConversations": "Tidak ada percakapan yang ditemukan",
+      "selectWaba": "Pilih WABA",
+      "noConversationsDesc": "Coba WABA lain, sesuaikan filter, atau tunggu pesan pelanggan baru.",
+      "selectWabaDesc": "Pilih Akun WhatsApp Business untuk memuat percakapannya."
+    },
+    "sidebar": {
+      "search": "Cari nomor atau nama",
+      "filterAll": "Semua",
+      "filterAdmin": "Admin",
+      "filterBot": "Agen AI",
+      "allPhones": "Semua Telepon"
+    },
+    "header": {
+      "back": "Kembali ke percakapan"
+    },
+    "detail": {
+      "emptyTitle": "Pilih percakapan",
+      "emptyDesc": "Pilih utas pelanggan dari kotak masuk untuk meninjau riwayat pesan dan melanjutkan percakapan.",
+      "agentActivePrompt": "Agen AI sedang aktif menangani percakapan ini! Anda dapat mengambil alih kapan saja melalui tombol di bawah.",
+      "agentActiveExpiredPrompt": "Percakapan kedaluwarsa karena tidak ada balasan dari pelanggan selama 24 jam terakhir. Agen AI tetap aktif, namun Anda tidak dapat mengambil alih saat ini.",
+      "takeoverPrompt": "Agen AI sedang dijeda. Kembalikan percakapan ke Agen AI jika Anda sudah selesai.",
+      "takeoverExpiredPrompt": "Percakapan kedaluwarsa karena tidak ada balasan dari pelanggan selama 24 jam terakhir. Anda tidak dapat mengirim pesan, silakan kembalikan percakapan ke Agen AI agar pesan pelanggan selanjutnya dapat dibalas secara otomatis.",
+      "returnToAgent": "Kembalikan ke Agen AI",
+      "returnDialogTitle": "Kembalikan percakapan ini ke Agen AI?",
+      "returnDialogDesc": "Agen AI akan melanjutkan penanganan pesan baru dari {name}.",
+      "takeoverButton": "Ambil Alih Percakapan",
+      "takeoverDialogTitle": "Ambil alih percakapan ini?",
+      "takeoverDialogDesc": "Agen AI akan berhenti membalas {name} sampai Anda mengembalikan percakapan ini ke Agen AI.",
+      "cancel": "Batal"
+    },
+    "composer": {
+      "document": "Dokumen",
+      "media": "Foto & video",
+      "audio": "Audio",
+      "removeMedia": "Hapus lampiran",
+      "audioCaptionNotSupported": "File audio tidak dapat diberi caption",
+      "unsupportedFile": "Tipe file ini tidak didukung.",
+      "maxFilesExceeded": "Maksimal {max} file yang dapat dikirim sekaligus.",
+      "templateRequired": "Penggunaan pesan templat diwajibkan",
+      "templateDesc": "Balasan format bebas kedaluwarsa 24 jam setelah pesan pelanggan terakhir. Kirim pesan templat untuk membuka kembali percakapan.",
+      "attach": "Lampirkan media",
+      "dropMedia": "Lepaskan media untuk dilampirkan",
+      "placeholderMedia": "Tambahkan keterangan...",
+      "placeholder": "Ketik pesan Anda...",
+      "placeholderTemplate": "Pesan templat diwajibkan",
+      "closeFormatToolbar": "Tutup",
+      "formatBold": "Tebal",
+      "formatItalic": "Miring",
+      "formatStrikethrough": "Coret",
+      "formatCode": "Kode inline",
+      "formatBulletedList": "Daftar poin",
+      "formatNumberedList": "Daftar nomor",
+      "formatQuote": "Kutipan",
+      "send": "Kirim"
+    },
+    "timeline": {
+      "loading": "Memuat pesan",
+      "loadOlder": "Muat pesan lebih lama",
+      "empty": "Belum ada pesan untuk percakapan ini.",
+      "today": "Hari ini",
+      "yesterday": "Kemarin"
+    },
+    "status": {
+      "sending": "Mengirim",
+      "read": "Dibaca",
+      "delivered": "Terkirim",
+      "failed": "Gagal",
+      "sent": "Terkirim"
+    },
+    "bubble": {
+      "errorLoad": "Tidak dapat memuat pratinjau media.",
+      "errorUnavailable": "File media tidak tersedia.",
+      "menu": {
+        "label": "Aksi pesan",
+        "open": "Buka",
+        "saveAs": "Simpan sebagai",
+        "copy": "Salin",
+        "copied": "Disalin ke clipboard.",
+        "cancel": "Batal",
+        "download": "Unduh file",
+        "saving": "Menyimpan...",
+        "downloadConfirmTitle": "File ini tidak dapat dipratinjau",
+        "downloadConfirmDescription": "Format file ini tidak dapat dibuka langsung di browser. Apakah Anda ingin menyimpannya?",
+        "errors": {
+          "urlUnavailable": "URL media tidak tersedia.",
+          "signedUrlInvalid": "Tautan media tidak valid atau sudah kedaluwarsa.",
+          "mediaFetchFailed": "Media gagal diambil.",
+          "fileOpenFailed": "File gagal dibuka.",
+          "fileSaveFailed": "File gagal disimpan.",
+          "savePickerUnsupported": "Browser ini tidak dapat memilih lokasi penyimpanan.",
+          "clipboardUnsupported": "Akses clipboard tidak didukung oleh browser ini.",
+          "formatUnsupported": "Format file ini tidak dapat disalin.",
+          "clipboardPermission": "Browser tidak memberikan izin clipboard."
+        }
+      },
+      "unsupported": "Pesan {type} tidak didukung"
+    },
+    "list": {
+      "errorTitle": "Tidak dapat memuat obrolan",
+      "errorDesc": "Kotak masuk tidak dapat dimuat saat ini.",
+      "retry": "Coba lagi",
+      "statusAdmin": "Butuh Admin",
+      "statusAiAgent": "AI Agent Aktif"
+    },
+    "contact": {
+      "label": {
+        "newCustomer": "Pelanggan Baru",
+        "vip": "Pelanggan VIP",
+        "followUp": "Perlu Tindak Lanjut",
+        "completed": "Selesai"
+      },
+      "close": "Tutup",
+      "back": "Kembali ke percakapan",
+      "title": "Info kontak",
+      "takeover": "Kontrol Admin",
+      "agentActive": "Agen AI Aktif",
+      "lastActivity": "Aktivitas terakhir",
+      "connectedVia": "Terhubung via admin",
+      "connectedPlatforms": "Platform terhubung",
+      "customerLabel": "Label pelanggan",
+      "selectLabel": "Pilih label pelanggan...",
+      "customLabel": "Label kustom...",
+      "typeLabel": "Ketik nama label...",
+      "internalNotes": "Catatan internal",
+      "addNote": "Tambahkan catatan singkat untuk tim admin",
+      "saving": "Menyimpan..."
+    },
+    "wabaSwitcher": {
+      "title": "Akun WhatsApp Business",
+      "select": "Pilih WABA",
+      "search": "Cari WABA atau nomor telepon",
+      "noMatch": "Tidak ada WABA yang cocok dengan pencarian ini.",
+      "noNumbers": "Tidak ada nomor yang terhubung"
+    },
+    "phoneFilter": {
+      "title": "Nomor Telepon",
+      "search": "Cari nomor telepon",
+      "noMatch": "Tidak ada nomor telepon yang cocok dengan pencarian ini."
+    }
+  },
+  "Admin": {
+    "user": {
+      "page": {
+        "title": "Manajemen Pengguna",
+        "description": "Tambah dan kelola akun pengguna untuk platform."
+      }
+    },
+    "waba": {
+      "page": {
+        "title": "Manajemen WABA",
+        "description": "Lihat semua Akun WhatsApp Business dan pasangkan webhook kepada mereka."
+      }
+    },
+    "webhook": {
+      "page": {
+        "title": "Manajemen Webhook",
+        "description": "Tambah dan kelola endpoint webhook untuk platform."
+      }
+    },
+    "AdminDashboardCard": {
+      "eyebrow": "Admin",
+      "title": "Dashboard Admin",
+      "description": "Pilih menu di bawah untuk mengelola sistem.",
+      "navigation": {
+        "user": {
+          "label": "Kelola Akun Pengguna",
+          "description": "Tambah dan kelola akun pengguna."
+        },
+        "webhook": {
+          "label": "Kelola Webhook",
+          "description": "Konfigurasi dan pantau webhook yang aktif."
+        },
+        "waba": {
+          "label": "Kelola WABA Pengguna",
+          "description": "Pasangkan Webhook ke WABA"
+        }
+      }
+    },
+    "Header": {
+      "logoAlt": "Pesan AI logo",
+      "brandName": "Pesan AI",
+      "navigation": {
+        "user": "Pengguna",
+        "webhook": "Webhook",
+        "waba": "WABA"
+      }
+    },
+    "CreateUserDialog": {
+      "trigger": "Buat Pengguna",
+      "title": "Buat Pengguna Baru",
+      "description": "Isi formulir untuk menambahkan akun pengguna baru.",
+      "labels": {
+        "name": "Nama",
+        "email": "Email",
+        "role": "Peran"
+      },
+      "placeholders": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "Pilih peran"
+      },
+      "roles": {
+        "user": "User",
+        "admin": "Admin"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "creating": "Membuat...",
+        "submit": "Buat Pengguna"
+      },
+      "messages": {
+        "success": "Pengguna dibuat dan email verifikasi dikirim",
+        "errorFallback": "Gagal membuat pengguna"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidEmail": "Masukkan alamat email yang valid",
+        "roleRequired": "Pilih peran"
+      }
+    },
+    "UserTable": {
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "columns": {
+        "name": "Nama",
+        "email": "Email",
+        "role": "Peran",
+        "createdAt": "Dibuat Pada",
+        "actions": "Aksi"
+      },
+      "actions": {
+        "resendInvite": "Kirim Ulang Undangan",
+        "sending": "Mengirim..."
+      },
+      "messages": {
+        "resendSuccess": "Email onboarding berhasil dikirim ulang",
+        "resendError": "Gagal mengirim ulang email onboarding",
+        "errorFallback": "Terjadi kesalahan"
+      },
+      "empty": {
+        "description": "Tidak ada pengguna."
+      },
+      "pagination": {
+        "showing": "Menampilkan {start}-{end} dari {total} pengguna",
+        "empty": "Tidak ada pengguna",
+        "previous": "Sebelumnya",
+        "page": "Halaman {current} dari {total}",
+        "next": "Selanjutnya"
+      }
+    },
+    "AssignWebhookDialog": {
+      "trigger": "Pasangkan Webhook",
+      "title": "Pasangkan Webhook ke WABA",
+      "description": "Pilih webhook untuk menangani pesan dari <strong>{name}</strong>. Memilih \"None / Remove\" akan menghapus webhook yang dipasangkan saat ini.",
+      "placeholder": "Pilih webhook",
+      "noneOption": "None / Remove",
+      "actions": {
+        "cancel": "Batal",
+        "save": "Simpan"
+      },
+      "messages": {
+        "success": "Webhook berhasil dipasangkan",
+        "errorFallback": "Gagal memasangkan webhook"
+      }
+    },
+    "WabaTable": {
+      "columns": {
+        "namePhone": "Nama / Nomor Telepon",
+        "associatedUser": "Pengguna Terkait",
+        "assignedWebhook": "Webhook Dipasangkan",
+        "createdAt": "Dibuat Pada",
+        "actions": "Aksi"
+      },
+      "badges": {
+        "none": "None"
+      },
+      "row": {
+        "unknownUser": "Tidak Diketahui",
+        "noPhoneNumbers": "Tidak ada nomor telepon",
+        "none": "None"
+      },
+      "empty": {
+        "description": "Tidak ada WABA."
+      },
+      "error": {
+        "fallback": "Terjadi kesalahan",
+        "retry": "Coba lagi"
+      },
+      "pagination": {
+        "showing": "Menampilkan {start}-{end} dari {total} WABA",
+        "empty": "Tidak ada WABA",
+        "previous": "Sebelumnya",
+        "page": "Halaman {current} dari {total}",
+        "next": "Selanjutnya"
+      }
+    },
+    "CreateWebhookDialog": {
+      "trigger": "Tambah Webhook",
+      "title": "Tambah Webhook Baru",
+      "description": "Masukkan detail webhook di bawah ini. URL akan divalidasi sebelum disimpan.",
+      "labels": {
+        "name": "Nama",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Frasa Sandi"
+      },
+      "placeholders": {
+        "name": "Webhook Saya",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Rahasia bersama untuk JWT"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "creating": "Membuat...",
+        "submit": "Tambah Webhook"
+      },
+      "messages": {
+        "success": "Webhook berhasil dibuat",
+        "errorFallback": "Gagal membuat webhook"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidUrl": "Masukkan URL yang valid",
+        "passphraseRequired": "Frasa sandi wajib diisi"
+      }
+    },
+    "DeleteWebhookDialog": {
+      "trigger": "Hapus",
+      "title": "Hapus Webhook",
+      "description": "Apakah Anda yakin ingin menghapus \"{name}\"? Tindakan ini tidak dapat dibatalkan.",
+      "actions": {
+        "cancel": "Batal",
+        "deleting": "Menghapus...",
+        "delete": "Hapus"
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" berhasil dihapus",
+        "errorFallback": "Gagal menghapus webhook"
+      }
+    },
+    "UpdateWebhookDialog": {
+      "trigger": "Edit",
+      "title": "Perbarui Webhook",
+      "description": "Perbarui pengaturan untuk \"{name}\". Perubahan akan langsung berlaku.",
+      "labels": {
+        "name": "Nama",
+        "webhookUrl": "Webhook URL",
+        "passphrase": "Frasa Sandi",
+        "passphraseHint": "Kosongkan untuk mempertahankan frasa sandi saat ini."
+      },
+      "placeholders": {
+        "name": "Webhook Saya",
+        "webhookUrl": "https://example.com/webhook",
+        "passphrase": "Masukkan frasa sandi baru"
+      },
+      "actions": {
+        "cancel": "Batal",
+        "saving": "Menyimpan...",
+        "submit": "Simpan Perubahan",
+        "refresh": "Uji Koneksi",
+        "refreshing": "Menguji..."
+      },
+      "messages": {
+        "success": "Webhook \"{name}\" berhasil diperbarui",
+        "refreshSuccess": "Koneksi berhasil diverifikasi",
+        "errorFallback": "Gagal memperbarui webhook"
+      },
+      "validation": {
+        "nameRequired": "Nama wajib diisi",
+        "invalidUrl": "Masukkan URL yang valid",
+        "passphraseMinLength": "Frasa sandi minimal 1 karakter"
+      }
+    },
+    "WebhookDocsDialog": {
+      "trigger": "Dokumentasi API",
+      "title": "Dokumentasi API Webhook",
+      "description": "Bagaimana endpoint webhook Anda harus menangani permintaan dari Pesan AI.",
+      "sections": {
+        "auth": {
+          "title": "Autentikasi",
+          "p1": "Setiap permintaan menyertakan token bearer di header <authCode>Authorization</authCode>. Token ini adalah JWT berumur pendek yang ditandatangani dengan algoritma <strongAuth>HS256</strongAuth> menggunakan <strongPassphrase>frasa sandi</strongPassphrase> yang Anda konfigurasikan sebagai rahasia bersama.",
+          "p2": "Jika webhook tool Anda meminta kredensial JWT, konfigurasi tipe key sebagai <strongType>passphrase</strongType>, pilih <strongAlgo>HS256</strongAlgo> sebagai algoritma, dan gunakan frasa sandi yang sama persis saat membuat webhook di Pesan AI."
+        },
+        "validation": {
+          "title": "Permintaan Validasi",
+          "p1": "Saat Anda mendaftarkan webhook, Pesan AI mengirim permintaan <strongGet>GET</strongGet> ke URL Anda untuk memverifikasi apakah URL tersebut dapat dijangkau dan diautentikasi. Endpoint Anda harus memvalidasi token JWT dan mengembalikan respons <codeOk>200 OK</codeOk> untuk mengonfirmasi validitas webhook."
+        },
+        "message": {
+          "title": "Permintaan Pesan",
+          "p1": "Saat pesan baru diterima, Pesan AI meneruskannya ke webhook Anda melalui permintaan <strongPost>POST</strongPost>. Endpoint Anda harus memverifikasi token bearer JWT menggunakan frasa sandi yang dikonfigurasikan, memproses riwayat pesan, dan mengembalikan respons bot.",
+          "p2": "Kolom <codePhone>customerPhoneNumber</codePhone> mengidentifikasi pelanggan, dan array <codeMessages>messages</codeMessages> berisi pesan teks secara kronologis.",
+          "list": {
+            "phone": "<codeField>customerPhoneNumber</codeField>: nomor telepon WhatsApp pelanggan dalam format internasional.",
+            "sequence": "<codeField>sequence</codeField>: angka, urutan kronologis mulai dari 1.",
+            "source": "<codeField>source</codeField>: salah satu dari <codeSource>customer</codeSource>, <codeSource>admin</codeSource>, atau <codeSource>bot</codeSource>.",
+            "timestamp": "<codeField>timestamp</codeField>: string timestamp ISO-8601.",
+            "content": "<codeField>content</codeField>: konten teks pesan."
+          },
+          "p3": "Kolom <codeBot>botResponse</codeBot> bersifat opsional dan akan dikirim ke pelanggan sebagai pesan bot. <codeAdmin>adminTakeover</codeAdmin> bersifat opsional dan default ke <codeFalse>false</codeFalse>; saat diatur ke <codeTrue>true</codeTrue>, Pesan AI menandai percakapan untuk pengambilalihan admin sebelum mengirim pesan bot.",
+          "p4": "Kembalikan status non-2xx hanya ketika Pesan AI harus menganggap panggilan webhook gagal. Kesalahan klien tidak dicoba ulang, kecuali <code429>429</code429>. Batas rate dan kesalahan server dicoba ulang hingga 3 kali dengan jeda linear 1 detik."
+        }
+      }
+    },
+    "WebhookTable": {
+      "columns": {
+        "name": "Nama",
+        "url": "URL",
+        "status": "Status",
+        "createdAt": "Dibuat Pada",
+        "actions": "Aksi"
+      },
+      "status": {
+        "active": "Aktif",
+        "inactive": "Tidak Aktif"
+      },
+      "empty": {
+        "description": "Tidak ada webhook."
+      },
+      "error": {
+        "fallback": "Terjadi kesalahan",
+        "retry": "Coba lagi"
+      },
+      "pagination": {
+        "showing": "Menampilkan {start}-{end} dari {total} webhook",
+        "empty": "Tidak ada webhook",
+        "previous": "Sebelumnya",
+        "page": "Halaman {current} dari {total}",
+        "next": "Selanjutnya"
+      }
+    }
+  }
+}

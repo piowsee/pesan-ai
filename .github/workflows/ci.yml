@@ -58,25 +58,25 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint check
-        run: pnpm lint
+        run: pnpm --filter pesan-ai lint
 
       - name: Prettier check
         run: pnpm format:check
 
       - name: Generate prisma
-        run: pnpm prisma generate
+        run: pnpm --filter pesan-ai exec prisma generate
 
       - name: Run migration scripts
-        run: pnpm prisma migrate dev
+        run: pnpm --filter pesan-ai exec prisma migrate dev
 
       - name: Run db seeding script
-        run: pnpm prisma db seed
+        run: pnpm --filter pesan-ai exec prisma db seed
 
       - name: Run test scripts
-        run: pnpm run test
+        run: make test
 
       - name: Build check
-        run: pnpm run build
+        run: pnpm --filter pesan-ai build
 
   # Build job for docs
   docs-build:
