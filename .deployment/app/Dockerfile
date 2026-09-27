@@ -1,4 +1,4 @@
-# Docs: https://nextjs.org/docs/14/app/building-your-application/deploying#docker-image
+# Docs: https://nextjs.org/docs/app/building-your-application/deploying#docker-image
 
 # ============================================
 # Stage 1: Dependencies Installation Stage
@@ -14,10 +14,14 @@ FROM node:${NODE_VERSION} AS dependencies
 # Set working directory
 WORKDIR /app
 
-# Copy package-related files first to leverage Docker's caching mechanism
+# Copy workspace manifests first to leverage Docker's caching mechanism.
+# web/package.json is required so pnpm can resolve the `pesan-ai` package; docs/ is
+# intentionally omitted here (it deploys via GitHub Pages, not this image).
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* pnpm-workspace.yaml* .npmrc* ./
+COPY web/package.json ./web/package.json
 
-# Install project dependencies with frozen lockfile for reproducible builds
+# Install project dependencies with frozen lockfile for reproducible builds.
+# The pnpm path is scoped to --filter pesan-ai so resolution succeeds without docs/.
 RUN --mount=type=cache,target=/root/.npm \
     --mount=type=cache,target=/usr/local/share/.cache/yarn \
     --mount=type=cache,target=/root/.local/share/pnpm/store \
@@ -26,7 +30,7 @@ RUN --mount=type=cache,target=/root/.npm \
   elif [ -f yarn.lock ]; then \
     corepack enable yarn && yarn install --frozen-lockfile --production=false; \
   elif [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm install --frozen-lockfile; \
+    corepack enable pnpm && pnpm install --frozen-lockfile --filter pesan-ai; \
   else \
     echo "No lockfile found." && exit 1; \
   fi
@@ -43,14 +47,18 @@ WORKDIR /app
 # openssl needed for prisma
 RUN apt-get update && apt-get install -y openssl
 
-# Copy project dependencies from dependencies stage
+# Copy installed dependencies from the dependencies stage. In a pnpm workspace the deps
+# live in two places: the virtual store at the root (node_modules/.pnpm) and the
+# per-package symlink tree (web/node_modules), so both are copied to build the app.
 COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/web/node_modules ./web/node_modules
 
-# Copy application source code
+# Copy application source code (.dockerignore keeps node_modules/.next out of the
+# context, so the dependencies copied above are preserved).
 COPY . .
 
 ENV NODE_ENV=production
-# DOCKER_BUILD was included to avoid build standalone on local
+# DOCKER_BUILD switches next.config.ts to standalone output + outputFileTracingRoot
 ENV DOCKER_BUILD=true
 
 # Next.js collects completely anonymous telemetry data about general usage.
@@ -58,13 +66,13 @@ ENV DOCKER_BUILD=true
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build Next.js application
+# Build the web app (its build script runs `prisma generate && next build`).
 RUN if [ -f package-lock.json ]; then \
     npm run build; \
   elif [ -f yarn.lock ]; then \
     corepack enable yarn && yarn build; \
   elif [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm build; \
+    corepack enable pnpm && pnpm --filter pesan-ai build; \
   else \
     echo "No lockfile found." && exit 1; \
   fi
@@ -98,21 +106,28 @@ ENV NEXT_PUBLIC_FACEBOOK_CONFIG_ID=$NEXT_PUBLIC_FACEBOOK_CONFIG_ID
 # Learn more here: https://nextjs.org/telemetry
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy production assets
-COPY --from=builder --chown=node:node /app/public ./public
+# Copy production assets. The app lives under web/ in the workspace, but the standalone
+# output is flattened back onto the app root (/app) so the container runs from ./ not ./web.
+COPY --from=builder --chown=node:node /app/web/public ./public
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
 RUN chown node:node .next
 
-# Automatically leverage output traces to reduce image size
+# Automatically leverage output traces to reduce image size.
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+# Standalone is traced from the monorepo root, so it mirrors the workspace: the app
+# (server.js + .next) sits under standalone/web and the traced runtime deps under
+# standalone/node_modules. Flatten both onto /app. The workspace symlinks in
+# web/node_modules point at absolute /app/node_modules/.pnpm paths, which stay valid
+# because .pnpm still lands at /app/node_modules/.pnpm below.
+COPY --from=builder --chown=node:node /app/web/.next/standalone/web ./
+COPY --from=builder --chown=node:node /app/web/.next/standalone/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/web/.next/static ./.next/static
 
 # If you want to persist the fetch cache generated during the build so that
 # cached responses are available immediately on startup, uncomment this line:
-COPY --from=builder --chown=node:node /app/.next/cache ./.next/cache
+COPY --from=builder --chown=node:node /app/web/.next/cache ./.next/cache
 
 # Switch to non-root user for security best practices
 USER node

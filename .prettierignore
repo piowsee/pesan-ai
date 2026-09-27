@@ -9,7 +9,7 @@ next-env.d.ts
 
 # Generated
 generated
-prisma/generated
+**/prisma/generated
 
 # Dependencies
 node_modules
