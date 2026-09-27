@@ -7,12 +7,17 @@
   loop:
     - app
     - database
-    - nginx
 
 - name: Copy App docker-compose
   ansible.builtin.copy:
     src: '{{ playbook_dir }}/../app/docker-compose.yaml'
     dest: '~/pesanai-docker/app/docker-compose.yaml'
+    mode: '0644'
+
+- name: Copy App Nginx config
+  ansible.builtin.copy:
+    src: '{{ playbook_dir }}/../app/nginx.conf'
+    dest: '~/pesanai-docker/app/nginx.conf'
     mode: '0644'
 
 - name: Copy Database files
@@ -21,14 +26,8 @@
     dest: '~/pesanai-docker/database/'
     mode: preserve
 
-- name: Copy Nginx App files
-  ansible.builtin.copy:
-    src: '{{ playbook_dir }}/../nginx/app/'
-    dest: '~/pesanai-docker/nginx/'
-    mode: '0644'
-
 - name: Inject Domain into Nginx App Config
   ansible.builtin.replace:
-    path: '~/pesanai-docker/nginx/nginx.conf'
+    path: '~/pesanai-docker/app/nginx.conf'
     regexp: 'YOUR_DOMAIN_NAME'
     replace: '{{ domain_name }}'

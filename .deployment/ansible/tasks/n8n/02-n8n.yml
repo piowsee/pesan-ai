@@ -6,7 +6,7 @@
   become: yes
 
 - name: Start n8n
-  ansible.builtin.command: docker compose up -d
+  ansible.builtin.command: docker compose up -d n8n
   args:
     chdir: '{{ ansible_facts.env.HOME }}/pesanai-docker/n8n'
   become: yes
