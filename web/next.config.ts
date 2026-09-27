@@ -5,6 +5,9 @@ import path from 'node:path';
 const mediaHost = 'https://pesan-ai-object-storage.sgp1.digitaloceanspaces.com';
 
 const nextConfig: NextConfig = {
+  typescript: {
+    tsconfigPath: 'tsconfig.build.json',
+  },
   async headers() {
     return [
       {
