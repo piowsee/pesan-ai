@@ -1,4 +1,12 @@
 ---
+- name: Setup WireGuard tunnel between app and n8n
+  hosts: app:n8n
+  become: no
+
+  tasks:
+    - name: Configure WireGuard mesh
+      ansible.builtin.import_tasks: tasks/common/wireguard.yml
+
 - name: Deploy Pesan AI App
   hosts: app
   become: no

@@ -22,7 +22,8 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - '80:80'
+      # Publish only on the WireGuard interface, never on the public IP.
+      - 'YOUR_N8N_WG_IP:80:80'
     networks:
       - backend
 

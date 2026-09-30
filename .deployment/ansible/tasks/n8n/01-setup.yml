@@ -13,8 +13,14 @@
     dest: '~/pesanai-docker/n8n/'
     mode: '0644'
 
-- name: Inject App IP into Nginx n8n Config
+- name: Inject App WireGuard IP into Nginx allow rule
   ansible.builtin.replace:
     path: '~/pesanai-docker/n8n/nginx.conf'
-    regexp: 'YOUR_APP_IP'
-    replace: '{{ hostvars[groups["app"][0]].ansible_host | default(groups["app"][0]) }}'
+    regexp: 'YOUR_APP_WG_IP'
+    replace: "{{ wg_ips['app'] }}"
+
+- name: Bind n8n Nginx to the WireGuard interface
+  ansible.builtin.replace:
+    path: '~/pesanai-docker/n8n/docker-compose.yaml'
+    regexp: 'YOUR_N8N_WG_IP'
+    replace: "{{ wg_ips['n8n'] }}"
