@@ -1,0 +1,14 @@
+[Interface]
+Address = {{ wg_self_ip }}/{{ wg_network_cidr }}
+ListenPort = {{ wg_port }}
+PrivateKey = {{ wg_private_key }}
+
+{% for role, ip in wg_ips.items() if role != wg_role %}
+{% set peer_host = groups[role][0] %}
+[Peer]
+# {{ role }}
+PublicKey = {{ hostvars[peer_host].wg_public_key }}
+AllowedIPs = {{ ip }}/32
+Endpoint = {{ hostvars[peer_host].ansible_host | default(peer_host) }}:{{ wg_port }}
+PersistentKeepalive = 25
+{% endfor %}
