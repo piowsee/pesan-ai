@@ -1,5 +1,14 @@
 # pesan-ai
 
+## 1.5.0
+
+### Minor Changes
+
+- c9774fd: Implement Customer's label and note feature on contact detail panel
+- 8350315: Modularized message-composer component into several part in a new 'message-composer' folder
+- 09d14b6: Implement refresh connection and update data for admin's webhook page. And refactor webhook caller to use betterfetch to handle POST and GET req.
+- 3837f12: add local storage for sidebar state
+
 ## 1.4.0
 
 ### Minor Changes
