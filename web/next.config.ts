@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 import path from 'node:path';
 
-const mediaHost = 'https://pesan-ai-object-storage.sgp1.digitaloceanspaces.com';
+const mediaHost = 'https://is3.cloudhost.id';
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'pesan-ai-object-storage.sgp1.digitaloceanspaces.com',
+        hostname: 'is3.cloudhost.id',
         pathname: '/**',
       },
     ],
