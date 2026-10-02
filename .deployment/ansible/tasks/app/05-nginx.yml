@@ -16,6 +16,7 @@
 
 - name: Generate SSL Certificate (if missing)
   when: not ssl_cert.stat.exists
+  become: yes
   block:
     - name: Ensure secrets directory exists
       ansible.builtin.file:
@@ -34,7 +35,6 @@
         certbot certonly --dns-cloudflare
         --dns-cloudflare-credentials ~/.secrets/cloudflare.ini
         --non-interactive --agree-tos -m {{ ssl_email }} -d {{ domain_name }}
-      become: yes
       when: ssl_email | default('') != ''
 
     - name: Obtain certificate (without email)
@@ -42,7 +42,6 @@
         certbot certonly --dns-cloudflare
         --dns-cloudflare-credentials ~/.secrets/cloudflare.ini
         --non-interactive --agree-tos --register-unsafely-without-email -d {{ domain_name }}
-      become: yes
       when: ssl_email | default('') == ''
 
 - name: Renew SSL Certificate (if exists)
