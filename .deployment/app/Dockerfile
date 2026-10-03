@@ -108,7 +108,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy production assets. The app lives under web/ in the workspace, but the standalone
 # output is flattened back onto the app root (/app) so the container runs from ./ not ./web.
-COPY --from=builder --chown=node:node /app/web/public ./public
+COPY --from=builder --chown=node:node /app/web/public ./web/public
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
@@ -116,18 +116,9 @@ RUN chown node:node .next
 
 # Automatically leverage output traces to reduce image size.
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-# Standalone is traced from the monorepo root, so it mirrors the workspace: the app
-# (server.js + .next) sits under standalone/web and the traced runtime deps under
-# standalone/node_modules. Flatten both onto /app. The workspace symlinks in
-# web/node_modules point at absolute /app/node_modules/.pnpm paths, which stay valid
-# because .pnpm still lands at /app/node_modules/.pnpm below.
-COPY --from=builder --chown=node:node /app/web/.next/standalone/web ./
-COPY --from=builder --chown=node:node /app/web/.next/standalone/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/web/.next/static ./.next/static
-
-# If you want to persist the fetch cache generated during the build so that
-# cached responses are available immediately on startup, uncomment this line:
-COPY --from=builder --chown=node:node /app/web/.next/cache ./.next/cache
+COPY --from=builder --chown=node:node /app/web/.next/standalone ./
+COPY --from=builder --chown=node:node /app/web/.next/static ./web/.next/static
+COPY --from=builder --chown=node:node /app/web/.next/cache ./web/.next/cache
 
 # Switch to non-root user for security best practices
 USER node
@@ -136,4 +127,4 @@ USER node
 EXPOSE 3000
 
 # Start Next.js standalone server
-CMD ["node", "server.js"]
+CMD ["node", "./web/server.js"]
