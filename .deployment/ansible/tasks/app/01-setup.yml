@@ -30,4 +30,4 @@
   ansible.builtin.replace:
     path: '~/pesanai-docker/app/nginx.conf'
     regexp: 'YOUR_DOMAIN_NAME'
-    replace: '{{ domain_name }}'
+    replace: '{{ app_domain_name }}'

@@ -10,7 +10,7 @@
 
 - name: Check if SSL certificate exists
   ansible.builtin.stat:
-    path: '/etc/letsencrypt/live/{{ domain_name }}'
+    path: '/etc/letsencrypt/live/{{ app_domain_name }}'
   register: ssl_cert
   become: yes
 
@@ -34,14 +34,14 @@
       ansible.builtin.command: >
         certbot certonly --dns-cloudflare
         --dns-cloudflare-credentials ~/.secrets/cloudflare.ini
-        --non-interactive --agree-tos -m {{ ssl_email }} -d {{ domain_name }}
+        --non-interactive --agree-tos -m {{ ssl_email }} -d {{ app_domain_name }}
       when: ssl_email | default('') != ''
 
     - name: Obtain certificate (without email)
       ansible.builtin.command: >
         certbot certonly --dns-cloudflare
         --dns-cloudflare-credentials ~/.secrets/cloudflare.ini
-        --non-interactive --agree-tos --register-unsafely-without-email -d {{ domain_name }}
+        --non-interactive --agree-tos --register-unsafely-without-email -d {{ app_domain_name }}
       when: ssl_email | default('') == ''
 
 - name: Renew SSL Certificate (if exists)

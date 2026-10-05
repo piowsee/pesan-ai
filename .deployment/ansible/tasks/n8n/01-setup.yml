@@ -12,3 +12,15 @@
     src: '{{ playbook_dir }}/../n8n/'
     dest: '~/pesanai-docker/n8n/'
     mode: '0644'
+
+- name: Inject Domain into n8n docker compose config
+  ansible.builtin.replace:
+    path: '~/pesanai-docker/n8n/docker-compose.yaml'
+    regexp: 'YOUR_DOMAIN_NAME'
+    replace: '{{ n8n_domain_name }}'
+
+- name: Inject Domain into Nginx App Config
+  ansible.builtin.replace:
+    path: '~/pesanai-docker/n8n/nginx.conf'
+    regexp: 'YOUR_DOMAIN_NAME'
+    replace: '{{ n8n_domain_name }}'

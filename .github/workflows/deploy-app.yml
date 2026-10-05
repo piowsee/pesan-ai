@@ -84,7 +84,7 @@ jobs:
             ansible_port=${{ secrets.SSH_PORT_APP }}
             ansible_user=${{ secrets.SSH_USERNAME_APP }}
             ansible_become_password=${{ secrets.SUDO_PASSWORD_APP }}
-            domain_name=${{ secrets.DOMAIN_NAME }}
+            app_domain_name=${{ secrets.APP_DOMAIN_NAME }}
             ssl_email=${{ secrets.SSL_EMAIL }}
             cf_api_token=${{ secrets.CF_API_TOKEN }}
             s3_bucket=${{ secrets.PGBACKREST_S3_BUCKET }}
@@ -105,3 +105,6 @@ jobs:
             ansible_port=${{ secrets.SSH_PORT_N8N }}
             ansible_user=${{ secrets.SSH_USERNAME_N8N }}
             ansible_become_password=${{ secrets.SUDO_PASSWORD_N8N }}
+            n8n_domain_name=${{ secrets.N8N_DOMAIN_NAME }}
+            ssl_email=${{ secrets.SSL_EMAIL }}
+            cf_api_token=${{ secrets.CF_API_TOKEN }}
