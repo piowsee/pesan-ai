@@ -61,6 +61,16 @@ ENV NODE_ENV=production
 # DOCKER_BUILD switches next.config.ts to standalone output + outputFileTracingRoot
 ENV DOCKER_BUILD=true
 
+# --- NEXT_PUBLIC build args ---
+# These MUST be present in THIS (builder) stage, because NEXT_PUBLIC_* vars are
+# inlined into the client bundle during `next build` below. Setting them only in
+# the runner stage has no effect: the bundle is already frozen by then.
+ARG NEXT_PUBLIC_META_APP_ID
+ARG NEXT_PUBLIC_FACEBOOK_CONFIG_ID
+ENV NEXT_PUBLIC_META_APP_ID=$NEXT_PUBLIC_META_APP_ID
+ENV NEXT_PUBLIC_FACEBOOK_CONFIG_ID=$NEXT_PUBLIC_FACEBOOK_CONFIG_ID
+# -------------------------------
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
@@ -93,14 +103,6 @@ RUN apt-get update -y && apt-get install -y openssl
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-
-# --- NEXT_PUBLIC build args ---
-ARG NEXT_PUBLIC_META_APP_ID
-ARG NEXT_PUBLIC_FACEBOOK_CONFIG_ID
-
-ENV NEXT_PUBLIC_META_APP_ID=$NEXT_PUBLIC_META_APP_ID
-ENV NEXT_PUBLIC_FACEBOOK_CONFIG_ID=$NEXT_PUBLIC_FACEBOOK_CONFIG_ID
-# -------------------------------
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
