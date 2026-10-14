@@ -235,7 +235,7 @@ describe('auth email helper', { tags: ['backend'] }, () => {
           reset_url: 'https://app.test/reset-password?token=reset-token',
         },
       }),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow('SMTP unavailable');
 
     expect(logError).toHaveBeenCalledWith(error, {
       to: 'user@example.com',

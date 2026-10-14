@@ -58,7 +58,7 @@ describe('ContactUsService', { tags: ['backend'] }, () => {
   });
 
   it('throws an ApiError when the email helper cannot send', async () => {
-    vi.mocked(sendEmail).mockResolvedValue(undefined as never);
+    vi.mocked(sendEmail).mockRejectedValue(new Error('SMTP unavailable'));
 
     await expect(
       ContactUsService.submitRequest({
@@ -66,7 +66,7 @@ describe('ContactUsService', { tags: ['backend'] }, () => {
         email: 'jane@example.com',
       }),
     ).rejects.toMatchObject({
-      message: 'Unable to send contact request',
+      message: 'Unable to send email',
       status: 502,
     } satisfies Partial<ApiError>);
   });

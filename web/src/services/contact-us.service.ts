@@ -23,23 +23,23 @@ export const ContactUsService = {
   async submitRequest(payload: ContactUsPayload) {
     const subject = `New Pesan AI contact request from ${payload.name}`;
 
-    const info = await sendEmail({
-      to: DEFAULT_CONTACT_RECIPIENT,
-      replyTo: payload.email,
-      subject,
-      type: EmailType.CONTACT_US,
-      text: buildContactRequestText(payload),
-      params: {
-        requester_name: payload.name,
-        requester_email: payload.email,
-        company_name: payload.companyName || EMPTY_FIELD_LABEL,
-        phone_number: payload.phoneNumber || EMPTY_FIELD_LABEL,
-        message: payload.message || EMPTY_FIELD_LABEL,
-      },
-    });
-
-    if (!info) {
-      throw new ApiError('Unable to send contact request', 502);
+    try {
+      await sendEmail({
+        to: DEFAULT_CONTACT_RECIPIENT,
+        replyTo: payload.email,
+        subject,
+        type: EmailType.CONTACT_US,
+        text: buildContactRequestText(payload),
+        params: {
+          requester_name: payload.name,
+          requester_email: payload.email,
+          company_name: payload.companyName || EMPTY_FIELD_LABEL,
+          phone_number: payload.phoneNumber || EMPTY_FIELD_LABEL,
+          message: payload.message || EMPTY_FIELD_LABEL,
+        },
+      });
+    } catch {
+      throw new ApiError('Unable to send email', 502);
     }
 
     return {
