@@ -68,7 +68,7 @@ export const auth = betterAuth({
             new_email: newEmail,
             approval_url: url,
           },
-        });
+        }).catch(() => {});
       },
     },
   },
@@ -95,7 +95,7 @@ export const auth = betterAuth({
           user_name: user.name || 'User',
           reset_url: resetUrl.toString(),
         },
-      });
+      }).catch(() => {});
     },
     resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
   },
@@ -137,7 +137,7 @@ export const auth = betterAuth({
           user_name: user.name || 'User',
           verification_url: verificationUrl.toString(),
         },
-      });
+      }).catch(() => {});
     },
     sendOnSignUp: true,
     /*
